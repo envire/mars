@@ -1,10 +1,11 @@
 #include <iostream>
-#include <mars/Dummy.hpp>
+#include <mars/EnvireMars.h>
+using namespace envireMars;
 
 int main(int argc, char** argv)
 {
-    mars::DummyClass dummyClass;
-    dummyClass.welcome();
+    envireMars::EnvireMars envireI;
+    envireI.welcome();
 
     return 0;
 }
