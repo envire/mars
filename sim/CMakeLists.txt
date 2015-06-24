@@ -113,6 +113,8 @@ set(SOURCES_H
        src/sensors/ScanningSonar.h
        
        src/interfaces/sensors/GridSensorInterface.h
+       
+       src/core/EnvireMars.h
     )
 
 set(TARGET_SRC
@@ -158,6 +160,8 @@ set(TARGET_SRC
        src/sensors/RaySensor.cpp
 
        src/sensors/ScanningSonar.cpp
+       
+
 )
 
 #cmake variables

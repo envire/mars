@@ -122,13 +122,13 @@ namespace mars {
             return INVALID_ID;
           }
         }
-        simNodesReload.push_back(reloadNode);
+        envMars.simNodesReload.push_back(reloadNode);
 
         if (nodeS->c_params.friction_direction1) {
           Vector *tmp = new Vector();
           *tmp = *(nodeS->c_params.friction_direction1);
-          if(simNodesReload.back().index == nodeS->index) {
-            simNodesReload.back().c_params.friction_direction1 = tmp;
+          if(envMars.simNodesReload.back().index == nodeS->index) {
+            envMars.simNodesReload.back().c_params.friction_direction1 = tmp;
           }
         }
         iMutex.unlock();
@@ -192,9 +192,9 @@ namespace mars {
         //      newNode->setSNode(*nodeS);
         newNode->setInterface(newNodeInterface);
         iMutex.lock();
-        simNodes[nodeS->index] = newNode;
+        envMars.simNodes[nodeS->index] = newNode;
         if (nodeS->movable)
-          simNodesDyn[nodeS->index] = newNode;
+          envMars.simNodesDyn[nodeS->index] = newNode;
         iMutex.unlock();
         control->sim->sceneHasChanged(false);
         NodeId id;
@@ -204,7 +204,7 @@ namespace mars {
             if(id) {
               newNode->setGraphicsID(id);
               if(!reload) {
-                simNodesReload.back().graphicsID1 = id;
+                envMars.simNodesReload.back().graphicsID1 = id;
               }
             }
           }
@@ -235,7 +235,7 @@ namespace mars {
               if(id) {
                 newNode->setGraphicsID2(id);
                 if(!reload) {
-                  simNodesReload.back().graphicsID2 = id;
+                  envMars.simNodesReload.back().graphicsID2 = id;
                 }
               }
             }
@@ -247,9 +247,9 @@ namespace mars {
         }
       } else {  //if nonPhysical
         iMutex.lock();
-        simNodes[nodeS->index] = newNode;
+        envMars.simNodes[nodeS->index] = newNode;
         if (nodeS->movable)
-          simNodesDyn[nodeS->index] = newNode;
+          envMars.simNodesDyn[nodeS->index] = newNode;
         iMutex.unlock();
         control->sim->sceneHasChanged(false);
         if(control->graphics) {
@@ -258,7 +258,7 @@ namespace mars {
             if(id) {
               newNode->setGraphicsID(id);
               if(!reload) {
-                simNodesReload.back().graphicsID1 = id;
+                envMars.simNodesReload.back().graphicsID1 = id;
               }
             }
           }
@@ -331,7 +331,7 @@ namespace mars {
      */
     int NodeManager::getNodeCount() const {
       MutexLocker locker(&iMutex);
-      return simNodes.size();
+      return envMars.simNodes.size();
     }
 
     NodeId NodeManager::getNextNodeID() const {
@@ -354,8 +354,8 @@ namespace mars {
       // first lock all core functions
       iMutex.lock();
 
-      iter = simNodes.find(nodeS->index);
-      if(iter == simNodes.end()) {
+      iter = envMars.simNodes.find(nodeS->index);
+      if(iter == envMars.simNodes.end()) {
         iMutex.unlock();
         LOG_ERROR("NodeManager::editNode: node id not found!");
         return;
@@ -372,7 +372,7 @@ namespace mars {
           std::vector<SimJoint*> joints = control->joints->getSimJoints();
           if(editedNode->getGroupID())
             gids.push_back(editedNode->getGroupID());
-          NodeMap nodes = simNodes;
+          NodeMap nodes = envMars.simNodes;
           std::vector<SimJoint*> jointsj = joints;
           nodes.erase(nodes.find(editedNode->getID()));
           moveNodeRecursive(nodeS->index, offset, &joints, &gids, &nodes);
@@ -386,14 +386,14 @@ namespace mars {
           editedNode->setPosition(nodeS->pos, false);
 
           // new implementation in jointManager?
-          NodeMap nodes = simNodes;
-          NodeMap nodesj = simNodes;
+          NodeMap nodes = envMars.simNodes;
+          NodeMap nodesj = envMars.simNodes;
           std::vector<SimJoint*> jointsj = control->joints->getSimJoints();
           nodes.erase(nodes.find(editedNode->getID()));
           moveRelativeNodes(*editedNode, &nodes, diff);
 
           if(sNode.groupID != 0) {
-            for(it=simNodes.begin(); it!=simNodes.end(); ++it) {
+            for(it=envMars.simNodes.begin(); it!=envMars.simNodes.end(); ++it) {
               if(it->second->getGroupID() == sNode.groupID) {
                 control->joints->reattacheJoints(it->second->getID());
               }
@@ -421,7 +421,7 @@ namespace mars {
           std::vector<SimJoint*> joints = control->joints->getSimJoints();
           if(editedNode->getGroupID())
             gids.push_back(editedNode->getGroupID());
-          NodeMap nodes = simNodes;
+          NodeMap nodes = envMars.simNodes;
           std::vector<SimJoint*> jointsj = control->joints->getSimJoints();
           nodes.erase(nodes.find(editedNode->getID()));
           rotateNodeRecursive(nodeS->index, rotation_point, q, &joints,
@@ -442,14 +442,14 @@ namespace mars {
 
           //(*iter)->rotateAtPoint(&rotation_point, &nodeS->rot, false);
 
-          NodeMap nodes = simNodes;
-          NodeMap nodesj = simNodes;
+          NodeMap nodes = envMars.simNodes;
+          NodeMap nodesj = envMars.simNodes;
           std::vector<SimJoint*> jointsj = control->joints->getSimJoints();
           nodes.erase(nodes.find(editedNode->getID()));
           rotateRelativeNodes(*editedNode, &nodes, rotation_point, q);
 
           if(sNode.groupID != 0) {
-            for(it=simNodes.begin(); it!=simNodes.end(); ++it) {
+            for(it=envMars.simNodes.begin(); it!=envMars.simNodes.end(); ++it) {
               if(it->second->getGroupID() == sNode.groupID) {
                 control->joints->reattacheJoints(it->second->getID());
               }
@@ -525,7 +525,7 @@ namespace mars {
       NodeMap::const_iterator iter;
       MutexLocker locker(&iMutex);
       nodeList->clear();
-      for (iter = simNodes.begin(); iter != simNodes.end(); iter++) {
+      for (iter = envMars.simNodes.begin(); iter != envMars.simNodes.end(); iter++) {
         iter->second->getCoreExchange(&obj);
         nodeList->push_back(obj);
       }
@@ -537,8 +537,8 @@ namespace mars {
      */
     void NodeManager::getNodeExchange(NodeId id, core_objects_exchange* obj) const {
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->getCoreExchange(obj);
       else
         obj = NULL;
@@ -550,8 +550,8 @@ namespace mars {
      */
     const NodeData NodeManager::getFullNode(NodeId id) const {
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         return iter->second->getSNode();
       else {
         char msg[128];
@@ -592,21 +592,21 @@ namespace mars {
 
       if(lock) iMutex.lock();
 
-      iter = simNodes.find(id);
-      if (iter != simNodes.end()) {
+      iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end()) {
         tmpNode = iter->second; //iter->second is a pointer to the SimNode associated with the map
-        simNodes.erase(iter);
+        envMars.simNodes.erase(iter);
       }
 
-      iter = nodesToUpdate.find(id);
-      if (iter != nodesToUpdate.end()) {
-        nodesToUpdate.erase(iter);
+      iter = envMars.nodesToUpdate.find(id);
+      if (iter != envMars.nodesToUpdate.end()) {
+        envMars.nodesToUpdate.erase(iter);
       }
 
       if (tmpNode && tmpNode->isMovable()) {
-        iter = simNodesDyn.find(id);
-        if (iter != simNodesDyn.end()) {
-          simNodesDyn.erase(iter);
+        iter = envMars.simNodesDyn.find(id);
+        if (iter != envMars.simNodesDyn.end()) {
+          envMars.simNodesDyn.erase(iter);
         }
       }
 
@@ -628,8 +628,8 @@ namespace mars {
      */
     void NodeManager::setNodeState(NodeId id, const nodeState &state) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->setPhysicalState(state);
     }
 
@@ -638,8 +638,8 @@ namespace mars {
      */
     void NodeManager::getNodeState(NodeId id, nodeState *state) const {
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->getPhysicalState(state);
     }
 
@@ -655,8 +655,8 @@ namespace mars {
       MutexLocker locker(&iMutex);
 
       for (iter = ids.begin(); iter != ids.end(); iter++) {
-        nter = simNodes.find(*iter);
-        if (nter != simNodes.end())
+        nter = envMars.simNodes.find(*iter);
+        if (nter != envMars.simNodes.end())
           pNodes.push_back(nter->second->getInterface());
       }
 
@@ -668,10 +668,10 @@ namespace mars {
      */
     void NodeManager::setPosition(NodeId id, const Vector &pos) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter != simNodes.end()) {
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end()) {
         iter->second->setPosition(pos, 1);
-        nodesToUpdate[id] = iter->second;
+        envMars.nodesToUpdate[id] = iter->second;
       }
     }
 
@@ -679,8 +679,8 @@ namespace mars {
     const Vector NodeManager::getPosition(NodeId id) const {
       Vector pos(0.0,0.0,0.0);
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         pos = iter->second->getPosition();
       return pos;
     }
@@ -689,8 +689,8 @@ namespace mars {
     const Quaternion NodeManager::getRotation(NodeId id) const {
       Quaternion q(Quaternion::Identity());
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         q = iter->second->getRotation();
       return q;
     }
@@ -699,8 +699,8 @@ namespace mars {
     const Vector NodeManager::getLinearVelocity(NodeId id) const {
       Vector vel(0.0,0.0,0.0);
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         vel = iter->second->getLinearVelocity();
       return vel;
     }
@@ -708,8 +708,8 @@ namespace mars {
     const Vector NodeManager::getAngularVelocity(NodeId id) const {
       Vector avel(0.0,0.0,0.0);
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         avel = iter->second->getAngularVelocity();
       return avel;
     }
@@ -718,8 +718,8 @@ namespace mars {
     const Vector NodeManager::getLinearAcceleration(NodeId id) const {
       Vector acc(0.0,0.0,0.0);
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         acc = iter->second->getLinearAcceleration();
       return acc;
     }
@@ -727,8 +727,8 @@ namespace mars {
     const Vector NodeManager::getAngularAcceleration(NodeId id) const {
       Vector aacc(0.0,0.0,0.0);
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         aacc = iter->second->getAngularAcceleration();
       return aacc;
     }
@@ -741,8 +741,8 @@ namespace mars {
      */
     void NodeManager::setRotation(NodeId id, const Quaternion &rot) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->setRotation(rot, 1);
     }
 
@@ -751,8 +751,8 @@ namespace mars {
      */
     void NodeManager::applyForce(NodeId id, const Vector &force, const Vector &pos) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->applyForce(force, pos);
     }
     /**
@@ -760,8 +760,8 @@ namespace mars {
      */
     void NodeManager::applyForce(NodeId id, const Vector &force) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->applyForce(force);
     }
 
@@ -770,8 +770,8 @@ namespace mars {
      */
     void NodeManager::applyTorque(NodeId id, const Vector &torque) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->applyTorque(torque);
     }
 
@@ -781,8 +781,8 @@ namespace mars {
      */
     void NodeManager::setContactParamMotion1(NodeId id, sReal motion) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->setContactMotion1(motion);
     }
 
@@ -792,12 +792,12 @@ namespace mars {
      */
     void NodeManager::addNodeSensor(BaseNodeSensor *sensor){
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(sensor->getAttachedNode());
-      if (iter != simNodes.end()) {
+      NodeMap::iterator iter = envMars.simNodes.find(sensor->getAttachedNode());
+      if (iter != envMars.simNodes.end()) {
         iter->second->addSensor(sensor);
-        NodeMap::iterator kter = simNodesDyn.find(sensor->getAttachedNode());
-        if (kter == simNodesDyn.end())
-          simNodesDyn[iter->first] = iter->second;
+        NodeMap::iterator kter = envMars.simNodesDyn.find(sensor->getAttachedNode());
+        if (kter == envMars.simNodesDyn.end())
+          envMars.simNodesDyn[iter->first] = iter->second;
       }
       else
         {
@@ -807,8 +807,8 @@ namespace mars {
 
     void NodeManager::reloadNodeSensor(BaseNodeSensor* sensor) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(sensor->getAttachedNode());
-      if (iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(sensor->getAttachedNode());
+      if (iter != envMars.simNodes.end())
         iter->second->reloadSensor(sensor);
     }
 
@@ -821,8 +821,8 @@ namespace mars {
 
     const SimNode* NodeManager::getSimNode(NodeId id) const {
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         return iter->second;
       else
         return NULL;
@@ -831,8 +831,8 @@ namespace mars {
 
     void NodeManager::setNodeStructPositionFromRelative(NodeData *node) const {
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(node->relative_id);
-      if (iter != simNodes.end()) {
+      NodeMap::const_iterator iter = envMars.simNodes.find(node->relative_id);
+      if (iter != envMars.simNodes.end()) {
         NodeData tmpNode = iter->second->getSNode();
         getAbsFromRel(tmpNode, node);
       }
@@ -1002,8 +1002,8 @@ namespace mars {
     void NodeManager::rotateNode(NodeId id, Vector pivot, Quaternion q,
                                  unsigned long excludeJointId, bool includeConnected) {
       std::vector<int> gids;
-      NodeMap::iterator iter = simNodes.find(id);
-      if(iter == simNodes.end()) {
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if(iter == envMars.simNodes.end()) {
         iMutex.unlock();
         LOG_ERROR("NodeManager::rotateNode: node id not found!");
         return;
@@ -1025,7 +1025,7 @@ namespace mars {
         if(editedNode->getGroupID())
           gids.push_back(editedNode->getGroupID());
 
-        NodeMap nodes = simNodes;
+        NodeMap nodes = envMars.simNodes;
         nodes.erase(nodes.find(editedNode->getID()));
 
         rotateNodeRecursive(id, pivot, q, &joints,
@@ -1038,8 +1038,8 @@ namespace mars {
     void NodeManager::positionNode(NodeId id, Vector pos,
                                    unsigned long excludeJointId) {
       std::vector<int> gids;
-      NodeMap::iterator iter = simNodes.find(id);
-      if(iter == simNodes.end()) {
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if(iter == envMars.simNodes.end()) {
         iMutex.unlock();
         LOG_ERROR("NodeManager::rotateNode: node id not found!");
         return;
@@ -1061,7 +1061,7 @@ namespace mars {
       if(editedNode->getGroupID())
         gids.push_back(editedNode->getGroupID());
 
-      NodeMap nodes = simNodes;
+      NodeMap nodes = envMars.simNodes;
       nodes.erase(nodes.find(editedNode->getID()));
 
       moveNodeRecursive(id, offset, &joints, &gids, &nodes);
@@ -1085,7 +1085,7 @@ namespace mars {
     void NodeManager::clearRelativePosition(NodeId id, bool lock) {
       NodeMap::iterator iter;
       if(lock) iMutex.lock();
-      for(iter = simNodes.begin(); iter != simNodes.end(); iter++) {
+      for(iter = envMars.simNodes.begin(); iter != envMars.simNodes.end(); iter++) {
         if(iter->second->getSNode().relative_id == id) {
           iter->second->clearRelativePosition();
         }
@@ -1103,7 +1103,7 @@ namespace mars {
       Vector* friction;
 
       iMutex.lock();
-      for(iter = simNodesReload.begin(); iter != simNodesReload.end(); iter++) {
+      for(iter = envMars.simNodesReload.begin(); iter != envMars.simNodesReload.end(); iter++) {
         tmp = *iter;
         if(tmp.c_params.friction_direction1) {
           friction = new Vector(0.0, 0.0, 0.0);
@@ -1128,8 +1128,8 @@ namespace mars {
     }
 
     std::list<NodeData>::iterator NodeManager::getReloadNode(NodeId id) {
-      std::list<NodeData>::iterator iter = simNodesReload.begin();
-      for(;iter!=simNodesReload.end(); ++iter) {
+      std::list<NodeData>::iterator iter = envMars.simNodesReload.begin();
+      for(;iter!=envMars.simNodesReload.end(); ++iter) {
         if(iter->index == id) break;
       }
       return iter;
@@ -1142,7 +1142,7 @@ namespace mars {
       Vector x(0.0,0.0,0.0);
       MutexLocker locker(&iMutex);
       std::list<NodeData>::iterator iter = getReloadNode(id);
-      if (iter != simNodesReload.end()) {
+      if (iter != envMars.simNodesReload.end()) {
         if(iter->filename != "PRIMITIVE") {
           x.x() = ext.x() / iter->ext.x();
           x.y() = ext.y() / iter->ext.y();
@@ -1159,7 +1159,7 @@ namespace mars {
       MutexLocker locker(&iMutex);
 
       std::list<NodeData>::iterator iter = getReloadNode(id);
-      if (iter != simNodesReload.end()) {
+      if (iter != envMars.simNodesReload.end()) {
         iter->c_params.friction1 = friction1;
         iter->c_params.friction2 = friction2;
       }
@@ -1172,7 +1172,7 @@ namespace mars {
     void NodeManager::setReloadPosition(NodeId id, const Vector &pos) {
       MutexLocker locker(&iMutex);
       std::list<NodeData>::iterator iter = getReloadNode(id);
-      if (iter != simNodesReload.end()) {
+      if (iter != envMars.simNodesReload.end()) {
         iter->pos = pos;
       }
     }
@@ -1184,7 +1184,7 @@ namespace mars {
     void NodeManager::updateDynamicNodes(sReal calc_ms, bool physics_thread) {
       MutexLocker locker(&iMutex);
       NodeMap::iterator iter;
-      for(iter = simNodesDyn.begin(); iter != simNodesDyn.end(); iter++) {
+      for(iter = envMars.simNodesDyn.begin(); iter != envMars.simNodesDyn.end(); iter++) {
         iter->second->update(calc_ms, physics_thread);
       }
     }
@@ -1197,7 +1197,7 @@ namespace mars {
       iMutex.lock();
       if(update_all_nodes) {
         update_all_nodes = false;
-        for(iter = simNodes.begin(); iter != simNodes.end(); iter++) {
+        for(iter = envMars.simNodes.begin(); iter != envMars.simNodes.end(); iter++) {
           control->graphics->setDrawObjectPos(iter->second->getGraphicsID(),
                                               iter->second->getVisualPosition());
           control->graphics->setDrawObjectRot(iter->second->getGraphicsID(),
@@ -1209,7 +1209,7 @@ namespace mars {
         }
       }
       else {
-        for(iter = simNodesDyn.begin(); iter != simNodesDyn.end(); iter++) {
+        for(iter = envMars.simNodesDyn.begin(); iter != envMars.simNodesDyn.end(); iter++) {
           control->graphics->setDrawObjectPos(iter->second->getGraphicsID(),
                                               iter->second->getVisualPosition());
           control->graphics->setDrawObjectRot(iter->second->getGraphicsID(),
@@ -1219,7 +1219,7 @@ namespace mars {
           control->graphics->setDrawObjectRot(iter->second->getGraphicsID2(),
                                               iter->second->getRotation());
         }
-        for(iter = nodesToUpdate.begin(); iter != nodesToUpdate.end(); iter++) {
+        for(iter = envMars.nodesToUpdate.begin(); iter != envMars.nodesToUpdate.end(); iter++) {
           control->graphics->setDrawObjectPos(iter->second->getGraphicsID(),
                                               iter->second->getVisualPosition());
           control->graphics->setDrawObjectRot(iter->second->getGraphicsID(),
@@ -1229,7 +1229,7 @@ namespace mars {
           control->graphics->setDrawObjectRot(iter->second->getGraphicsID2(),
                                               iter->second->getRotation());
         }
-        nodesToUpdate.clear();
+        envMars.nodesToUpdate.clear();
       }
       iMutex.unlock();
     }
@@ -1240,11 +1240,11 @@ namespace mars {
     void NodeManager::clearAllNodes(bool clear_all, bool clearGraphics) {
       MutexLocker locker(&iMutex);
       NodeMap::iterator iter;
-      while (!simNodes.empty())
-        removeNode(simNodes.begin()->first, false, clearGraphics);
-      simNodes.clear();
-      simNodesDyn.clear();
-      if(clear_all) simNodesReload.clear();
+      while (!envMars.simNodes.empty())
+        removeNode(envMars.simNodes.begin()->first, false, clearGraphics);
+      envMars.simNodes.clear();
+      envMars.simNodesDyn.clear();
+      if(clear_all) envMars.simNodesReload.clear();
       next_node_id = 1;
       iMutex.unlock();
     }
@@ -1263,7 +1263,7 @@ namespace mars {
     void NodeManager::setReloadQuaternion(NodeId id, const Quaternion &q) {
       MutexLocker locker(&iMutex);
       std::list<NodeData>::iterator iter = getReloadNode(id);
-      if (iter != simNodesReload.end()) {
+      if (iter != envMars.simNodesReload.end()) {
         iter->rot = q;
       }
     }
@@ -1273,24 +1273,24 @@ namespace mars {
      */
     void NodeManager::setContactParams(NodeId id, const contact_params &cp) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->setContactParams(cp);
     }
 
 
     void NodeManager::setVelocity(NodeId id, const Vector& vel) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodesDyn.find(id);
-      if (iter != simNodesDyn.end())
+      NodeMap::iterator iter = envMars.simNodesDyn.find(id);
+      if (iter != envMars.simNodesDyn.end())
         iter->second->setLinearVelocity(vel);
     }
 
 
     void NodeManager::setAngularVelocity(NodeId id, const Vector& vel) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodesDyn.find(id);
-      if (iter != simNodesDyn.end())
+      NodeMap::iterator iter = envMars.simNodesDyn.find(id);
+      if (iter != envMars.simNodesDyn.end())
         iter->second->setAngularVelocity(vel);
     }
 
@@ -1303,7 +1303,7 @@ namespace mars {
       std::list<NodeData>::iterator iter;
 
       iMutex.lock();
-      for(iter = simNodesReload.begin(); iter != simNodesReload.end(); iter++) {
+      for(iter = envMars.simNodesReload.begin(); iter != envMars.simNodesReload.end(); iter++) {
         iter->pos.x() *= factor_x;
         iter->pos.y() *= factor_y;
         iter->pos.z() *= factor_z;
@@ -1324,32 +1324,32 @@ namespace mars {
     void NodeManager::getNodeMass(NodeId id, sReal *mass,
                                   sReal* inertia) const {
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->getMass(mass, inertia);
     }
 
 
     void NodeManager::setAngularDamping(NodeId id, sReal damping) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->setAngularDamping(damping);
     }
 
 
     void NodeManager::addRotation(NodeId id, const Quaternion &q) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->addRotation(q);
     }
 
 
     const contact_params NodeManager::getContactParams(NodeId id) const {
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         return iter->second->getContactParams();
       contact_params a;
       return a;
@@ -1365,7 +1365,7 @@ namespace mars {
 
         NodeMap::const_iterator iter;
         iMutex.lock();
-        for(iter=simNodes.begin(); iter!=simNodes.end(); ++iter) {
+        for(iter=envMars.simNodes.begin(); iter!=envMars.simNodes.end(); ++iter) {
           sprintf(text, "/%lu.stl", iter->first);
           filename = folder+std::string(text);
           control->graphics->exportDrawObject(iter->second->getGraphicsID(), filename);
@@ -1384,7 +1384,7 @@ namespace mars {
       std::vector<Vector> points;
 
       iMutex.lock();
-      for(iter=simNodes.begin(); iter!=simNodes.end(); ++iter) {
+      for(iter=envMars.simNodes.begin(); iter!=envMars.simNodes.end(); ++iter) {
         iter->second->getContactPoints(&points);
         for(lter=points.begin(); lter!=points.end(); ++lter) {
           ids->push_back(iter->first);
@@ -1397,16 +1397,16 @@ namespace mars {
     void NodeManager::getContactIDs(const interfaces::NodeId &id,
                                     std::list<interfaces::NodeId> *ids) const {
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end()) {
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end()) {
         iter->second->getContactIDs(ids);
       }
     }
 
     void NodeManager::updateRay(NodeId id) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->updateRay();
     }
 
@@ -1414,8 +1414,8 @@ namespace mars {
 
     NodeId NodeManager::getDrawID(NodeId id) const {
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         return iter->second->getGraphicsID();
       else
         return INVALID_ID;
@@ -1424,8 +1424,8 @@ namespace mars {
 
     const Vector NodeManager::getContactForce(NodeId id) const {
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         return iter->second->getContactForce();
       else
         return Vector(0.0, 0.0, 0.0);
@@ -1434,8 +1434,8 @@ namespace mars {
 
     double NodeManager::getCollisionDepth(NodeId id) const {
       MutexLocker locker(&iMutex);
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         return iter->second->getCollisionDepth();
       else
         return 0.0;
@@ -1450,7 +1450,7 @@ namespace mars {
       int current;
 
       iMutex.lock();
-      for(iter = simNodes.begin(); iter != simNodes.end(); iter++) {
+      for(iter = envMars.simNodes.begin(); iter != envMars.simNodes.end(); iter++) {
         if(id == 0 || iter->first == id) {
           current = iter->second->getVisualRep();
           if(val & 1 && !(current & 1))
@@ -1473,7 +1473,7 @@ namespace mars {
 
       iMutex.lock();
       NodeMap::const_iterator iter;
-      for(iter = simNodes.begin(); iter != simNodes.end(); iter++) {
+      for(iter = envMars.simNodes.begin(); iter != envMars.simNodes.end(); iter++) {
         if (iter->second->getName() == node_name)  {
           iMutex.unlock();
           return iter->first;
@@ -1485,9 +1485,9 @@ namespace mars {
 
     void NodeManager::pushToUpdate(SimNode* node) {
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = nodesToUpdate.find(node->getID());
-      if (iter == nodesToUpdate.end())
-        nodesToUpdate[node->getID()] = node;
+      NodeMap::iterator iter = envMars.nodesToUpdate.find(node->getID());
+      if (iter == envMars.nodesToUpdate.end())
+        envMars.nodesToUpdate[node->getID()] = node;
     }
 
 
@@ -1495,15 +1495,15 @@ namespace mars {
     std::vector<NodeId> NodeManager::getConnectedNodes(NodeId id) {
       std::vector<NodeId> connected;
       MutexLocker locker(&iMutex);
-      NodeMap::iterator iter = simNodes.find(id);
-      if (iter == simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if (iter == envMars.simNodes.end())
         return connected;
 
       SimNode* current = iter->second;
       std::vector<SimJoint*> simJoints = control->joints->getSimJoints();
 
       if (current->getGroupID() != 0)
-        for (iter = simNodes.begin(); iter != simNodes.end(); iter++)
+        for (iter = envMars.simNodes.begin(); iter != envMars.simNodes.end(); iter++)
           if (iter->second->getGroupID() == current->getGroupID())
             connected.push_back(iter->first);
 
@@ -1538,17 +1538,17 @@ namespace mars {
 
     bool NodeManager::getDataBrokerNames(NodeId id, std::string *groupName,
                                          std::string *dataName) const {
-      NodeMap::const_iterator iter = simNodes.find(id);
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
       //LOG_DEBUG("We have currently %i elements\n",(int)simNodes.size());
-      if (iter == simNodes.end())
+      if (iter == envMars.simNodes.end())
         return false;
       iter->second->getDataBrokerNames(groupName, dataName);
       return true;
     }
 
     void NodeManager::setVisualQOffset(NodeId id, const Quaternion &q) {
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if (iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if (iter != envMars.simNodes.end())
         iter->second->setVisQOffset(q);
     }
 
@@ -1557,25 +1557,25 @@ namespace mars {
                                const Vector &visOffsetPos,
                                const Quaternion &visOffsetRot,
                                bool doLock) {
-      NodeMap::const_iterator iter = simNodes.find(id);
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
 
-      if (iter != simNodes.end()) {
+      if (iter != envMars.simNodes.end()) {
         iter->second->updatePR(pos, rot, visOffsetPos, visOffsetRot);
         if(doLock) MutexLocker locker(&iMutex);
-        nodesToUpdate[id] = iter->second;
+        envMars.nodesToUpdate[id] = iter->second;
       }
     }
 
     bool NodeManager::getIsMovable(NodeId id) const {
-      NodeMap::const_iterator iter = simNodes.find(id);
-      if(iter != simNodes.end())
+      NodeMap::const_iterator iter = envMars.simNodes.find(id);
+      if(iter != envMars.simNodes.end())
         return iter->second->isMovable();
       return false;
     }
 
     void NodeManager::setIsMovable(NodeId id, bool isMovable) {
-      NodeMap::iterator iter = simNodes.find(id);
-      if(iter != simNodes.end())
+      NodeMap::iterator iter = envMars.simNodes.find(id);
+      if(iter != envMars.simNodes.end())
         iter->second->setMovable(isMovable);
     }
 
