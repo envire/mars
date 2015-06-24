@@ -36,6 +36,7 @@
 #include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/NodeManagerInterface.h>
+#include "EnvireMars.h"
 
 namespace mars {
   namespace sim {
@@ -160,10 +161,11 @@ namespace mars {
       interfaces::NodeId next_node_id;
       bool update_all_nodes;
       int visual_rep;
-      NodeMap simNodes;
-      NodeMap simNodesDyn;
-      NodeMap nodesToUpdate;
-      std::list<interfaces::NodeData> simNodesReload;
+      EnvireMars envMars;
+      //NodeMap simNodes;
+      //NodeMap simNodesDyn;
+      //NodeMap nodesToUpdate;
+      //std::list<interfaces::NodeData> simNodesReload;
       unsigned long maxGroupID;
 
       mutable utils::Mutex iMutex;
