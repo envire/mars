@@ -1,3 +1,7 @@
 build/
+<<<<<<< HEAD
 **/doc/doxygen/html/
 *~
+=======
+*.sw?
+>>>>>>> c4ddd1e6b176253ff9c38a38cad7eb48536f401d

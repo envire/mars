@@ -1,0 +1,18 @@
+<package>
+  <description brief="Envire plugin to be used by mars core">
+  The plugin is used to handle the elements that are present in the simulation
+  </description>
+  <author>Raúl Domínguez/raul.dominguez@dfki.de</author>
+  <license></license>
+  <url>http://https://github.com/envire/envire-mars</url>
+  <logo>http://</logo>
+  <depend package="base/cmake" />
+  <!--
+   To add any dependencies use the depend tag
+  <depend package="dummy-dependency-0" />
+	...
+  <depend package="dummy-dependency-n-1" />
+  <depend package="dummy-dependency-n" />
+  -->
+  <depend package="envire/core" />
+</package>
