@@ -3,6 +3,6 @@ rock_library(test_ItemPhysics
   DEPS_PKGCONFIG envire_core)                                                
 
 rock_testsuite(test_suite suite.cpp                                             
-  #  test_ItemPhysics.cpp                                                            
+  test_ItemPhysics.cpp                                                            
   DEPS mars_sim                                                            
   DEPS_PKGCONFIG envire_core)                                                
