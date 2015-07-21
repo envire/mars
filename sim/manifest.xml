@@ -11,5 +11,6 @@
     <depend package="simulation/mars/interfaces" />
     <depend package="simulation/configmaps" />
     <depend package="simulation/ode" />
+    <depend package="envire/core" />
     <tags>needs_opt</tags>
 </package>

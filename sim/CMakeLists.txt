@@ -86,6 +86,7 @@ set(SOURCES_H
        src/physics/JointPhysics.h
        src/physics/NodePhysics.h
        src/physics/WorldPhysics.h
+       src/physics/ItemPhysics.h
        
        src/sensors/CameraSensor.h
        src/sensors/IDListConfig.h
@@ -135,6 +136,7 @@ set(TARGET_SRC
        src/physics/JointPhysics.cpp
        src/physics/NodePhysics.cpp
        src/physics/WorldPhysics.cpp
+       src/physics/ItemPhysics.cpp
 
        src/sensors/CameraSensor.cpp
        src/sensors/Joint6DOFSensor.cpp
@@ -216,3 +218,11 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 #configure_file(configuration/mars_Preferences.in ${CMAKE_BINARY_DIR}/mars_Preferences.yaml @ONLY)
 #install(FILES ${CMAKE_BINARY_DIR}/mars_Preferences.yaml DESTINATION configuration/mars_default/)
+#set(ROCK_USE_CXX11 TRUE)
+rock_init(mars_sim 0.1)
+rock_standard_layout()
+find_package(Boost COMPONENTS system filesystem REQUIRED)
+target_link_libraries( mars_sim
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
+  )
