@@ -6,24 +6,24 @@ using namespace mars::sim;
 
 BOOST_AUTO_TEST_CASE(contructors)
 {
-    mars::sim::ItemPhysics item;
-    std::cout << "Constructor Test";
-    
+ 
+    mars::sim::PhysicsItem item;
+    //mars::sim::MarsItem<mars::sim::NodePhysics> item;
+    std::cout << "Constructor Test" << std::endl;
 }
 
 BOOST_AUTO_TEST_CASE(hello_world)
 {
-    mars::sim::ItemPhysics item;
+    mars::sim::MarsItem<mars::sim::NodePhysics> item;
     item.hello();
 }
 
-BOOST_AUTO_TEST_CASE(dummy_welcome)
+BOOST_AUTO_TEST_CASE(set_get)
 {
-    mars::sim::ItemPhysics item;
-    mars::sim::DummyClass dummy;
-    dummy.welcome();
-    item.setData(dummy);
-    mars::sim::DummyClass dummy2 = item.getData();
-    dummy2.welcome();
+    mars::sim::MarsItem<mars::sim::NodePhysics> item;
+    mars::sim::NodePhysics node(NULL);
+    item.setData(node);
+    std::cout << "Set data done" << std::endl;
+    mars::sim::NodePhysics node_copy = item.getData();
+    std::cout << "Get data done" << std::endl;
 }
-

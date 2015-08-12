@@ -45,34 +45,21 @@
 //#include "WorldPhysics.h"
 //#include "envire_core/TransformTree.hpp"
 #include "envire_core/Item.hpp"
+#include "NodePhysics.h"
+
 
 using namespace envire::core;
 
-namespace mars{
-  namespace sim{
-    class DummyClass
-    {
-      public: 
-        /**
-         * Print a welcome to stdout
-         * \return nothing
-         */
-        void welcome();
-    };
 
-  } // end namespace envire-mars
-}
-
+using namespace std;
 namespace mars {
   namespace sim {
-    class ItemPhysics: 
-      public envire::core::Item<mars::sim::DummyClass> {
-      public: 
-        /**
-         * Print a welcome to stdout
-         * \return nothing
-         */
+    template <class T>
+    class MarsItem : public envire::core::Item<T> {
+      public:
         void hello();
+    };
+    class PhysicsItem : MarsItem<mars::sim::NodePhysics> { 
     };
   }
 }

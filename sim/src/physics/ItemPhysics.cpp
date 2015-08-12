@@ -3,12 +3,14 @@
 
 using namespace std;
 
-void mars::sim::ItemPhysics::hello()
+template <class T>
+void mars::sim::MarsItem<T>::hello()
 {
-    cout << "You successfully Inherited from a class template. Hello!" << endl;
-}
+  cout << "You successfully created a templated class from a template. Hello!" << endl;
+};
 
-void mars::sim::DummyClass::welcome()
-{
-    cout << "This is a method of the class to which the template was adapted" << endl;
-}
+//void mars::sim::MarsItem<mars::sim::NodePhysics>::hello()
+//{ 
+//  cout << "You successfully created a class to allocate NodePhysics from a template. Hello!" << endl;
+//};
+
