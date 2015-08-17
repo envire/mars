@@ -57,9 +57,9 @@ endforeach(DIR)
 
 include_directories(
                src/core
-               src/interfaces/sensors
+               #src/interfaces/sensors
                src/physics
-               src/sensors
+               #src/sensors
 )
 
 
@@ -68,98 +68,98 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/src )
 
 set(SOURCES_H
-       src/core/Controller.h
-       src/core/ControllerManager.h
-       src/core/EntityManager.h
-       src/core/JointManager.h
-       src/core/MotorManager.h
-       src/core/NodeManager.h
-       src/core/PhysicsMapper.h
-       src/core/SensorManager.h
-       src/core/SimEntity.h
-       src/core/SimJoint.h
-       src/core/SimMotor.h
-       src/core/SimNode.h
-       src/core/Simulator.h
-       src/sensors/RotatingRaySensor.h
-       
-       src/physics/JointPhysics.h
-       src/physics/NodePhysics.h
-       src/physics/WorldPhysics.h
-       src/physics/ItemPhysics.h
-       
-       src/sensors/CameraSensor.h
-       src/sensors/IDListConfig.h
-       src/sensors/Joint6DOFSensor.h
-       src/sensors/JointArraySensor.h
-       src/sensors/JointAVGTorqueSensor.h
-       src/sensors/JointLoadSensor.h
-       src/sensors/JointPositionSensor.h
-       src/sensors/JointTorqueSensor.h
-       src/sensors/JointVelocitySensor.h
-       src/sensors/MotorCurrentSensor.h
-#       src/sensors/MotorPositionSensor.h
-       src/sensors/NodeAngularVelocitySensor.h
-       src/sensors/NodeArraySensor.h
-       src/sensors/NodeCOMSensor.h
-       src/sensors/NodeContactForceSensor.h
-       src/sensors/NodeContactSensor.h
-       src/sensors/NodePositionSensor.h
-       src/sensors/NodeRotationSensor.h
-       src/sensors/NodeVelocitySensor.h
-#       src/sensors/RayGridSensor.h
-       src/sensors/RaySensor.h
-       src/sensors/MultiLevelLaserRangeFinder.h
-
-       src/sensors/ScanningSonar.h
-       
-       src/interfaces/sensors/GridSensorInterface.h
+    #       src/core/Controller.h
+    #       src/core/ControllerManager.h
+    #       src/core/EntityManager.h
+    #       src/core/JointManager.h
+    #       src/core/MotorManager.h
+    #       src/core/NodeManager.h
+    #       src/core/PhysicsMapper.h
+    #       src/core/SensorManager.h
+    #       src/core/SimEntity.h
+    #       src/core/SimJoint.h
+    #       src/core/SimMotor.h
+    #       src/core/SimNode.h
+    #       src/core/Simulator.h
+           src/sensors/RotatingRaySensor.h
+    #       
+    #       src/physics/JointPhysics.h
+           src/physics/NodePhysics.h
+           src/physics/WorldPhysics.h
+           src/physics/ItemPhysics.h
+    #       
+    #       src/sensors/CameraSensor.h
+    #       src/sensors/IDListConfig.h
+    #       src/sensors/Joint6DOFSensor.h
+    #       src/sensors/JointArraySensor.h
+    #       src/sensors/JointAVGTorqueSensor.h
+    #       src/sensors/JointLoadSensor.h
+    #       src/sensors/JointPositionSensor.h
+    #       src/sensors/JointTorqueSensor.h
+    #       src/sensors/JointVelocitySensor.h
+    #       src/sensors/MotorCurrentSensor.h
+    ##       src/sensors/MotorPositionSensor.h
+    #       src/sensors/NodeAngularVelocitySensor.h
+    #       src/sensors/NodeArraySensor.h
+    #       src/sensors/NodeCOMSensor.h
+    #       src/sensors/NodeContactForceSensor.h
+    #       src/sensors/NodeContactSensor.h
+    #       src/sensors/NodePositionSensor.h
+    #       src/sensors/NodeRotationSensor.h
+    #       src/sensors/NodeVelocitySensor.h
+    ##       src/sensors/RayGridSensor.h
+    #       src/sensors/RaySensor.h
+    #       src/sensors/MultiLevelLaserRangeFinder.h
+    #
+    #       src/sensors/ScanningSonar.h
+    #       
+    #       src/interfaces/sensors/GridSensorInterface.h
     )
 
 set(TARGET_SRC
-       src/core/Controller.cpp
-       src/core/ControllerManager.cpp
-       src/core/EntityManager.cpp
-       src/core/JointManager.cpp
-       src/core/MotorManager.cpp
-       src/core/NodeManager.cpp
-       src/core/PhysicsMapper.cpp
-       src/core/SensorManager.cpp
-       src/core/SimEntity.cpp
-       src/core/SimJoint.cpp
-       src/core/SimMotor.cpp
-       src/core/SimNode.cpp
-       src/core/Simulator.cpp
-       src/sensors/MultiLevelLaserRangeFinder.cpp
-       src/sensors/RotatingRaySensor.cpp
-
-       src/physics/JointPhysics.cpp
-       src/physics/NodePhysics.cpp
-       src/physics/WorldPhysics.cpp
-       src/physics/ItemPhysics.cpp
-
-       src/sensors/CameraSensor.cpp
-       src/sensors/Joint6DOFSensor.cpp
-       src/sensors/JointArraySensor.cpp
-       src/sensors/JointAVGTorqueSensor.cpp
-       src/sensors/JointLoadSensor.cpp
-       src/sensors/JointPositionSensor.cpp
-       src/sensors/JointTorqueSensor.cpp
-       src/sensors/JointVelocitySensor.cpp
-       src/sensors/MotorCurrentSensor.cpp
-#       src/sensors/MotorPositionSensor.cpp
-       src/sensors/NodeAngularVelocitySensor.cpp
-       src/sensors/NodeArraySensor.cpp
-       src/sensors/NodeCOMSensor.cpp
-       src/sensors/NodeContactForceSensor.cpp
-       src/sensors/NodeContactSensor.cpp
-       src/sensors/NodePositionSensor.cpp
-       src/sensors/NodeRotationSensor.cpp
-       src/sensors/NodeVelocitySensor.cpp
-#       src/sensors/RayGridSensor.cpp
-       src/sensors/RaySensor.cpp
-
-       src/sensors/ScanningSonar.cpp
+    #       src/core/Controller.cpp
+    #       src/core/ControllerManager.cpp
+    #       src/core/EntityManager.cpp
+    #       src/core/JointManager.cpp
+    #       src/core/MotorManager.cpp
+    #       src/core/NodeManager.cpp
+    #       src/core/PhysicsMapper.cpp
+    #       src/core/SensorManager.cpp
+    #       src/core/SimEntity.cpp
+    #       src/core/SimJoint.cpp
+    #       src/core/SimMotor.cpp
+    #       src/core/SimNode.cpp
+    #       src/core/Simulator.cpp
+    #       src/sensors/MultiLevelLaserRangeFinder.cpp
+           src/sensors/RotatingRaySensor.cpp
+    #
+    #       src/physics/JointPhysics.cpp
+           src/physics/NodePhysics.cpp
+           src/physics/WorldPhysics.cpp
+           src/physics/ItemPhysics.cpp
+    #
+    #       src/sensors/CameraSensor.cpp
+    #       src/sensors/Joint6DOFSensor.cpp
+    #       src/sensors/JointArraySensor.cpp
+    #       src/sensors/JointAVGTorqueSensor.cpp
+    #       src/sensors/JointLoadSensor.cpp
+    #       src/sensors/JointPositionSensor.cpp
+    #       src/sensors/JointTorqueSensor.cpp
+    #       src/sensors/JointVelocitySensor.cpp
+    #       src/sensors/MotorCurrentSensor.cpp
+    ##       src/sensors/MotorPositionSensor.cpp
+    #       src/sensors/NodeAngularVelocitySensor.cpp
+    #       src/sensors/NodeArraySensor.cpp
+    #       src/sensors/NodeCOMSensor.cpp
+    #       src/sensors/NodeContactForceSensor.cpp
+    #       src/sensors/NodeContactSensor.cpp
+    #       src/sensors/NodePositionSensor.cpp
+    #       src/sensors/NodeRotationSensor.cpp
+    #       src/sensors/NodeVelocitySensor.cpp
+    ##       src/sensors/RayGridSensor.cpp
+    #       src/sensors/RaySensor.cpp
+    #
+    #       src/sensors/ScanningSonar.cpp
 )
 
 #cmake variables
@@ -218,7 +218,7 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 #configure_file(configuration/mars_Preferences.in ${CMAKE_BINARY_DIR}/mars_Preferences.yaml @ONLY)
 #install(FILES ${CMAKE_BINARY_DIR}/mars_Preferences.yaml DESTINATION configuration/mars_default/)
-#set(ROCK_USE_CXX11 TRUE)
+set(ROCK_USE_CXX11 TRUE)
 rock_init(mars_sim 0.1)
 rock_standard_layout()
 find_package(Boost COMPONENTS system filesystem REQUIRED)
