@@ -47,19 +47,22 @@
 #include "envire_core/Item.hpp"
 #include "NodePhysics.h"
 
-
 using namespace envire::core;
-
-
 using namespace std;
+
 namespace mars {
   namespace sim {
     template <class T>
     class MarsItem : public envire::core::Item<T> {
       public:
+        template <typename Ts>
+          MarsItem(Ts&& args) : envire::core::Item<T> (std::forward<Ts>(args)) {}
         void hello();
     };
-    class PhysicsItem : MarsItem<mars::sim::NodePhysics> { 
+    class PhysicsItem : public MarsItem<mars::sim::NodePhysics> {
+      public:
+        template <typename Ts>
+          PhysicsItem(Ts&& args) : MarsItem<mars::sim::NodePhysics> (std::forward<Ts>(args)) {}
     };
   }
 }
