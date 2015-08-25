@@ -108,8 +108,10 @@ namespace mars {
       mutable utils::Mutex iMutex;
 
       static interfaces::PhysicsError error;
-
+		int testItem;
+		
     private:
+
       utils::Mutex drawLock;
       dSpaceID space;
       dWorldID world;

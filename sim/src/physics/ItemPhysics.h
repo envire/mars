@@ -52,17 +52,22 @@ using namespace std;
 
 namespace mars {
   namespace sim {
-    template <class T>
-    class MarsItem : public envire::core::Item<T> {
+    //template <class T>
+    //class MarsItem : public envire::core::Item<T> {
+      //public:
+        //template <typename Ts>
+        //MarsItem(Ts&& args) : envire::core::Item<T> (std::forward<Ts>(args)) {}
+        //void hello();
+        ////int test;
+    //};
+    class PhysicsItem : public MarsItem<mars::sim::ItemManager> {
       public:
-        template <typename Ts>
-          MarsItem(Ts&& args) : envire::core::Item<T> (std::forward<Ts>(args)) {}
-        void hello();
-    };
-    class PhysicsItem : public MarsItem<mars::sim::NodePhysics> {
-      public:
-        template <typename Ts>
-          PhysicsItem(Ts&& args) : MarsItem<mars::sim::NodePhysics> (std::forward<Ts>(args)) {}
+        //template <typename Ts>
+        //PhysicsItem(Ts&& args) : MarsItem<mars::sim::NodePhysics> (std::forward<Ts>(args)) {}
+        
+         template <typename Ts>                                                      
+          DummyItem(Ts&& args) : Item<ItemManager> (std::forward<Ts>(args)){}       
+        
     };
   }
 }

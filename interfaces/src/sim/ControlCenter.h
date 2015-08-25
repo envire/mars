@@ -37,6 +37,7 @@
 
 //Backward compatibility remove this include as soon as possible
 #include "../Logging.hpp"
+#include <stdio.h>
 
 #ifndef LOG_ERROR
 #define LOG_ERROR(...) typedef int Deprication_Error_If_you_need_LOG_XXXX_from_mars_please_include_mars_logging_Logging_hpp[-1]
@@ -49,6 +50,7 @@
 
 // Include stddef for basic defs like NULL
 #include <cstddef>
+#include "ItemManagerInterface.h"
 
 namespace mars {
   namespace main_gui {
@@ -66,6 +68,7 @@ namespace mars {
   namespace interfaces {
     class ControlCenter;
     class NodeManagerInterface;
+    class ItemManagerInterface;    
     class JointManagerInterface;
     class MotorManagerInterface;
     class ControllerManagerInterface;
@@ -79,12 +82,14 @@ namespace mars {
      * The declaration of the ControlCenter.
      *
      */
+
     class ControlCenter {
     public:
       ControlCenter(){
         sim = NULL;
         cfg = NULL;
         nodes  = NULL;
+        items = NULL;
         joints = NULL;
         motors = NULL;
         controllers = NULL;
@@ -92,19 +97,31 @@ namespace mars {
         graphics = NULL;
         dataBroker = NULL;
         loadCenter = NULL;
+        
+
       }
 
       cfg_manager::CFGManagerInterface *cfg;
       NodeManagerInterface *nodes;
+
       JointManagerInterface *joints;
       MotorManagerInterface *motors;
       ControllerManagerInterface *controllers;
       SensorManagerInterface *sensors;
+      
       SimulatorInterface *sim;
+      
       GraphicsManagerInterface *graphics;
+       
       EntityManagerInterface *entities;
+   
       data_broker::DataBrokerInterface *dataBroker;
+       
       LoadCenter *loadCenter;
+      
+      ItemManagerInterface *items;   
+    
+     
 
       static data_broker::DataBrokerInterface *theDataBroker;
     };

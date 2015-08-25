@@ -30,6 +30,7 @@
 #include "Simulator.h"
 #include "PhysicsMapper.h"
 #include "NodeManager.h"
+#include "ItemManager.h"   //Item
 #include "JointManager.h"
 #include "MotorManager.h"
 #include "SensorManager.h"
@@ -252,6 +253,8 @@ namespace mars {
       control->controllers = new ControllerManager(control);
       control->entities = new EntityManager(control);
 
+      control->items = new ItemManager(control);   
+      
       control->controllers->setDefaultPort(std_port);
       control->nodes->setVisualRep(0, cfgVisRep.iValue);
 
