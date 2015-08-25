@@ -1,17 +1,17 @@
-#include <boost/test/unit_test.hpp>
-#include <physics/ItemPhysics.cpp>
-#include <envire_core/Item.hpp>
-
-using namespace mars::sim;
-
-
-BOOST_AUTO_TEST_CASE(contructors)
-{
-    mars::sim::WorldPhysics physics(NULL);
-    mars::sim::PhysicsItem item(&physics);
-    item.hello();
-
-}
+//#include <boost/test/unit_test.hpp>
+//#include <physics/ItemPhysics.cpp>
+//#include <envire_core/Item.hpp>
+//
+//using namespace mars::sim;
+//
+//
+//BOOST_AUTO_TEST_CASE(contructors)
+//{
+//    mars::sim::WorldPhysics physics(NULL);
+//    mars::sim::PhysicsItem item(&physics);
+//    item.hello();
+//
+//}
 
 //BOOST_AUTO_TEST_CASE(contructors)
 //{

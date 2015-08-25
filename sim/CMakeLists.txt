@@ -216,5 +216,13 @@ install(DIRECTORY ${MARS_HDRS_DIRS} DESTINATION include/mars/sim FILES_MATCHING 
 configure_file(configuration/${PROJECT_NAME}.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
-configure_file(configuration/mars_Preferences.in ${CMAKE_BINARY_DIR}/mars_Preferences.yaml @ONLY)
-install(FILES ${CMAKE_BINARY_DIR}/mars_Preferences.yaml DESTINATION configuration/mars_default/)
+#configure_file(configuration/mars_Preferences.in ${CMAKE_BINARY_DIR}/mars_Preferences.yaml @ONLY)
+#install(FILES ${CMAKE_BINARY_DIR}/mars_Preferences.yaml DESTINATION configuration/mars_default/)
+set(ROCK_USE_CXX11 TRUE)
+rock_init(mars_sim 0.1)
+rock_standard_layout()
+find_package(Boost COMPONENTS system filesystem REQUIRED)
+target_link_libraries( mars_sim
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
+  )
