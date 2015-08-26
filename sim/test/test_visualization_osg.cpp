@@ -12,7 +12,7 @@ using namespace osgviz;
 BOOST_AUTO_TEST_CASE(first_visualization)
 {
     mars::sim::WorldPhysics physics(NULL);
-    mars::sim::PhysicsItem item(&physics);
+    mars::sim::ItemPhysics item(&physics);
     // Somehow visualize
     osgviz::OsgViz *osgViz = osgviz::OsgViz::getInstance();
     //load lib with some helpful primitives
@@ -119,10 +119,10 @@ BOOST_AUTO_TEST_CASE(first_visualization)
 BOOST_AUTO_TEST_CASE(first_object)
 {
     mars::sim::WorldPhysics physics(NULL);
-    mars::sim::PhysicsItem item(&physics);
+    mars::sim::ItemPhysics item(&physics);
     mars::sim::NodePhysics node = item.getData();
     ode.compute(node); //Or however is done
-    //mars::sim::SurfacePhysicsItem item(&physics);
+    //mars::sim::SurfaceItemPhysics item(&physics);
     //mars::sim::SurfacePhysics surface = item.getData();
     //ode.compute(surface);
 }

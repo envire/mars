@@ -53,16 +53,16 @@ using namespace std;
 namespace mars {
   namespace sim {
     template <class T>
-    class MarsItem : public envire::core::Item<T> {
+    class ItemMars : public envire::core::Item<T> {
       public:
         template <typename Ts>
-          MarsItem(Ts&& args) : envire::core::Item<T> (std::forward<Ts>(args)) {}
+          ItemMars(Ts&& args) : envire::core::Item<T> (std::forward<Ts>(args)) {}
         void hello();
     };
-    class PhysicsItem : public MarsItem<mars::sim::NodePhysics> {
+    class ItemPhysics : public ItemMars<mars::sim::NodePhysics> {
       public:
         template <typename Ts>
-          PhysicsItem(Ts&& args) : MarsItem<mars::sim::NodePhysics> (std::forward<Ts>(args)) {}
+          ItemPhysics(Ts&& args) : ItemMars<mars::sim::NodePhysics> (std::forward<Ts>(args)) {}
     };
   }
 }

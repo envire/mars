@@ -7,14 +7,14 @@ using namespace mars::sim;
 BOOST_AUTO_TEST_CASE(contructors)
 {
     mars::sim::WorldPhysics physics(NULL);
-    mars::sim::PhysicsItem item(&physics);
+    mars::sim::ItemPhysics item(&physics);
     std::cout << "Constructor Test" << std::endl;
 }
 
 BOOST_AUTO_TEST_CASE(hello_world)
 {
     mars::sim::WorldPhysics physics(NULL);
-    mars::sim::PhysicsItem item(&physics);
+    mars::sim::ItemPhysics item(&physics);
     item.hello();
     std::cout << "Hello World Test" << std::endl;
 }
@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(hello_world)
 BOOST_AUTO_TEST_CASE(set_get)
 {
     mars::sim::WorldPhysics physics(NULL);
-    mars::sim::PhysicsItem item(&physics);
+    mars::sim::ItemPhysics item(&physics);
     mars::sim::WorldPhysics physics2(NULL);
     mars::sim::NodePhysics node(&physics2);
     item.setData(node);
@@ -37,10 +37,10 @@ BOOST_AUTO_TEST_CASE(set_get)
 BOOST_AUTO_TEST_CASE(first_object)
 {
     mars::sim::WorldPhysics physics(NULL);
-    mars::sim::PhysicsItem item(&physics);
+    mars::sim::ItemPhysics item(&physics);
     mars::sim::NodePhysics node = item.getData();
     ode.compute(node); //Or however is done
-    //mars::sim::SurfacePhysicsItem item(&physics);
+    //mars::sim::SurfaceItemPhysics item(&physics);
     //mars::sim::SurfacePhysics surface = item.getData();
     //ode.compute(surface);
 }
