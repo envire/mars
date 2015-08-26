@@ -88,6 +88,7 @@ set(SOURCES_H
        src/physics/JointPhysics.h
        src/physics/NodePhysics.h
        src/physics/WorldPhysics.h
+       src/physics/ItemPhysics.h
        
        src/sensors/CameraSensor.h
        src/sensors/IDListConfig.h
@@ -140,6 +141,7 @@ set(TARGET_SRC
        src/physics/JointPhysics.cpp
        src/physics/NodePhysics.cpp
        src/physics/WorldPhysics.cpp
+       src/physics/ItemPhysics.cpp
 
        src/sensors/CameraSensor.cpp
        src/sensors/Joint6DOFSensor.cpp
