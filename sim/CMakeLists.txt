@@ -75,6 +75,9 @@ set(SOURCES_H
        src/core/NodeManager.h
       
        src/core/ItemManager.h       
+       #src/core/ItemNodeInterface.h    # Does not build because NodeInterface is abstract
+       src/core/ItemMars.h
+       src/core/ItemNodeData.h
        
        src/core/PhysicsMapper.h
        src/core/SensorManager.h
@@ -88,7 +91,7 @@ set(SOURCES_H
        src/physics/JointPhysics.h
        src/physics/NodePhysics.h
        src/physics/WorldPhysics.h
-       src/physics/ItemPhysics.h
+       #src/physics/ItemPhysics.h
        
        src/sensors/CameraSensor.h
        src/sensors/IDListConfig.h

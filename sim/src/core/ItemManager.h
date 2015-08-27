@@ -34,14 +34,13 @@
 #include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/ItemManagerInterface.h>
+#include "ItemNodeData.h"
 
 namespace mars {
   namespace sim {
 
     class SimJoint;
     class SimNode;
-
-    typedef std::map<interfaces::NodeId, SimNode*> NodeMap;
 
     /**
      * The declaration of the ItemManager class.
@@ -50,23 +49,19 @@ namespace mars {
     class ItemManager : public interfaces::ItemManagerInterface,
                         public interfaces::GraphicsUpdateInterface {
     public:
-      ItemManager(interfaces::ControlCenter *c);
+      ItemManager(interfaces::ControlCenter *c); 
       virtual ~ItemManager(){}
       virtual int test();
     private:
       //interfaces::NodeId next_node_id;
       //bool update_all_nodes;
       //int visual_rep;
-      NodeMap simNodes;
-      NodeMap simNodesDyn;
-      NodeMap nodesToUpdate;
-      std::list<interfaces::NodeData> simNodesReload;
-      unsigned long maxGroupID;
-
-      mutable utils::Mutex iMutex;    
-    
+      
       interfaces::ControlCenter *control;
       int visual_rep;
+
+      //ItemNodeInterface itemNodeInterface;
+      ItemNodeData itemNodeData;
 
 
     };

@@ -66,34 +66,39 @@ namespace mars {
 
     }
 
-    int ItemManager::test(){
-		  printf("test itemManager\n");
-       NodeData node;
-       NodeData *nodeS = &node;
-    
-       const std::string &name = "box";
-       nodeS->pos = utils::Vector::Zero();
-       nodeS->name = name;
-       nodeS->movable = true;
-       nodeS->physicMode = NODE_TYPE_BOX;
-       nodeS->index=0;
-       nodeS->noPhysical = false;
-       nodeS->inertia_set=true;
-       nodeS->ext.x() = 1;
-       nodeS->ext.y() = 1; 
-       nodeS->ext.z() = 1;   
-       NodeType type = nodeS->physicMode;
-       nodeS->mass = 1.0f;
-       nodeS->initPrimitive(type, nodeS->ext, nodeS->mass);             
+    int ItemManager::test()
+    {
+      printf("test itemManager\n");
+
+      NodeData node = itemNodeData.getData();
+      NodeData *nodeS = &node;
+
+      const std::string &name = "box";
+      nodeS->pos = utils::Vector::Zero();
+      nodeS->name = name;
+      nodeS->movable = true;
+      nodeS->physicMode = NODE_TYPE_BOX;
+      nodeS->index=0;
+      nodeS->noPhysical = false;
+      nodeS->inertia_set=true;
+      nodeS->ext.x() = 1;
+      nodeS->ext.y() = 1; 
+      nodeS->ext.z() = 1;   
+      NodeType type = nodeS->physicMode;
+      nodeS->mass = 1.0f;
+      nodeS->initPrimitive(type, nodeS->ext, nodeS->mass);
 
       // create a node object
       SimNode *newNode = new SimNode(control, *nodeS);
 
+      // This is not a NodePhysics but many more things. How do I get the NodePhysics from it?
+
       // create the physical node data
       if(! (nodeS->noPhysical)){
         // create an interface object to the physics
+        // The interface to the physics is already in the itemPhysics
         NodeInterface *newNodeInterface = PhysicsMapper::newNodePhysics(control->sim->getPhysics());
- //printf("...........getPhysics.......\n");       
+        //printf("...........getPhysics.......\n");       
         if (!newNodeInterface->createNode(nodeS)) {
           // if no node was created in physics
           // delete the objects
@@ -106,17 +111,26 @@ namespace mars {
         // put all data to the correct place
         //      newNode->setSNode(*nodeS);
         newNode->setInterface(newNodeInterface);
-        iMutex.lock();
-        simNodes[nodeS->index] = newNode;
-        if (nodeS->movable)
-          simNodesDyn[nodeS->index] = newNode;
-        iMutex.unlock();
+        // Set the node in the item wraper newNodeInterface is the pointer to a
+        // NodeInterface which is a more abstract class than NodePhysics,
+        // therefore it can not just be attached to an item
+        //NodePhysics *nodePhysics = newNodeInterface;
+        //itemNodeInterface.setData(newNodeInterface);
+        // and include the item in the tree
+        // envireTree.addVertex(item);
+        // Instead of maps we use the envire Tree
+        //Mutex.lock();
+        //simNodes[nodeS->index] = newNode;
+        //if (nodeS->movable)
+        //  simNodesDyn[nodeS->index] = newNode;
+        //iMutex.unlock();
         control->sim->sceneHasChanged(false);
         if(control->graphics) {
           NodeId id = control->graphics->addDrawObject(*nodeS, visual_rep & 1);
           if(id) newNode->setGraphicsID(id);
 
           //        NEW_NODE_STRUCT(physicalRep);
+          // What is done here?
           NodeData physicalRep;
           physicalRep = *nodeS;
           physicalRep.material = nodeS->material;
@@ -140,8 +154,8 @@ namespace mars {
           newNode->setVisualRep(visual_rep);
         }
       } 	  
-		  
-		  };
+
+    };
 
   } // end of namespace sim
 } // end of namespace mars
