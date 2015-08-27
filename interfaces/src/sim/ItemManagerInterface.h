@@ -70,4 +70,4 @@ namespace mars {
   } // end of namespace interfaces
 } // end of namespace mars
 
-#endif  // NODE_MANAGER_INTERFACE_H
+#endif  // ITEM_MANAGER_INTERFACE_H
