@@ -46,9 +46,8 @@ namespace mars {
       }
   
       void Test::init() {
-	  envire::core::Item<mars::interfaces::ItemManagerInterface*> itemTest;        
-      control->items->test();
-      itemTest.setData(control->items);
+	  mars::interfaces::ItemManagerInterface* itemTest;
+          itemTest -> test();
 
       }
 

@@ -62,5 +62,8 @@ install(FILES ${HEADERS} DESTINATION include/mars/plugins/${PROJECT_NAME})
 # using pkg-config
 configure_file(${PROJECT_NAME}.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
-
+find_package(Rock)
+set(ROCK_USE_CXX11 TRUE)
+rock_init(mars_sim 0.1)
+rock_standard_layout()
 
