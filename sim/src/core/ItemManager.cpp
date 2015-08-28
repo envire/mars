@@ -42,6 +42,8 @@
 
 #include <mars/utils/MutexLocker.h>
 
+//#include <envire_core/Item.hpp>
+
 namespace mars {
   namespace sim {
 
@@ -70,8 +72,14 @@ namespace mars {
     {
       printf("test itemManager\n");
 
-      NodeData node = itemNodeData.getData();
+      NodeData node;
+      
+      itemNodeData.setData(node);
+      printf("item set data done\n");
+
       NodeData *nodeS = &node;
+
+      printf("Pointer assignation\n");
 
       const std::string &name = "box";
       nodeS->pos = utils::Vector::Zero();
@@ -88,17 +96,23 @@ namespace mars {
       nodeS->mass = 1.0f;
       nodeS->initPrimitive(type, nodeS->ext, nodeS->mass);
 
+      printf("Node S assignations and calls\n");
+
       // create a node object
       SimNode *newNode = new SimNode(control, *nodeS);
+      printf("Create a node object\n");
 
       // This is not a NodePhysics but many more things. How do I get the NodePhysics from it?
 
       // create the physical node data
       if(! (nodeS->noPhysical)){
+        printf("Enters if\n");
         // create an interface object to the physics
         // The interface to the physics is already in the itemPhysics
-        NodeInterface *newNodeInterface = PhysicsMapper::newNodePhysics(control->sim->getPhysics());
-        //printf("...........getPhysics.......\n");       
+        interfaces::PhysicsInterface* physicsInterface = control->sim->getPhysics();
+        printf("Physical interface obtained \n");
+        NodeInterface *newNodeInterface = PhysicsMapper::newNodePhysics(physicsInterface);
+        printf("...........getPhysics.......\n");
         if (!newNodeInterface->createNode(nodeS)) {
           // if no node was created in physics
           // delete the objects
@@ -108,9 +122,11 @@ namespace mars {
           LOG_ERROR("NodeManager::addNode: No node was created in physics.");
           return INVALID_ID;
         }
+        printf("Node Created a Node Physics \n");
         // put all data to the correct place
         //      newNode->setSNode(*nodeS);
         newNode->setInterface(newNodeInterface);
+        printf("interface is set \n");
         // Set the node in the item wraper newNodeInterface is the pointer to a
         // NodeInterface which is a more abstract class than NodePhysics,
         // therefore it can not just be attached to an item
