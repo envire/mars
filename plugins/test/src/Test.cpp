@@ -28,11 +28,8 @@
 
 
 #include "Test.h"
-#include <mars/interfaces/sim/ItemManagerInterface.h>
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
-#include <envire_core/Item.hpp>
-//#include "EnvireItem.hpp"
 
 namespace mars {
   namespace plugins {
@@ -40,14 +37,19 @@ namespace mars {
 
       using namespace mars::utils;
       using namespace mars::interfaces;
+      using namespace mars::sim;
 
       Test::Test(lib_manager::LibManager *theManager)
         : MarsPluginTemplate(theManager, "Test") {
       }
   
       void Test::init() {
-	  mars::interfaces::ItemManagerInterface* itemTest;
-          itemTest -> test();
+          ItemManager* itemManager = new ItemManager(control); // This breaks on execution time
+          std::cout << "Instance of itemManager" << std::endl;
+	      ItemManagerInterface* itemManagerInterface = itemManager;
+          std::cout << "Instance of the Interface" << std::endl;
+	      itemManagerInterface -> test();
+          std::cout << "Test Executed" << std::endl;
 
       }
 

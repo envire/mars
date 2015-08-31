@@ -13,6 +13,8 @@ pkg_check_modules(PKGCONFIG REQUIRED
 			    lib_manager
 			    data_broker
 			    mars_interfaces
+                            envire_core
+                            mars_sim
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
@@ -64,6 +66,11 @@ configure_file(${PROJECT_NAME}.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc @ONL
 install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 find_package(Rock)
 set(ROCK_USE_CXX11 TRUE)
-rock_init(mars_sim 0.1)
+rock_init(test 0.1)
 rock_standard_layout()
 
+find_package(Boost COMPONENTS system filesystem REQUIRED)
+target_link_libraries( test
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
+  )

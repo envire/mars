@@ -39,6 +39,7 @@
 namespace mars {
   namespace sim {
 
+    using namespace interfaces;
     class SimJoint;
     class SimNode;
 
@@ -49,9 +50,9 @@ namespace mars {
     class ItemManager : public interfaces::ItemManagerInterface,
                         public interfaces::GraphicsUpdateInterface {
     public:
-      ItemManager(interfaces::ControlCenter *c); 
+      ItemManager(ControlCenter *c); 
       virtual ~ItemManager(){}
-      virtual int test();
+      virtual int test( );
     private:
       interfaces::NodeId next_node_id;
       bool update_all_nodes;

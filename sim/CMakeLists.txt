@@ -12,8 +12,9 @@ lib_defaults()
 define_module_info()
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/cmake")
-
 set(DEFAULT_CONFIG_DIR "." CACHE STRING "The Default config dir to load")
+
+
 add_definitions(-DDEFAULT_CONFIG_DIR=\"${DEFAULT_CONFIG_DIR}\")
 
 
@@ -40,7 +41,9 @@ pkg_check_modules(PKGCONFIG REQUIRED
 			    data_broker
 			    cfg_manager
 			    mars_interfaces
-                mars_utils
+                            mars_utils
+                            configmaps
+                            envire_core
 )
 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
@@ -221,8 +224,8 @@ install(DIRECTORY ${MARS_HDRS_DIRS} DESTINATION include/mars/sim FILES_MATCHING 
 configure_file(configuration/${PROJECT_NAME}.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
-#configure_file(configuration/mars_Preferences.in ${CMAKE_BINARY_DIR}/mars_Preferences.yaml @ONLY)
-#install(FILES ${CMAKE_BINARY_DIR}/mars_Preferences.yaml DESTINATION configuration/mars_default/)
+configure_file(configuration/mars_Preferences.in ${CMAKE_BINARY_DIR}/mars_Preferences.yaml @ONLY)
+install(FILES ${CMAKE_BINARY_DIR}/mars_Preferences.yaml DESTINATION configuration/mars_default/)
 set(ROCK_USE_CXX11 TRUE)
 rock_init(mars_sim 0.1)
 rock_standard_layout()

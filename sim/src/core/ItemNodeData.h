@@ -22,14 +22,14 @@
  *
  */
 
-#ifndef ITEM_NODE_INTERFACE_H
-#define ITEM_NODE_INTERFACE_H
+#ifndef ITEM_NODE_DATA_H
+#define ITEM_NODE_DATA_H
 
 #ifdef _PRINT_HEADER_
-  #warning "ItemNodeInterface.h"
+  #warning "ItemNodeData.h"
 #endif
 
-#include <ItemMars.h>
+#include "ItemMars.h"
 #include <mars/interfaces/NodeData.h>
 
 using namespace envire::core;
