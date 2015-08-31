@@ -53,14 +53,14 @@ namespace mars {
       virtual ~ItemManager(){}
       virtual int test();
     private:
-      //interfaces::NodeId next_node_id;
-      //bool update_all_nodes;
-      //int visual_rep;
+      interfaces::NodeId next_node_id;
+      bool update_all_nodes;
+      int visual_rep;
       
       interfaces::ControlCenter *control;
-      int visual_rep;
+     // int visual_rep;
 
-      //ItemNodeInterface itemNodeInterface;
+      ItemNodeInterface itemNodeInterface;
       ItemNodeData itemNodeData;
 
 

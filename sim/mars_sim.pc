@@ -1,0 +1,13 @@
+prefix=/usr/local
+exec_prefix=/usr/local
+libdir=${prefix}/lib
+includedir=${prefix}/include/
+
+Name: mars_sim
+Description: The DFKI Robot Simulator
+Version: 1.0
+Libs: -L${libdir} -lmars_sim
+Requires.private: mars_utils mars_interfaces lib_manager data_broker cfg_manager ode 
+
+Cflags: -I${includedir}  -I${includedir}/mars_sim/ 
+

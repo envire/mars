@@ -75,7 +75,7 @@ set(SOURCES_H
        src/core/NodeManager.h
       
        src/core/ItemManager.h       
-       #src/core/ItemNodeInterface.h    # Does not build because NodeInterface is abstract
+       src/core/ItemNodeInterface.h    # Does not build because NodeInterface is abstract
        src/core/ItemMars.h
        src/core/ItemNodeData.h
        
@@ -144,7 +144,7 @@ set(TARGET_SRC
        src/physics/JointPhysics.cpp
        src/physics/NodePhysics.cpp
        src/physics/WorldPhysics.cpp
-       src/physics/ItemPhysics.cpp
+       #src/physics/ItemPhysics.cpp
 
        src/sensors/CameraSensor.cpp
        src/sensors/Joint6DOFSensor.cpp
