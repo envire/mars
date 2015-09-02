@@ -59,6 +59,8 @@ namespace mars {
         TreeMars(ControlCenter *c);
         virtual ~TreeMars(){}
         virtual int test();
+        // Generate the nodes according to a ConfigMap
+        void loadConfigMap(configmaps::ConfigMap* map);
       private:
         interfaces::ControlCenter *control;
         int visual_rep;

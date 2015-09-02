@@ -126,7 +126,11 @@ namespace mars {
           newNode->setVisualRep(visual_rep);
         }
       } 	  
+    }
 
+    void TreeMars::loadConfigMap(configmaps::ConfigMap* map)
+    {
+      // Iterate the map and generate the correspondent ItemData
     }
 
   } // NS sim
