@@ -1,0 +1,15 @@
+<package>
+    <description brief="SMURF2MarsTree">
+      Tests
+   </description>
+    <maintainer>Raul/raul.dominguez@dfki.de</maintainer>
+    <author>Raul/raul.dominguez@dfki.de</author>
+    <depend package="simulation/mars/scripts/cmake" />
+    <depend package="simulation/lib_manager" />
+    <depend package="simulation/mars/common/data_broker" />
+    <depend package="simulation/mars/interfaces" />
+    <depend package="simulation/mars/entity_generation/entity_factory" />
+    <!-- <depend package="simulation/smurf_parser" />
+    <depend package="simulation/mars/smurf_loader" />-->
+    <tags>needs_opt</tags>
+</package>
