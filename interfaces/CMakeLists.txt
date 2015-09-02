@@ -45,6 +45,7 @@ set(HEADERS
     src/utils.h
 
     src/exceptions/SceneParseException.h
+    src/sim/TreeMarsInterface.h
 )
 
 set(SOURCES 
