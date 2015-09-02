@@ -81,6 +81,7 @@ set(SOURCES_H
        #src/core/ItemNodeInterface.h    # Does not build because NodeInterface is abstract
        src/core/ItemMars.h
        src/core/ItemNodeData.h
+       src/core/TreeMars.h
        
        src/core/PhysicsMapper.h
        src/core/SensorManager.h
