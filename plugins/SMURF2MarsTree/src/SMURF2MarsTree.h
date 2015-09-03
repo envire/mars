@@ -39,6 +39,9 @@
 #include <mars/interfaces/MARSDefs.h>
 #include <mars/data_broker/ReceiverInterface.h>
 #include <mars/cfg_manager/CFGManagerInterface.h>
+#include <mars/sim/TreeMars.h>
+#include <mars/interfaces/sim/TreeMarsInterface.h>
+#include <mars/interfaces/sim/ControlCenter.h> 
 
 #include <string>
 

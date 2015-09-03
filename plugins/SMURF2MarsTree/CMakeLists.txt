@@ -16,6 +16,7 @@ pkg_check_modules(PKGCONFIG REQUIRED
                             smurf_parser
                             configmaps
                             urdfdom
+                            mars_sim
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
@@ -68,7 +69,7 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 find_package(Rock)
 set(ROCK_USE_CXX11 TRUE)
-rock_init(test_smurf 0.1)
+rock_init(SMURF2MarsTree 0.1)
 rock_standard_layout()
 
 find_package(Boost REQUIRED filesystem system thread)

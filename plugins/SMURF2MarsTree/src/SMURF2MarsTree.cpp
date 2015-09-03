@@ -52,20 +52,26 @@ namespace mars {
   
       void SMURF2MarsTree::init() {
 
+        std::cout << "Init method start" << std::endl;
         // Create configMap
         //
-        configmaps::ConfigMap* map;
+        configmaps::ConfigMap* map = new configmaps::ConfigMap;
+        std::cout << "Create configMap" << std::endl;
         // Update the configMap from a Smurf file
-        //
-        std::string path = "";
-        std::string fileName = ""; 
+        std::string path = std::string(std::getenv("AUTOPROJ_CURRENT_ROOT")) + "/models/robots/asguard_v4/smurf/";
+        std::string fileName = "asguard_v4.smurf"; 
+        std::cout << "Complete Part: " << path << fileName << std::endl;
         bool expandURIs = false;
         boost::shared_ptr<urdf::ModelInterface> modelInterface;
+        std::cout << "Shared Pointer to modelInterface" << std::endl;
         modelInterface = parseFile( map, path, fileName, expandURIs);
+        std::cout << "parseFile executed" << std::endl;
         // Create a Tree
-        //
+        mars::sim::TreeMars* tree = new mars::sim::TreeMars(control);
+        std::cout << "Pointer to the Tree created" << std::endl;
         // Make the tree load the configMap
         //
+        tree -> loadConfigMap(map);
         // Plot the Tree
 
       }

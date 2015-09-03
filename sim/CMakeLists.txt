@@ -134,6 +134,7 @@ set(TARGET_SRC
        src/core/NodeManager.cpp
        
        src/core/ItemManager.cpp       
+       src/core/TreeMars.cpp
        
        src/core/PhysicsMapper.cpp
        src/core/SensorManager.cpp

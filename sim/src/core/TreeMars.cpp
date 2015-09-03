@@ -27,7 +27,8 @@
  * one.
  */
 
-#include "ItemNodeData.h"
+
+#include "TreeMars.h"
 
 namespace mars {
   namespace sim {
@@ -131,6 +132,20 @@ namespace mars {
     void TreeMars::loadConfigMap(configmaps::ConfigMap* map)
     {
       // Iterate the map and generate the correspondent ItemData
+      typedef configmaps::ConfigMap::const_iterator MapIterator;
+      typedef configmaps::ConfigVectorTemplate<configmaps::ConfigItem>::const_iterator VectorIterator;
+      for (MapIterator iter = map -> begin(); iter != map -> end(); iter++)
+      {
+        cout << "Key: " << iter->first << endl;
+        for (VectorIterator iterV = iter-> second.begin(); iterV != iter-> second.end(); iterV++)
+        {
+          cout << "Vector item: " << iterV -> toString() << endl;
+        }
+      }
+      // Load Motors
+      // Load Sensors
+      // Load URDF?
+      // Load Materials?
     }
 
   } // NS sim

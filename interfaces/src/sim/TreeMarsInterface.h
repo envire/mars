@@ -52,7 +52,7 @@ namespace mars {
 
     /**
      * \author Yong-Ho Yoo \n
-     * \brief "ItemManagerInterface" declares the interfaces for all ItemOperations
+     * \brief "TreeMarsInterface" declares the interfaces for all ItemOperations
      * that are used for the communication between the simulation modules.
      *
      */

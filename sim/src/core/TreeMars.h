@@ -35,9 +35,18 @@
 #endif
 
 #include <envire_core/TransformTree.hpp>
-#include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
+
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/TreeMarsInterface.h>
+#include <mars/interfaces/sim/SimulatorInterface.h>
+#include <mars/interfaces/graphics/GraphicsManagerInterface.h>
+#include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
+
+#include "SimNode.h"
+#include "ItemNodeData.h"
+#include "PhysicsMapper.h"
+
+
 
 namespace mars {
   namespace sim {
