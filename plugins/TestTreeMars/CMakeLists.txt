@@ -10,10 +10,11 @@ define_module_info()
 
 
 pkg_check_modules(PKGCONFIG REQUIRED
-			    lib_manager
-			    data_broker
-			    mars_interfaces
-                            envire_core
+                lib_manager
+                data_broker
+                mars_interfaces
+                envire_core
+                mars_sim #To be able to instantiate TreeMars
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
