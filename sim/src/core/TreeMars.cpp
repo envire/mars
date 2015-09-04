@@ -28,6 +28,11 @@
  */
 
 #include "ItemNodeData.h"
+#include "TreeMars.h"
+#include "SimNode.h"
+#include "PhysicsMapper.h"
+#include <mars/interfaces/graphics/GraphicsManagerInterface.h>
+#include <mars/interfaces/sim/SimulatorInterface.h>
 
 namespace mars {
   namespace sim {

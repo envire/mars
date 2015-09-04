@@ -44,8 +44,6 @@ namespace mars {
 
     using namespace envire::core;
     using namespace interfaces;
-    class SimJoint;
-    class SimNode;
 
     /**
      * The declaration of the ItemManager class.
