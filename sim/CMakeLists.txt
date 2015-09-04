@@ -142,6 +142,7 @@ set(TARGET_SRC
        src/core/SimMotor.cpp
        src/core/SimNode.cpp
        src/core/Simulator.cpp
+       src/core/TreeMars.cpp
        src/sensors/MultiLevelLaserRangeFinder.cpp
        src/sensors/RotatingRaySensor.cpp
 
