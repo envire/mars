@@ -41,10 +41,13 @@
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
+#include <urdf_model/model.h>
+#include <mars/entity_generation/smurf/smurf.h>
 
 #include "SimNode.h"
 #include "ItemNodeData.h"
 #include "PhysicsMapper.h"
+#include "SimEntity.h"
 
 
 
@@ -69,7 +72,7 @@ namespace mars {
         virtual ~TreeMars(){}
         virtual int test();
         // Generate the nodes according to a ConfigMap
-        void loadConfigMap(configmaps::ConfigMap* map);
+        void loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, configmaps::ConfigMap* map, mars::smurf::SMURF smurf);
       private:
         interfaces::ControlCenter *control;
         int visual_rep;

@@ -47,8 +47,9 @@ namespace mars {
       using namespace smurf_parser;
 
       SMURF2MarsTree::SMURF2MarsTree(lib_manager::LibManager *theManager)
-        : MarsPluginTemplate(theManager, "SMURF2MarsTree") {
+        : MarsPluginTemplate(theManager, "SMURF2MarsTree"), smurf(theManager) {
       }
+
   
       void SMURF2MarsTree::init() {
 
@@ -64,14 +65,14 @@ namespace mars {
         bool expandURIs = false;
         boost::shared_ptr<urdf::ModelInterface> modelInterface;
         std::cout << "Shared Pointer to modelInterface" << std::endl;
-        modelInterface = parseFile( map, path, fileName, expandURIs);
+        modelInterface = parseFile(map, path, fileName, expandURIs);
         std::cout << "parseFile executed" << std::endl;
         // Create a Tree
         mars::sim::TreeMars* tree = new mars::sim::TreeMars(control);
         std::cout << "Pointer to the Tree created" << std::endl;
-        // Make the tree load the configMap
+        // Make the tree load the model and configMap
         //
-        tree -> loadConfigMap(map);
+        tree -> loadRobot(modelInterface, map, smurf);
         // Plot the Tree
 
       }

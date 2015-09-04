@@ -42,6 +42,7 @@
 #include <mars/sim/TreeMars.h>
 #include <mars/interfaces/sim/TreeMarsInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h> 
+#include <mars/entity_generation/smurf/smurf.h>
 
 #include <string>
 
@@ -56,6 +57,7 @@ namespace mars {
         // for gui
         // public mars::main_gui::MenuInterface,
         public mars::cfg_manager::CFGClient {
+
 
       public:
         SMURF2MarsTree(lib_manager::LibManager *theManager);
@@ -87,6 +89,7 @@ namespace mars {
 
       private:
         cfg_manager::cfgPropertyStruct example;
+        mars::smurf::SMURF smurf;
 
       }; // end of class definition SMURF2MarsTree
 

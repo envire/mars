@@ -129,8 +129,9 @@ namespace mars {
       } 	  
     }
 
-    void TreeMars::loadConfigMap(configmaps::ConfigMap* map)
+    void TreeMars::loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, configmaps::ConfigMap* map, mars::smurf::SMURF smurf)
     {
+      //sim::SimEntity* smurf.createEntity(map); // This belongs to the SMURF class, you need to create an instance...
       // Iterate the map and generate the correspondent ItemData
       typedef configmaps::ConfigMap::const_iterator MapIterator;
       typedef configmaps::ConfigVectorTemplate<configmaps::ConfigItem>::const_iterator VectorIterator;

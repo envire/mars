@@ -17,6 +17,7 @@ pkg_check_modules(PKGCONFIG REQUIRED
                             configmaps
                             urdfdom
                             mars_sim
+                            mars_smurf
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
