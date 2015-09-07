@@ -68,7 +68,11 @@ namespace mars {
       //virtual void setPosition(interfaces::NodeId id, const utils::Vector &pos);
       virtual const utils::Vector getPosition(interfaces::NodeId id) const = 0;
       //virtual void setRotation(interfaces::NodeId id, const utils::Quaternion &rot);
-      virtual const utils::Quaternion getRotation(interfaces::NodeId id) const = 0;    
+      virtual const utils::Quaternion getRotation(interfaces::NodeId id) const = 0; 
+
+      virtual void reloadNodes(bool reloadGraphics) = 0;  
+     
+          
     
 
       virtual void preGraphicsUpdate(void) = 0;          
