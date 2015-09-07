@@ -62,32 +62,15 @@ namespace mars {
     public:
       virtual ~ItemManagerInterface() {}
       virtual int test() = 0;
-     // virtual NodeId addItem(NodeData *nodeS, bool reload, bool loadGraphics) = 0;  
-      virtual NodeId addItem(NodeData *nodeS,
-                             bool reload = false,
-                             bool loadGraphics = true) = 0;        
-//      virtual std::vector<NodeId> addItem(std::vector<NodeData> v_NodeData) = 0;
-               
+             
       virtual void updateItemDynamics(interfaces::sReal calc_ms, bool physics_thread = true) = 0;
       
       //virtual void setPosition(interfaces::NodeId id, const utils::Vector &pos);
       virtual const utils::Vector getPosition(interfaces::NodeId id) const = 0;
       //virtual void setRotation(interfaces::NodeId id, const utils::Quaternion &rot);
       virtual const utils::Quaternion getRotation(interfaces::NodeId id) const = 0;    
-      virtual unsigned long getMaxGroupID() = 0;          
-      /**
-       * \brief This function reloads all node from a temporally NodeData pool.
-       *
-       * It is very important to assure the serialization between the threads to
-       * have the desired results. Currently the verified use of this function is
-       * only guaranteed by calling it within the main thread (update callback
-       * from \c gui_thread). \warning This method should only be used internally.
-       * This function don't removes any nodes, before calling this function
-       * i_NodeManager::clearAllNodes should be executed. To reload the simulation
-       * the function i_GuiToSim::spotReload should be used.
-       * \sa i_GuiToSim::spotReload
-       */
-      virtual void reloadNodes(bool reloadGraphics) = 0;  
+    
+
       virtual void preGraphicsUpdate(void) = 0;          
 
     };
