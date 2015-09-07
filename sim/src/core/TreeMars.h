@@ -57,6 +57,7 @@ namespace mars {
         TreeMars(ControlCenter *c);
         virtual ~TreeMars(){}
         virtual int test();
+        virtual void minimalTest();
       private:
         interfaces::ControlCenter *control;
         int visual_rep;

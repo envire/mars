@@ -33,6 +33,7 @@
 #include "PhysicsMapper.h"
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/interfaces/sim/SimulatorInterface.h>
+#include <assert.h>
 
 namespace mars {
   namespace sim {
@@ -49,7 +50,7 @@ namespace mars {
      * post:
      *     - 
      */
-    TreeMars::TreeMars(ControlCenter *c) : visual_rep(1),control(c)
+    TreeMars::TreeMars(ControlCenter *c) : control(c), visual_rep(1)
     {
       if(control->graphics) {
         GraphicsUpdateInterface *gui = static_cast<GraphicsUpdateInterface*>(this);
@@ -57,6 +58,49 @@ namespace mars {
       }
     }
 
+
+    void TreeMars::minimalTest()
+    {
+      using std::string;
+      using utils::Vector;
+      using utils::Quaternion;
+
+      NodeData nodeData;
+      nodeData.init("box", //name
+                    Vector(1,2,3)); //position
+
+      //we want a primitive object, not a mesh or something similar
+      nodeData.initPrimitive(NODE_TYPE_BOX,//node type (box, sphere, etc.)
+                             Vector(3, 1, 1),//extents (width, height, length)
+                             1);//mass
+
+      //simlator object. Manages communication with mars data broker.
+      //Note: Creates an internal copy of nodeData
+      SimNode *newNode = new SimNode(control, nodeData);
+
+      //Create the physical node data
+      NodeInterface *newNodeInterface = PhysicsMapper::newNodePhysics(control->sim->getPhysics());
+      //create physics node, based on the values in nodeData
+      if(!newNodeInterface->createNode(&nodeData))
+      {
+        abort();
+      }
+      //attach the physics node to the simulation node
+      newNode->setInterface(newNodeInterface);
+      //sceneHasChanged does not seem to have any effect
+      //control->sim->sceneHasChanged(true);
+
+      //The GraphicsManager identifies the object by this id
+      NodeId id = control->graphics->addDrawObject(nodeData,
+                                                   true); //activated: only visible if true, no idea what it means
+
+      //the sim node needs to know the id of the graphical representation
+      //because it has to update the representation, e.g. if the extents of the
+      //object change
+      newNode->setGraphicsID(id);
+      newNode->setVisualRep(visual_rep);//FIXME do I need this?
+
+    }
     int TreeMars::test()
     {
       printf("Test TreeMars\n");
@@ -105,7 +149,7 @@ namespace mars {
         newNode->setInterface(newNodeInterface);
         control->sim->sceneHasChanged(false);
         if(control->graphics) {
-          NodeId id = control->graphics->addDrawObject(*nodeS, visual_rep & 1);
+          NodeId id = control->graphics->addDrawObject(node, visual_rep & 1);
           if(id) newNode->setGraphicsID(id);
           // What is done here?
           NodeData physicalRep;
@@ -117,8 +161,8 @@ namespace mars {
           physicalRep.visual_offset_rot = Quaternion::Identity();
           physicalRep.visual_size = physicalRep.ext;
 
-          if(nodeS->physicMode != NODE_TYPE_TERRAIN) {
-            if(nodeS->physicMode != NODE_TYPE_MESH) {
+          if(node.physicMode != NODE_TYPE_TERRAIN) {
+            if(node.physicMode != NODE_TYPE_MESH) {
               physicalRep.filename = "PRIMITIVE";
               //physicalRep.filename = nodeS->filename;
               if(nodeS->physicMode > 0 && nodeS->physicMode < NUMBER_OF_NODE_TYPES){
