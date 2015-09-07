@@ -78,7 +78,6 @@ set(SOURCES_H
        src/core/NodeManager.h
       
        src/core/ItemManager.h       
-       src/core/ItemNodeInterface.h    # Does not build because NodeInterface is abstract
        src/core/ItemMars.h
        src/core/ItemNodeData.h
        
@@ -132,7 +131,8 @@ set(TARGET_SRC
        src/core/MotorManager.cpp
        src/core/NodeManager.cpp
        
-       src/core/ItemManager.cpp       
+       src/core/ItemManager.cpp 
+ 
        
        src/core/PhysicsMapper.cpp
        src/core/SensorManager.cpp

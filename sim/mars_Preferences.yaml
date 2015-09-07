@@ -1,0 +1,5 @@
+---
+Preferences:
+  - name: resources_path
+    type: string
+    value: /home/dfki.uni-bremen.de/yoo/rockentern/install/share

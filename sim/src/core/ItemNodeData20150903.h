@@ -33,15 +33,32 @@
 #include <mars/interfaces/NodeData.h>
 
 
+#include <mars/utils/Mutex.h>
+#include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
+#include <mars/interfaces/sim/ControlCenter.h>
+//#include <mars/interfaces/sim/ItemManagerInterface.h>
+
+
 using namespace envire::core;
 using namespace std;
 
 namespace mars {
   namespace sim {
+    using namespace interfaces;	 
+    class SimNode; 
+    typedef std::map<interfaces::NodeId, SimNode*> NodeMap;
     	  
-    class ItemNodeData : public ItemMars<mars::interfaces::NodeData>{
+    class ItemNodeData : public ItemMars<mars::interfaces::NodeData>,
+							public interfaces::GraphicsUpdateInterface {
       public:
-        ItemNodeData(){};
+        ItemNodeData(ControlCenter *c);
+        int addItem();
+        void ItemNodeData::updateItemDynamics(sReal calc_ms, bool physics_thread)        
+      private:  
+        interfaces::ControlCenter *control;
+        int visual_rep; 
+         
+
     };
   }
 }

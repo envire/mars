@@ -1,2 +1,0 @@
-/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/CMakeFiles/doc.dir
-/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/CMakeFiles/mars_sim.dir

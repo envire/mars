@@ -150,6 +150,20 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
+test/CMakeFiles/test_ItemManager.dir/rule:
+	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f CMakeFiles/Makefile2 test/CMakeFiles/test_ItemManager.dir/rule
+.PHONY : test/CMakeFiles/test_ItemManager.dir/rule
+
+# Convenience name for target.
+test_ItemManager: test/CMakeFiles/test_ItemManager.dir/rule
+.PHONY : test_ItemManager
+
+# fast build rule for target.
+test_ItemManager/fast:
+	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f test/CMakeFiles/test_ItemManager.dir/build.make test/CMakeFiles/test_ItemManager.dir/build
+.PHONY : test_ItemManager/fast
+
+# Convenience name for target.
 test/CMakeFiles/test_suite.dir/rule:
 	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f CMakeFiles/Makefile2 test/CMakeFiles/test_suite.dir/rule
 .PHONY : test/CMakeFiles/test_suite.dir/rule
@@ -168,6 +182,7 @@ suite.o: suite.cpp.o
 
 # target to build an object file
 suite.cpp.o:
+	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f test/CMakeFiles/test_ItemManager.dir/build.make test/CMakeFiles/test_ItemManager.dir/suite.cpp.o
 	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f test/CMakeFiles/test_suite.dir/build.make test/CMakeFiles/test_suite.dir/suite.cpp.o
 .PHONY : suite.cpp.o
 
@@ -176,6 +191,7 @@ suite.i: suite.cpp.i
 
 # target to preprocess a source file
 suite.cpp.i:
+	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f test/CMakeFiles/test_ItemManager.dir/build.make test/CMakeFiles/test_ItemManager.dir/suite.cpp.i
 	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f test/CMakeFiles/test_suite.dir/build.make test/CMakeFiles/test_suite.dir/suite.cpp.i
 .PHONY : suite.cpp.i
 
@@ -184,8 +200,33 @@ suite.s: suite.cpp.s
 
 # target to generate assembly for a file
 suite.cpp.s:
+	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f test/CMakeFiles/test_ItemManager.dir/build.make test/CMakeFiles/test_ItemManager.dir/suite.cpp.s
 	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f test/CMakeFiles/test_suite.dir/build.make test/CMakeFiles/test_suite.dir/suite.cpp.s
 .PHONY : suite.cpp.s
+
+test_ItemManager.o: test_ItemManager.cpp.o
+.PHONY : test_ItemManager.o
+
+# target to build an object file
+test_ItemManager.cpp.o:
+	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f test/CMakeFiles/test_ItemManager.dir/build.make test/CMakeFiles/test_ItemManager.dir/test_ItemManager.cpp.o
+.PHONY : test_ItemManager.cpp.o
+
+test_ItemManager.i: test_ItemManager.cpp.i
+.PHONY : test_ItemManager.i
+
+# target to preprocess a source file
+test_ItemManager.cpp.i:
+	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f test/CMakeFiles/test_ItemManager.dir/build.make test/CMakeFiles/test_ItemManager.dir/test_ItemManager.cpp.i
+.PHONY : test_ItemManager.cpp.i
+
+test_ItemManager.s: test_ItemManager.cpp.s
+.PHONY : test_ItemManager.s
+
+# target to generate assembly for a file
+test_ItemManager.cpp.s:
+	cd /home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim && $(MAKE) -f test/CMakeFiles/test_ItemManager.dir/build.make test/CMakeFiles/test_ItemManager.dir/test_ItemManager.cpp.s
+.PHONY : test_ItemManager.cpp.s
 
 test_ItemPhysics.o: test_ItemPhysics.cpp.o
 .PHONY : test_ItemPhysics.o
@@ -224,10 +265,14 @@ help:
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
 	@echo "... test"
+	@echo "... test_ItemManager"
 	@echo "... test_suite"
 	@echo "... suite.o"
 	@echo "... suite.i"
 	@echo "... suite.s"
+	@echo "... test_ItemManager.o"
+	@echo "... test_ItemManager.i"
+	@echo "... test_ItemManager.s"
 	@echo "... test_ItemPhysics.o"
 	@echo "... test_ItemPhysics.i"
 	@echo "... test_ItemPhysics.s"

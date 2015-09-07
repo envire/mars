@@ -1190,6 +1190,7 @@ namespace mars {
     }
 
     void NodeManager::preGraphicsUpdate() {
+	//	printf("...preGraphicsUpdate...\n");
       NodeMap::iterator iter;
       if(!control->graphics)
         return;

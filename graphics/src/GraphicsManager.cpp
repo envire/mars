@@ -395,6 +395,7 @@ namespace mars {
     }
 
     void GraphicsManager::update(){
+	//	printf(".....update\n");
       //update drawElements
       for (unsigned int i=0; i<draws.size(); i++) {
         drawMapper &draw = draws[i];
@@ -1854,7 +1855,7 @@ namespace mars {
 
     void*  GraphicsManager::getWindowManager(int id){
 
-
+//printf("getWindowManage...\n");
       GraphicsWidget* gw=getGraphicsWindow(id);
 
       if(gw == NULL){
@@ -1890,6 +1891,7 @@ namespace mars {
       static Vector dummy;
       if(ns == NULL) return dummy;
       return ns->object()->getPosition();
+
     }
 
     const Quaternion& GraphicsManager::getDrawObjectQuaternion(unsigned long id) {

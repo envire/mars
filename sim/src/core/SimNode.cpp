@@ -527,7 +527,7 @@ namespace mars {
         last_l_vel = l_vel;
         last_a_vel = a_vel;
         // update the position and rotation of the node
-        my_interface->getPosition(&sNode.pos);
+        my_interface->getPosition(&sNode.pos);    //from NodePhysics member  
         my_interface->getRotation(&sNode.rot);
         my_interface->getLinearVelocity(&l_vel);
         my_interface->getAngularVelocity(&a_vel);

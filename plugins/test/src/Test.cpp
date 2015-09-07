@@ -47,10 +47,18 @@ namespace mars {
           ItemManager* itemManager = new ItemManager(control); // This breaks on execution time
           std::cout << "Instance of itemManager" << std::endl;
 	      ItemManagerInterface* itemManagerInterface = itemManager;
+	      control->items = itemManagerInterface;
           std::cout << "Instance of the Interface" << std::endl;
-	      itemManagerInterface -> test();
-          std::cout << "Test Executed" << std::endl;
-
+ 
+		  //control->sim->loadScene("box.scn");  
+		  control->items->test();
+		  
+		  
+		//Vector ps;
+      //obj_id[0] = control->nodes->getID("box1");
+      //printf("..........%lu.....\n", obj_id[0]);
+      //ps = control->nodes->getPosition(obj_id[0]);		
+      //printf(" ps.z = %f\n", ps.z());
       }
 
       void Test::reset() {
@@ -63,15 +71,25 @@ namespace mars {
       void Test::update(sReal time_ms) {
 
         // control->motors->setMotorValue(id, value);
+
+        
+        Vector pos;
+        pos = control->items->getPosition(1);
+        //pos = control->nodes->getPosition(1);        
+        printf("pos.z = %f\n", pos.z());
+        
       }
 
       void Test::receiveData(const data_broker::DataInfo& info,
                                     const data_broker::DataPackage& package,
                                     int id) {
+        printf("plugin ... receiveData\n");										
         // package.get("force1/x", force);
       }
   
       void Test::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
+		  
+        printf("plugin ... cfgUpdateProperty\n");
 
         if(_property.paramId == example.paramId) {
           example.dValue = _property.dValue;

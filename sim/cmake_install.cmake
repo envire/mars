@@ -2,7 +2,7 @@
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  SET(CMAKE_INSTALL_PREFIX "/usr/local")
+  SET(CMAKE_INSTALL_PREFIX "/home/dfki.uni-bremen.de/yoo/rockentern/install")
 ENDIF(NOT DEFINED CMAKE_INSTALL_PREFIX)
 STRING(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -12,7 +12,7 @@ IF(NOT DEFINED CMAKE_INSTALL_CONFIG_NAME)
     STRING(REGEX REPLACE "^[^A-Za-z0-9_]+" ""
            CMAKE_INSTALL_CONFIG_NAME "${BUILD_TYPE}")
   ELSE(BUILD_TYPE)
-    SET(CMAKE_INSTALL_CONFIG_NAME "")
+    SET(CMAKE_INSTALL_CONFIG_NAME "RelWithDebInfo")
   ENDIF(BUILD_TYPE)
   MESSAGE(STATUS "Install configuration: \"${CMAKE_INSTALL_CONFIG_NAME}\"")
 ENDIF(NOT DEFINED CMAKE_INSTALL_CONFIG_NAME)
@@ -33,7 +33,23 @@ IF(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 ENDIF(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/CMakeFiles/CMakeRelink.dir/libmars_sim.so")
+  IF(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libmars_sim.so" AND
+     NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libmars_sim.so")
+    FILE(RPATH_CHECK
+         FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libmars_sim.so"
+         RPATH "/home/dfki.uni-bremen.de/yoo/rockentern/install/lib")
+  ENDIF()
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/libmars_sim.so")
+  IF(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libmars_sim.so" AND
+     NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libmars_sim.so")
+    FILE(RPATH_CHANGE
+         FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libmars_sim.so"
+         OLD_RPATH "/home/dfki.uni-bremen.de/yoo/rockentern/install/lib:"
+         NEW_RPATH "/home/dfki.uni-bremen.de/yoo/rockentern/install/lib")
+    IF(CMAKE_INSTALL_DO_STRIP)
+      EXECUTE_PROCESS(COMMAND "/usr/bin/strip" "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libmars_sim.so")
+    ENDIF(CMAKE_INSTALL_DO_STRIP)
+  ENDIF()
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
@@ -45,6 +61,9 @@ IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspeci
     "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/src/core/MotorManager.h"
     "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/src/core/NodeManager.h"
     "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/src/core/ItemManager.h"
+    "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/src/core/ItemNodeInterface.h"
+    "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/src/core/ItemMars.h"
+    "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/src/core/ItemNodeData.h"
     "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/src/core/PhysicsMapper.h"
     "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/src/core/SensorManager.h"
     "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/src/core/SimEntity.h"
@@ -93,6 +112,21 @@ ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unsp
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/mars_sim.pc")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
+
+IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/configuration/mars_default" TYPE FILE FILES "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/mars_Preferences.yaml")
+ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
+
+IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/configuration/mars_sim" TYPE DIRECTORY FILES "/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/configuration/" FILES_MATCHING REGEX "/[^/]*$" REGEX "/[^/]*\\.pc$" EXCLUDE)
+ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
+
+IF(NOT CMAKE_INSTALL_LOCAL_ONLY)
+  # Include the install script for each subdirectory.
+  INCLUDE("/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/src/cmake_install.cmake")
+  INCLUDE("/home/dfki.uni-bremen.de/yoo/rockentern/simulation/mars/sim/test/cmake_install.cmake")
+
+ENDIF(NOT CMAKE_INSTALL_LOCAL_ONLY)
 
 IF(CMAKE_INSTALL_COMPONENT)
   SET(CMAKE_INSTALL_MANIFEST "install_manifest_${CMAKE_INSTALL_COMPONENT}.txt")

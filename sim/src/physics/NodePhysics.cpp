@@ -45,6 +45,7 @@
 #include <mars/interfaces/terrainStruct.h>
 #include <cmath>
 #include <set>
+#include <iostream>
 
 
 namespace mars {
@@ -145,7 +146,7 @@ namespace mars {
       MutexLocker locker(&(theWorld->iMutex));
       if(theWorld && theWorld->existsWorld()) {
         bool ret;
-        //LOG_DEBUG("physicMode %d", node->physicMode);
+       // LOG_DEBUG("physicMode %d", node->physicMode);
         // first we create a ode geometry for the node
         switch(node->physicMode) {
         case NODE_TYPE_MESH:
@@ -230,6 +231,8 @@ namespace mars {
         pos->x() = (sReal)tmp[0];
         pos->y() = (sReal)tmp[1];
         pos->z() = (sReal)tmp[2];
+        
+        printf("nGeomID = %lu ... zz = %f\n",nGeom, pos->z());
         /*
           if(composite) {
           tmp = dGeomGetOffsetPosition(nGeom);
@@ -684,6 +687,8 @@ namespace mars {
         dReal tempMass =(dReal)(node->mass);
         dMassSetBoxTotal(&nMass, tempMass, (dReal)(node->ext.x()),
                          (dReal)(node->ext.y()),(dReal)(node->ext.z()));
+                         
+
       }
       return true;
     }
@@ -841,12 +846,15 @@ namespace mars {
       tmp[2] = (dReal)node->rot.y();
       tmp[3] = (dReal)node->rot.z();
       tmp[0] = (dReal)node->rot.w();
+      
+      //printf("(%f %f %f %f %f)...\n", tmp[1], tmp[2], tmp[3], tmp[0], node->density);
 
       // first we must find or create a physically body for the node
       // and connect the geometry to the body
       if(node->groupID) {
         body_created = theWorld->getCompositeBody(node->groupID, &nBody, this);
         composite = true;
+        
       }
       else {
         if(!nBody) nBody = dBodyCreate(theWorld->getWorld());
@@ -860,6 +868,7 @@ namespace mars {
       // and rotation of the geom
       if(body_created) {
         dBodySetMass(nBody, &nMass);
+        
         dBodySetPosition(nBody, (dReal)(node->pos.x()),
                          (dReal)(node->pos.y()),
                          (dReal)(node->pos.z()));

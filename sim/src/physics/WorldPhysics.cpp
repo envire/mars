@@ -174,6 +174,7 @@ namespace mars {
         if(control->graphics)
           control->graphics->addDrawItems(&draw);
       }
+      //printf("initTheWorld..\n");
     }
 
     /**
@@ -230,7 +231,7 @@ namespace mars {
       int i;
 
       // if world_init = false or step_size <= 0 debug something
-      if(world_init && step_size > 0) {
+       if(world_init && step_size > 0) {
         if(old_gravity != world_gravity) {
           old_gravity = world_gravity;
           dWorldSetGravity(world, world_gravity.x(),
@@ -271,19 +272,21 @@ namespace mars {
         drawLock.lock();
         draw_extern.swap(draw_intern);
         drawLock.unlock();
-
-        /// then calculate the next state for a time of step_size seconds
+        // then calculate the next state for a time of step_size seconds
         try {
           if(fast_step) dWorldQuickStep(world, step_size);
           else dWorldStep(world, step_size);
+
         } catch (...) {
           control->sim->handleError(PHYSICS_UNKNOWN);
         }
 	if(WorldPhysics::error) {
           control->sim->handleError(WorldPhysics::error);
           WorldPhysics::error = PHYSICS_NO_ERROR;
+          
+          printf("error...\n");
 	}
-      }
+      }   
     }
 
     /**

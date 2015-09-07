@@ -29,6 +29,8 @@
 
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/interfaces/sim/NodeManagerInterface.h>
+#include <mars/interfaces/sim/ItemManagerInterface.h>
+
 #include <mars/interfaces/sim/JointManagerInterface.h>
 #include <mars/interfaces/sim/SensorManagerInterface.h>
 #include <mars/interfaces/sim/MotorManagerInterface.h>
@@ -263,7 +265,8 @@ namespace mars {
         node.groupID += groupIDOffset;
 
       NodeId oldId = node.index;
-      NodeId newId = control->nodes->addNode(&node);
+      NodeId newId = control->items->addItem(&node);
+      //NodeId newId = control->nodes->addNode(&node);      
       if(!newId) {
         LOG_ERROR("addNode returned 0");
         return 0;

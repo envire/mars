@@ -5,3 +5,4 @@
 # This file includes the relevant testing commands required for 
 # testing this directory and lists subdirectories to be tested as well.
 ADD_TEST(test-test_suite-cxx "/test_suite")
+ADD_TEST(test-test_ItemManager-cxx "/test_ItemManager")

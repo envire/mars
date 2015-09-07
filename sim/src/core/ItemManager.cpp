@@ -65,11 +65,270 @@ namespace mars {
         GraphicsUpdateInterface *gui = static_cast<GraphicsUpdateInterface*>(this);
         control->graphics->addGraphicsUpdateInterface(gui);
       }
+    }
+      
+    NodeId ItemManager::addItem(NodeData *nodeS, bool reload,
+                                bool loadGraphics) {
+									
+	  itemNodeData.setData(*nodeS);
+	  
+      printf("item set data done\n");								
+      iMutex.lock();
+      next_node_id = 1;
+      nodeS->index = next_node_id;
+       
+       printf("index in addNode %d\n", nodeS->index);
+            
+      next_node_id++;
+      iMutex.unlock();
 
+      if (!reload) {
+        iMutex.lock();
+        NodeData reloadNode = *nodeS;
+        if((nodeS->physicMode == NODE_TYPE_TERRAIN) && nodeS->terrain ) {
+          if(!control->loadCenter || !control->loadCenter->loadHeightmap) {
+            LOG_ERROR("NodeManager:: loadCenter is missing, can not create Node");
+            return INVALID_ID;
+          }
+          reloadNode.terrain = new(terrainStruct);
+          *(reloadNode.terrain) = *(nodeS->terrain);
+          control->loadCenter->loadHeightmap->readPixelData(reloadNode.terrain);
+          if(!reloadNode.terrain->pixelData) {
+            LOG_ERROR("NodeManager::addNode: could not load image for terrain");
+            return INVALID_ID;
+          }
+        }
+        simNodesReload.push_back(reloadNode);
+
+        if (nodeS->c_params.friction_direction1) {
+          Vector *tmp = new Vector();
+          *tmp = *(nodeS->c_params.friction_direction1);
+          if(simNodesReload.back().index == nodeS->index) {
+            simNodesReload.back().c_params.friction_direction1 = tmp;
+          }
+        }
+        iMutex.unlock();
+      }
+
+      // to check some preconditions
+      if (nodeS->groupID < 0) {
+        nodeS->groupID = 0;
+      }
+      else if (nodeS->groupID > maxGroupID) {
+        maxGroupID = nodeS->groupID;
+      }
+
+      // convert obj to ode mesh
+      if((nodeS->physicMode == NODE_TYPE_MESH) && (nodeS->terrain == 0) ) {
+        if(!control->loadCenter || !control->loadCenter->loadMesh) {
+          LOG_ERROR("NodeManager:: loadCenter is missing, can not create Node");
+          return INVALID_ID;
+        }
+        control->loadCenter->loadMesh->getPhysicsFromOBJ(nodeS);
+      }
+      if((nodeS->physicMode == NODE_TYPE_TERRAIN) && nodeS->terrain ) {
+        if(!control->loadCenter || !control->loadCenter->loadHeightmap) {
+          LOG_ERROR("NodeManager:: loadCenter is missing, can not create Node");
+          return INVALID_ID;
+        }
+        if(!nodeS->terrain->pixelData) {
+          control->loadCenter->loadHeightmap->readPixelData(nodeS->terrain);
+          if(!nodeS->terrain->pixelData) {
+            LOG_ERROR("NodeManager::addNode: could not load image for terrain");
+            return INVALID_ID;
+          }
+        }
+      }
+
+      // this should be done somewhere else
+      // if we have a relative position, we have to calculate the absolute
+      // position here
+
+      if(nodeS->relative_id != 0) {
+        setNodeStructPositionFromRelative(nodeS);
+      }
+
+      // create a node object
+      SimNode *newNode = new SimNode(control, *nodeS);
+
+      // create the physical node data
+      if(! (nodeS->noPhysical)){
+        // create an interface object to the physics
+        NodeInterface *newNodeInterface = PhysicsMapper::newNodePhysics(control->sim->getPhysics());
+        if (!newNodeInterface->createNode(nodeS)) {
+          // if no node was created in physics
+          // delete the objects
+          delete newNode;
+          delete newNodeInterface;
+          // and return false
+          LOG_ERROR("NodeManager::addNode: No node was created in physics.");
+          return INVALID_ID;
+        }
+        // put all data to the correct place
+        //      newNode->setSNode(*nodeS);
+        newNode->setInterface(newNodeInterface);
+        iMutex.lock();
+        simNodes[nodeS->index] = newNode;
+        if (nodeS->movable)
+          simNodesDyn[nodeS->index] = newNode;
+        iMutex.unlock();
+        control->sim->sceneHasChanged(false);
+        NodeId id;
+        if(control->graphics) {
+          if(loadGraphics) {
+            id = control->graphics->addDrawObject(*nodeS, visual_rep & 1);
+            printf("graphic id = %lu\n",id); 
+            if(id) {
+              newNode->setGraphicsID(id);
+              if(!reload) {
+                simNodesReload.back().graphicsID1 = id;
+              }
+            }
+          }
+          else {
+            newNode->setGraphicsID(nodeS->graphicsID1);
+          }
+          //        NEW_NODE_STRUCT(physicalRep);
+          NodeData physicalRep;
+          physicalRep = *nodeS;
+          physicalRep.material = nodeS->material;
+          physicalRep.material.exists = 1;
+          physicalRep.material.transparency = 0.3;
+          physicalRep.visual_offset_pos = Vector(0.0, 0.0, 0.0);
+          physicalRep.visual_offset_rot = Quaternion::Identity();
+          physicalRep.visual_size = physicalRep.ext;
+
+          if(nodeS->physicMode != NODE_TYPE_TERRAIN) {
+            if(nodeS->physicMode != NODE_TYPE_MESH) {
+              physicalRep.filename = "PRIMITIVE";
+              //physicalRep.filename = nodeS->filename;
+              if(nodeS->physicMode > 0 && nodeS->physicMode < NUMBER_OF_NODE_TYPES){
+                physicalRep.origName = NodeData::toString(nodeS->physicMode);
+              }
+            }
+            if(loadGraphics) {
+              id = control->graphics->addDrawObject(physicalRep,
+                                                    visual_rep & 2);
+              if(id) {
+                newNode->setGraphicsID2(id);
+                if(!reload) {
+                  simNodesReload.back().graphicsID2 = id;
+                }
+              }
+            }
+            else {
+              newNode->setGraphicsID2(nodeS->graphicsID2);
+            }
+          }
+          newNode->setVisualRep(visual_rep);
+        }  
+      } else {  //if nonPhysical
+        iMutex.lock();
+        simNodes[nodeS->index] = newNode;
+        if (nodeS->movable)
+          simNodesDyn[nodeS->index] = newNode;
+        iMutex.unlock();
+        control->sim->sceneHasChanged(false);
+        if(control->graphics) {
+          if(loadGraphics) {
+            NodeId id = control->graphics->addDrawObject(*nodeS);
+            if(id) {
+              newNode->setGraphicsID(id);
+              if(!reload) {
+                simNodesReload.back().graphicsID1 = id;
+              }
+            }
+          }
+          else {
+            newNode->setGraphicsID(nodeS->graphicsID1);
+          }
+        }
+      }
+      return nodeS->index;
+    }
+    
+   void ItemManager::preGraphicsUpdate() {
+	//	printf("...preGraphicsUpdate...\n");
+      NodeMap::iterator iter;
+      if(!control->graphics)
+        return;
+
+      iMutex.lock();
+      if(update_all_nodes) {
+        update_all_nodes = false;
+        for(iter = simNodes.begin(); iter != simNodes.end(); iter++) {
+          control->graphics->setDrawObjectPos(iter->second->getGraphicsID(),
+                                              iter->second->getVisualPosition());
+          control->graphics->setDrawObjectRot(iter->second->getGraphicsID(),
+                                              iter->second->getVisualRotation());
+          control->graphics->setDrawObjectPos(iter->second->getGraphicsID2(),
+                                              iter->second->getPosition());
+          control->graphics->setDrawObjectRot(iter->second->getGraphicsID2(),
+                                              iter->second->getRotation());
+        }
+      }
+      else {
+        for(iter = simNodesDyn.begin(); iter != simNodesDyn.end(); iter++) {
+          control->graphics->setDrawObjectPos(iter->second->getGraphicsID(),
+                                              iter->second->getVisualPosition());
+          control->graphics->setDrawObjectRot(iter->second->getGraphicsID(),
+                                              iter->second->getVisualRotation());
+          control->graphics->setDrawObjectPos(iter->second->getGraphicsID2(),
+                                              iter->second->getPosition());
+          control->graphics->setDrawObjectRot(iter->second->getGraphicsID2(),
+                                              iter->second->getRotation());
+        }
+        for(iter = nodesToUpdate.begin(); iter != nodesToUpdate.end(); iter++) {
+          control->graphics->setDrawObjectPos(iter->second->getGraphicsID(),
+                                              iter->second->getVisualPosition());
+          control->graphics->setDrawObjectRot(iter->second->getGraphicsID(),
+                                              iter->second->getVisualRotation());
+          control->graphics->setDrawObjectPos(iter->second->getGraphicsID2(),
+                                              iter->second->getPosition());
+          control->graphics->setDrawObjectRot(iter->second->getGraphicsID2(),
+                                              iter->second->getRotation());
+        }
+        nodesToUpdate.clear();
+      }
+      iMutex.unlock();
+    }
+    /**
+     *\brief Reloads all nodes in the simulation.
+     */
+    void ItemManager::reloadNodes(bool reloadGrahpics) {
+		
+    //  printf("reloadNodes\n");		
+      std::list<NodeData>::iterator iter;
+      NodeData tmp;
+      Vector* friction;
+
+      iMutex.lock();
+      for(iter = simNodesReload.begin(); iter != simNodesReload.end(); iter++) {
+        tmp = *iter;
+        if(tmp.c_params.friction_direction1) {
+          friction = new Vector(0.0, 0.0, 0.0);
+          *friction = *(tmp.c_params.friction_direction1);
+          tmp.c_params.friction_direction1 = friction;
+        }
+        if(tmp.terrain) {
+          tmp.terrain = new(terrainStruct);
+          *(tmp.terrain) = *(iter->terrain);
+          tmp.terrain->pixelData = (double*)calloc((tmp.terrain->width*
+                                                     tmp.terrain->height),
+                                                    sizeof(double));
+          memcpy(tmp.terrain->pixelData, iter->terrain->pixelData,
+                 (tmp.terrain->width*tmp.terrain->height)*sizeof(double));
+        }
+        iMutex.unlock();
+        addItem(&tmp, true, reloadGrahpics);
+        iMutex.lock();
+      }
+      iMutex.unlock();
+      //updateDynamicNodes(0);
+      updateItemDynamics(0);
     }
 
-    int ItemManager::test()
-    {
+    int ItemManager::test(){
       printf("test itemManager\n");
 
       NodeData node;
@@ -86,16 +345,16 @@ namespace mars {
       nodeS->name = name;
       nodeS->movable = true;
       nodeS->physicMode = NODE_TYPE_BOX;
-      nodeS->index=0;
+      nodeS->index=1;
       nodeS->noPhysical = false;
-      nodeS->inertia_set=true;
+      nodeS->inertia_set=false;
       nodeS->ext.x() = 1;
       nodeS->ext.y() = 1; 
       nodeS->ext.z() = 1;   
       NodeType type = nodeS->physicMode;
       nodeS->mass = 1.0f;
       nodeS->initPrimitive(type, nodeS->ext, nodeS->mass);
-
+      
       printf("Node S assignations and calls\n");
 
       // create a node object
@@ -123,8 +382,6 @@ namespace mars {
           return INVALID_ID;
         }
         printf("Node Created a Node Physics \n");
-        // put all data to the correct place
-        //      newNode->setSNode(*nodeS);
         newNode->setInterface(newNodeInterface);
         printf("interface is set \n");
         // Set the node in the item wraper newNodeInterface is the pointer to a
@@ -135,11 +392,11 @@ namespace mars {
         // and include the item in the tree
         // envireTree.addVertex(item);
         // Instead of maps we use the envire Tree
-        //Mutex.lock();
-        //simNodes[nodeS->index] = newNode;
-        //if (nodeS->movable)
-        //  simNodesDyn[nodeS->index] = newNode;
-        //iMutex.unlock();
+        iMutex.lock();
+        simNodes[nodeS->index] = newNode;
+        if (nodeS->movable)
+          simNodesDyn[nodeS->index] = newNode;
+        iMutex.unlock();
         control->sim->sceneHasChanged(false);
         if(control->graphics) {
           NodeId id = control->graphics->addDrawObject(*nodeS, visual_rep & 1);
@@ -169,9 +426,51 @@ namespace mars {
           }
           newNode->setVisualRep(visual_rep);
         }
-      } 	  
+      }
+  } 	  
 
-    };
+     ///**
+     //*\brief This function adds an vector of nodes to the factory.
+     //* The functionality is implemented in the GUI, but should
+     //* move to the node factory soon.
+     //*
+     //*/
+    //vector<NodeId> ItemManager::addItem(vector<NodeData> v_NodeData) {
+      //vector<NodeId> tmp;
+      //vector<NodeData>::iterator iter;
+
+      //control->sim->sceneHasChanged(false);
+      //for(iter=v_NodeData.begin(); iter!=v_NodeData.end(); iter++)
+        //tmp.push_back(addNode(&(*iter)));
+      //return tmp;
+    //}
+       
+    void ItemManager::updateItemDynamics(sReal calc_ms, bool physics_thread) {
+      MutexLocker locker(&iMutex);
+      NodeMap::iterator iter;
+      for(iter = simNodesDyn.begin(); iter != simNodesDyn.end(); iter++) {
+        iter->second->update(calc_ms, physics_thread);
+      }
+    } 
+    
+    const Vector ItemManager::getPosition(NodeId id) const {
+      Vector pos(0.0,0.0,0.0);
+      MutexLocker locker(&iMutex);
+      NodeMap::const_iterator iter = simNodes.find(id);
+      if (iter != simNodes.end())
+        pos = iter->second->getPosition();
+      return pos;
+    }
+
+
+    const Quaternion ItemManager::getRotation(NodeId id) const {
+      Quaternion q(Quaternion::Identity());
+      MutexLocker locker(&iMutex);
+      NodeMap::const_iterator iter = simNodes.find(id);
+      if (iter != simNodes.end())
+        q = iter->second->getRotation();
+      return q;
+    }       
 
   } // end of namespace sim
 } // end of namespace mars

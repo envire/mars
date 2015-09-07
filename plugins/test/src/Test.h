@@ -42,6 +42,7 @@
 #include <mars/sim/ItemManager.h>
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/ItemManagerInterface.h>
+#include <mars/interfaces/sim/NodeManagerInterface.h>
 
 #include <string>
 
@@ -50,12 +51,6 @@ namespace mars {
   namespace plugins {
     namespace test {
 		
-	 class DummyClass
-    {
-      public: 
-        DummyClass(){};
-    };	
-
       // inherit from MarsPluginTemplateGUI for extending the gui
       class Test: public mars::interfaces::MarsPluginTemplate,
         public mars::data_broker::ReceiverInterface,
@@ -90,6 +85,8 @@ namespace mars {
         //void menuAction(int action, bool checked = false);
 
         // Test methods
+        
+        unsigned long obj_id[10];
 
       private:
         cfg_manager::cfgPropertyStruct example;

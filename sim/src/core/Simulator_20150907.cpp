@@ -333,8 +333,6 @@ namespace mars {
           }
         }
 
-
-
         if (sync_graphics && !sync_count) {
             msleep(2);
             stepping_mutex.unlock();
@@ -355,8 +353,6 @@ namespace mars {
           msleep(1);
         }
         step();
-        
-       // printf("after step..\n");
 
       }
       simulationStatus = STOPPED;
@@ -386,6 +382,7 @@ namespace mars {
         control->dataBroker->trigger("mars_sim/prePhysicsUpdate");
       }
       physics->stepTheWorld();
+
 #ifdef DEBUG_TIME
       LOG_DEBUG("Step World: %ld", getTimeDiff(startTime));
 #endif
@@ -976,7 +973,6 @@ std::cout << calc_ms << " ms.. \n" << std::endl;
     void Simulator::singleStep(void) {
       stepping_mutex.lock();
       simulationStatus = STEPPING;
-      printf("singleStep....\n");
       stepping_wc.wakeAll();
       stepping_mutex.unlock();
     }

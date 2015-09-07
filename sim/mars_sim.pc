@@ -1,5 +1,5 @@
-prefix=/usr/local
-exec_prefix=/usr/local
+prefix=/home/dfki.uni-bremen.de/yoo/rockentern/install
+exec_prefix=/home/dfki.uni-bremen.de/yoo/rockentern/install
 libdir=${prefix}/lib
 includedir=${prefix}/include/
 
