@@ -79,7 +79,7 @@ namespace mars {
 
       NodeMap nodesToUpdate;
       std::list<interfaces::NodeData> simNodesReload;
-      unsigned long maxGroupID;
+      //unsigned long maxGroupID;
 
       std::list<interfaces::NodeData>::iterator getReloadNode(interfaces::NodeId id);
 

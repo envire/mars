@@ -283,8 +283,6 @@ namespace mars {
 	if(WorldPhysics::error) {
           control->sim->handleError(WorldPhysics::error);
           WorldPhysics::error = PHYSICS_NO_ERROR;
-          
-          printf("error...\n");
 	}
       }   
     }

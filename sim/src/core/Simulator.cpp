@@ -389,14 +389,12 @@ namespace mars {
 #ifdef DEBUG_TIME
       LOG_DEBUG("Step World: %ld", getTimeDiff(startTime));
 #endif
-std::cout << calc_ms << " ms.. \n" << std::endl;
 
-      //control->nodes->updateDynamicNodes(calc_ms); //Moved update to here, otherwise RaySensor is one step behind the world every time
       control->items->updateItemDynamics(calc_ms); //Moved update to here, otherwise RaySensor is one step behind the world every time
 
-      //control->joints->updateJoints(calc_ms);
-      //control->motors->updateMotors(calc_ms);
-      //control->controllers->updateControllers(calc_ms);
+      control->joints->updateJoints(calc_ms);
+      control->motors->updateMotors(calc_ms);
+      control->controllers->updateControllers(calc_ms);
 
       if(show_time)
         time = utils::getTime();
@@ -791,7 +789,6 @@ std::cout << calc_ms << " ms.. \n" << std::endl;
       control->motors->clearAllMotors(clear_all);
       control->joints->clearAllJoints(clear_all);
       control->nodes->clearAllNodes(clear_all, reloadGraphics);
-      printf("reloadGraphics\n");
       if(control->graphics) {
         control->graphics->clearDrawItems();
         if(reloadGraphics) {
@@ -826,7 +823,6 @@ std::cout << calc_ms << " ms.. \n" << std::endl;
 
 
     void Simulator::reloadWorld(void) {
-		printf("reloadWorld......\n");
       control->nodes->reloadNodes(reloadGraphics);
       control->joints->reloadJoints();
       control->motors->reloadMotors();
@@ -976,7 +972,6 @@ std::cout << calc_ms << " ms.. \n" << std::endl;
     void Simulator::singleStep(void) {
       stepping_mutex.lock();
       simulationStatus = STEPPING;
-      printf("singleStep....\n");
       stepping_wc.wakeAll();
       stepping_mutex.unlock();
     }
@@ -1244,7 +1239,7 @@ std::cout << calc_ms << " ms.. \n" << std::endl;
 
       if(_property.paramId == cfgSyncGui.paramId) {
         this->setSyncThreads(_property.bValue);
-                           printf("setSyncThreads ...\n");          
+      
         return;
       }
 

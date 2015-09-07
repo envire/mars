@@ -231,8 +231,7 @@ namespace mars {
         pos->x() = (sReal)tmp[0];
         pos->y() = (sReal)tmp[1];
         pos->z() = (sReal)tmp[2];
-        
-        printf("nGeomID = %lu ... zz = %f\n",nGeom, pos->z());
+
         /*
           if(composite) {
           tmp = dGeomGetOffsetPosition(nGeom);

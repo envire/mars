@@ -265,8 +265,7 @@ namespace mars {
         node.groupID += groupIDOffset;
 
       NodeId oldId = node.index;
-      NodeId newId = control->items->addItem(&node);
-      //NodeId newId = control->nodes->addNode(&node);      
+      NodeId newId = control->nodes->addNode(&node);      
       if(!newId) {
         LOG_ERROR("addNode returned 0");
         return 0;
