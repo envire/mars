@@ -71,9 +71,28 @@ namespace mars {
         mars::sim::TreeMars* tree = new mars::sim::TreeMars(control);
         std::cout << "Pointer to the Tree created" << std::endl;
         // Make the tree load the model and configMap
-        //
-        tree -> loadRobot(modelInterface, map, smurf);
+
+        tree -> loadRobot(modelInterface, *map);
         // Plot the Tree
+        /*
+        typedef configmaps::ConfigMap::const_iterator MapIterator;
+        typedef configmaps::ConfigVectorTemplate<configmaps::ConfigItem>::const_iterator VectorIterator;
+        for (MapIterator iter = map -> begin(); iter != map -> end(); iter++)
+        {
+          cout << "Key: " << iter->first << endl;
+          for (VectorIterator iterV = iter-> second.begin(); iterV != iter-> second.end(); iterV++)
+          {
+            cout << "Vector item: " << iterV -> toString() << endl;
+          }
+        }
+
+        std::string path2 = (std::string)(map->operator[]("path"));
+        std::cout << "Path 2: " << path2 << std::endl;
+        std::string filename2 = (std::string)(map->operator[]("file"));
+        std::cout << "Filename 2: " << filename2 << std::endl;
+        sim::SimEntity* entity = smurf.createEntity(*map);
+        */
+
 
       }
 

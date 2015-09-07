@@ -128,25 +128,32 @@ namespace mars {
         }
       } 	  
     }
-
-    void TreeMars::loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, configmaps::ConfigMap* map, mars::smurf::SMURF smurf)
+    void TreeMars::loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, const configmaps::ConfigMap & map)
     {
-      //sim::SimEntity* smurf.createEntity(map); // This belongs to the SMURF class, you need to create an instance...
-      // Iterate the map and generate the correspondent ItemData
-      typedef configmaps::ConfigMap::const_iterator MapIterator;
-      typedef configmaps::ConfigVectorTemplate<configmaps::ConfigItem>::const_iterator VectorIterator;
-      for (MapIterator iter = map -> begin(); iter != map -> end(); iter++)
-      {
-        cout << "Key: " << iter->first << endl;
-        for (VectorIterator iterV = iter-> second.begin(); iterV != iter-> second.end(); iterV++)
-        {
-          cout << "Vector item: " << iterV -> toString() << endl;
-        }
-      }
-      // Load Motors
-      // Load Sensors
-      // Load URDF?
-      // Load Materials?
+    std::cout << "Test modelInterface methods" << std::endl;
+    std::cout << "Root's name from model: " << modelInterface -> getRoot()->name.c_str() << std::endl;
+    
+    // Load Tree from URDF 
+    //KDL::Tree* kdlTree = new KDL::Tree;
+    //bool loaded treeFromUrdfModel(modelInterface, kdlTree);
+
+    //std::cout << "Loaded succesfully: " << loaded << std::endl;
+
+    // Convert to itemData and add to the tree
+    //boost::shared_ptr<const Link> modelInterface -> getRoot();
+    ////  add all children
+    //for (size_t i=0; i<robot_model.getRoot()->child_links.size(); i++)
+    //    if (!addChildrenToTree(modelInterface.getRoot()->child_links[i], tree))
+    //        return false;
+
+    // Iterate the modelInterface and generate the correspondent ItemData
+    // Load URDF
+
+
+    // Load Motors
+    // Load Sensors
+
+    // Load Materials?
     }
 
   } // NS sim

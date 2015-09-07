@@ -42,7 +42,6 @@
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
 #include <urdf_model/model.h>
-#include <mars/entity_generation/smurf/smurf.h>
 
 #include "SimNode.h"
 #include "ItemNodeData.h"
@@ -72,7 +71,7 @@ namespace mars {
         virtual ~TreeMars(){}
         virtual int test();
         // Generate the nodes according to a ConfigMap
-        void loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, configmaps::ConfigMap* map, mars::smurf::SMURF smurf);
+        void loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, const configmaps::ConfigMap & map);
       private:
         interfaces::ControlCenter *control;
         int visual_rep;
