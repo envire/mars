@@ -38,6 +38,7 @@
 #include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/TreeMarsInterface.h>
+#include <string>
 
 namespace mars {
   namespace sim {
@@ -58,18 +59,27 @@ namespace mars {
         virtual ~TreeMars(){}
         virtual int test();
         virtual void minimalTest();
+
+        //TODO There has to be a way to set multiple or no data elements
+
+        /**Adds an object to the tree and adds a visual representation
+         * (including physics) of the object to the mars scene graph.
+         *
+         * @param name The name of the frame that will be inserted into the tree
+         * @param data The data that should be inserted into the frame
+         * @param location Location of the object. I.e. transformation from the
+         *                 root node to the object.
+         */
+        void addObject(const std::string& name,
+                       const mars::interfaces::NodeData& data,
+                       const envire::core::Transform& location);
+      protected:
+
+        /**This method is temporary and should be replaced  */
+        void addNodeToSimulation(mars::interfaces::NodeData& data);
       private:
         interfaces::ControlCenter *control;
         int visual_rep;
-
-        //Methods
-        //
-        // Add_object (config , initial pos)
-        //
-        // Update_objects()
-        //
-        //
-
     };
 
   } // NS sim

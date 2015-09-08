@@ -31,6 +31,7 @@
 #include "TreeMars.h"
 #include "SimNode.h"
 #include "PhysicsMapper.h"
+#include "ItemMars.h"
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <assert.h>
@@ -41,6 +42,8 @@ namespace mars {
     using namespace std;
     using namespace utils;
     using namespace interfaces;
+    using namespace envire::core;
+    using boost::intrusive_ptr;
 
     /**
      *\brief Initialization of a new ItemManager
@@ -58,6 +61,64 @@ namespace mars {
       }
     }
 
+    void TreeMars::addTree(const TransformTree& tree)
+    {
+      std::for_each(boost::vertices(tree).first, boost::vertices(tree).second,
+                    [](const TransformTree::vertex_descriptor& v)
+                    {
+
+                    });
+
+    }
+
+    void TreeMars::addObject(const string& name, const NodeData& data,
+                             const Transform& location)
+    {
+      intrusive_ptr<ItemNodeData> item(new ItemNodeData());
+      item->getData() = data;
+      addNodeToSimulation(item->getData());
+
+      Frame frame(name);
+      frame.items.push_back(item);
+      //add_vertex creates a copy of the frame.
+      //Therefore the frame has to be initialized completely before adding it.
+      TransformTree::vertex_descriptor node = add_vertex(frame);
+
+      std::pair<TransformTree::edge_descriptor, bool> result;
+      result = add_edge(getRootNode(), node, location);
+      if(!result.second)
+      {
+        //FIXME edge is already in the graph and has been updated
+        //      should this happen?
+        abort();
+      }
+    }
+
+    void TreeMars::addNodeToSimulation(mars::interfaces::NodeData& nodeData)
+    {
+      //simlator object. Manages communication with mars data broker.
+      //Note: Creates an internal copy of nodeData
+      SimNode *newNode = new SimNode(control, nodeData);
+      NodeInterface *newNodeInterface = PhysicsMapper::newNodePhysics(control->sim->getPhysics());
+      //create physics node, based on the values in nodeData
+      if(!newNodeInterface->createNode(&nodeData))
+      {
+        //FIXME this is not a good way to handle the error
+        abort();
+      }
+      //attach the physics node to the simulation node
+      newNode->setInterface(newNodeInterface);
+
+      //The GraphicsManager identifies the object by this id
+      NodeId id = control->graphics->addDrawObject(nodeData,
+                                                   true); //activated: only visible if true, no idea what it means
+
+      //the sim node needs to know the id of the graphical representation
+      //because it has to update the representation, e.g. if the extents of the
+      //object change
+      newNode->setGraphicsID(id);
+      newNode->setVisualRep(visual_rep);//FIXME do I need this?
+    }
 
     void TreeMars::minimalTest()
     {
