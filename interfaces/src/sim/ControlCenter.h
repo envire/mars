@@ -68,7 +68,8 @@ namespace mars {
   namespace interfaces {
     class ControlCenter;
     class NodeManagerInterface;
-    class ItemManagerInterface;    
+    class ItemManagerInterface;   
+    class TreeMarsInterface; 
     class JointManagerInterface;
     class MotorManagerInterface;
     class ControllerManagerInterface;
@@ -90,6 +91,7 @@ namespace mars {
         cfg = NULL;
         nodes  = NULL;
         items = NULL;
+        tree = NULL;
         joints = NULL;
         motors = NULL;
         controllers = NULL;
@@ -120,6 +122,7 @@ namespace mars {
       LoadCenter *loadCenter;
       
       ItemManagerInterface *items;   
+      TreeMarsInterface *tree;
     
      
 

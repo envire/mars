@@ -61,30 +61,30 @@ namespace mars {
       }
     }
 
-    void TreeMars::addObject(const string& name, const NodeData& data,
-                             const Transform& location)
-    {
-      intrusive_ptr<ItemNodeData> item(new ItemNodeData());
-      item->getData() = data;
+    //void TreeMars::addObject(const string& name, const NodeData& data,
+                             //const Transform& location)
+    //{
+      //intrusive_ptr<ItemNodeData> item(new ItemNodeData());
+      //item->getData() = data;
 
-      //TODO add code here that creates the corresponding visual and physics
-      //     objects and stores their ids in item->getData()
+      ////TODO add code here that creates the corresponding visual and physics
+      ////     objects and stores their ids in item->getData()
 
-      Frame frame(name);
-      frame.items.push_back(item);
-      //add_vertex creates a copy of the frame.
-      //Therefore the frame has to be initialized completely before adding it.
-      TransformTree::vertex_descriptor node = add_vertex(frame);
+      //Frame frame(name);
+      //frame.items.push_back(item);
+      ////add_vertex creates a copy of the frame.
+      ////Therefore the frame has to be initialized completely before adding it.
+      //TransformTree::vertex_descriptor node = add_vertex(frame);
 
-      std::pair<TransformTree::edge_descriptor, bool> result;
-      result = add_edge(getRootNode(), node, location);
-      if(!result.second)
-      {
-        //FIXME edge is already in the graph and has been updated
-        //      should this happen?
-        abort();
-      }
-    }
+      //std::pair<TransformTree::edge_descriptor, bool> result;
+      //result = add_edge(getRootNode(), node, location);
+      //if(!result.second)
+      //{
+        ////FIXME edge is already in the graph and has been updated
+        ////      should this happen?
+        //abort();
+      //}
+    //}
 
     int TreeMars::test()
     {

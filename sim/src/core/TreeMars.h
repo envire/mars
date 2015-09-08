@@ -23,7 +23,7 @@
 
 /**
  * \file TreeMars.h
- * \author Raul Dominguez
+ * \author Raul Dominguez, Yong-Ho Yoo
  *
  * The TreeMars class inherits from the EnvireTree which is used to represent
  * an environment. In this case the environment represented is the simulated
@@ -50,7 +50,8 @@ namespace mars {
      * The declaration of the ItemManager class.
      *
      */
-    class TreeMars : public TransformTree, 
+    class TreeMars : public TreeMarsInterface,
+    public TransformTree,     
     public interfaces::TreeMarsInterface, 
     public interfaces::GraphicsUpdateInterface{
     
@@ -69,14 +70,16 @@ namespace mars {
          * @param location Location of the object. I.e. transformation from the
          *                 root node to the object.
          */
-        void addObject(const std::string& name,
-                       const mars::interfaces::NodeData& data,
-                       const envire::core::Transform& location);
+        //void addObject(const std::string& name,
+                       //const mars::interfaces::NodeData& data,
+                       //const envire::core::Transform& location);
       protected:
 
       private:
         interfaces::ControlCenter *control;
         int visual_rep;
+        
+        
     };
 
   } // NS sim

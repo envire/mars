@@ -31,6 +31,7 @@
 #include "PhysicsMapper.h"
 #include "NodeManager.h"
 #include "ItemManager.h"   //Item
+#include "TreeMars.h"
 #include "ItemNodeData.h"
 
 #include "JointManager.h"
@@ -256,7 +257,8 @@ namespace mars {
       control->entities = new EntityManager(control);
 
       control->items = new ItemManager(control);   
-      
+      control->tree = new TreeMars(control);  
+            
       control->controllers->setDefaultPort(std_port);
       control->nodes->setVisualRep(0, cfgVisRep.iValue);
 
