@@ -38,6 +38,7 @@
 #include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/TreeMarsInterface.h>
+#include "ItemNodeData.h"
 #include <string>
 
 namespace mars {
@@ -45,16 +46,15 @@ namespace mars {
 
     using namespace envire::core;
     using namespace interfaces;
-
-    /**
-     * The declaration of the ItemManager class.
-     *
-     */
-    class TreeMars : public TreeMarsInterface,
-    public TransformTree,     
-    public interfaces::TreeMarsInterface, 
-    public interfaces::GraphicsUpdateInterface{
+    class SimJoint;
+    class SimNode;
     
+    typedef std::map<interfaces::NodeId, SimNode*> NodeMap;
+    
+    class TreeMars : public TransformTree,     
+					 public interfaces::TreeMarsInterface, 
+					 public interfaces::GraphicsUpdateInterface{
+
       public: 
         TreeMars(ControlCenter *c);
         virtual ~TreeMars(){}
@@ -70,14 +70,24 @@ namespace mars {
          * @param location Location of the object. I.e. transformation from the
          *                 root node to the object.
          */
-        //void addObject(const std::string& name,
-                       //const mars::interfaces::NodeData& data,
-                       //const envire::core::Transform& location);
+        int addObject(const std::string& name,
+                       mars::interfaces::NodeData* nodeS,
+                       const envire::core::Transform& location);
       protected:
 
-      private:
-        interfaces::ControlCenter *control;
-        int visual_rep;
+      interfaces::ControlCenter *control;
+      
+      NodeMap simNodes;          
+      NodeMap simNodesDyn; 
+      mutable utils::Mutex iMutex;   
+      int visual_rep;
+
+      //ItemNodeData itemNodeData;
+
+      interfaces::NodeId next_node_id;
+      bool update_all_nodes;
+
+      NodeMap nodesToUpdate;
         
         
     };

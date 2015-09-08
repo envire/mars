@@ -44,10 +44,7 @@ namespace mars {
     class SimNode;
     
     typedef std::map<interfaces::NodeId, SimNode*> NodeMap;
-    /**
-     * The declaration of the ItemManager class.
-     *
-     */
+
     class ItemManager : public interfaces::ItemManagerInterface,
                         public interfaces::GraphicsUpdateInterface {
     public:

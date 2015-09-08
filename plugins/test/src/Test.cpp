@@ -20,8 +20,8 @@
 
 /**
  * \file Test.cpp
- * \author tes (tes)
- * \brief test
+ * \author Yong-Ho Yoo
+ * \brief 
  *
  * Version 0.1
  */
@@ -30,6 +30,11 @@
 #include "Test.h"
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
+#include "../../../sim/src/core/TreeMars.h"
+
+#include <boost/test/unit_test.hpp>
+#include <mars/interfaces/sim/ControlCenter.h>
+#include <envire_core/GraphViz.hpp>
 
 namespace mars {
   namespace plugins {
@@ -38,27 +43,57 @@ namespace mars {
       using namespace mars::utils;
       using namespace mars::interfaces;
       using namespace mars::sim;
+      
+using namespace envire::core;
+using mars::sim::TreeMars;
+using mars::interfaces::ControlCenter;
+using base::TransformWithCovariance;
+using envire::core::GraphViz;
+using mars::interfaces::NodeData;
 
       Test::Test(lib_manager::LibManager *theManager)
         : MarsPluginTemplate(theManager, "Test") {
       }
   
       void Test::init() {
-          ItemManager* itemManager = new ItemManager(control); // This breaks on execution time
-          std::cout << "Instance of itemManager" << std::endl;
-	      ItemManagerInterface* itemManagerInterface = itemManager;
-	      control->items = itemManagerInterface;
-          std::cout << "Instance of the Interface" << std::endl;
- 
-		  //control->sim->loadScene("box.scn");  
-		  control->items->addItem();
-//		  Vector pos;
-//       pos = control->items->getPosition(1);	  
-		//Vector ps;
-      //obj_id[0] = control->nodes->getID("box1");
-      //printf("..........%lu.....\n", obj_id[0]);
-      //ps = control->nodes->getPosition(obj_id[0]);		
-      //printf(" ps.z = %f\n", ps.z());
+  
+          TreeMars* treeMars = new TreeMars(control);
+          TreeMarsInterface* treeMarsInterface = treeMars;
+          control->tree = treeMarsInterface;
+          
+      NodeData node;    
+      NodeData *nodeS = &node;
+
+      printf("Pointer assignation\n");
+
+      const std::string &name = "box";
+      nodeS->pos = utils::Vector::Zero();
+      nodeS->name = name;
+      nodeS->movable = true;
+      nodeS->physicMode = NODE_TYPE_BOX;
+      nodeS->index=1;
+      nodeS->noPhysical = false;
+      nodeS->inertia_set=false;
+      nodeS->ext.x() = 1;
+      nodeS->ext.y() = 1; 
+      nodeS->ext.z() = 1;   
+      NodeType type = nodeS->physicMode;
+      nodeS->mass = 1.0f;
+      nodeS->initPrimitive(type, nodeS->ext, nodeS->mass);
+     
+     
+     
+    for(int i = 0; i < 2; ++i)
+    {
+      TransformWithCovariance tf;
+      tf.translation << i, i * 2, i * 3;
+      Transform t;
+      t.setTransform(tf);
+      control->tree->addObject("test " + boost::lexical_cast<std::string>(i), nodeS, t);
+    }
+          
+     
+    
       }
 
       void Test::reset() {

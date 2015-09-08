@@ -20,12 +20,16 @@
 
 /**
  * \file TreeMars.cpp
- * \author Raul Dominguez
+ * \author Raul Dominguez, Yong-Ho Yoo
  *
  * The TreeMars class inherits from the EnvireTree which is used to represent
  * an environment. In this case the environment represented is the simulated
  * one.
  */
+
+#include "PhysicsMapper.h"
+#include <mars/interfaces/utils.h>
+#include <mars/utils/MutexLocker.h>
 
 #include "ItemNodeData.h"
 #include "TreeMars.h"
@@ -61,81 +65,66 @@ namespace mars {
       }
     }
 
-    //void TreeMars::addObject(const string& name, const NodeData& data,
-                             //const Transform& location)
-    //{
-      //intrusive_ptr<ItemNodeData> item(new ItemNodeData());
-      //item->getData() = data;
-
-      ////TODO add code here that creates the corresponding visual and physics
-      ////     objects and stores their ids in item->getData()
-
-      //Frame frame(name);
-      //frame.items.push_back(item);
-      ////add_vertex creates a copy of the frame.
-      ////Therefore the frame has to be initialized completely before adding it.
-      //TransformTree::vertex_descriptor node = add_vertex(frame);
-
-      //std::pair<TransformTree::edge_descriptor, bool> result;
-      //result = add_edge(getRootNode(), node, location);
-      //if(!result.second)
-      //{
-        ////FIXME edge is already in the graph and has been updated
-        ////      should this happen?
-        //abort();
-      //}
-    //}
-
-    int TreeMars::test()
+    int TreeMars::addObject(const string& name, NodeData* nodeS,
+                             const Transform& location)
     {
-      printf("Test TreeMars\n");
+      intrusive_ptr<ItemNodeData> item(new ItemNodeData());
+      item->getData() = *nodeS;
 
-      // Create a node data and add it to the tree
-      NodeData node;
-      ItemNodeData itemNodeData;
-      itemNodeData.setData(node);
-      printf("item set data done\n");
-      NodeData *nodeS = &node;
-
-      // Configure the object in the node
-      const std::string &name = "box";
-      nodeS->pos = utils::Vector::Zero();
-      nodeS->name = name;
-      nodeS->movable = true;
-      nodeS->physicMode = NODE_TYPE_BOX;
-      nodeS->index=0;
-      nodeS->noPhysical = false;
-      nodeS->inertia_set=true;
-      // I guess these are the position coordinates, they should go on a edge
-      nodeS->ext.x() = 1;
-      nodeS->ext.y() = 1; 
-      nodeS->ext.z() = 1;   
-      NodeType type = nodeS->physicMode;
-      nodeS->mass = 1.0f;
-      nodeS->initPrimitive(type, nodeS->ext, nodeS->mass);
-
-      // Create a node object
+      //TODO add code here that creates the corresponding visual and physics
+      //     objects and stores their ids in item->getData()
+      
+ //--------------create physical object and visualize it     
+      
+       // create a node object
       SimNode *newNode = new SimNode(control, *nodeS);
+     // NodeData* nodeS;
+     // nodeS = &data;
+      
       printf("Create a node object\n");
 
-      // Create the physical node data
+      // This is not a NodePhysics but many more things. How do I get the NodePhysics from it?
+
+       // create the physical node data
       if(! (nodeS->noPhysical)){
-        // Create an interface object to the physics
+        printf("Enters if\n");
+        // create an interface object to the physics
+        // The interface to the physics is already in the itemPhysics
         interfaces::PhysicsInterface* physicsInterface = control->sim->getPhysics();
+        printf("Physical interface obtained \n");
         NodeInterface *newNodeInterface = PhysicsMapper::newNodePhysics(physicsInterface);
+        printf("...........getPhysics.......\n");
         if (!newNodeInterface->createNode(nodeS)) {
-          // If no node was created in physics delete the objects
+          // if no node was created in physics
+          // delete the objects
           delete newNode;
           delete newNodeInterface;
           // and return false
           LOG_ERROR("NodeManager::addNode: No node was created in physics.");
           return INVALID_ID;
         }
+        printf("Node Created a Node Physics \n");
         newNode->setInterface(newNodeInterface);
+        printf("interface is set \n");
+        // Set the node in the item wraper newNodeInterface is the pointer to a
+        // NodeInterface which is a more abstract class than NodePhysics,
+        // therefore it can not just be attached to an item
+        //NodePhysics *nodePhysics = newNodeInterface;
+        //itemNodeInterface.setData(newNodeInterface);
+        // and include the item in the tree
+        // envireTree.addVertex(item);
+        // Instead of maps we use the envire Tree
+        iMutex.lock();
+        simNodes[nodeS->index] = newNode;
+        if (nodeS->movable)
+          simNodesDyn[nodeS->index] = newNode;
+        iMutex.unlock();
         control->sim->sceneHasChanged(false);
         if(control->graphics) {
-          NodeId id = control->graphics->addDrawObject(node, visual_rep & 1);
+          NodeId id = control->graphics->addDrawObject(*nodeS, visual_rep & 1);
           if(id) newNode->setGraphicsID(id);
+
+          //        NEW_NODE_STRUCT(physicalRep);
           // What is done here?
           NodeData physicalRep;
           physicalRep = *nodeS;
@@ -146,8 +135,8 @@ namespace mars {
           physicalRep.visual_offset_rot = Quaternion::Identity();
           physicalRep.visual_size = physicalRep.ext;
 
-          if(node.physicMode != NODE_TYPE_TERRAIN) {
-            if(node.physicMode != NODE_TYPE_MESH) {
+          if(nodeS->physicMode != NODE_TYPE_TERRAIN) {
+            if(nodeS->physicMode != NODE_TYPE_MESH) {
               physicalRep.filename = "PRIMITIVE";
               //physicalRep.filename = nodeS->filename;
               if(nodeS->physicMode > 0 && nodeS->physicMode < NUMBER_OF_NODE_TYPES){
@@ -159,9 +148,29 @@ namespace mars {
           }
           newNode->setVisualRep(visual_rep);
         }
-      } 	  
+      }	
+ //--------------
+ 
+      Frame frame(name);
+      frame.items.push_back(item);
+      //add_vertex creates a copy of the frame.
+      //Therefore the frame has to be initialized completely before adding it.
+      TransformTree::vertex_descriptor node = add_vertex(frame);
 
+      std::pair<TransformTree::edge_descriptor, bool> result;
+	 //result = add_edge(getRootNode(), node, location);    		// still not defined //  
+      if(!result.second)
+      {
+        //FIXME edge is already in the graph and has been updated
+        //      should this happen?
+        abort();
+      }
     }
+
+    int TreeMars::test(){
+    
+  
+    }  
 
   } // NS sim
 } // NS mars

@@ -62,10 +62,10 @@ namespace mars {
     public:
       virtual ~TreeMarsInterface() {}
       virtual int test() = 0;
-      virtual void minimalTest() = 0;
-      virtual int addObject(const std::string& name,
-                       const mars::interfaces::NodeData& data,
-                       const envire::core::Transform& location) = 0;
+      //virtual void minimalTest() = 0;
+      //virtual int addObject(const std::string& name,
+                       //const mars::interfaces::NodeData& data,
+                       //const envire::core::Transform& location) = 0;
 
  
     };
