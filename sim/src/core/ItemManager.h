@@ -53,16 +53,13 @@ namespace mars {
     public:
       ItemManager(ControlCenter *c); 
       virtual ~ItemManager(){}
-      virtual int test();
-
+      //virtual int test();
+      //virtual NodeId addItem(NodeData *nodeS, bool reload, bool loadGraphics);   
+      virtual int addItem(void);     
       virtual void updateItemDynamics(interfaces::sReal calc_ms, bool physics_thread = true);
       
-      //virtual void setPosition(interfaces::NodeId id, const utils::Vector &pos);
       virtual const utils::Vector getPosition(interfaces::NodeId id) const;
-      //virtual void setRotation(interfaces::NodeId id, const utils::Quaternion &rot);
-      virtual const utils::Quaternion getRotation(interfaces::NodeId id) const;  
-      virtual unsigned long getMaxGroupID() { return maxGroupID; }   
-      virtual void reloadNodes(bool reloadGraphics);         
+      virtual const utils::Quaternion getRotation(interfaces::NodeId id) const;   
       virtual void preGraphicsUpdate(void);         
        
 
@@ -80,68 +77,7 @@ namespace mars {
       bool update_all_nodes;
 
       NodeMap nodesToUpdate;
-      std::list<interfaces::NodeData> simNodesReload;
-      //unsigned long maxGroupID;
-
-      std::list<interfaces::NodeData>::iterator getReloadNode(interfaces::NodeId id);
-
-      // interfaces::NodeInterface* getNodeInterface(NodeId node_id);
-      struct Params; // see below.
-      // recursively walks through the gids and joints and
-      // applies the applyFunc with the given parameters.
-      void recursiveHelper(interfaces::NodeId id, const Params *params,
-                           std::vector<SimJoint*> *joints,
-                           std::vector<int> *gids,
-                           NodeMap *nodes,
-                           void (*applyFunc)(SimNode *node, const Params *params));
-      void moveNodeRecursive(interfaces::NodeId id, const utils::Vector &offset,
-                             std::vector<SimJoint*> *joints,
-                             std::vector<int> *gids,
-                             NodeMap *nodes);
-      void rotateNodeRecursive(interfaces::NodeId id,
-                               const utils::Vector &rotation_point,
-                               const utils::Quaternion &rotation,
-                               std::vector<SimJoint*> *joints,
-                               std::vector<int> *gids,
-                               NodeMap *nodes);
-      // these static methods are used by moveNodeRecursive and rotateNodeRecursive
-      // as applyFuncs for the recursiveHelper method
-      static void applyMove(SimNode *node, const Params *params);
-      static void applyRotation(SimNode *node, const Params *params);
-
-      void moveRelativeNodes(const SimNode &node, NodeMap *nodes, utils::Vector v);
-      void rotateRelativeNodes(const SimNode &node, NodeMap *nodes,
-                               utils::Vector pivot, utils::Quaternion rot);
-
-      void resetRelativeNodes(const SimNode &node,
-                              NodeMap *nodes,
-                              const utils::Quaternion *rotate = 0);
-      void resetRelativeJoints(const SimNode &node,
-                               NodeMap *nodes,
-                               std::vector<SimJoint*> *joints,
-                               const utils::Quaternion *rotate = 0);
-      void setNodeStructPositionFromRelative(interfaces::NodeData *node) const;
-      void clearRelativePosition(interfaces::NodeId id, bool lock);
-      void removeNode(interfaces::NodeId id, bool lock,
-                      bool clearGraphics=true);
-      void pushToUpdate(SimNode* node);
-
-      // for passing parameters to the recursiveHelper.
-      struct Params
-      {
-        // make virtual so we can use polymorphism
-        virtual ~Params() {}
-      };
-      struct MoveParams : Params
-      {
-        utils::Vector offset;
-      };
-      struct RotationParams : Params
-      {
-        utils::Vector rotation_point;
-        utils::Quaternion rotation;
-      };
-      
+       
 
     };
 

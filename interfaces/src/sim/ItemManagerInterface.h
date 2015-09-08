@@ -61,19 +61,18 @@ namespace mars {
     class ItemManagerInterface {
     public:
       virtual ~ItemManagerInterface() {}
-      virtual int test() = 0;
-             
+      //virtual int test() = 0;
+      //virtual NodeId addItem(NodeData *nodeS,
+                             //bool reload = false,
+                             //bool loadGraphics = true) = 0;        
+      virtual int addItem(void) = 0;                
       virtual void updateItemDynamics(interfaces::sReal calc_ms, bool physics_thread = true) = 0;
       
       //virtual void setPosition(interfaces::NodeId id, const utils::Vector &pos);
       virtual const utils::Vector getPosition(interfaces::NodeId id) const = 0;
       //virtual void setRotation(interfaces::NodeId id, const utils::Quaternion &rot);
-      virtual const utils::Quaternion getRotation(interfaces::NodeId id) const = 0; 
-
-      virtual void reloadNodes(bool reloadGraphics) = 0;  
-     
-          
-    
+      virtual const utils::Quaternion getRotation(interfaces::NodeId id) const = 0;    
+  //    virtual unsigned long getMaxGroupID() = 0;          
 
       virtual void preGraphicsUpdate(void) = 0;          
 

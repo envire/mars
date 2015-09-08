@@ -51,9 +51,9 @@ namespace mars {
           std::cout << "Instance of the Interface" << std::endl;
  
 		  //control->sim->loadScene("box.scn");  
-		  control->items->test();
-		  
-		  
+		  control->items->addItem();
+//		  Vector pos;
+//       pos = control->items->getPosition(1);	  
 		//Vector ps;
       //obj_id[0] = control->nodes->getID("box1");
       //printf("..........%lu.....\n", obj_id[0]);
@@ -76,7 +76,7 @@ namespace mars {
         Vector pos;
         pos = control->items->getPosition(1);
         //pos = control->nodes->getPosition(1);        
-        printf("pos.z = %f\n", pos.z());
+        printf("pos.z = ..........%f\n", pos.z());
         
       }
 
