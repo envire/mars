@@ -15,7 +15,6 @@ BOOST_AUTO_TEST_CASE(showAbox)
 {
     mars::interfaces::ControlCenter control;
     mars::sim::ItemManager itemManager(&control);
-    itemManager.test();
     std::cout << "Test Item Manager" << std::endl;
 }
 //
