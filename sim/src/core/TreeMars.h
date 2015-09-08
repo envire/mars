@@ -58,7 +58,6 @@ namespace mars {
         TreeMars(ControlCenter *c);
         virtual ~TreeMars(){}
         virtual int test();
-        virtual void minimalTest();
 
         //TODO There has to be a way to set multiple or no data elements
 
@@ -75,8 +74,6 @@ namespace mars {
                        const envire::core::Transform& location);
       protected:
 
-        /**This method is temporary and should be replaced  */
-        void addNodeToSimulation(mars::interfaces::NodeData& data);
       private:
         interfaces::ControlCenter *control;
         int visual_rep;

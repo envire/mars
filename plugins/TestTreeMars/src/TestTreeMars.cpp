@@ -46,7 +46,6 @@ namespace mars {
       void TestTreeMars::init() {
         TreeMars* treeMars = new TreeMars(control);
         TreeMarsInterface* treeMarsInterface = treeMars;
-        treeMarsInterface -> minimalTest();
         treeMarsInterface -> test();
       }
 

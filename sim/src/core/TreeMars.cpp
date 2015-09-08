@@ -61,22 +61,14 @@ namespace mars {
       }
     }
 
-    void TreeMars::addTree(const TransformTree& tree)
-    {
-      std::for_each(boost::vertices(tree).first, boost::vertices(tree).second,
-                    [](const TransformTree::vertex_descriptor& v)
-                    {
-
-                    });
-
-    }
-
     void TreeMars::addObject(const string& name, const NodeData& data,
                              const Transform& location)
     {
       intrusive_ptr<ItemNodeData> item(new ItemNodeData());
       item->getData() = data;
-      addNodeToSimulation(item->getData());
+
+      //TODO add code here that creates the corresponding visual and physics
+      //     objects and stores their ids in item->getData()
 
       Frame frame(name);
       frame.items.push_back(item);
@@ -94,74 +86,6 @@ namespace mars {
       }
     }
 
-    void TreeMars::addNodeToSimulation(mars::interfaces::NodeData& nodeData)
-    {
-      //simlator object. Manages communication with mars data broker.
-      //Note: Creates an internal copy of nodeData
-      SimNode *newNode = new SimNode(control, nodeData);
-      NodeInterface *newNodeInterface = PhysicsMapper::newNodePhysics(control->sim->getPhysics());
-      //create physics node, based on the values in nodeData
-      if(!newNodeInterface->createNode(&nodeData))
-      {
-        //FIXME this is not a good way to handle the error
-        abort();
-      }
-      //attach the physics node to the simulation node
-      newNode->setInterface(newNodeInterface);
-
-      //The GraphicsManager identifies the object by this id
-      NodeId id = control->graphics->addDrawObject(nodeData,
-                                                   true); //activated: only visible if true, no idea what it means
-
-      //the sim node needs to know the id of the graphical representation
-      //because it has to update the representation, e.g. if the extents of the
-      //object change
-      newNode->setGraphicsID(id);
-      newNode->setVisualRep(visual_rep);//FIXME do I need this?
-    }
-
-    void TreeMars::minimalTest()
-    {
-      using std::string;
-      using utils::Vector;
-      using utils::Quaternion;
-
-      NodeData nodeData;
-      nodeData.init("box", //name
-                    Vector(1,2,3)); //position
-
-      //we want a primitive object, not a mesh or something similar
-      nodeData.initPrimitive(NODE_TYPE_BOX,//node type (box, sphere, etc.)
-                             Vector(3, 1, 1),//extents (width, height, length)
-                             1);//mass
-
-      //simlator object. Manages communication with mars data broker.
-      //Note: Creates an internal copy of nodeData
-      SimNode *newNode = new SimNode(control, nodeData);
-
-      //Create the physical node data
-      NodeInterface *newNodeInterface = PhysicsMapper::newNodePhysics(control->sim->getPhysics());
-      //create physics node, based on the values in nodeData
-      if(!newNodeInterface->createNode(&nodeData))
-      {
-        abort();
-      }
-      //attach the physics node to the simulation node
-      newNode->setInterface(newNodeInterface);
-      //sceneHasChanged does not seem to have any effect
-      //control->sim->sceneHasChanged(true);
-
-      //The GraphicsManager identifies the object by this id
-      NodeId id = control->graphics->addDrawObject(nodeData,
-                                                   true); //activated: only visible if true, no idea what it means
-
-      //the sim node needs to know the id of the graphical representation
-      //because it has to update the representation, e.g. if the extents of the
-      //object change
-      newNode->setGraphicsID(id);
-      newNode->setVisualRep(visual_rep);//FIXME do I need this?
-
-    }
     int TreeMars::test()
     {
       printf("Test TreeMars\n");
