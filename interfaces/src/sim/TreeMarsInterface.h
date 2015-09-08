@@ -60,14 +60,7 @@ namespace mars {
      
     class TreeMarsInterface {
     public:
-      virtual ~TreeMarsInterface() {}
-      virtual int test() = 0;
-      virtual void minimalTest() = 0;
-      //int test;
-      //
-      // int addObject(std::map conf);
-
- 
+      virtual ~TreeMarsInterface() {} 
     };
 
   } // end of namespace interfaces
