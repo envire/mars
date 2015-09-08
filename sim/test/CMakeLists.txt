@@ -2,6 +2,7 @@
   #DEPS mars_sim                                                          
   #DEPS_PKGCONFIG envire_core)                                                
 
+<<<<<<< HEAD
 #rock_testsuite(test_suite suite.cpp                                             
  ## test_ItemPhysics.cpp                                                            
   #DEPS mars_sim                                                            
@@ -10,3 +11,23 @@
  ## test_ItemManager.cpp
   #DEPS mars_sim
   #DEPS_PKGCONFIG envire_core)
+=======
+find_package(Boost COMPONENTS thread filesystem system)
+rock_testsuite(test_suite 
+               suite.cpp                                             
+               test_ItemPhysics.cpp
+               test_TreeMars.cpp                                                            
+               DEPS mars_sim                                                           
+               DEPS_PKGCONFIG envire_core)
+               
+target_link_libraries(test_suite
+                      ${Boost_LIBRARIES})
+                 
+                                                             
+rock_testsuite(test_ItemManager 
+               suite.cpp
+               test_ItemManager.cpp
+               DEPS mars_sim
+               DEPS_PKGCONFIG envire_core)
+               
+>>>>>>> fbab4ff14d4fe839a74276a374cbde8e4e11cf94

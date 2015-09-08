@@ -80,6 +80,7 @@ set(SOURCES_H
        src/core/ItemManager.h       
        src/core/ItemMars.h
        src/core/ItemNodeData.h
+       src/core/TreeMars.h
        
        src/core/PhysicsMapper.h
        src/core/SensorManager.h
@@ -141,6 +142,7 @@ set(TARGET_SRC
        src/core/SimMotor.cpp
        src/core/SimNode.cpp
        src/core/Simulator.cpp
+       src/core/TreeMars.cpp
        src/sensors/MultiLevelLaserRangeFinder.cpp
        src/sensors/RotatingRaySensor.cpp
 
@@ -173,6 +175,9 @@ set(TARGET_SRC
        src/sensors/ScanningSonar.cpp
 )
 
+#cmake variables
+configure_file(${CMAKE_SOURCE_DIR}/config.h.in ${CMAKE_BINARY_DIR}/config.h @ONLY)
+include_directories("${CMAKE_BINARY_DIR}")
 add_library(${PROJECT_NAME} SHARED ${TARGET_SRC})
 
 IF (WIN32)
