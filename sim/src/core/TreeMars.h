@@ -100,7 +100,6 @@ namespace mars {
 
       private:
       interfaces::ControlCenter *control;
-      int visual_rep;
       mars::utils::Mutex mutex; /**<Used to lock access to the tree structure */
         
     };

@@ -51,7 +51,7 @@ namespace mars {
     using envire::core::GraphViz;
 
 
-    TreeMars::TreeMars(ControlCenter *c) : control(c), visual_rep(1)
+    TreeMars::TreeMars(ControlCenter *c) : control(c)
     {
       if(control->graphics) {
         GraphicsUpdateInterface *gui = static_cast<GraphicsUpdateInterface*>(this);
@@ -108,14 +108,12 @@ namespace mars {
       newNode->setInterface(newNodeInterface);
 
       if(control->graphics) {
-        //FIXME visual_rep & 1 is bullshit?!
-        NodeId id = control->graphics->addDrawObject(node, visual_rep & 1);
-        if(id) newNode->setGraphicsID(id); //TODO figure out what the graphics id does
+        NodeId id = control->graphics->addDrawObject(node, true);
+        if(id) newNode->setGraphicsID(id);
 
         // What is done here?
         NodeData physicalRep;
         physicalRep = node; //initialize from node
-        physicalRep.material = node.material; //FIXME maybe useless because is done one line above?
         physicalRep.material.exists = true;
         physicalRep.material.transparency = 0.3;
         physicalRep.visual_offset_pos = Vector(0.0, 0.0, 0.0);
@@ -130,10 +128,12 @@ namespace mars {
               physicalRep.origName = NodeData::toString(node.physicMode);
             }
           }
-          id = control->graphics->addDrawObject(physicalRep, visual_rep & 2);
+          id = control->graphics->addDrawObject(physicalRep, true);
           if(id) newNode->setGraphicsID2(id);
         }
-        newNode->setVisualRep(visual_rep);
+        //visual rep= 1 means: the node is drawn.
+        //the default is 1. Different values can be set from the simulator gui
+        newNode->setVisualRep(1);
       }
     }
     return newNode;
