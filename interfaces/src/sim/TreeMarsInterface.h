@@ -36,6 +36,7 @@
 #endif
 
 #include <string>
+#include <mars/interfaces/MARSDefs.h>
 
 namespace envire { namespace core
 { 
@@ -69,7 +70,7 @@ namespace mars { namespace interfaces
     */
     virtual void updateItemDynamics(sReal calc_ms, bool physics_thread) = 0;
     //draws the current tree structure to a dot file */
-    virtual void drawDotFile(const std::string& file) const;
+    virtual void drawDotFile(const std::string& file) const = 0;
 };
 }} // end of namespace mars::interfaces
 
