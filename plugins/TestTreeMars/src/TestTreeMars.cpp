@@ -46,22 +46,36 @@ namespace mars {
       }
   
       void TestTreeMars::init() {
-        NodeData nodeData;
-        nodeData.init("box", //name
+        NodeData sphereNode;
+        sphereNode.init("sphere", //name
                       Vector(1,2,3)); //position
 
         //we want a primitive object, not a mesh or something similar
-        nodeData.initPrimitive(NODE_TYPE_BOX,//node type (box, sphere, etc.)
-                               Vector(3, 1, 1),//extents (width, height, length)
-                               1);//mass
-        nodeData.movable = true;
+        sphereNode.initPrimitive(NODE_TYPE_SPHERE,//node type (box, sphere, etc.)
+                               Vector(0.1, 0.1, 0.1),//extents (width, height, length)
+                               0.1);//mass
+        sphereNode.movable = true;
         base::TransformWithCovariance tf;
-        tf.translation << 5, 1, 1;
+        tf.translation << 1, 2, 3;
         envire::core::Transform t;
         t.setTransform(tf);
+        control->tree->addObject("testObject", sphereNode, t);
+
+        NodeData boxNode;
+        boxNode.init("box", //name
+                      Vector(0,0,-1)); //position
+
+        //we want a primitive object, not a mesh or something similar
+        boxNode.initPrimitive(NODE_TYPE_BOX,//node type (box, sphere, etc.)
+                               Vector(10, 10, 0.1),//extents (width, height, length)
+                               0.1);//mass
+        boxNode.movable = false;
+        boxNode.material.transparency = 0.5;
+        tf.translation << 0, 0, -1;
+        t.setTransform(tf);
+        control->tree->addObject("testObject", boxNode, t);
 
 
-        control->tree->addObject("testObject", nodeData, t);
       }
 
       void TestTreeMars::reset() {
