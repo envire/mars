@@ -69,7 +69,7 @@ namespace mars {
          * @param name The name of the frame that will be inserted into the tree
          * @param data The data that should be inserted into the frame
          * @param location Location of the object. I.e. transformation from the
-         *                 root node to the object.
+         *                 parent node to the object.
          */
         void addObject(const std::string& name,
                       const mars::interfaces::NodeData& node,
@@ -89,6 +89,9 @@ namespace mars {
          * Otherwise does nothing.
          */
         virtual void preGraphicsUpdate();
+
+        //draws the current tree structure to a dot file */
+        virtual void drawDotFile(const std::string& file) const;
       protected:
 
         //TODO maybe return graphics object as well?

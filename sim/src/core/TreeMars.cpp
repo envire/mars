@@ -30,16 +30,15 @@
 #include "PhysicsMapper.h"
 #include <mars/interfaces/utils.h>
 #include <mars/utils/MutexLocker.h>
-
 #include "ItemNodeData.h"
 #include "TreeMars.h"
 #include "SimNode.h"
-#include "PhysicsMapper.h"
 #include "ItemMars.h"
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/utils/MutexLocker.h>
 #include <assert.h>
+#include <envire_core/GraphViz.hpp>
 
 namespace mars {
   namespace sim {
@@ -49,6 +48,8 @@ namespace mars {
     using namespace interfaces;
     using namespace envire::core;
     using boost::intrusive_ptr;
+    using envire::core::GraphViz;
+
 
     TreeMars::TreeMars(ControlCenter *c) : control(c), visual_rep(1)
     {
@@ -208,6 +209,14 @@ namespace mars {
         }
       }
     }
+  }
+
+
+  void TreeMars::drawDotFile(const std::string& file) const
+  {
+    assert(!file.empty());
+    GraphViz gviz;
+    gviz.write(*this, file);
   }
 
   } // NS sim

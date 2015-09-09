@@ -75,6 +75,7 @@ namespace mars {
         t.setTransform(tf);
         control->tree->addObject("testObject", boxNode, t);
 
+        control->tree->drawDotFile("initial_tree.dot");
 
       }
 
