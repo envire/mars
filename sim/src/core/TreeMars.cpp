@@ -20,7 +20,7 @@
 
 /**
  * \file TreeMars.cpp
- * \author Raul Dominguez, Yong-Ho Yoo
+ * \author Raul Dominguez, Yong-Ho Yoo, Arne Böckmann
  *
  * The TreeMars class inherits from the EnvireTree which is used to represent
  * an environment. In this case the environment represented is the simulated
@@ -49,14 +49,6 @@ namespace mars {
     using namespace envire::core;
     using boost::intrusive_ptr;
 
-    /**
-     *\brief Initialization of a new ItemManager
-     *
-     * pre:
-     *     - a pointer to a ControlCenter is needed
-     * post:
-     *     - 
-     */
     TreeMars::TreeMars(ControlCenter *c) : control(c), visual_rep(1)
     {
       if(control->graphics) {
@@ -65,112 +57,87 @@ namespace mars {
       }
     }
 
-    int TreeMars::addObject(const string& name, NodeData* nodeS,
+    void TreeMars::addObject(const string& name, const NodeData& node,
                              const Transform& location)
     {
       intrusive_ptr<ItemNodeData> item(new ItemNodeData());
-      item->getData() = *nodeS;
-
-      //TODO add code here that creates the corresponding visual and physics
-      //     objects and stores their ids in item->getData()
-      
- //--------------create physical object and visualize it     
-      
-       // create a node object
-      SimNode *newNode = new SimNode(control, *nodeS);
-     // NodeData* nodeS;
-     // nodeS = &data;
-      
-      printf("Create a node object\n");
-
-      // This is not a NodePhysics but many more things. How do I get the NodePhysics from it?
-
-       // create the physical node data
-      if(! (nodeS->noPhysical)){
-        printf("Enters if\n");
-        // create an interface object to the physics
-        // The interface to the physics is already in the itemPhysics
-        interfaces::PhysicsInterface* physicsInterface = control->sim->getPhysics();
-        printf("Physical interface obtained \n");
-        NodeInterface *newNodeInterface = PhysicsMapper::newNodePhysics(physicsInterface);
-        printf("...........getPhysics.......\n");
-        if (!newNodeInterface->createNode(nodeS)) {
-          // if no node was created in physics
-          // delete the objects
-          delete newNode;
-          delete newNodeInterface;
-          // and return false
-          LOG_ERROR("NodeManager::addNode: No node was created in physics.");
-          return INVALID_ID;
-        }
-        printf("Node Created a Node Physics \n");
-        newNode->setInterface(newNodeInterface);
-        printf("interface is set \n");
-        // Set the node in the item wraper newNodeInterface is the pointer to a
-        // NodeInterface which is a more abstract class than NodePhysics,
-        // therefore it can not just be attached to an item
-        //NodePhysics *nodePhysics = newNodeInterface;
-        //itemNodeInterface.setData(newNodeInterface);
-        // and include the item in the tree
-        // envireTree.addVertex(item);
-        // Instead of maps we use the envire Tree
-        iMutex.lock();
-        simNodes[nodeS->index] = newNode;
-        if (nodeS->movable)
-          simNodesDyn[nodeS->index] = newNode;
-        iMutex.unlock();
-        control->sim->sceneHasChanged(false);
-        if(control->graphics) {
-          NodeId id = control->graphics->addDrawObject(*nodeS, visual_rep & 1);
-          if(id) newNode->setGraphicsID(id);
-
-          //        NEW_NODE_STRUCT(physicalRep);
-          // What is done here?
-          NodeData physicalRep;
-          physicalRep = *nodeS;
-          physicalRep.material = nodeS->material;
-          physicalRep.material.exists = 1;
-          physicalRep.material.transparency = 0.3;
-          physicalRep.visual_offset_pos = Vector(0.0, 0.0, 0.0);
-          physicalRep.visual_offset_rot = Quaternion::Identity();
-          physicalRep.visual_size = physicalRep.ext;
-
-          if(nodeS->physicMode != NODE_TYPE_TERRAIN) {
-            if(nodeS->physicMode != NODE_TYPE_MESH) {
-              physicalRep.filename = "PRIMITIVE";
-              //physicalRep.filename = nodeS->filename;
-              if(nodeS->physicMode > 0 && nodeS->physicMode < NUMBER_OF_NODE_TYPES){
-                physicalRep.origName = NodeData::toString(nodeS->physicMode);
-              }
-            }
-            id = control->graphics->addDrawObject(physicalRep, visual_rep & 2);
-            if(id) newNode->setGraphicsID2(id);
-          }
-          newNode->setVisualRep(visual_rep);
-        }
-      }	
- //--------------
+      item->getData() = node;
+      item->simNode = createSimNode(item);
  
       Frame frame(name);
       frame.items.push_back(item);
       //add_vertex creates a copy of the frame.
       //Therefore the frame has to be initialized completely before adding it.
-      TransformTree::vertex_descriptor node = add_vertex(frame);
+      TransformTree::vertex_descriptor treeNode = add_vertex(frame);
 
       std::pair<TransformTree::edge_descriptor, bool> result;
-	 //result = add_edge(getRootNode(), node, location);    		// still not defined //  
+	    result = add_edge(getRootNode(), treeNode, location);
       if(!result.second)
       {
         //FIXME edge is already in the graph and has been updated
         //      should this happen?
         abort();
+    }
+  }
+
+  std::shared_ptr<SimNode> TreeMars::createSimNode(intrusive_ptr<ItemNodeData> ind)
+  {
+    //This code is adapted from an example by Yong-Ho Yoo which can be found
+    //in ItemManager.h/cpp
+    const NodeData& node = ind->getData();
+    // create a node object
+    shared_ptr<SimNode> newNode(new SimNode(control, node));
+
+    // create the physical node data
+    if(!node.noPhysical){
+      // create an interface object to the physics
+      // The interface to the physics is already in the itemPhysics
+      NodeInterface *newNodeInterface = PhysicsMapper::newNodePhysics(control->sim->getPhysics());
+
+      //FIXME remove const_cast
+      if (!newNodeInterface->createNode(const_cast<NodeData*>(&node))) {
+        delete newNodeInterface;
+        abort();//FIXME do something more appropriate here
+      }
+      //newNode takes ownership of newNodeInterface, we do not need to delete it
+      newNode->setInterface(newNodeInterface);
+
+      if(control->graphics) {
+        //FIXME visual_rep & 1 is bullshit?!
+        NodeId id = control->graphics->addDrawObject(node, visual_rep & 1);
+        if(id) newNode->setGraphicsID(id); //TODO figure out what the graphics id does
+
+        // What is done here?
+        NodeData physicalRep;
+        physicalRep = node; //initialize from node
+        physicalRep.material = node.material; //FIXME maybe useless because is done one line above?
+        physicalRep.material.exists = true;
+        physicalRep.material.transparency = 0.3;
+        physicalRep.visual_offset_pos = Vector(0.0, 0.0, 0.0);
+        physicalRep.visual_offset_rot = Quaternion::Identity();
+        physicalRep.visual_size = physicalRep.ext;
+
+        if(node.physicMode != NODE_TYPE_TERRAIN) {
+          if(node.physicMode != NODE_TYPE_MESH) {
+            physicalRep.filename = "PRIMITIVE";
+            //physicalRep.filename = nodeS->filename;
+            if(node.physicMode > 0 && node.physicMode < NUMBER_OF_NODE_TYPES){
+              physicalRep.origName = NodeData::toString(node.physicMode);
+            }
+          }
+          id = control->graphics->addDrawObject(physicalRep, visual_rep & 2);
+          if(id) newNode->setGraphicsID2(id);
+        }
+        newNode->setVisualRep(visual_rep);
       }
     }
+    return newNode;
+  }
 
-    int TreeMars::test(){
-    
-  
-    }  
+  //FIXME this is not the right place for the update
+  void TreeMars::updateItemDynamics(sReal calc_ms, bool physics_thread) {
+    printf("update dynamics!!!");
+  }
 
   } // NS sim
 } // NS mars

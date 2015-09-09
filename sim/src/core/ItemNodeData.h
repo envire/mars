@@ -31,6 +31,7 @@
 
 #include "ItemMars.h"
 #include <mars/interfaces/NodeData.h>
+#include <memory>
 
 
 using namespace envire::core;
@@ -38,10 +39,16 @@ using namespace std;
 
 namespace mars {
   namespace sim {
+    class SimNode;
     	  
     class ItemNodeData : public ItemMars<mars::interfaces::NodeData>{
       public:
-        ItemNodeData(){};
+        ItemNodeData() : simNode(nullptr) {};
+
+        /**Every ItemNodeData has a corresponding node in the simulation.
+         * This is a pointer to that node. */
+        std::shared_ptr<SimNode> simNode;
+
     };
   }
 }

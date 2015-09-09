@@ -23,7 +23,7 @@
 
 /**
  * \file TreeMars.h
- * \author Raul Dominguez, Yong-Ho Yoo
+ * \author Raul Dominguez, Yong-Ho Yoo, Arne Böckmann
  *
  * The TreeMars class inherits from the EnvireTree which is used to represent
  * an environment. In this case the environment represented is the simulated
@@ -40,13 +40,14 @@
 #include <mars/interfaces/sim/TreeMarsInterface.h>
 #include "ItemNodeData.h"
 #include <string>
+#include <memory>
+#include <boost/smart_ptr/intrusive_ptr.hpp>
 
 namespace mars {
   namespace sim {
 
     using namespace envire::core;
     using namespace interfaces;
-    class SimJoint;
     class SimNode;
     
     typedef std::map<interfaces::NodeId, SimNode*> NodeMap;
@@ -58,7 +59,6 @@ namespace mars {
       public: 
         TreeMars(ControlCenter *c);
         virtual ~TreeMars(){}
-        virtual int test();
 
         //TODO There has to be a way to set multiple or no data elements
 
@@ -70,16 +70,23 @@ namespace mars {
          * @param location Location of the object. I.e. transformation from the
          *                 root node to the object.
          */
-        int addObject(const std::string& name,
-                       mars::interfaces::NodeData* nodeS,
-                       const envire::core::Transform& location);
+        void addObject(const std::string& name,
+                      const mars::interfaces::NodeData& node,
+                      const envire::core::Transform& location);
+
+
+        void updateItemDynamics(sReal calc_ms, bool physics_thread);
       protected:
+
+        //TODO maybe return graphics object as well?
+        //TODO decide whether shared_ptr or unique_ptr should be used
+        std::shared_ptr<SimNode> createSimNode(boost::intrusive_ptr<ItemNodeData> ind);
+
 
       interfaces::ControlCenter *control;
       
       NodeMap simNodes;          
-      NodeMap simNodesDyn; 
-      mutable utils::Mutex iMutex;   
+      NodeMap simNodesDyn; //contains the moveable nodes
       int visual_rep;
 
       //ItemNodeData itemNodeData;

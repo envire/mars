@@ -30,7 +30,6 @@
 #include "Simulator.h"
 #include "PhysicsMapper.h"
 #include "NodeManager.h"
-#include "ItemManager.h"   //Item
 #include "TreeMars.h"
 #include "ItemNodeData.h"
 
@@ -255,8 +254,6 @@ namespace mars {
       control->sensors = new SensorManager(control);
       control->controllers = new ControllerManager(control);
       control->entities = new EntityManager(control);
-
-      control->items = new ItemManager(control);   
       control->tree = new TreeMars(control);  
             
       control->controllers->setDefaultPort(std_port);
@@ -392,7 +389,7 @@ namespace mars {
       LOG_DEBUG("Step World: %ld", getTimeDiff(startTime));
 #endif
 
-      control->items->updateItemDynamics(calc_ms); //Moved update to here, otherwise RaySensor is one step behind the world every time
+      control->tree->updateItemDynamics(calc_ms, true); //Moved update to here, otherwise RaySensor is one step behind the world every time
 
       control->joints->updateJoints(calc_ms);
       control->motors->updateMotors(calc_ms);

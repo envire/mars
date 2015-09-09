@@ -13,10 +13,3 @@ rock_testsuite(test_suite
 target_link_libraries(test_suite
                       ${Boost_LIBRARIES})
                  
-                                                             
-rock_testsuite(test_ItemManager 
-               suite.cpp
-               test_ItemManager.cpp
-               DEPS mars_sim
-               DEPS_PKGCONFIG envire_core)
-               

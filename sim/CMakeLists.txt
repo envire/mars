@@ -76,8 +76,7 @@ set(SOURCES_H
        src/core/JointManager.h
        src/core/MotorManager.h
        src/core/NodeManager.h
-      
-       src/core/ItemManager.h       
+          
        src/core/ItemMars.h
        src/core/ItemNodeData.h
        src/core/TreeMars.h
@@ -131,10 +130,7 @@ set(TARGET_SRC
        src/core/JointManager.cpp
        src/core/MotorManager.cpp
        src/core/NodeManager.cpp
-       
-       src/core/ItemManager.cpp 
- 
-       
+            
        src/core/PhysicsMapper.cpp
        src/core/SensorManager.cpp
        src/core/SimEntity.cpp

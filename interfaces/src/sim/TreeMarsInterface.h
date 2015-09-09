@@ -35,42 +35,24 @@
   #warning "TreeMarsInterface.h"
 #endif
 
-#include "../sensor_bases.h"
-#include "../NodeData.h"
-#include "../nodeState.h"
+#include <string>
 
-#include <mars/utils/Vector.h>
-#include <mars/utils/Quaternion.h>
+namespace envire { namespace core
+{ 
+  class Transform; 
+}}
 
-namespace mars {
+namespace mars { namespace interfaces 
+{
+  class TreeMarsInterface {
+  public:
+    virtual ~TreeMarsInterface() {}
+    virtual void addObject(const std::string& name,
+                           const mars::interfaces::NodeData& node,
+                           const envire::core::Transform& location) = 0;
 
-  //namespace sim {
-    //class SimNode;
-  //};
-
-  namespace interfaces {
-
-    /**
-     * \author Yong-Ho Yoo \n
-     * \brief "ItemManagerInterface" declares the interfaces for all ItemOperations
-     * that are used for the communication between the simulation modules.
-     *
-     */
-    
-     
-    class TreeMarsInterface {
-    public:
-      virtual ~TreeMarsInterface() {}
-      virtual int test() = 0;
-      //virtual void minimalTest() = 0;
-      //virtual int addObject(const std::string& name,
-                       //const mars::interfaces::NodeData& data,
-                       //const envire::core::Transform& location) = 0;
-
- 
-    };
-
-  } // end of namespace interfaces
-} // end of namespace mars
+    virtual void updateItemDynamics(sReal calc_ms, bool physics_thread) = 0;
+};
+}} // end of namespace mars::interfaces
 
 #endif  // TREE_MARS_INTERFACE_H

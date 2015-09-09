@@ -90,7 +90,6 @@ namespace mars {
         sim = NULL;
         cfg = NULL;
         nodes  = NULL;
-        items = NULL;
         tree = NULL;
         joints = NULL;
         motors = NULL;
@@ -121,7 +120,6 @@ namespace mars {
        
       LoadCenter *loadCenter;
       
-      ItemManagerInterface *items;   
       TreeMarsInterface *tree;
     
      

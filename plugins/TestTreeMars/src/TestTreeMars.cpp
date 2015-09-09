@@ -30,6 +30,8 @@
 #include "TestTreeMars.h"
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
+#include <envire_core/Transform.hpp>
+#include <base/TransformWithCovariance.hpp>
 
 namespace mars {
   namespace plugins {
@@ -44,9 +46,21 @@ namespace mars {
       }
   
       void TestTreeMars::init() {
-        TreeMars* treeMars = new TreeMars(control);
-        TreeMarsInterface* treeMarsInterface = treeMars;
-        treeMarsInterface -> test();
+        NodeData nodeData;
+        nodeData.init("box", //name
+                      Vector(1,2,3)); //position
+
+        //we want a primitive object, not a mesh or something similar
+        nodeData.initPrimitive(NODE_TYPE_BOX,//node type (box, sphere, etc.)
+                               Vector(3, 1, 1),//extents (width, height, length)
+                               1);//mass
+
+        base::TransformWithCovariance tf;
+        tf.translation << 5, 1, 1;
+        envire::core::Transform t;
+        t.setTransform(tf);
+
+        control->tree->addObject("testObject", nodeData, t);
       }
 
       void TestTreeMars::reset() {
@@ -59,6 +73,7 @@ namespace mars {
       void TestTreeMars::update(sReal time_ms) {
 
         // control->motors->setMotorValue(id, value);
+        //call update here
       }
 
       void TestTreeMars::receiveData(const data_broker::DataInfo& info,
