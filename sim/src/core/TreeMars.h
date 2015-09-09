@@ -38,6 +38,7 @@
 #include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/TreeMarsInterface.h>
+#include <mars/utils/Mutex.h>
 #include "ItemNodeData.h"
 #include <string>
 #include <memory>
@@ -94,20 +95,10 @@ namespace mars {
         //TODO decide whether shared_ptr or unique_ptr should be used
         std::shared_ptr<SimNode> createSimNode(boost::intrusive_ptr<ItemNodeData> ind);
 
-
+      private:
       interfaces::ControlCenter *control;
-      
-      NodeMap simNodes;          
-      NodeMap simNodesDyn; //contains the moveable nodes
       int visual_rep;
-
-      //ItemNodeData itemNodeData;
-
-      interfaces::NodeId next_node_id;
-      bool update_all_nodes;
-
-      NodeMap nodesToUpdate;
-        
+      mars::utils::Mutex mutex; /**<Used to lock access to the tree structure */
         
     };
 

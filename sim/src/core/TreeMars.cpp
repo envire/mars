@@ -38,6 +38,7 @@
 #include "ItemMars.h"
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/interfaces/sim/SimulatorInterface.h>
+#include <mars/utils/MutexLocker.h>
 #include <assert.h>
 
 namespace mars {
@@ -60,6 +61,9 @@ namespace mars {
     void TreeMars::addObject(const string& name, const NodeData& node,
                              const Transform& location)
     {
+      //FIXME locking the whole method might be overkill
+      MutexLocker lock(&mutex);
+
       intrusive_ptr<ItemNodeData> item(new ItemNodeData());
       item->getData() = node;
       item->simNode = createSimNode(item);
@@ -134,7 +138,10 @@ namespace mars {
     return newNode;
   }
 
-  void TreeMars::updateItemDynamics(sReal calc_ms, bool physics_thread) {
+  void TreeMars::updateItemDynamics(sReal calc_ms, bool physics_thread)
+  {
+    //FIXME locking the whole method might be overkill
+    MutexLocker lock(&mutex);
     //this method is called by the simulator once per simulation step
     envire::core::TransformTree::edge_iterator it, end;
     for(boost::tie(it, end) = edges(); it != end; ++it)
@@ -171,6 +178,9 @@ namespace mars {
 
   void TreeMars::preGraphicsUpdate()
   {
+    //FIXME locking the whole method might be overkill
+    MutexLocker lock(&mutex);
+
     if(nullptr == control->graphics)
       return;
     envire::core::TransformTree::vertex_iterator it, end;
