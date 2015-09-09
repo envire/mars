@@ -78,9 +78,9 @@ namespace mars {
       void TestTreeMars::addBall(const std::string& name) {
 
 
-        const double x = (rand() % 4) - 2;
-        const double y = (rand() % 4) - 2;
-        const double z = (rand() % 4);
+        const double x = ((rand() % 40) - 20)/10.0;
+        const double y = ((rand() % 40) - 20)/10.0;
+        const double z = (rand() % 40)/10.0;
         NodeData sphereNode;
         sphereNode.init("sphere", //name
                       Vector(x,y,z)); //position
