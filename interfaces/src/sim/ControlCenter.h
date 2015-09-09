@@ -50,7 +50,6 @@
 
 // Include stddef for basic defs like NULL
 #include <cstddef>
-#include "ItemManagerInterface.h"
 
 namespace mars {
   namespace main_gui {
@@ -68,7 +67,6 @@ namespace mars {
   namespace interfaces {
     class ControlCenter;
     class NodeManagerInterface;
-    class ItemManagerInterface;   
     class TreeMarsInterface; 
     class JointManagerInterface;
     class MotorManagerInterface;
