@@ -44,6 +44,8 @@ pkg_check_modules(PKGCONFIG REQUIRED
                             mars_utils
                             configmaps
                             envire_core
+                            orocos_kdl
+                            kdl_parser
 )
 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})

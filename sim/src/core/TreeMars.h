@@ -48,6 +48,8 @@
 #include "PhysicsMapper.h"
 #include "SimEntity.h"
 
+#include "envire_core/Transform.hpp"
+#include <base/TransformWithCovariance.hpp>
 
 
 namespace mars {
@@ -72,6 +74,7 @@ namespace mars {
         virtual int test();
         // Generate the nodes according to a ConfigMap
         void loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, const configmaps::ConfigMap & map);
+        void loadRobotRec(boost::shared_ptr<urdf::ModelInterface> modelInterface, std::string startLinkName, std::vector<std::string>& visitedLinks, bool root=true);
       private:
         interfaces::ControlCenter *control;
         int visual_rep;

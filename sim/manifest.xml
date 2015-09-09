@@ -12,5 +12,6 @@
     <depend package="simulation/configmaps" />
     <depend package="simulation/ode" />
     <depend package="envire/core" />
+    <depend package="control/urdfdom" />
     <tags>needs_opt</tags>
 </package>
