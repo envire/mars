@@ -134,9 +134,73 @@ namespace mars {
     return newNode;
   }
 
-  //FIXME this is not the right place for the update
   void TreeMars::updateItemDynamics(sReal calc_ms, bool physics_thread) {
-    printf("update dynamics!!!");
+    printf("update \n");
+    //this method is called by the simulator once per simulation step
+    envire::core::TransformTree::edge_iterator it, end;
+    for(boost::tie(it, end) = edges(); it != end; ++it)
+    {
+      TransformTree::vertex_descriptor vertex = target(*it);
+      Frame& frame = getFrame(vertex);
+      for(intrusive_ptr<ItemBase>& i : frame.items)
+      {
+        //FIXME this cast sucks. Frame should be templated
+        intrusive_ptr<ItemNodeData> item = boost::dynamic_pointer_cast<ItemNodeData>(i);
+        assert(item != nullptr);//for now item needs to be of type ItemNodeData
+        assert(item->simNode != nullptr);//every item needs a sim node (this will probably change in the future)
+        if(item->getData().movable)
+        {
+          item->simNode->update(calc_ms, physics_thread);
+        }
+      }
+
+      //update corresponding edge in the graph based on the position and location
+      //of the first item in the list
+      if(!frame.items.empty())
+      {
+        //FIXME this assumes that all items move as one
+        intrusive_ptr<ItemNodeData> item = boost::dynamic_pointer_cast<ItemNodeData>(frame.items[0]);
+        assert(item != nullptr);//for now item needs to be of type ItemNodeData
+        assert(item->simNode != nullptr);//every item needs a sim node (this will probably change in the future)
+        Transform& tf = getTransform(it);
+        const base::TransformWithCovariance transform(base::AngleAxisd(item->simNode->getRotation()),
+                                                      item->simNode->getPosition());
+        tf.setTransform(transform);
+      }
+    }
+  }
+
+  void TreeMars::preGraphicsUpdate()
+  {
+    printf("graphics\n");
+    if(nullptr == control->graphics)
+      return;
+
+    envire::core::TransformTree::vertex_iterator it, end;
+    for(boost::tie(it, end) = vertices(); it != end; ++it)
+    {
+      Frame& frame = getFrame(it);
+      //FIXME this assumes that all items move together.
+      if(!frame.items.empty())
+      {
+        for(intrusive_ptr<ItemBase>& i : frame.items)
+        {
+          //FIXME this cast sucks. Frame should be templated
+          intrusive_ptr<ItemNodeData> item = boost::dynamic_pointer_cast<ItemNodeData>(i);
+          assert(item != nullptr);//for now item needs to be of type ItemNodeData
+          assert(item->simNode != nullptr);//every item needs a sim node (this will probably change in the future)
+          shared_ptr<SimNode> simNode = item->simNode;
+          control->graphics->setDrawObjectPos(simNode->getGraphicsID(),
+                                              simNode->getVisualPosition());
+          control->graphics->setDrawObjectRot(simNode->getGraphicsID(),
+                                              simNode->getVisualRotation());
+          control->graphics->setDrawObjectPos(simNode->getGraphicsID2(),
+                                              simNode->getPosition());
+          control->graphics->setDrawObjectRot(simNode->getGraphicsID2(),
+                                              simNode->getRotation());
+        }
+      }
+    }
   }
 
   } // NS sim

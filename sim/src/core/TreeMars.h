@@ -74,8 +74,20 @@ namespace mars {
                       const mars::interfaces::NodeData& node,
                       const envire::core::Transform& location);
 
-
+        /**Updates the physical state of the simulated items and
+         * their corresponding vertices.
+         * I.e. updates the nodes values from the physical layer
+         * and copies position and rotation over to the corresponding edge
+         * in the tree.
+         */
         void updateItemDynamics(sReal calc_ms, bool physics_thread);
+
+        /**Updates the position and rotation of the graphics objects
+         * corresponding to the nodes if the simulator is running in
+         * graphics mode (i.e. control->graphics exists).
+         * Otherwise does nothing.
+         */
+        virtual void preGraphicsUpdate();
       protected:
 
         //TODO maybe return graphics object as well?
