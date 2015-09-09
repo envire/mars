@@ -77,7 +77,7 @@ namespace mars {
         //FIXME edge is already in the graph and has been updated
         //      should this happen?
         abort();
-    }
+      }
   }
 
   std::shared_ptr<SimNode> TreeMars::createSimNode(intrusive_ptr<ItemNodeData> ind)
@@ -135,7 +135,6 @@ namespace mars {
   }
 
   void TreeMars::updateItemDynamics(sReal calc_ms, bool physics_thread) {
-    printf("update \n");
     //this method is called by the simulator once per simulation step
     envire::core::TransformTree::edge_iterator it, end;
     for(boost::tie(it, end) = edges(); it != end; ++it)
@@ -172,10 +171,8 @@ namespace mars {
 
   void TreeMars::preGraphicsUpdate()
   {
-    printf("graphics\n");
     if(nullptr == control->graphics)
       return;
-
     envire::core::TransformTree::vertex_iterator it, end;
     for(boost::tie(it, end) = vertices(); it != end; ++it)
     {
