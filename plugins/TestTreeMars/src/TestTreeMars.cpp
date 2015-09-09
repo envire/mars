@@ -54,11 +54,12 @@ namespace mars {
         nodeData.initPrimitive(NODE_TYPE_BOX,//node type (box, sphere, etc.)
                                Vector(3, 1, 1),//extents (width, height, length)
                                1);//mass
-
+        nodeData.movable = true;
         base::TransformWithCovariance tf;
         tf.translation << 5, 1, 1;
         envire::core::Transform t;
         t.setTransform(tf);
+
 
         control->tree->addObject("testObject", nodeData, t);
       }
