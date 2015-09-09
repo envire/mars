@@ -83,7 +83,10 @@ namespace mars {
         // TestTreeMars methods
 
       private:
+        void addBall(const std::string& name);//adds a ball at a random location with random weight
+      private:
         cfg_manager::cfgPropertyStruct example;
+        int drawingId;
 
       }; // end of class definition TestTreeMars
 

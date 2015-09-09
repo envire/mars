@@ -32,6 +32,8 @@
 #include <mars/data_broker/DataPackage.h>
 #include <envire_core/Transform.hpp>
 #include <base/TransformWithCovariance.hpp>
+#include <stdlib.h>
+#include <sstream>
 
 namespace mars {
   namespace plugins {
@@ -42,25 +44,10 @@ namespace mars {
       using namespace mars::sim;
 
       TestTreeMars::TestTreeMars(lib_manager::LibManager *theManager)
-        : MarsPluginTemplate(theManager, "TestTreeMars") {
+        : MarsPluginTemplate(theManager, "TestTreeMars"), drawingId(0) {
       }
   
       void TestTreeMars::init() {
-        NodeData sphereNode;
-        sphereNode.init("sphere", //name
-                      Vector(1,2,3)); //position
-
-        //we want a primitive object, not a mesh or something similar
-        sphereNode.initPrimitive(NODE_TYPE_SPHERE,//node type (box, sphere, etc.)
-                               Vector(0.1, 0.1, 0.1),//extents (width, height, length)
-                               0.1);//mass
-        sphereNode.movable = true;
-        base::TransformWithCovariance tf;
-        tf.translation << 1, 2, 3;
-        envire::core::Transform t;
-        t.setTransform(tf);
-        control->tree->addObject("testObject", sphereNode, t);
-
         NodeData boxNode;
         boxNode.init("box", //name
                       Vector(0,0,-1)); //position
@@ -71,11 +58,43 @@ namespace mars {
                                0.1);//mass
         boxNode.movable = false;
         boxNode.material.transparency = 0.5;
+        base::TransformWithCovariance tf;
         tf.translation << 0, 0, -1;
+        Transform t;
         t.setTransform(tf);
         control->tree->addObject("testObject", boxNode, t);
 
-        control->tree->drawDotFile("initial_tree.dot");
+        for(int i = 0; i < 500; ++i)
+        {
+          std::stringstream ss;
+          ss << "Ball " << i;
+          addBall(ss.str());
+        }
+
+        control->tree->drawDotFile("0000.dot");
+
+      }
+
+      void TestTreeMars::addBall(const std::string& name) {
+
+
+        const double x = (rand() % 4) - 2;
+        const double y = (rand() % 4) - 2;
+        const double z = (rand() % 4);
+        NodeData sphereNode;
+        sphereNode.init("sphere", //name
+                      Vector(x,y,z)); //position
+
+        //we want a primitive object, not a mesh or something similar
+        sphereNode.initPrimitive(NODE_TYPE_SPHERE,//node type (box, sphere, etc.)
+                               Vector(0.1, 0.1, 0.1),//extents (width, height, length)
+                               0.1);//mass
+        sphereNode.movable = true;
+        base::TransformWithCovariance tf;
+        tf.translation << x, y, z;
+        envire::core::Transform t;
+        t.setTransform(tf);
+        control->tree->addObject(name, sphereNode, t);
 
       }
 
@@ -87,15 +106,16 @@ namespace mars {
 
 
       void TestTreeMars::update(sReal time_ms) {
-
-        // control->motors->setMotorValue(id, value);
-        //call update here
+        //uncomment this to get one dot file for each step
+     //   drawingId++;
+     //   std::stringstream ss;
+     //   ss << std::setfill('0') << std::setw(4) << drawingId << ".dot";
+     //   control->tree->drawDotFile(ss.str());
       }
 
       void TestTreeMars::receiveData(const data_broker::DataInfo& info,
                                     const data_broker::DataPackage& package,
                                     int id) {
-        // package.get("force1/x", force);
       }
   
       void TestTreeMars::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
