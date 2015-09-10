@@ -35,11 +35,24 @@
 #endif
 
 #include <envire_core/TransformTree.hpp>
-#include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
+#include "envire_core/Transform.hpp"
+#include <base/TransformWithCovariance.hpp>
+
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/TreeMarsInterface.h>
+#include <mars/interfaces/sim/SimulatorInterface.h>
+#include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
+#include <mars/interfaces/graphics/GraphicsManagerInterface.h>
+
 #include <mars/utils/Mutex.h>
+
+#include <urdf_model/model.h>
+
+#include "SimNode.h"
 #include "ItemNodeData.h"
+#include "PhysicsMapper.h"
+#include "SimEntity.h"
+
 #include <string>
 #include <memory>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
@@ -60,6 +73,10 @@ namespace mars {
       public: 
         TreeMars(ControlCenter *c);
         virtual ~TreeMars(){}
+        // Generate the nodes according to a SMURF Model
+        void loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, const configmaps::ConfigMap & map);
+        void loadRobotRec(boost::shared_ptr<urdf::ModelInterface> modelInterface, std::string startLinkName, std::vector<std::string>& visitedLinks, bool root=true);
+
 
         //TODO There has to be a way to set multiple or no data elements
 
