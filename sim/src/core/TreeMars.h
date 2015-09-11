@@ -126,6 +126,7 @@ namespace mars {
         virtual void drawDotFile(const std::string& file) const;
 
         virtual NodeIdentifier getRoot() const;
+
       protected:
 
         //TODO maybe return graphics object as well?
@@ -137,6 +138,13 @@ namespace mars {
          * to the simulation.
          */
         std::shared_ptr<SimNode> createPhysicsInterface(boost::intrusive_ptr<ItemNodeData> ind) const;
+
+        void pose2Transform(const urdf::Pose & pose, 
+                            base::TransformWithCovariance & tf);
+
+        void nodeDataFromModel( NodeData & node,
+                                const std::string startLinkName,
+                                const base::TransformWithCovariance & rootToCurrent);
 
         void loadRobotRec(boost::shared_ptr<urdf::ModelInterface> modelInterface,
                           std::string startLinkName, std::vector<std::string>& visitedLinks,

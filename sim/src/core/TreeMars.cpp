@@ -221,13 +221,9 @@ namespace mars {
       gviz.write(*this, file);
     }
 
-    void TreeMars::loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, const configmaps::ConfigMap & map)
+    void TreeMars::loadRobot( boost::shared_ptr<urdf::ModelInterface> modelInterface, 
+                              const configmaps::ConfigMap & map)
     {
-      for( std::map<std::string, boost::shared_ptr<urdf::Joint > >::iterator  it=modelInterface->joints_.begin();it!=modelInterface->joints_.end();it++)
-      {
-        std::cout<< "visiting " <<it->first  <<std::endl;
-        std::cout<< "type " <<it->second->type  <<std::endl;
-      }
       // The ConfigMap includes information that by now is not included but
       // should be included soon
       std::vector<std::string>  visited;
@@ -235,6 +231,33 @@ namespace mars {
       loadRobotRec(modelInterface, modelInterface->getRoot()->name, visited,
                    isRoot, getRootNode(),
                    base::TransformWithCovariance());
+    }
+
+    void TreeMars::pose2Transform(const urdf::Pose & pose, 
+                                  base::TransformWithCovariance & tf)
+    {
+        // Move the conversion to a separate method
+        urdf::Rotation urotation = pose.rotation;
+        base::AngleAxisd rotation(Quaternion(urotation.x, urotation.y, urotation.z, urotation.w));
+        urdf::Vector3 uposition = pose.position;
+        base::Position translation;
+        translation.x() = uposition.x;
+        translation.y() = uposition.y;
+        translation.z() = uposition.z;
+        tf = base::TransformWithCovariance(rotation, translation);
+    }
+
+    void TreeMars::nodeDataFromModel( NodeData & nodeD, 
+                                      const std::string startLinkName,
+                                      const base::TransformWithCovariance & rootToCurrent)
+    {
+      //TODO Move this method to NodeData.
+      // We don't know yet where to get the data from
+      nodeD.init(startLinkName, rootToCurrent.translation,
+                 Quaternion(rootToCurrent.orientation));
+      //FIXME need to know width height length and mass
+      nodeD.initPrimitive(NODE_TYPE_BOX, Vector(0.05, 0.05, 0.05), 0.1);
+      nodeD.movable = true;
     }
 
     /*
@@ -246,40 +269,21 @@ namespace mars {
         std::string startLinkName, std::vector<std::string>& visitedLinks,
         bool root, NodeIdentifier parentNode, base::TransformWithCovariance rootToParent)
     {
-      // Let's first add just empty nodeData and null transformations
-      std::cout << "I am Link: " << startLinkName << std::endl;
-      // Think where to get the transform from
-      base::TransformWithCovariance tf;
-      Transform t; //the transform from parent to this node
-      if (root){
-        std::cout << "I am the root. I have no parent "<< std::endl;
-        tf = base::TransformWithCovariance();
-      }
-      else
-      {
+      // The transform from parent to this node for the TreeMars
+      base::TransformWithCovariance tf = base::TransformWithCovariance();
+      if (!root){ // Root node of the robot has no transformation
         boost::shared_ptr< urdf::Joint > parent = modelInterface -> getLink(startLinkName) -> parent_joint;
-        std::cout << "My parent Joint is: "<<  parent -> name <<std::endl;
         urdf::Pose parentRelPose = parent -> parent_to_joint_origin_transform;
-        std::cout << "My parent Joint transformation to parent is: "<< parentRelPose.position.x << "\n" << parentRelPose.position.y << "\n" << parentRelPose.position.z << "\n" << std::endl;
-        // Move the conversion to a separate method
-        urdf::Rotation urotation = parentRelPose.rotation;
-        base::AngleAxisd rotation(Quaternion(urotation.x, urotation.y, urotation.z, urotation.w));
-        urdf::Vector3 uposition = parentRelPose.position;
-        base::Position translation;
-        translation.x() = uposition.x;
-        translation.y() = uposition.y;
-        translation.z() = uposition.z;
-        tf = base::TransformWithCovariance(rotation, translation);
+        pose2Transform(parentRelPose, tf);
       }
+      Transform t; 
       t.setTransform(tf);
+      // For creating a Node in the Simulation we need its absolute transformation
       const base::TransformWithCovariance rootToCurrent = rootToParent.composition(tf);
       NodeData nodeD;
-      nodeD.init(startLinkName, rootToCurrent.translation,
-                 Quaternion(rootToCurrent.orientation));
-      //FIXME need to know width height length and mass
-      nodeD.initPrimitive(NODE_TYPE_BOX, Vector(0.05, 0.05, 0.05), 0.1);
-      nodeD.movable = true;
+      nodeDataFromModel(nodeD, startLinkName, rootToCurrent);
       NodeIdentifier newParent = addObject(startLinkName, nodeD, t, parentNode);
+      // Continue the tree exploration:
       visitedLinks.push_back(startLinkName);
       std::vector<boost::shared_ptr<urdf::Link> > child_links = modelInterface->getLink(startLinkName)->child_links;
       for(std::size_t i=0; i<child_links.size();i++)
