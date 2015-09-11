@@ -59,8 +59,9 @@ namespace mars {
       }
     }
 
-    void TreeMars::addObject(const string& name, const NodeData& node,
-                             const Transform& location)
+    mars::interfaces::NodeIdentifier TreeMars::addObject(const string& name,
+        const NodeData& node, const Transform& location,
+        const NodeIdentifier& parent)
     {
       //FIXME locking the whole method might be overkill
       MutexLocker lock(&mutex);
@@ -76,13 +77,14 @@ namespace mars {
       TransformTree::vertex_descriptor treeNode = add_vertex(frame);
 
       std::pair<TransformTree::edge_descriptor, bool> result;
-	    result = add_edge(getRootNode(), treeNode, location);
+	    result = add_edge(parent, treeNode, location);
       if(!result.second)
       {
         //FIXME edge is already in the graph and has been updated
         //      should this happen?
         abort();
       }
+      return treeNode;
   }
 
   std::shared_ptr<SimNode> TreeMars::createSimNode(intrusive_ptr<ItemNodeData> ind)
@@ -209,6 +211,11 @@ namespace mars {
         }
       }
     }
+  }
+
+  NodeIdentifier TreeMars::getRoot() const
+  {
+    return getRootNode();
   }
 
 

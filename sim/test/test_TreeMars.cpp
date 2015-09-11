@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(add_objects)
       tf.translation << i, i * 2, i * 3;
       Transform t;
       t.setTransform(tf);
-      tree.addObject("test " + boost::lexical_cast<std::string>(i), d, t);
+      tree.addObject("test " + boost::lexical_cast<std::string>(i), d, t, tree.getRoot());
     }
     GraphViz gviz;
     gviz.write(tree, "graphviz_boost_test_tree_mars_add_object.dot");

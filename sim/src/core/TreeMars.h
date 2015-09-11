@@ -88,9 +88,10 @@ namespace mars {
          * @param location Location of the object. I.e. transformation from the
          *                 parent node to the object.
          */
-        void addObject(const std::string& name,
-                      const mars::interfaces::NodeData& node,
-                      const envire::core::Transform& location);
+        NodeIdentifier addObject(const std::string& name,
+                                 const mars::interfaces::NodeData& node,
+                                 const envire::core::Transform& location,
+                                 const NodeIdentifier& parent);
 
         /**Updates the physical state of the simulated items and
          * their corresponding vertices.
@@ -109,6 +110,8 @@ namespace mars {
 
         //draws the current tree structure to a dot file */
         virtual void drawDotFile(const std::string& file) const;
+
+        virtual NodeIdentifier getRoot() const;
       protected:
 
         //TODO maybe return graphics object as well?

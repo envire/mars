@@ -37,6 +37,7 @@
 
 #include <string>
 #include <mars/interfaces/MARSDefs.h>
+#include <envire_core/TransformTree.hpp>
 
 namespace envire { namespace core
 { 
@@ -46,6 +47,11 @@ namespace envire { namespace core
 namespace mars { namespace interfaces 
 {
   class NodeData;
+
+  //Never use vertex_descriptor directly as it might change in the future
+  //vertex_descriptor is only visible here because c++ lacks a good way to
+  //encapsulate it.
+  typedef envire::core::TransformTree::vertex_descriptor NodeIdentifier;
 
   class TreeMarsInterface {
   public:
@@ -58,10 +64,13 @@ namespace mars { namespace interfaces
      * @param data The data that should be inserted into the frame
      * @param location Location of the object. I.e. transformation from the
      *                 parent node to the object.
+     * @param parent The parent node.
+     * @return An object that can be used to identify the node that was just created.
      */
-    virtual void addObject(const std::string& name,
-                           const mars::interfaces::NodeData& node,
-                           const envire::core::Transform& location) = 0;
+    virtual NodeIdentifier addObject(const std::string& name,
+                                     const mars::interfaces::NodeData& node,
+                                     const envire::core::Transform& location,
+                                     const NodeIdentifier& parent) = 0;
     /**Updates the physical state of the simulated items and
      * their corresponding vertices.
      * I.e. updates the nodes values from the physical layer
@@ -71,6 +80,9 @@ namespace mars { namespace interfaces
     virtual void updateItemDynamics(sReal calc_ms, bool physics_thread) = 0;
     //draws the current tree structure to a dot file */
     virtual void drawDotFile(const std::string& file) const = 0;
+
+    virtual NodeIdentifier getRoot() const = 0;
+
 };
 }} // end of namespace mars::interfaces
 

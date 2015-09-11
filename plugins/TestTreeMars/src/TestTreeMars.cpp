@@ -62,7 +62,7 @@ namespace mars {
         tf.translation << 0, 0, -1;
         Transform t;
         t.setTransform(tf);
-        control->tree->addObject("testObject", boxNode, t);
+        control->tree->addObject("testObject", boxNode, t, control->tree->getRoot());
 
         for(int i = 0; i < 500; ++i)
         {
@@ -94,7 +94,7 @@ namespace mars {
         tf.translation << x, y, z;
         envire::core::Transform t;
         t.setTransform(tf);
-        control->tree->addObject(name, sphereNode, t);
+        control->tree->addObject(name, sphereNode, t, control->tree->getRoot());
 
       }
 
