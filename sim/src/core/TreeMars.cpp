@@ -239,7 +239,8 @@ namespace mars {
     std::vector<std::string>  visited;
     bool isRoot = true;
     loadRobotRec(modelInterface, modelInterface->getRoot()->name, visited,
-                 isRoot, getRootNode());
+                 isRoot, getRootNode(),
+                 base::TransformWithCovariance());
   }
 
   /*
@@ -249,13 +250,13 @@ namespace mars {
    */
   void TreeMars::loadRobotRec(boost::shared_ptr<urdf::ModelInterface> modelInterface,
       std::string startLinkName, std::vector<std::string>& visitedLinks,
-      bool root, NodeIdentifier parentNode)
+      bool root, NodeIdentifier parentNode, base::TransformWithCovariance rootToParent)
   {
     // Let's first add just empty nodeData and null transformations
     std::cout << "I am Link: " << startLinkName << std::endl;
     // Think where to get the transform from
     base::TransformWithCovariance tf;
-    envire::core::Transform t;
+    Transform t; //the transform from parent to this node
     if (root){
       std::cout << "I am the root. I have no parent "<< std::endl;
       tf = base::TransformWithCovariance();
@@ -268,33 +269,19 @@ namespace mars {
       std::cout << "My parent Joint transformation to parent is: "<< parentRelPose.position.x << "\n" << parentRelPose.position.y << "\n" << parentRelPose.position.z << "\n" << std::endl;
       // Move the conversion to a separate method
       urdf::Rotation urotation = parentRelPose.rotation;
-      Eigen::Quaterniond tempQ;
-      double &x = tempQ.x();
-      double &y = tempQ.y();
-      double &z = tempQ.z();
-      double &w = tempQ.w();
-      x = urotation.x;
-      y = urotation.y;
-      z = urotation.z;
-      w = urotation.w;
-      base::AngleAxisd rotation(tempQ);
+      base::AngleAxisd rotation(Quaternion(urotation.x, urotation.y, urotation.z, urotation.w));
       urdf::Vector3 uposition = parentRelPose.position;
-      x = uposition.x;
-      y = uposition.y;
-      z = uposition.z;
       base::Position translation;
-      double &px = translation.x();
-      double &py = translation.y();
-      double &pz = translation.z();
-      px = uposition.x;
-      py = uposition.y;
-      pz = uposition.z;
+      translation.x() = uposition.x;
+      translation.y() = uposition.y;
+      translation.z() = uposition.z;
       tf = base::TransformWithCovariance(rotation, translation);
     }
     t.setTransform(tf);
+    const base::TransformWithCovariance rootToCurrent = rootToParent.composition(tf);
     NodeData nodeD;
-    //FIXME why is position zero?
-    nodeD.init(startLinkName, t.transform.translation, base::Quaterniond(t.transform.orientation)); //position
+    nodeD.init(startLinkName, rootToCurrent.translation,
+               Quaternion(rootToCurrent.orientation));
     //FIXME need to know width height length and weight
     nodeD.initPrimitive(NODE_TYPE_BOX, Vector(0.1, 0.1, 0.1), 0.1);
     nodeD.movable = true;
@@ -306,7 +293,8 @@ namespace mars {
       std::string child_link_name = child_links.at(i)->name;
       bool visited = (std::find(std::begin(visitedLinks), std::end(visitedLinks), child_link_name)!=std::end(visitedLinks));
       if (!visited)
-        loadRobotRec(modelInterface, child_link_name, visitedLinks, false, newParent);
+        loadRobotRec(modelInterface, child_link_name, visitedLinks, false,
+                     newParent, rootToCurrent);
     }
   }
 

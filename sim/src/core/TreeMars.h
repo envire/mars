@@ -86,8 +86,11 @@ namespace mars {
          * (including physics) of the object to the mars scene graph.
          *
          * @param name The name of the frame that will be inserted into the tree
-         * @param data The data that should be inserted into the frame
-         * @param location Location of the object. I.e. transformation from the
+         * @param data Describes what kind of item should be inserted into the
+         *             simulation.
+         *             Note: Position and orientation should be in the simulator
+         *                   coordinate frame. I.e. in the root frame.
+         * @param location Relative location of the object. I.e. transformation from the
          *                 parent node to the object.
          */
         NodeIdentifier addObject(const std::string& name,
@@ -122,7 +125,7 @@ namespace mars {
 
         void loadRobotRec(boost::shared_ptr<urdf::ModelInterface> modelInterface,
                           std::string startLinkName, std::vector<std::string>& visitedLinks,
-                          bool root, NodeIdentifier parentNode);
+                          bool root, NodeIdentifier parentNode, base::TransformWithCovariance rootToParent);
 
       private:
       interfaces::ControlCenter *control;
