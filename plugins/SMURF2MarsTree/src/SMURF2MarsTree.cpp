@@ -70,6 +70,7 @@ namespace mars {
         // Make the tree load the model and configMap
 
         control->tree->loadRobot(modelInterface, *map);
+        control->tree->drawDotFile("smurf.dot");
         // Plot the Tree
         /*
         typedef configmaps::ConfigMap::const_iterator MapIterator;
