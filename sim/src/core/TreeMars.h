@@ -123,9 +123,16 @@ namespace mars {
         //TODO decide whether shared_ptr or unique_ptr should be used
         std::shared_ptr<SimNode> createSimNode(boost::intrusive_ptr<ItemNodeData> ind);
 
+        /**
+         * Creates a physics object corresponding to the specified data and adds it
+         * to the simulation.
+         */
+        std::shared_ptr<SimNode> createPhysicsInterface(boost::intrusive_ptr<ItemNodeData> ind) const;
+
         void loadRobotRec(boost::shared_ptr<urdf::ModelInterface> modelInterface,
                           std::string startLinkName, std::vector<std::string>& visitedLinks,
-                          bool root, NodeIdentifier parentNode, base::TransformWithCovariance rootToParent);
+                          bool root, NodeIdentifier parentNode,
+                          base::TransformWithCovariance rootToParent);
 
       private:
       interfaces::ControlCenter *control;
