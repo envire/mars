@@ -67,12 +67,9 @@ namespace mars {
         std::cout << "Shared Pointer to modelInterface" << std::endl;
         modelInterface = parseFile(map, path, fileName, expandURIs);
         std::cout << "parseFile executed" << std::endl;
-        // Create a Tree
-        mars::sim::TreeMars* tree = new mars::sim::TreeMars(control);
-        std::cout << "Pointer to the Tree created" << std::endl;
         // Make the tree load the model and configMap
 
-        tree -> loadRobot(modelInterface, *map);
+        control->tree->loadRobot(modelInterface, *map);
         // Plot the Tree
         /*
         typedef configmaps::ConfigMap::const_iterator MapIterator;

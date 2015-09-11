@@ -39,6 +39,7 @@
 #include <mars/utils/MutexLocker.h>
 #include <assert.h>
 #include <envire_core/GraphViz.hpp>
+#include <urdf_model/model.h>
 
 namespace mars {
   namespace sim {
@@ -225,89 +226,89 @@ namespace mars {
     GraphViz gviz;
     gviz.write(*this, file);
   }
-    void TreeMars::loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, const configmaps::ConfigMap & map)
-    {
-      for( std::map<std::string, boost::shared_ptr<urdf::Joint > >::iterator  it=modelInterface->joints_.begin();it!=modelInterface->joints_.end();it++)
-      {
-        std::cout<< "visiting " <<it->first  <<std::endl;
-        std::cout<< "type " <<it->second->type  <<std::endl;
-      }
-      // The ConfigMap includes information that by now is not included but
-      // should be included soon
-      std::vector<std::string>  visited;
-      bool isRoot = true;
-      loadRobotRec(modelInterface, modelInterface->getRoot()->name, visited, isRoot);
-    }
 
-    /*
-     * \brief Deep First Strategy to explore the URDF tree and create the
-     * correspondent NodeData objects and transformations.
-     * 
-     */
-    void TreeMars::loadRobotRec(boost::shared_ptr<urdf::ModelInterface> modelInterface, std::string startLinkName, std::vector<std::string>& visitedLinks, bool root)
+  void TreeMars::loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, const configmaps::ConfigMap & map)
+  {
+    for( std::map<std::string, boost::shared_ptr<urdf::Joint > >::iterator  it=modelInterface->joints_.begin();it!=modelInterface->joints_.end();it++)
     {
-      // Let's first add just empty nodeData and null transformations
-      std::cout << "I am Link: " << startLinkName << std::endl;
-      // Think where to get the transform from
-      base::TransformWithCovariance tf;
-      envire::core::Transform t;
-      if (root){
-        std::cout << "I am the root. I have no parent "<< std::endl;
-        tf = base::TransformWithCovariance();
-      }
-      else
-      {
-        boost::shared_ptr< urdf::Joint > parent = modelInterface -> getLink(startLinkName) -> parent_joint;
-        std::cout << "My parent Joint is: "<<  parent -> name <<std::endl;
-        urdf::Pose parentRelPose = parent -> parent_to_joint_origin_transform;
-        std::cout << "My parent Joint transformation to parent is: "<< parentRelPose.position.x << "\n" << parentRelPose.position.y << "\n" << parentRelPose.position.z << "\n" << std::endl;
-        // Move the conversion to a separate method
-        urdf::Rotation urotation = parentRelPose.rotation;
-        Eigen::Quaterniond tempQ;
-        double &x = tempQ.x();
-        double &y = tempQ.y();
-        double &z = tempQ.z();
-        double &w = tempQ.w();
-        x = urotation.x;
-        y = urotation.y;
-        z = urotation.z;
-        w = urotation.w;
-        base::AngleAxisd rotation(tempQ);
-        urdf::Vector3 uposition = parentRelPose.position;
-        x = uposition.x;
-        y = uposition.y;
-        z = uposition.z;
-        base::Position translation;
-        double &px = translation.x();
-        double &py = translation.y();
-        double &pz = translation.z();
-        px = uposition.x;
-        py = uposition.y;
-        pz = uposition.z;
-        tf = base::TransformWithCovariance(rotation, translation);
-      }
-      t.setTransform(tf);
-      NodeData nodeD;
-      // Configure the object in the node
-      const std::string &name = startLinkName;
-      nodeD.pos = utils::Vector::Zero();
-      nodeD.name = name;
-      nodeD.movable = true;
-      nodeD.physicMode = NODE_TYPE_BOX;
-      nodeD.index=0;
-      nodeD.noPhysical = false;
-      nodeD.inertia_set=true;
-      // this.addItem(nodeD, t);
-      visitedLinks.push_back(startLinkName);
-      std::vector<boost::shared_ptr<urdf::Link> > child_links = modelInterface->getLink(startLinkName)->child_links;
-      for(std::size_t i=0; i<child_links.size();i++)
-      {
-        std::string child_link_name = child_links.at(i)->name;
-        bool visited = (std::find(std::begin(visitedLinks), std::end(visitedLinks), child_link_name)!=std::end(visitedLinks));
-        if (!visited)
-          loadRobotRec(modelInterface, child_link_name, visitedLinks, false);
-      }
+      std::cout<< "visiting " <<it->first  <<std::endl;
+      std::cout<< "type " <<it->second->type  <<std::endl;
     }
+    // The ConfigMap includes information that by now is not included but
+    // should be included soon
+    std::vector<std::string>  visited;
+    bool isRoot = true;
+    loadRobotRec(modelInterface, modelInterface->getRoot()->name, visited,
+                 isRoot, getRootNode());
+  }
+
+  /*
+   * \brief Deep First Strategy to explore the URDF tree and create the
+   * correspondent NodeData objects and transformations.
+   *
+   */
+  void TreeMars::loadRobotRec(boost::shared_ptr<urdf::ModelInterface> modelInterface,
+      std::string startLinkName, std::vector<std::string>& visitedLinks,
+      bool root, NodeIdentifier parentNode)
+  {
+    // Let's first add just empty nodeData and null transformations
+    std::cout << "I am Link: " << startLinkName << std::endl;
+    // Think where to get the transform from
+    base::TransformWithCovariance tf;
+    envire::core::Transform t;
+    if (root){
+      std::cout << "I am the root. I have no parent "<< std::endl;
+      tf = base::TransformWithCovariance();
+    }
+    else
+    {
+      boost::shared_ptr< urdf::Joint > parent = modelInterface -> getLink(startLinkName) -> parent_joint;
+      std::cout << "My parent Joint is: "<<  parent -> name <<std::endl;
+      urdf::Pose parentRelPose = parent -> parent_to_joint_origin_transform;
+      std::cout << "My parent Joint transformation to parent is: "<< parentRelPose.position.x << "\n" << parentRelPose.position.y << "\n" << parentRelPose.position.z << "\n" << std::endl;
+      // Move the conversion to a separate method
+      urdf::Rotation urotation = parentRelPose.rotation;
+      Eigen::Quaterniond tempQ;
+      double &x = tempQ.x();
+      double &y = tempQ.y();
+      double &z = tempQ.z();
+      double &w = tempQ.w();
+      x = urotation.x;
+      y = urotation.y;
+      z = urotation.z;
+      w = urotation.w;
+      base::AngleAxisd rotation(tempQ);
+      urdf::Vector3 uposition = parentRelPose.position;
+      x = uposition.x;
+      y = uposition.y;
+      z = uposition.z;
+      base::Position translation;
+      double &px = translation.x();
+      double &py = translation.y();
+      double &pz = translation.z();
+      px = uposition.x;
+      py = uposition.y;
+      pz = uposition.z;
+      tf = base::TransformWithCovariance(rotation, translation);
+    }
+    t.setTransform(tf);
+    NodeData nodeD;
+    //FIXME why is position zero?
+    nodeD.init(startLinkName, t.transform.translation, base::Quaterniond(t.transform.orientation)); //position
+    //FIXME need to know width height length and weight
+    nodeD.initPrimitive(NODE_TYPE_BOX, Vector(0.1, 0.1, 0.1), 0.1);
+    nodeD.movable = true;
+    NodeIdentifier newParent = addObject(startLinkName, nodeD, t, parentNode);
+    visitedLinks.push_back(startLinkName);
+    std::vector<boost::shared_ptr<urdf::Link> > child_links = modelInterface->getLink(startLinkName)->child_links;
+    for(std::size_t i=0; i<child_links.size();i++)
+    {
+      std::string child_link_name = child_links.at(i)->name;
+      bool visited = (std::find(std::begin(visitedLinks), std::end(visitedLinks), child_link_name)!=std::end(visitedLinks));
+      if (!visited)
+        loadRobotRec(modelInterface, child_link_name, visitedLinks, false, newParent);
+    }
+  }
 
   } // NS sim
 } // NS mars

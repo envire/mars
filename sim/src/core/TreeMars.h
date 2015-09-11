@@ -46,8 +46,6 @@
 
 #include <mars/utils/Mutex.h>
 
-#include <urdf_model/model.h>
-
 #include "SimNode.h"
 #include "ItemNodeData.h"
 #include "PhysicsMapper.h"
@@ -57,6 +55,10 @@
 #include <memory>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 
+namespace urdf
+{
+  class ModelInterface;
+}
 namespace mars {
   namespace sim {
 
@@ -73,10 +75,10 @@ namespace mars {
       public: 
         TreeMars(ControlCenter *c);
         virtual ~TreeMars(){}
-        // Generate the nodes according to a SMURF Model
-        void loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface, const configmaps::ConfigMap & map);
-        void loadRobotRec(boost::shared_ptr<urdf::ModelInterface> modelInterface, std::string startLinkName, std::vector<std::string>& visitedLinks, bool root=true);
 
+        // Generate the nodes according to a SMURF Model
+        virtual void loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface,
+                               const configmaps::ConfigMap & map);
 
         //TODO There has to be a way to set multiple or no data elements
 
@@ -117,6 +119,10 @@ namespace mars {
         //TODO maybe return graphics object as well?
         //TODO decide whether shared_ptr or unique_ptr should be used
         std::shared_ptr<SimNode> createSimNode(boost::intrusive_ptr<ItemNodeData> ind);
+
+        void loadRobotRec(boost::shared_ptr<urdf::ModelInterface> modelInterface,
+                          std::string startLinkName, std::vector<std::string>& visitedLinks,
+                          bool root, NodeIdentifier parentNode);
 
       private:
       interfaces::ControlCenter *control;

@@ -38,11 +38,21 @@
 #include <string>
 #include <mars/interfaces/MARSDefs.h>
 #include <envire_core/TransformTree.hpp>
-
+#include <boost/smart_ptr/shared_ptr.hpp>
 namespace envire { namespace core
 { 
   class Transform; 
 }}
+
+namespace urdf
+{
+  class ModelInterface;
+}
+
+namespace configmaps
+{
+  class ConfigMap;
+}
 
 namespace mars { namespace interfaces 
 {
@@ -78,8 +88,13 @@ namespace mars { namespace interfaces
      * in the tree.
     */
     virtual void updateItemDynamics(sReal calc_ms, bool physics_thread) = 0;
+
     //draws the current tree structure to a dot file */
     virtual void drawDotFile(const std::string& file) const = 0;
+
+    // Generate the nodes according to a SMURF Model
+    virtual void loadRobot(boost::shared_ptr<urdf::ModelInterface> modelInterface,
+                           const configmaps::ConfigMap& map) = 0;
 
     virtual NodeIdentifier getRoot() const = 0;
 
