@@ -27,19 +27,8 @@
  * one.
  */
 
-#include "PhysicsMapper.h"
-#include <mars/interfaces/utils.h>
-#include <mars/utils/MutexLocker.h>
-#include "ItemNodeData.h"
+
 #include "TreeMars.h"
-#include "SimNode.h"
-#include "ItemMars.h"
-#include <mars/interfaces/graphics/GraphicsManagerInterface.h>
-#include <mars/interfaces/sim/SimulatorInterface.h>
-#include <mars/utils/MutexLocker.h>
-#include <assert.h>
-#include <envire_core/GraphViz.hpp>
-#include <urdf_model/model.h>
 
 namespace mars {
   namespace sim {

@@ -36,6 +36,8 @@
 
 #include <envire_core/TransformTree.hpp>
 #include "envire_core/Transform.hpp"
+#include <envire_core/GraphViz.hpp>
+
 #include <base/TransformWithCovariance.hpp>
 
 #include <mars/interfaces/sim/ControlCenter.h>
@@ -43,17 +45,24 @@
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
+#include <mars/interfaces/utils.h>
 
 #include <mars/utils/Mutex.h>
+#include <mars/utils/MutexLocker.h>
 
 #include "SimNode.h"
 #include "ItemNodeData.h"
 #include "PhysicsMapper.h"
 #include "SimEntity.h"
+#include "ItemMars.h"
 
 #include <string>
 #include <memory>
+#include <assert.h>
+
 #include <boost/smart_ptr/intrusive_ptr.hpp>
+
+#include <urdf_model/model.h>
 
 namespace urdf
 {
