@@ -79,7 +79,7 @@ set(SOURCES_H
           
        src/core/ItemMars.h
        src/core/ItemNodeData.h
-       src/core/TreeMars.h
+#       src/core/TreeMars.h
        
        src/core/PhysicsMapper.h
        src/core/SensorManager.h
@@ -138,7 +138,7 @@ set(TARGET_SRC
        src/core/SimMotor.cpp
        src/core/SimNode.cpp
        src/core/Simulator.cpp
-       src/core/TreeMars.cpp
+#       src/core/TreeMars.cpp
        src/sensors/MultiLevelLaserRangeFinder.cpp
        src/sensors/RotatingRaySensor.cpp
 
