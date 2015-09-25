@@ -179,7 +179,8 @@ namespace mars {
       std::string filename = (std::string)entityconfig["file"];
       fprintf(stderr, "SMURF::createEntity: Creating entity of type %s\n", ((std::string)entityconfig["type"]).c_str());
       if((std::string)entityconfig["type"] == "smurf") {
-        model = smurf_parser::parseFile(&entityconfig, path, filename, true);
+        std::cout << "Complete Path 2: " << path << filename << std::endl;
+        model = smurf_parser::parseFile(&entityconfig, path, filename, false);
         debugMap.append(entityconfig);
         // TODO: we should have a system that first loads the URDF and then the other files in
         //   order of priority (or sort the contents in a way as to avoid errors upon loading).

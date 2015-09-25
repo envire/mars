@@ -52,11 +52,10 @@ namespace mars {
 
   
       void SMURF2MarsTree::init() {
-
         std::cout << "Init method start" << std::endl;
         // Create configMap
         //
-        configmaps::ConfigMap* map = new configmaps::ConfigMap;
+        configmaps::ConfigMap map;// = new configmaps::ConfigMap;
         std::cout << "Create configMap" << std::endl;
         // Update the configMap from a Smurf file
         std::string path = std::string(std::getenv("AUTOPROJ_CURRENT_ROOT")) + "/models/robots/asguard_v4/smurf/";
@@ -65,32 +64,23 @@ namespace mars {
         bool expandURIs = false;
         boost::shared_ptr<urdf::ModelInterface> modelInterface;
         std::cout << "Shared Pointer to modelInterface" << std::endl;
-        modelInterface = parseFile(map, path, fileName, expandURIs);
+        modelInterface = parseFile(&map, path, fileName, expandURIs);
+        map["path"] = path;
+        map["file"] = fileName;
+        map["type"] = "smurf";
         std::cout << "parseFile executed" << std::endl;
-        // Make the tree load the model and configMap
+        std::cout << "map[path]: " << (std::string)map["path"] << std::endl;
+        map.toYamlFile("map.yml");
 
-        control->tree->loadRobot(modelInterface, *map);
+
+        control->tree->loadRobot(modelInterface, map);
         control->tree->drawDotFile("smurf.dot");
-        // Plot the Tree
-        /*
-        typedef configmaps::ConfigMap::const_iterator MapIterator;
-        typedef configmaps::ConfigVectorTemplate<configmaps::ConfigItem>::const_iterator VectorIterator;
-        for (MapIterator iter = map -> begin(); iter != map -> end(); iter++)
-        {
-          cout << "Key: " << iter->first << endl;
-          for (VectorIterator iterV = iter-> second.begin(); iterV != iter-> second.end(); iterV++)
-          {
-            cout << "Vector item: " << iterV -> toString() << endl;
-          }
-        }
 
-        std::string path2 = (std::string)(map->operator[]("path"));
-        std::cout << "Path 2: " << path2 << std::endl;
-        std::string filename2 = (std::string)(map->operator[]("file"));
-        std::cout << "Filename 2: " << filename2 << std::endl;
-        sim::SimEntity* entity = smurf.createEntity(*map);
-        */
-
+        // Make the tree load the model and configMap
+        sim::SimEntity* entity = smurf.createEntity(map);
+        std::cout << "Print Nodes:" << std::endl;
+        entity -> printNodes();
+        std::cout << "End Print Nodes" << std::endl;
 
       }
 

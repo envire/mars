@@ -224,6 +224,8 @@ namespace mars {
     void TreeMars::loadRobot( boost::shared_ptr<urdf::ModelInterface> modelInterface, 
                               const configmaps::ConfigMap & map)
     {
+      // I think that the best way to go is to use the SMURF class, but make it independent of the NodeManager
+      //
       // The ConfigMap includes information that by now is not included but
       // should be included soon
       std::vector<std::string>  visited;
@@ -247,7 +249,8 @@ namespace mars {
         tf = base::TransformWithCovariance(rotation, translation);
     }
 
-    void TreeMars::nodeDataFromModel( NodeData & nodeD, 
+    void TreeMars::nodeDataFromModel( const boost::shared_ptr<const urdf::Link> & link,
+                                      NodeData & nodeD, 
                                       const std::string startLinkName,
                                       const base::TransformWithCovariance & rootToCurrent)
     {
@@ -255,6 +258,10 @@ namespace mars {
       // We don't know yet where to get the data from
       nodeD.init(startLinkName, rootToCurrent.translation,
                  Quaternion(rootToCurrent.orientation));
+      // The Create Entity method generates an object which contains all the
+      // nodes that belong to the robot from the model
+      //boost::shared_ptr<urdf::Geometry> myGeometry = link -> collision -> geometry;
+      //std::cout << "My collision geometry type is" << myGeometry -> type << std::endl;
       //FIXME need to know width height length and mass
       nodeD.initPrimitive(NODE_TYPE_BOX, Vector(0.05, 0.05, 0.05), 0.1);
       nodeD.movable = true;
@@ -279,9 +286,10 @@ namespace mars {
       Transform t; 
       t.setTransform(tf);
       // For creating a Node in the Simulation we need its absolute transformation
+      // With the pointer to a link we can obtain the global pose with SMURF::getGlobalPose, so we don't have to pass over the accummulated transformation...
       const base::TransformWithCovariance rootToCurrent = rootToParent.composition(tf);
       NodeData nodeD;
-      nodeDataFromModel(nodeD, startLinkName, rootToCurrent);
+      nodeDataFromModel(modelInterface -> getLink(startLinkName), nodeD, startLinkName, rootToCurrent);
       NodeIdentifier newParent = addObject(startLinkName, nodeD, t, parentNode);
       // Continue the tree exploration:
       visitedLinks.push_back(startLinkName);

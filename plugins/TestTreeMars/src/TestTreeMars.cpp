@@ -34,6 +34,7 @@
 #include <base/TransformWithCovariance.hpp>
 #include <stdlib.h>
 #include <sstream>
+#include <mars/utils/mathUtils.h>
 
 namespace mars {
   namespace plugins {
@@ -50,7 +51,9 @@ namespace mars {
       void TestTreeMars::init() {
         NodeData boxNode;
         boxNode.init("box", //name
-                      Vector(0,0,-1)); //position
+                      Vector(0,0,-1),
+                      mars::utils::angleAxisToQuaternion(0.25, Vector(1,0,0) )
+                      ); //position
 
         //we want a primitive object, not a mesh or something similar
         boxNode.initPrimitive(NODE_TYPE_BOX,//node type (box, sphere, etc.)
@@ -58,24 +61,28 @@ namespace mars {
                                0.1);//mass
         boxNode.movable = false;
         boxNode.material.transparency = 0.5;
+        boxNode.material.ambientFront = mars::utils::Color(0.0, 1.0, 0.0, 1.0);
+        boxNode.material.emissionFront = mars::utils::Color(0.0, 1.0, 0.0, 1.0);
         base::TransformWithCovariance tf;
         tf.translation << 0, 0, -1;
         Transform t;
         t.setTransform(tf);
-        control->tree->addObject("testObject", boxNode, t, control->tree->getRoot());
+        control->tree->addObject("Surface", boxNode, t, control->tree->getRoot());
 
-        for(int i = 0; i < 500; ++i)
+        string arr[] = {"Black", "Red", "Blue", "Yellow", "White"};
+        std::vector<string> colors(arr, arr+5);
+        for(int i = 0; i < 5; ++i)
         {
           std::stringstream ss;
-          ss << "Ball " << i;
-          addBall(ss.str());
+          ss << colors[i] <<" ball";
+          addBall(ss.str(), colors[i]);
         }
 
         control->tree->drawDotFile("0000.dot");
 
       }
 
-      void TestTreeMars::addBall(const std::string& name) {
+      void TestTreeMars::addBall(const std::string& name, const std::string& color) {
 
 
         const double x = ((rand() % 40) - 20)/10.0;
@@ -87,8 +94,19 @@ namespace mars {
 
         //we want a primitive object, not a mesh or something similar
         sphereNode.initPrimitive(NODE_TYPE_SPHERE,//node type (box, sphere, etc.)
-                               Vector(0.1, 0.1, 0.1),//extents (width, height, length)
+                               Vector(0.3, 0.3, 0.3),//extents (width, height, length)
                                0.1);//mass
+        if (color == "Black")
+            sphereNode.material.emissionFront = mars::utils::Color(0.0, 0.0, 0.0, 1.0);
+        else if (color == "Red")
+            sphereNode.material.emissionFront = mars::utils::Color(1.0, 0.0, 0.0, 1.0);
+        else if (color == "Blue")
+            sphereNode.material.emissionFront = mars::utils::Color(0.0, 0.0, 1.0, 1.0);
+        else if (color == "Yellow")
+            sphereNode.material.emissionFront = mars::utils::Color(1.0, 1.0, 0.0, 1.0);
+        else if (color == "White")
+            sphereNode.material.emissionFront = mars::utils::Color(1.0, 1.0, 1.0, 1.0);
+
         sphereNode.movable = true;
         base::TransformWithCovariance tf;
         tf.translation << x, y, z;
@@ -107,10 +125,10 @@ namespace mars {
 
       void TestTreeMars::update(sReal time_ms) {
         //uncomment this to get one dot file for each step
-     //   drawingId++;
-     //   std::stringstream ss;
-     //   ss << std::setfill('0') << std::setw(4) << drawingId << ".dot";
-     //   control->tree->drawDotFile(ss.str());
+        drawingId++;
+        std::stringstream ss;
+        ss << std::setfill('0') << std::setw(4) << drawingId << ".dot";
+        control->tree->drawDotFile(ss.str());
       }
 
       void TestTreeMars::receiveData(const data_broker::DataInfo& info,

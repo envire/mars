@@ -64,6 +64,8 @@
 
 #include <urdf_model/model.h>
 
+
+
 namespace urdf
 {
   class ModelInterface;
@@ -142,7 +144,8 @@ namespace mars {
         void pose2Transform(const urdf::Pose & pose, 
                             base::TransformWithCovariance & tf);
 
-        void nodeDataFromModel( NodeData & node,
+        void nodeDataFromModel( const boost::shared_ptr<const urdf::Link> & link,
+                                NodeData & node,
                                 const std::string startLinkName,
                                 const base::TransformWithCovariance & rootToCurrent);
 
