@@ -30,9 +30,6 @@
 #include "Simulator.h"
 #include "PhysicsMapper.h"
 #include "NodeManager.h"
-//#include "TreeMars.h"
-#include "ItemNodeData.h"
-
 #include "JointManager.h"
 #include "MotorManager.h"
 #include "SensorManager.h"
@@ -48,6 +45,7 @@
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <lib_manager/LibInterface.hpp>
 #include <mars/interfaces/Logging.hpp>
+#include <envire_core/TransformGraph.hpp>
 
 #include <signal.h>
 #include <getopt.h>
@@ -254,7 +252,7 @@ namespace mars {
       control->sensors = new SensorManager(control);
       control->controllers = new ControllerManager(control);
       control->entities = new EntityManager(control);
-      //control->tree = new TreeMars(control);  
+      control->graph = new envire::core::TransformGraph();
             
       control->controllers->setDefaultPort(std_port);
       control->nodes->setVisualRep(0, cfgVisRep.iValue);
@@ -388,8 +386,6 @@ namespace mars {
 #ifdef DEBUG_TIME
       LOG_DEBUG("Step World: %ld", getTimeDiff(startTime));
 #endif
-
-      //control->tree->updateItemDynamics(calc_ms, true); //Moved update to here, otherwise RaySensor is one step behind the world every time
 
       control->joints->updateJoints(calc_ms);
       control->motors->updateMotors(calc_ms);

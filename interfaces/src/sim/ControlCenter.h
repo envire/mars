@@ -51,6 +51,11 @@
 // Include stddef for basic defs like NULL
 #include <cstddef>
 
+
+namespace envire { namespace core {
+  class TransformGraph;
+}}
+
 namespace mars {
   namespace main_gui {
     class GuiInterface;
@@ -67,7 +72,6 @@ namespace mars {
   namespace interfaces {
     class ControlCenter;
     class NodeManagerInterface;
-    class TreeMarsInterface; 
     class JointManagerInterface;
     class MotorManagerInterface;
     class ControllerManagerInterface;
@@ -88,7 +92,6 @@ namespace mars {
         sim = NULL;
         cfg = NULL;
         nodes  = NULL;
-        tree = NULL;
         joints = NULL;
         motors = NULL;
         controllers = NULL;
@@ -96,6 +99,7 @@ namespace mars {
         graphics = NULL;
         dataBroker = NULL;
         loadCenter = NULL;
+        graph = NULL;
         
 
       }
@@ -118,9 +122,7 @@ namespace mars {
        
       LoadCenter *loadCenter;
       
-      TreeMarsInterface *tree;
-    
-     
+      envire::core::TransformGraph* graph;
 
       static data_broker::DataBrokerInterface *theDataBroker;
     };
