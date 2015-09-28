@@ -14,7 +14,6 @@ define_module_info()
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/cmake")
 set(DEFAULT_CONFIG_DIR "." CACHE STRING "The Default config dir to load")
 
-
 add_definitions(-DDEFAULT_CONFIG_DIR=\"${DEFAULT_CONFIG_DIR}\")
 
 
@@ -77,9 +76,7 @@ set(SOURCES_H
        src/core/MotorManager.h
        src/core/NodeManager.h
           
-       src/core/ItemMars.h
-       src/core/ItemNodeData.h
-#       src/core/TreeMars.h
+       src/core/ConfigMapItem.h
        
        src/core/PhysicsMapper.h
        src/core/SensorManager.h
@@ -138,15 +135,12 @@ set(TARGET_SRC
        src/core/SimMotor.cpp
        src/core/SimNode.cpp
        src/core/Simulator.cpp
-#       src/core/TreeMars.cpp
        src/sensors/MultiLevelLaserRangeFinder.cpp
        src/sensors/RotatingRaySensor.cpp
 
        src/physics/JointPhysics.cpp
        src/physics/NodePhysics.cpp
        src/physics/WorldPhysics.cpp
-       #src/physics/ItemPhysics.cpp
-
        src/sensors/CameraSensor.cpp
        src/sensors/Joint6DOFSensor.cpp
        src/sensors/JointArraySensor.cpp
