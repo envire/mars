@@ -31,6 +31,8 @@
 #include <mars/interfaces/MARSDefs.h>
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <string>
+#include <vector>
+#include <envire_core/Frame.hpp>
 
 namespace envire {namespace core {
   class TransformGraph;
@@ -71,6 +73,7 @@ namespace mars {
         virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
         
       private:
+        std::vector<std::pair<envire::core::FrameId, envire::core::FrameId>> transforms;
 
       }; // end of class definition TestTreeMars
 

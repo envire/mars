@@ -33,10 +33,14 @@
 #include <string>
 #include <envire_core/events/GraphEventDispatcher.hpp>
 #include <envire_core/Frame.hpp>
+#include <envire_core/TransformGraphTypes.hpp>
 #include <unordered_map>
+#include <boost/functional/hash.hpp>
+#include <boost/uuid/uuid.hpp>
 
 namespace envire {namespace core {
   class TransformGraph;
+  class Transform;
 }}
 
 namespace mars {
@@ -75,11 +79,21 @@ namespace mars {
 
         // CFGClient methods
         virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
-        
       private:
-        /**Maps the envire transform graph frame ids to draw ids */
-        std::unordered_map<envire::core::FrameId, int> frameToDrawId;
-        envire::core::FrameId originId;
+        
+        void changeOrigin(const envire::core::FrameId& origin);
+        
+        /**Determine whether @p a is the parent of @p b */
+        bool isParent(const envire::core::vertex_descriptor a,
+                      const envire::core::vertex_descriptor b) const;
+                      
+        /**Updates the drawing position of @p vertex */              
+        void updatePosition(const envire::core::vertex_descriptor vertex) const;
+      private:
+        /**Maps the item's uuid to the graphics id used for drawing */
+        std::unordered_map<boost::uuids::uuid, int, boost::hash<boost::uuids::uuid>> uuidToGraphicsId;
+        envire::core::FrameId originId; /**<id of the current origin */
+        envire::core::VertexMap tree; /**<map from parent to children */
         
 
       }; // end of class definition TestTreeMars

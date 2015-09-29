@@ -54,6 +54,38 @@ namespace mars {
   
       void TestGraph::init() 
       {
+        FrameId originId = "origin";
+        NodeType type;
+        for(int i = 0; i < 42; ++i)
+        {
+          const string name = "item " + boost::lexical_cast<string>(i);
+          
+          const int r = rand() % 4;
+          switch(r)
+          {
+            case 0: type = interfaces::NODE_TYPE_BOX; break;
+            case 1: type = interfaces::NODE_TYPE_SPHERE; break;
+            case 2: type = interfaces::NODE_TYPE_CAPSULE; break;
+            case 3: type = interfaces::NODE_TYPE_CYLINDER; break;
+            default: type = interfaces::NODE_TYPE_BOX; break;
+          }
+          Transform tf;
+          tf.transform.translation << rand() % 20, rand() % 20, rand() % 20;
+          base::Vector3d axis;
+          axis.setRandom();
+          tf.transform.orientation = base::AngleAxisd(double(rand()) / (RAND_MAX/2), axis);
+          
+          NodeData data;
+          data.init(name, Vector(0,0,0));
+          data.initPrimitive(type, Vector(0.2, 0.2, 0.2), 0.1);
+          data.movable = false;
+          data.material.transparency = 0.5;
+          boost::intrusive_ptr<ConfigMapItem> item(new ConfigMapItem);
+          data.toConfigMap(&(item.get()->getData()));
+          control->graph->addTransform(originId, name, tf);
+          transforms.emplace_back(originId, name);
+          control->graph->addItemToFrame(name, item);
+        }
       }
 
       void TestGraph::reset() {
@@ -68,36 +100,12 @@ namespace mars {
 
       void TestGraph::update(sReal time_ms) 
       {
-        static int i = 0;
-        if((rand() % 20) == 3 && i < 42)
+        //rotate the objects
+        for(const pair<FrameId, FrameId>& transform : transforms)
         {
-          FrameId originId = "origin";
-          NodeType type;
-          const string name = "item " + boost::lexical_cast<string>(i);
-          
-          const int r = rand() % 4;
-          switch(r)
-          {
-            case 0: type = interfaces::NODE_TYPE_BOX; break;
-            case 1: type = interfaces::NODE_TYPE_SPHERE; break;
-            case 2: type = interfaces::NODE_TYPE_CAPSULE; break;
-            case 3: type = interfaces::NODE_TYPE_CYLINDER; break;
-            default: type = interfaces::NODE_TYPE_BOX; break;
-          }
-          Transform tf;
-          tf.transform.translation << rand() % 20, rand() % 20, rand() % 20;
-          tf.transform.orientation = base::Quaterniond::Identity();
-          
-          NodeData data;
-          data.init(name, Vector(0,0,0));
-          data.initPrimitive(type, Vector(0.2, 0.2, 0.2), 0.1);
-          data.movable = false;
-          data.material.transparency = 0.5;
-          boost::intrusive_ptr<ConfigMapItem> item(new ConfigMapItem);
-          data.toConfigMap(&(item.get()->getData()));
-          control->graph->addTransform(originId, name, tf);
-          control->graph->addItemToFrame(name, item);
-          ++i;
+          Transform tf = control->graph->getTransform(transform.first, transform.second);
+          tf.transform.orientation *= base::Quaterniond(base::AngleAxisd(0.017, base::Vector3d(0, 1, 0)));
+          control->graph->updateTransform(transform.first, transform.second, tf);
         }
       }
 
