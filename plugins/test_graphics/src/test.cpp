@@ -29,12 +29,12 @@
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
-#include <envire_core/Transform.hpp>
-#include <envire_core/TransformGraph.hpp>
+#include <envire_core/items/Transform.hpp>
+#include <envire_core/graph/TransformGraph.hpp>
 #include <envire_core/events/ItemAddedEvent.hpp>
 #include <envire_core/events/TransformAddedEvent.hpp>
 #include <envire_core/events/TransformModifiedEvent.hpp>
-#include <envire_core/TransformGraphExceptions.hpp>
+#include <envire_core/graph/TransformGraphExceptions.hpp>
 #include <mars/sim/ConfigMapItem.h>
 #include <base/TransformWithCovariance.hpp>
 #include <stdlib.h>
@@ -181,6 +181,7 @@ bool Test::isParent(vertex_descriptor a, vertex_descriptor b) const
     //a is a parent, now check if b is the child of a
     return std::find(tree.at(a).begin(), tree.at(a).end(), b) != tree.at(a).end();
   }
+  return false;
 }
 
 void Test::update(sReal time_ms) {

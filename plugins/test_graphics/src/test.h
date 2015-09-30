@@ -32,8 +32,8 @@
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <string>
 #include <envire_core/events/GraphEventDispatcher.hpp>
-#include <envire_core/Frame.hpp>
-#include <envire_core/TransformGraphTypes.hpp>
+#include <envire_core/items/Frame.hpp>
+#include <envire_core/graph/TransformGraphTypes.hpp>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
