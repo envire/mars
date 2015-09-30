@@ -44,7 +44,7 @@
 
 //#include "WorldPhysics.h"
 //#include "envire_core/TransformTree.hpp"
-#include "envire_core/Item.hpp"
+#include "envire_core/items/Item.hpp"
 #include "NodePhysics.h"
 
 using namespace envire::core;

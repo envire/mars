@@ -32,7 +32,7 @@
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <string>
 #include <vector>
-#include <envire_core/Frame.hpp>
+#include <envire_core/items/Frame.hpp>
 
 namespace envire {namespace core {
   class TransformGraph;

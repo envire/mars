@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 #include <physics/ItemPhysics.cpp>
-#include <envire_core/Item.hpp>
+#include <envire_core/items/Item.hpp>
 
 using namespace mars::sim;
 

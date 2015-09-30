@@ -29,8 +29,8 @@
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
-#include <envire_core/Transform.hpp>
-#include <envire_core/TransformGraph.hpp>
+#include <envire_core/items/Transform.hpp>
+#include <envire_core/graph/TransformGraph.hpp>
 #include <mars/sim/ConfigMapItem.h>
 #include <base/TransformWithCovariance.hpp>
 #include <stdlib.h>

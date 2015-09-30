@@ -45,7 +45,7 @@
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <lib_manager/LibInterface.hpp>
 #include <mars/interfaces/Logging.hpp>
-#include <envire_core/TransformGraph.hpp>
+#include <envire_core/graph/TransformGraph.hpp>
 
 #include <signal.h>
 #include <getopt.h>

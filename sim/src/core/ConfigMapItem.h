@@ -1,5 +1,5 @@
 #pragma once
-#include <envire_core/Item.hpp>
+#include <envire_core/items/Item.hpp>
 #include <configmaps/ConfigData.h>
 
 namespace mars { namespace sim
