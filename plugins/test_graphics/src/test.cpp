@@ -72,32 +72,34 @@ Test::~Test() {
 
 void Test::transformAdded(const envire::core::TransformAddedEvent& e)
 {
+  const vertex_descriptor target = control->graph->vertex(e.target);
+  const vertex_descriptor origin = control->graph->vertex(e.origin);
   if(tree.empty())
   {
     //use the first frame we get as originId
     changeOrigin(e.origin);
+    tree[origin].insert(target);
   }
   else
   {
     //update the tree structure
     //find the vertex that was added
-    const vertex_descriptor target = control->graph->vertex(e.target);
-    const vertex_descriptor origin = control->graph->vertex(e.origin);
-    if(tree.find(origin) == tree.end() &&
-      tree.find(target) != tree.end())
+    if(tree.find(origin) != tree.end() &&
+       tree.find(target) == tree.end())
     {
-      //origin was added
-      tree[target].push_back(origin);
+      //origin already is a parent in the tree and target is not
+      tree[origin].insert(target);
     }
-    else if(tree.find(target) == tree.end() &&
-            tree.find(origin) != tree.end())
+    else if(tree.find(origin) == tree.end() &&
+            tree.find(target) != tree.end())
     {
-      //target was added
-      tree[origin].push_back(target);
+      //target already is a parent in the tree and origin is not
+      tree[target].insert(origin);
     }
     else
     {
-      //loop detected. No need to do anything
+      //loop detected. a new shorter path might be available. refresh the whole tree
+      tree = control->graph->getTree(control->graph->vertex(originId));
     }
   }
 }
@@ -157,15 +159,18 @@ void Test::itemAdded(const envire::core::ItemAddedEvent& e)
   boost::intrusive_ptr<ConfigMapItem> pItem;
   if(pItem = boost::dynamic_pointer_cast<ConfigMapItem>(e.item))
   {
+    //assert that this item has not been added before
     assert(uuidToGraphicsId.find(pItem->getID()) == uuidToGraphicsId.end());
     try
     {         
       NodeData node;
-      node.fromConfigMap(&pItem->getData(), "");
-      Transform fromOrigin = control->graph->getTransform(originId, e.frame); 
-      node.pos = fromOrigin.transform.translation;
-      node.rot = fromOrigin.transform.orientation;
-      uuidToGraphicsId[pItem->getID()] = control->graphics->addDrawObject(node);
+      if(node.fromConfigMap(&pItem->getData(), ""))
+      {
+        Transform fromOrigin = control->graph->getTransform(originId, e.frame); 
+        node.pos = fromOrigin.transform.translation;
+        node.rot = fromOrigin.transform.orientation;
+        uuidToGraphicsId[pItem->getID()] = control->graphics->addDrawObject(node);
+      }
     }
     catch(const UnknownTransformException& ex)
     {

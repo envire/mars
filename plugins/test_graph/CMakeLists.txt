@@ -54,7 +54,7 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 find_package(Rock)
 set(ROCK_USE_CXX11 TRUE)
-rock_init(test_graphics 0.1)
+rock_init(test_graph 0.1)
 rock_standard_layout()
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
