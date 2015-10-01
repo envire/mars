@@ -113,17 +113,14 @@ void Test::transformModified(const envire::core::TransformModifiedEvent& e)
 {
   const vertex_descriptor target = control->graph->vertex(e.target);
   const vertex_descriptor origin = control->graph->vertex(e.origin);
-  vertex_descriptor parent;
   vertex_descriptor child;
   
   if(isParent(target, origin))
   {
-    parent = target;
     child = origin;
   }
   else if(isParent(origin, target))
   {
-    parent = origin;
     child = target;
   }
   else
@@ -190,7 +187,19 @@ bool Test::isParent(vertex_descriptor a, vertex_descriptor b) const
 }
 
 void Test::update(sReal time_ms) {
-
+  //uncomment this to randomly change the origin
+  /*
+  static sReal secondsPassed = 0;
+  secondsPassed += time_ms / 1000;
+  if(secondsPassed > 500)
+  {
+    VertexMap::iterator it = tree.begin();
+    int randomIndex = rand() % tree.size();
+    std::advance(it, randomIndex);
+    changeOrigin(control->graph->getFrameId(it->first));
+    secondsPassed = 0;
+  }
+*/
 }
 
 void Test::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
@@ -198,8 +207,20 @@ void Test::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
 
 void Test::changeOrigin(const FrameId& origin)
 {
+  const vertex_descriptor newOrigin = control->graph->vertex(origin);
   originId = origin;
-  tree = control->graph->getTree(control->graph->vertex(origin));
+  tree = control->graph->getTree(newOrigin);
+  //update the origins position
+  updatePosition(newOrigin);
+  //update all childreen
+  for(const auto& it : tree)
+  {
+    for(const auto& vertex : it.second)
+    {
+      updatePosition(vertex);
+    }
+  }
+  
 }
 
 /**Updates the drawing position of @p vertex */              
@@ -207,12 +228,25 @@ void Test::updatePosition(const vertex_descriptor vertex) const
 {
   const FrameId& frameId = control->graph->getFrameId(vertex);
   const vector<ItemBase::Ptr>& items = control->graph->getItems(vertex);
-  const Transform tf = control->graph->getTransform(originId, frameId);
+  base::Vector3d translation;
+  base::Quaterniond orientation;
+  if(originId.compare(frameId) == 0)
+  {
+    translation << 0, 0, 0;
+    orientation.setIdentity();
+  }
+  else
+  {
+    const Transform tf = control->graph->getTransform(originId, frameId);
+    translation = tf.transform.translation;
+    orientation = tf.transform.orientation;
+  }
+ 
   for(const ItemBase::Ptr item : items)
   {
     const int graphicsId = uuidToGraphicsId.at(item->getID());
-    control->graphics->setDrawObjectPos(graphicsId, tf.transform.translation);
-    control->graphics->setDrawObjectRot(graphicsId, tf.transform.orientation);
+    control->graphics->setDrawObjectPos(graphicsId, translation);
+    control->graphics->setDrawObjectRot(graphicsId, orientation);
   }
 }
 
