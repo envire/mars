@@ -99,14 +99,17 @@ void Test::transformAdded(const envire::core::TransformAddedEvent& e)
     else
     {
       //loop detected. a new shorter path might be available. refresh the whole tree
-      tree = control->graph->getTree(control->graph->vertex(originId));
+      updateTree(originId);
     }
   }
 }
 
 void Test::transformRemoved(const envire::core::TransformRemovedEvent& e)
 {
-  //TODO figure out what to do when the origin frame gets removed
+  //Removing a transform can lead to non trivial changes in the tree.
+  //Instead of thinking about them we just recalculate the tree.
+  //This is fast enough for now.
+  updateTree(originId);
 }
 
 void Test::transformModified(const envire::core::TransformModifiedEvent& e)
@@ -207,8 +210,13 @@ void Test::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
 
 void Test::changeOrigin(const FrameId& origin)
 {
+  originId = origin;  
+  updateTree(origin);
+}
+
+void Test::updateTree(const FrameId& origin)
+{
   const vertex_descriptor newOrigin = control->graph->vertex(origin);
-  originId = origin;
   tree = control->graph->getTree(newOrigin);
   //update the origins position
   updatePosition(newOrigin);
@@ -220,8 +228,8 @@ void Test::changeOrigin(const FrameId& origin)
       updatePosition(vertex);
     }
   }
-  
 }
+
 
 /**Updates the drawing position of @p vertex */              
 void Test::updatePosition(const vertex_descriptor vertex) const

@@ -81,7 +81,16 @@ namespace mars {
         virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
       private:
         
+        /** Set @p origin as the new origin frame.
+          * This will update the tree and recalculate all draw positions.
+          * The new origin item will apear at (0, 0, 0) with identity orientation.
+         */
         void changeOrigin(const envire::core::FrameId& origin);
+        
+        /**Recalculates the tree and updates the draw positions of all items
+         * @param origin The name of the current origin frame.
+         */
+        void updateTree(const envire::core::FrameId& origin);
         
         /**Determine whether @p a is the parent of @p b */
         bool isParent(const envire::core::vertex_descriptor a,
