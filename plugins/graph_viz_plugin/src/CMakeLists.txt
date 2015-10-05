@@ -1,9 +1,9 @@
 set(SOURCES 
-    src/test.cpp
+    src/graphviz.cpp
     PARENT_SCOPE
 )
 
 set(HEADERS
-    src/test.h
+    src/graphviz.h
     PARENT_SCOPE
 )

@@ -25,7 +25,7 @@
  */
 
 
-#include "test.h"
+#include "graphviz.h"
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
@@ -41,18 +41,18 @@
 #include <iostream>
 #include <algorithm>
 
-using namespace mars::plugins::test_graphics;
+using namespace mars::plugins::graph_viz_plugin;
 using namespace mars::utils;
 using namespace mars::interfaces;
 using namespace envire::core;
 using namespace mars::sim;
 using namespace std;
 
-Test::Test(lib_manager::LibManager *theManager)
+GraphViz::GraphViz(lib_manager::LibManager *theManager)
   : MarsPluginTemplate(theManager, "Test"), originId(""){
 }
 
-void Test::init() {
+void GraphViz::init() {
   
   if(control->graph != nullptr)
   {
@@ -60,17 +60,17 @@ void Test::init() {
   }
 }
 
-void Test::reset() {
+void GraphViz::reset() {
 }
 
-Test::~Test() {
+GraphViz::~GraphViz() {
   if(control->graph != nullptr)
   {
     control->graph->unsubscribe(std::shared_ptr<GraphEventDispatcher>(this));
   }
 }
 
-void Test::transformAdded(const envire::core::TransformAddedEvent& e)
+void GraphViz::transformAdded(const envire::core::TransformAddedEvent& e)
 {
   const vertex_descriptor target = control->graph->vertex(e.target);
   const vertex_descriptor origin = control->graph->vertex(e.origin);
@@ -104,7 +104,7 @@ void Test::transformAdded(const envire::core::TransformAddedEvent& e)
   }
 }
 
-void Test::transformRemoved(const envire::core::TransformRemovedEvent& e)
+void GraphViz::transformRemoved(const envire::core::TransformRemovedEvent& e)
 {
   //Removing a transform can lead to non trivial changes in the tree.
   //Instead of thinking about them we just recalculate the tree.
@@ -112,7 +112,7 @@ void Test::transformRemoved(const envire::core::TransformRemovedEvent& e)
   updateTree(originId);
 }
 
-void Test::transformModified(const envire::core::TransformModifiedEvent& e)
+void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
 {
   const vertex_descriptor target = control->graph->vertex(e.target);
   const vertex_descriptor origin = control->graph->vertex(e.origin);
@@ -154,7 +154,7 @@ void Test::transformModified(const envire::core::TransformModifiedEvent& e)
   }
 }
 
-void Test::itemAdded(const envire::core::ItemAddedEvent& e)
+void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
 {
   boost::intrusive_ptr<ConfigMapItem> pItem;
   if(pItem = boost::dynamic_pointer_cast<ConfigMapItem>(e.item))
@@ -179,7 +179,7 @@ void Test::itemAdded(const envire::core::ItemAddedEvent& e)
   }
 }
 
-bool Test::isParent(vertex_descriptor a, vertex_descriptor b) const
+bool GraphViz::isParent(vertex_descriptor a, vertex_descriptor b) const
 {
   if(tree.find(a) != tree.end())
   {
@@ -189,7 +189,7 @@ bool Test::isParent(vertex_descriptor a, vertex_descriptor b) const
   return false;
 }
 
-void Test::update(sReal time_ms) {
+void GraphViz::update(sReal time_ms) {
   //uncomment this to randomly change the origin
   /*
   static sReal secondsPassed = 0;
@@ -205,16 +205,16 @@ void Test::update(sReal time_ms) {
 */
 }
 
-void Test::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
+void GraphViz::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
 }
 
-void Test::changeOrigin(const FrameId& origin)
+void GraphViz::changeOrigin(const FrameId& origin)
 {
   originId = origin;  
   updateTree(origin);
 }
 
-void Test::updateTree(const FrameId& origin)
+void GraphViz::updateTree(const FrameId& origin)
 {
   const vertex_descriptor newOrigin = control->graph->vertex(origin);
   tree = control->graph->getTree(newOrigin);
@@ -232,7 +232,7 @@ void Test::updateTree(const FrameId& origin)
 
 
 /**Updates the drawing position of @p vertex */              
-void Test::updatePosition(const vertex_descriptor vertex) const
+void GraphViz::updatePosition(const vertex_descriptor vertex) const
 {
   const FrameId& frameId = control->graph->getFrameId(vertex);
   const vector<ItemBase::Ptr>& items = control->graph->getItems(vertex);
@@ -258,5 +258,5 @@ void Test::updatePosition(const vertex_descriptor vertex) const
   }
 }
 
-DESTROY_LIB(mars::plugins::test_graphics::Test);
-CREATE_LIB(mars::plugins::test_graphics::Test);
+DESTROY_LIB(mars::plugins::graph_viz_plugin::GraphViz);
+CREATE_LIB(mars::plugins::graph_viz_plugin::GraphViz);

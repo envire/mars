@@ -1,4 +1,4 @@
-project(test_graphics)
+project(graph_viz_plugin)
 set(PROJECT_VERSION 1.0)
 set(PROJECT_DESCRIPTION "Plugin")
 cmake_minimum_required(VERSION 2.6)
@@ -55,11 +55,11 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 find_package(Rock)
 set(ROCK_USE_CXX11 TRUE)
-rock_init(test_graphics 0.1)
+rock_init(graph_viz_plugin 0.1)
 rock_standard_layout()
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
-target_link_libraries(test_graphics
+target_link_libraries(graph_viz_plugin
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   )

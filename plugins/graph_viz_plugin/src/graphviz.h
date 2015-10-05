@@ -45,19 +45,19 @@ namespace envire {namespace core {
 
 namespace mars {
   namespace plugins {
-    namespace test_graphics {
+    namespace graph_viz_plugin {
 
       /**
        * A very simple plugin that tries to convert all ConfigMaps found in the
        * transform graph into NodeData and draw it.
        * */
-      class Test : public mars::interfaces::MarsPluginTemplate,
+      class GraphViz : public mars::interfaces::MarsPluginTemplate,
                    public envire::core::GraphEventDispatcher
       {
 
       public:
-        Test(lib_manager::LibManager *theManager);
-        ~Test();
+        GraphViz(lib_manager::LibManager *theManager);
+        ~GraphViz();
 
         // LibInterface methods
         int getLibVersion() const
