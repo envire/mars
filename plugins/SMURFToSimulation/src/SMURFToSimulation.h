@@ -19,18 +19,18 @@
  */
 
 /**
- * \file SMURF2MarsTree.h
+ * \file SMURFToSimulation.h
  * \author Raul (raul.dominguez@dfki.de)
  * \brief Tests
  *
  * Version 0.1
  */
 
-#ifndef MARS_PLUGINS_SMURF2MARSTREE_H
-#define MARS_PLUGINS_SMURF2MARSTREE_H
+#ifndef MARS_PLUGINS_SMURF2SIMULATION_H
+#define MARS_PLUGINS_SMURF2SIMULATION_H
 
 #ifdef _PRINT_HEADER_
-  #warning "SMURF2MarsTree.h"
+  #warning "SMURFToSimulation.h"
 #endif
 
 // set define if you want to extend the gui
@@ -39,20 +39,17 @@
 #include <mars/interfaces/MARSDefs.h>
 #include <mars/data_broker/ReceiverInterface.h>
 #include <mars/cfg_manager/CFGManagerInterface.h>
-#include <mars/sim/TreeMars.h>
-#include <mars/interfaces/sim/TreeMarsInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h> 
-#include <mars/entity_generation/smurf/smurf.h>
 
 #include <string>
 
 namespace mars {
 
   namespace plugins {
-    namespace SMURF2MarsTree {
+    namespace SMURFToSimulation {
 
       // inherit from MarsPluginTemplateGUI for extending the gui
-      class SMURF2MarsTree: public mars::interfaces::MarsPluginTemplate,
+      class SMURFToSimulation: public mars::interfaces::MarsPluginTemplate,
         public mars::data_broker::ReceiverInterface,
         // for gui
         // public mars::main_gui::MenuInterface,
@@ -60,14 +57,14 @@ namespace mars {
 
 
       public:
-        SMURF2MarsTree(lib_manager::LibManager *theManager);
-        ~SMURF2MarsTree();
+        SMURFToSimulation(lib_manager::LibManager *theManager);
+        ~SMURFToSimulation();
 
         // LibInterface methods
         int getLibVersion() const
         { return 1; }
         const std::string getLibName() const
-        { return std::string("SMURF2MarsTree"); }
+        { return std::string("SMURFToSimulation"); }
         CREATE_MODULE_INFO();
 
         // MarsPlugin methods
@@ -85,16 +82,15 @@ namespace mars {
         // MenuInterface methods
         //void menuAction(int action, bool checked = false);
 
-        // SMURF2MarsTree methods
+        // SMURFToSimulation methods
 
       private:
         cfg_manager::cfgPropertyStruct example;
-        mars::smurf::SMURF smurf;
 
-      }; // end of class definition SMURF2MarsTree
+      }; // end of class definition SMURFToSimulation
 
-    } // end of namespace SMURF2MarsTree
+    } // end of namespace SMURFToSimulation
   } // end of namespace plugins
 } // end of namespace mars
 
-#endif // MARS_PLUGINS_SMURF2MARSTREE_H
+#endif // MARS_PLUGINS_SMURF2SIMULATION

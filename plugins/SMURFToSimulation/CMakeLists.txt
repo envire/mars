@@ -1,4 +1,4 @@
-project(SMURF2MarsTree)
+project(SMURFToSimulation)
 set(PROJECT_VERSION 1.0)
 set(PROJECT_DESCRIPTION "Tests")
 cmake_minimum_required(VERSION 2.6)
@@ -28,11 +28,11 @@ include_directories(
 )
 
 set(SOURCES 
-	src/SMURF2MarsTree.cpp
+	src/SMURFToSimulation.cpp
 )
 
 set(HEADERS
-	src/SMURF2MarsTree.h
+	src/SMURFToSimulation.h
 )
 
 
@@ -70,7 +70,7 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 find_package(Rock)
 set(ROCK_USE_CXX11 TRUE)
-rock_init(SMURF2MarsTree 0.1)
+rock_init(SMURFToSimulation 0.1)
 rock_standard_layout()
 
 find_package(Boost REQUIRED filesystem system thread)
