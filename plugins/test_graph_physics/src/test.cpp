@@ -71,7 +71,7 @@ namespace mars {
         data.init("floorData", Vector(0,0,0));
         data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(5, 5, 5), 0.1);
         data.movable = false;
-        boost::intrusive_ptr<ConfigMapItem> item(new ConfigMapItem);
+        boost::shared_ptr<ConfigMapItem> item(new ConfigMapItem);
         data.toConfigMap(&(item.get()->getData()));
         control->graph->addItemToFrame(floor, item);
         
@@ -79,7 +79,7 @@ namespace mars {
         data2.init("ballData", Vector(0,0,0));
         data2.initPrimitive(NODE_TYPE_SPHERE, Vector(0.3, 0.3, 0.3), 0.1);
         data2.movable = true;
-        boost::intrusive_ptr<ConfigMapItem> item2(new ConfigMapItem);
+        boost::shared_ptr<ConfigMapItem> item2(new ConfigMapItem);
         data2.toConfigMap(&(item2.get()->getData()));
         control->graph->addItemToFrame(ball, item2); 
       }
