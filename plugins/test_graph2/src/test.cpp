@@ -89,7 +89,7 @@ namespace mars {
         data.init("node", Vector(0,0,0));
         data.initPrimitive(NODE_TYPE_BOX, Vector(0.4, 0.4, 0.4), 0.1);
         data.movable = false;
-        boost::intrusive_ptr<ConfigMapItem> item(new ConfigMapItem);
+        boost::shared_ptr<ConfigMapItem> item(new ConfigMapItem);
         data.toConfigMap(&(item.get()->getData()));
         control->graph->addItemToFrame(a, item);
         
@@ -97,7 +97,7 @@ namespace mars {
         data2.init("node2", Vector(0,0,0));
         data2.initPrimitive(NODE_TYPE_BOX, Vector(0.4, 0.4, 0.4), 0.1);
         data2.movable = false;
-        boost::intrusive_ptr<ConfigMapItem> item2(new ConfigMapItem);
+        boost::shared_ptr<ConfigMapItem> item2(new ConfigMapItem);
         data2.toConfigMap(&(item2.get()->getData()));
         control->graph->addItemToFrame(b, item2);
         
@@ -105,7 +105,7 @@ namespace mars {
         data3.init("node3", Vector(0,0,0));
         data3.initPrimitive(NODE_TYPE_BOX, Vector(0.4, 0.4, 0.4), 0.1);
         data3.movable = false;
-        boost::intrusive_ptr<ConfigMapItem> item3(new ConfigMapItem);
+        boost::shared_ptr<ConfigMapItem> item3(new ConfigMapItem);
         data3.toConfigMap(&(item3.get()->getData()));
         control->graph->addItemToFrame(c, item3);
         
@@ -113,7 +113,7 @@ namespace mars {
         data4.init("node4", Vector(0,0,0));
         data4.initPrimitive(NODE_TYPE_BOX, Vector(0.4, 0.4, 0.4), 0.1);
         data4.movable = false;
-        boost::intrusive_ptr<ConfigMapItem> item4(new ConfigMapItem);
+        boost::shared_ptr<ConfigMapItem> item4(new ConfigMapItem);
         data4.toConfigMap(&(item4.get()->getData()));
         control->graph->addItemToFrame(d, item4);     
       }
