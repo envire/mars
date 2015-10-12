@@ -69,7 +69,7 @@ namespace mars {
         
         NodeData data;
         data.init("floorData", Vector(0,0,0));
-        data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(5, 5, 5), 0.1);
+        data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(5, 5, 0.3), 0.1);
         data.movable = false;
         boost::shared_ptr<ConfigMapItem> item(new ConfigMapItem);
         data.toConfigMap(&(item.get()->getData()));
