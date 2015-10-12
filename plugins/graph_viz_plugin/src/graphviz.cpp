@@ -149,7 +149,7 @@ void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
 
 void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
 {
-  boost::intrusive_ptr<ConfigMapItem> pItem;
+  boost::shared_ptr<ConfigMapItem> pItem;
   if(pItem = boost::dynamic_pointer_cast<ConfigMapItem>(e.item))
   {
     //assert that this item has not been added before
