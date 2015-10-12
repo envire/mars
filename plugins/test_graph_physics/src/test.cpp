@@ -54,11 +54,10 @@ namespace mars {
   
       void TestGraph2::init() 
       {
-        //construct a small solar system
+        itemId = 0;
         
         
-        
-        FrameId floor = "floor";
+        floor = "floor";
         FrameId ball = "ball";
 
         
@@ -74,8 +73,7 @@ namespace mars {
         boost::shared_ptr<ConfigMapItem> item(new ConfigMapItem);
         data.toConfigMap(&(item.get()->getData()));
         control->graph->addItemToFrame(floor, item);
-        
-        NodeData data2;
+                NodeData data2;
         data2.init("ballData", Vector(0,0,0));
         data2.initPrimitive(NODE_TYPE_SPHERE, Vector(0.3, 0.3, 0.3), 0.1);
         data2.movable = true;
@@ -83,6 +81,49 @@ namespace mars {
         data2.toConfigMap(&(item2.get()->getData()));
         control->graph->addItemToFrame(ball, item2); 
       }
+      
+      void TestGraph2::dropItem()
+      {
+        FrameId id = boost::lexical_cast<FrameId>(itemId);
+        ++itemId;
+        std::cout << "item count: " << itemId << std::endl;
+        boost::random::uniform_int_distribution<> rnd(-50, 50);
+        const float x = rnd(rng)/ 10.0;
+        const float y = rnd(rng)/ 10.0;
+        Transform tf;
+        tf.transform.translation << x, y, 10;
+        tf.transform.orientation = base::Quaterniond::Identity();
+        control->graph->addTransform(floor, id, tf);    
+        
+        NodeData data;
+        data.init(id + "data", Vector(0,0,0));
+        mars::interfaces::NodeType type;
+        switch(boost::random::uniform_int_distribution<>(0, 3)(rng))
+        {
+          case 0:
+            type = interfaces::NODE_TYPE_BOX;
+            break;
+          case 1:
+            type = interfaces::NODE_TYPE_CAPSULE;
+            break;
+          case 2:
+            type = interfaces::NODE_TYPE_CYLINDER;
+            break;
+          case 3:
+            type = interfaces::NODE_TYPE_SPHERE;
+            break;
+          default:
+            break;
+        }
+        data.initPrimitive(type, Vector(0.3, 0.3, 0.3), 0.1);
+        data.movable = true;
+        boost::shared_ptr<ConfigMapItem> item(new ConfigMapItem);
+        data.toConfigMap(&(item.get()->getData()));
+        control->graph->addItemToFrame(id, item); 
+        
+      }
+
+      
 
       void TestGraph2::reset() {
       }
@@ -94,7 +135,7 @@ namespace mars {
 
       void TestGraph2::update(sReal time_ms) 
       {
-
+          dropItem();
       }
 
       void TestGraph2::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {

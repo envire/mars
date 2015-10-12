@@ -68,11 +68,16 @@ namespace mars {
         void reset();
         void update(mars::interfaces::sReal time_ms);
         
+        void dropItem();
+        
     
         // CFGClient methods
         virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
         
       private:
+        boost::random::mt19937 rng; 
+        envire::core::FrameId floor;
+        int itemId;
         std::vector<std::pair<envire::core::FrameId, envire::core::FrameId>> transforms;
 
       }; // end of class definition TestTreeMars
