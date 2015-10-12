@@ -1,9 +1,9 @@
 <package>
-    <description brief="TestTreeMars">
+    <description brief="Graph visualization plugin">
       Plugin
    </description>
-    <maintainer>Raul/raul.dominguez@dfki.de</maintainer>
-    <author>Raul/raul.dominguez@dfki.de</author>
+    <maintainer>Arne/arne.boeckmann@dfki.de</maintainer>
+    <author>Arne/arne.boeckmann@dfki.de</author>
     <depend package="simulation/mars/scripts/cmake" />
     <depend package="simulation/lib_manager" />
     <depend package="simulation/mars/common/data_broker" />

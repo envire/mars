@@ -63,7 +63,7 @@ namespace mars {
         int getLibVersion() const
         { return 1; }
         const std::string getLibName() const
-        { return std::string("Test"); }
+        { return std::string("GraphViz"); }
         CREATE_MODULE_INFO();
 
         // MarsPlugin methods

@@ -18,13 +18,6 @@
  *
  */
 
-/**
- * \file test.cpp
- * \author Arne Böckmann
- * \brief Plugin
- */
-
-
 #include "graphviz.h"
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
@@ -49,7 +42,7 @@ using namespace mars::sim;
 using namespace std;
 
 GraphViz::GraphViz(lib_manager::LibManager *theManager)
-  : MarsPluginTemplate(theManager, "Test"), originId(""){
+  : MarsPluginTemplate(theManager, "GraphViz"), originId(""){
 }
 
 void GraphViz::init() {
