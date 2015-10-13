@@ -78,7 +78,6 @@ namespace mars {
         boost::random::mt19937 rng; 
         envire::core::FrameId floor;
         int itemId;
-        std::vector<std::pair<envire::core::FrameId, envire::core::FrameId>> transforms;
 
       }; // end of class definition TestTreeMars
 
