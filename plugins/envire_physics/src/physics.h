@@ -20,7 +20,7 @@ namespace mars {
   }
   
   namespace plugins {
-    namespace graph_physics_plugin {
+    namespace envire_physics {
 
       class GraphPhysics : public mars::interfaces::MarsPluginTemplate,
                    public envire::core::GraphEventDispatcher

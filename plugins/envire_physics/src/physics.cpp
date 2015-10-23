@@ -40,7 +40,7 @@
 #include <algorithm>
 
 
-using namespace mars::plugins::graph_physics_plugin;
+using namespace mars::plugins::envire_physics;
 using namespace mars::utils;
 using namespace mars::interfaces;
 using namespace envire::core;
@@ -189,6 +189,6 @@ void GraphPhysics::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property)
 {
 }
 
-DESTROY_LIB(mars::plugins::graph_physics_plugin::GraphPhysics);
-CREATE_LIB(mars::plugins::graph_physics_plugin::GraphPhysics);
+DESTROY_LIB(mars::plugins::envire_physics::GraphPhysics);
+CREATE_LIB(mars::plugins::envire_physics::GraphPhysics);
 

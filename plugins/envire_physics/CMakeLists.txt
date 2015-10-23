@@ -1,4 +1,4 @@
-project(graph_physics_plugin)
+project(envire_physics)
 set(PROJECT_VERSION 1.0)
 set(PROJECT_DESCRIPTION "Plugin")
 cmake_minimum_required(VERSION 2.6)
@@ -57,11 +57,11 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 find_package(Rock)
 set(ROCK_USE_CXX11 TRUE)
-rock_init(graph_physics_plugin 0.1)
+rock_init(envire_physics 0.1)
 rock_standard_layout()
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
-target_link_libraries(graph_physics_plugin
+target_link_libraries(envire_physics
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   )
