@@ -57,7 +57,6 @@ namespace mars {
 
       public:
         GraphViz(lib_manager::LibManager *theManager);
-        ~GraphViz();
 
         // LibInterface methods
         int getLibVersion() const

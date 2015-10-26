@@ -42,25 +42,17 @@ using namespace mars::sim;
 using namespace std;
 
 GraphViz::GraphViz(lib_manager::LibManager *theManager)
-  : MarsPluginTemplate(theManager, "GraphViz"), originId(""){
+  : MarsPluginTemplate(theManager, "GraphViz"), GraphEventDispatcher(*(control->graph)), originId("" )
+{
+  assert(control->graph != nullptr);
 }
 
-void GraphViz::init() {
-  
-  if(control->graph != nullptr)
-  {
-    control->graph->subscribe(std::shared_ptr<GraphEventDispatcher>(this));
-  }
+void GraphViz::init() 
+{
+
 }
 
 void GraphViz::reset() {
-}
-
-GraphViz::~GraphViz() {
-  if(control->graph != nullptr)
-  {
-    control->graph->unsubscribe(std::shared_ptr<GraphEventDispatcher>(this));
-  }
 }
 
 void GraphViz::transformAdded(const envire::core::TransformAddedEvent& e)
@@ -228,7 +220,6 @@ void GraphViz::updateTree(const FrameId& origin)
 void GraphViz::updatePosition(const vertex_descriptor vertex) const
 {
   const FrameId& frameId = control->graph->getFrameId(vertex);
-  const vector<ItemBase::Ptr>& items = control->graph->getItems(vertex);
   base::Vector3d translation;
   base::Quaterniond orientation;
   if(originId.compare(frameId) == 0)
@@ -242,9 +233,13 @@ void GraphViz::updatePosition(const vertex_descriptor vertex) const
     translation = tf.transform.translation;
     orientation = tf.transform.orientation;
   }
- 
-  for(const ItemBase::Ptr item : items)
+  
+  using Iterator = TransformGraph::ItemIterator<ConfigMapItem::Ptr>;
+  Iterator begin, end;
+  boost::tie(begin, end) = control->graph->getItems<ConfigMapItem::Ptr>(vertex);
+  for(;begin != end; ++begin)
   {
+    const ConfigMapItem::Ptr item = *begin;
     const int graphicsId = uuidToGraphicsId.at(item->getID());
     control->graphics->setDrawObjectPos(graphicsId, translation);
     control->graphics->setDrawObjectRot(graphicsId, orientation);
