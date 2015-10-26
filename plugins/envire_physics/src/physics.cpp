@@ -49,106 +49,154 @@ using namespace std;
 using namespace base;
 
 GraphPhysics::GraphPhysics(lib_manager::LibManager *theManager)
-  : MarsPluginTemplate(theManager, "GraphPhysics"){
+  : MarsPluginTemplate(theManager, "GraphPhysics"), Dispatcher(*(control->graph)){
 }
 
 void GraphPhysics::init() {
-  
+  /*
   if(control->graph != nullptr)
   {
     control->graph->subscribe(std::shared_ptr<GraphEventDispatcher>(this));
   }
+  */
 }
 
 void GraphPhysics::reset() {
 }
 
 GraphPhysics::~GraphPhysics() {
+  /*
   if(control->graph != nullptr)
   {
     control->graph->unsubscribe(std::shared_ptr<GraphEventDispatcher>(this));
   }
+  */
 }
 
 void GraphPhysics::frameAdded(const FrameAddedEvent& e)
 {
+  /*
   //the first frame that is added is the root (for now)
   if(originId.empty())
   {
     originId = e.addedFrame;
   }
+  */
 }
 
 void GraphPhysics::frameRemoved(const FrameRemovedEvent& e)
 { 
+  /*
   //FIXME do something intelligent of the origin gets removed
   assert(e.removedFrame != originId);
+  */
 }
 
 void GraphPhysics::transformRemoved(const envire::core::TransformRemovedEvent& e)
 {
+
   //Removing a transform can lead to non trivial changes in the tree.
   //Instead of thinking about them we just recalculate the tree.
   //This is fast enough for now.
  // tree = control->graph->getTree(originId);
+ 
 }
 
 void GraphPhysics::transformAdded(const envire::core::TransformAddedEvent& e)
 {
+  /*
   //dont give a shit about performance for the first iteration
   tree = control->graph->getTree(originId);
+  */
 }
 
 void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent& e)
 {
+  /*
   //for the first iteration we ignore transformation changes from outside this plugin
+  */
 }
 
 void GraphPhysics::itemAdded(const envire::core::ItemAddedEvent& e)
 {
+  /*
   boost::shared_ptr<ConfigMapItem> pItem;
   if(pItem = boost::dynamic_pointer_cast<ConfigMapItem>(e.item))
   {
     //assert that this item has not been added before
     assert(uuidToPhysics.find(pItem->getID()) == uuidToPhysics.end());
-
-    try
-    {         
-      //try to convert the item into a node Data
-      NodeData node;
-      //FIXME fromConfigMap always returns true? There is no way to check
-      //      if the object is actually valid?! WTF
-      if(node.fromConfigMap(&pItem->getData(), ""))
+    configmaps::ConfigMap mapAux = pItem->getData();
+    if (std::string(mapAux["name"]) != std::string("joint"))
+    {
+      try
+      {         
+	//try to convert the item into a node Data
+	NodeData node;
+	//FIXME fromConfigMap always returns true? There is no way to check
+	//      if the object is actually valid?! WTF
+	//      Return a false instead of crashing here:
+	if(node.fromConfigMap(&pItem->getData(), "")) // Here it breaks with the joint
+	{
+	  Transform fromOrigin = control->graph->getTransform(originId, e.frame); 
+	  node.pos = fromOrigin.transform.translation;
+	  node.rot = fromOrigin.transform.orientation;
+	  
+	  // create an interface object to the physics
+	  shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
+	  if (physics->createNode(&node)) 
+	  {
+	    uuidToPhysics[pItem->getID()] = physics;
+	  }
+	}
+      }
+      catch(const UnknownTransformException& ex)
       {
-        Transform fromOrigin = control->graph->getTransform(originId, e.frame); 
-        node.pos = fromOrigin.transform.translation;
-        node.rot = fromOrigin.transform.orientation;
-        
-        // create an interface object to the physics
-        shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-        if (physics->createNode(&node)) 
-        {
-          uuidToPhysics[pItem->getID()] = physics;
-        }
+	cerr << ex.what() << endl;
       }
     }
-    catch(const UnknownTransformException& ex)
+    else
     {
-      cerr << ex.what() << endl;
+      try
+      {         
+	JointData joint;
+	if(joint.fromConfigMap(&pItem->getData(), ""))
+	{
+	  Transform fromOrigin = control->graph->getTransform(originId, e.frame); 
+	  // create an interface object to the physics
+	  shared_ptr<JointInterface> physics(PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
+	  // Node 1 and node2 I guess are the ones that are being connected
+	  
+	  
+	  //if (physics->createJoint(&joint, &node1, &node2))
+	  //{
+	  //  uuidToPhysics[pItem->getID()] = physics;
+	  //}
+	  
+	  
+	}      
+      }
+      catch(const UnknownTransformException& ex)
+      {
+	cerr << ex.what() << endl;
+      }
     }
   }
+  */
 }
 
 void GraphPhysics::update(sReal time_ms) 
 {
+  /*
   //dfs visit the tree and update all positions
   const vertex_descriptor originDesc = control->graph->vertex(originId);
   updateChildPositions(originDesc, TransformWithCovariance::Identity());
+  */
 }
 
 void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
                                         const TransformWithCovariance& frameToRoot)
 {
+  /*
   if(tree.find(vertex) != tree.end())
   {
     const unordered_set<vertex_descriptor>& children = tree[vertex];
@@ -156,16 +204,19 @@ void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
     {
       updatePositions(vertex, child, frameToRoot);
     }
-  }  
+  } 
+  */
 }
 
 void GraphPhysics::updatePositions(const vertex_descriptor origin,
                                    const vertex_descriptor target,
                                    const TransformWithCovariance& originToRoot)
 {
+  /*
   const vector<ItemBase::Ptr>& items = control->graph->getItems(target);
   Transform tf = control->graph->getTransform(origin, target);
   //take the first physics item in the item list and update the transform
+  std::cout << "Enters update positions " << std::endl;
   for(const ItemBase::Ptr item : items)
   {
     const boost::uuids::uuid& id = item->getID();
@@ -183,7 +234,9 @@ void GraphPhysics::updatePositions(const vertex_descriptor origin,
   }
   
   updateChildPositions(target, originToRoot * tf.transform.inverse());
+  */
 }
+
 
 void GraphPhysics::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) 
 {

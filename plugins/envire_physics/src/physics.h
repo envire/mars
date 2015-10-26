@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
+#include "Dispatcher.h"
+
 
 
 namespace mars {
@@ -23,7 +25,7 @@ namespace mars {
     namespace envire_physics {
 
       class GraphPhysics : public mars::interfaces::MarsPluginTemplate,
-                   public envire::core::GraphEventDispatcher
+                   public mars::envire_physics::Dispatcher
       {
       public:
         GraphPhysics(lib_manager::LibManager *theManager);
@@ -38,6 +40,7 @@ namespace mars {
         
         void init();
         void reset();
+        
         void frameAdded(const envire::core::FrameAddedEvent& e);
         void frameRemoved(const envire::core::FrameRemovedEvent& e);
         void transformRemoved(const envire::core::TransformRemovedEvent& e);
@@ -51,6 +54,7 @@ namespace mars {
         void updateChildPositions(const envire::core::vertex_descriptor vertex,
                                   const base::TransformWithCovariance& frameToRoot);
         
+        
         void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
         
         
@@ -59,5 +63,9 @@ namespace mars {
         envire::core::VertexMap tree;
         std::unordered_map<boost::uuids::uuid, std::shared_ptr<interfaces::NodeInterface>, boost::hash<boost::uuids::uuid>> uuidToPhysics;
       };
-
-}}}
+      
+    }
+    
+  }
+  
+}
