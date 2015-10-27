@@ -85,7 +85,11 @@ void GraphViz::transformAdded(const envire::core::TransformAddedEvent& e)
     }
     else
     {
-      //loop detected. a new shorter path might be available. refresh the whole tree
+      // This can happen in two cases:
+      // 1: A loop was added to the current tree, in this case a new, shorter
+      //    path might have been added, therefore we update the whole tree
+      // 2: A transform was added to another sub-tree, we dont care about this
+      //    but cannot distinguish between the 2 cases
       updateTree(originId);
     }
   }
@@ -115,9 +119,9 @@ void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
   }
   else
   {
-    //this cannot happen, either target should be the parent of origin or the
-    //other way around.
-    assert(false);
+    //a transform changed that is not part of the current tree. We don't care
+    //about it.
+    return;
   }
   
   //update all children
