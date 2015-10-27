@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <algorithm>
+#include <cassert>
 
 using namespace mars::plugins::graph_viz_plugin;
 using namespace mars::utils;
@@ -42,14 +43,15 @@ using namespace mars::sim;
 using namespace std;
 
 GraphViz::GraphViz(lib_manager::LibManager *theManager)
-  : MarsPluginTemplate(theManager, "GraphViz"), GraphEventDispatcher(*(control->graph)), originId("" )
+  : MarsPluginTemplate(theManager, "GraphViz"), GraphEventDispatcher(), originId("" )
 {
-  assert(control->graph != nullptr);
+
 }
 
 void GraphViz::init() 
 {
-
+  assert(control->graph != nullptr);
+  subscribe(control->graph);
 }
 
 void GraphViz::reset() {
@@ -215,7 +217,6 @@ void GraphViz::updateTree(const FrameId& origin)
   }
 }
 
-
 /**Updates the drawing position of @p vertex */              
 void GraphViz::updatePosition(const vertex_descriptor vertex) const
 {
@@ -240,9 +241,13 @@ void GraphViz::updatePosition(const vertex_descriptor vertex) const
   for(;begin != end; ++begin)
   {
     const ConfigMapItem::Ptr item = *begin;
-    const int graphicsId = uuidToGraphicsId.at(item->getID());
-    control->graphics->setDrawObjectPos(graphicsId, translation);
-    control->graphics->setDrawObjectRot(graphicsId, orientation);
+    //others might use ConfigMapItems as well, therefore check if if this is one of ours
+    if(uuidToGraphicsId.find(item->getID()) != uuidToGraphicsId.end())
+    {
+      const int graphicsId = uuidToGraphicsId.at(item->getID());
+      control->graphics->setDrawObjectPos(graphicsId, translation);
+      control->graphics->setDrawObjectRot(graphicsId, orientation);
+    }
   }
 }
 
