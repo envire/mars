@@ -40,7 +40,7 @@
 
 namespace mars {
   namespace plugins {
-    namespace test_graph2 {
+    namespace test_graph3 {
 
       using namespace mars::utils;
       using namespace mars::interfaces;
@@ -48,11 +48,11 @@ namespace mars {
       using namespace mars::sim;
       using namespace std;
 
-      TestGraph2::TestGraph2(lib_manager::LibManager *theManager)
-        : MarsPluginTemplate(theManager, "TestGraph2"){
+      TestGraph3::TestGraph3(lib_manager::LibManager *theManager)
+        : MarsPluginTemplate(theManager, "TestGraph3"){
       }
   
-      void TestGraph2::init() 
+      void TestGraph3::init() 
       {
         //construct a small solar system
         
@@ -111,15 +111,15 @@ namespace mars {
         control->graph->addItemToFrame(venus, item4);     
       }
 
-      void TestGraph2::reset() {
+      void TestGraph3::reset() {
       }
 
-      TestGraph2::~TestGraph2() {
+      TestGraph3::~TestGraph3() {
       
       }
 
 
-      void TestGraph2::update(sReal time_ms) 
+      void TestGraph3::update(sReal time_ms) 
       {
         const sReal time_s = time_ms / 1000.0;
         const sReal earthRotPerSecond = 0.0034;
@@ -142,12 +142,12 @@ namespace mars {
         control->graph->updateTransform("earth", "moon", earthToMoon);
       }
 
-      void TestGraph2::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
+      void TestGraph3::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
       }
 
     } // end of namespace TestTreeMars
   } // end of namespace plugins
 } // end of namespace mars
 
-DESTROY_LIB(mars::plugins::test_graph2::TestGraph2);
-CREATE_LIB(mars::plugins::test_graph2::TestGraph2);
+DESTROY_LIB(mars::plugins::test_graph3::TestGraph3);
+CREATE_LIB(mars::plugins::test_graph3::TestGraph3);

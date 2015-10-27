@@ -43,24 +43,24 @@ namespace envire {namespace core {
 
 namespace mars {
   namespace plugins {
-    namespace test_graph2 {
+    namespace test_graph3 {
 
       /**
        * A very simple plugin that tries to convert all ConfigMaps found in the
        * transform graph into NodeData and draw it.
        * */
-      class TestGraph2 : public mars::interfaces::MarsPluginTemplate
+      class TestGraph3 : public mars::interfaces::MarsPluginTemplate
       {
 
       public:
-        TestGraph2(lib_manager::LibManager *theManager);
-        ~TestGraph2();
+        TestGraph3(lib_manager::LibManager *theManager);
+        ~TestGraph3();
 
         // LibInterface methods
         int getLibVersion() const
         { return 1; }
         const std::string getLibName() const
-        { return std::string("TestGraph2"); }
+        { return std::string("TestGraph3"); }
         CREATE_MODULE_INFO();
 
         // MarsPlugin methods
