@@ -80,7 +80,7 @@ namespace mars {
           data.initPrimitive(type, Vector(0.2, 0.2, 0.2), 0.1);
           data.movable = false;
           data.material.transparency = 0.5;
-          boost::intrusive_ptr<ConfigMapItem> item(new ConfigMapItem);
+          ConfigMapItem::Ptr item(new ConfigMapItem);
           data.toConfigMap(&(item.get()->getData()));
           control->graph->addTransform(originId, name, tf);
           transforms.emplace_back(originId, name);
