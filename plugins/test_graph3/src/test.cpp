@@ -82,7 +82,7 @@ namespace mars {
         data.init("sun", Vector(0,0,0));
         data.initPrimitive(NODE_TYPE_SPHERE, Vector(0.5, 0.5, 0.5), 0.1);
         data.movable = false;
-        boost::shared_ptr<ConfigMapItem> item(new ConfigMapItem);
+        ConfigMapItem::Ptr item(new ConfigMapItem);
         data.toConfigMap(&(item.get()->getData()));
         control->graph->addItemToFrame(sun, item);
         
@@ -90,7 +90,7 @@ namespace mars {
         data2.init("earth", Vector(0,0,0));
         data2.initPrimitive(NODE_TYPE_SPHERE, Vector(0.3, 0.3, 0.3), 0.1);
         data2.movable = false;
-        boost::shared_ptr<ConfigMapItem> item2(new ConfigMapItem);
+        ConfigMapItem::Ptr item2(new ConfigMapItem);
         data2.toConfigMap(&(item2.get()->getData()));
         control->graph->addItemToFrame(earth, item2);
         
@@ -98,7 +98,7 @@ namespace mars {
         data3.init("moon", Vector(0,0,0));
         data3.initPrimitive(NODE_TYPE_SPHERE, Vector(0.1, 0.1, 0.1), 0.1);
         data3.movable = false;
-        boost::shared_ptr<ConfigMapItem> item3(new ConfigMapItem);
+        ConfigMapItem::Ptr item3(new ConfigMapItem);
         data3.toConfigMap(&(item3.get()->getData()));
         control->graph->addItemToFrame(moon, item3);
         
@@ -106,7 +106,7 @@ namespace mars {
         data4.init("venus", Vector(0,0,0));
         data4.initPrimitive(NODE_TYPE_SPHERE, Vector(0.4, 0.4, 0.4), 0.1);
         data4.movable = false;
-        boost::shared_ptr<ConfigMapItem> item4(new ConfigMapItem);
+        ConfigMapItem::Ptr item4(new ConfigMapItem);
         data4.toConfigMap(&(item4.get()->getData()));
         control->graph->addItemToFrame(venus, item4);     
       }
