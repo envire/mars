@@ -27,12 +27,16 @@
 #pragma once
 // set define if you want to extend the gui
 //#define PLUGIN_WITH_MARS_GUI
+
 #include <mars/interfaces/sim/MarsPluginTemplate.h>
 #include <mars/interfaces/MARSDefs.h>
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <string>
 #include <vector>
 #include <envire_core/items/Frame.hpp>
+#include <mars/interfaces/NodeData.h>
+#include <mars/interfaces/JointData.h>
+
 
 namespace envire {namespace core {
   class TransformGraph;
@@ -69,11 +73,19 @@ namespace mars {
         void update(mars::interfaces::sReal time_ms);
         
         void dropItem();
-        
+
+        void jointedItems();
+
+        mars::interfaces::NodeData randomNodeData(envire::core::FrameId id);
     
         // CFGClient methods
         virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
-        
+      private:
+        envire::core::FrameId getNextFrameId();
+        void addNodeToFrame(envire::core::FrameId id, mars::interfaces::NodeData data);
+        void addJointToFrame(envire::core::FrameId id, mars::interfaces::JointData data);
+
+
       private:
         boost::random::mt19937 rng; 
         envire::core::FrameId floor;
