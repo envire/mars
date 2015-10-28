@@ -52,7 +52,7 @@ namespace mars {
        * transform graph into NodeData and draw it.
        * */
       class GraphViz : public mars::interfaces::MarsPluginTemplate,
-                   public envire::core::GraphEventDispatcher
+                       public envire::core::GraphEventDispatcher
       {
 
       public:
@@ -75,6 +75,7 @@ namespace mars {
         virtual void transformRemoved(const envire::core::TransformRemovedEvent& e);
         virtual void transformModified(const envire::core::TransformModifiedEvent& e);
         virtual void itemAdded(const envire::core::ItemAddedEvent& e);
+        virtual void frameAdded(const envire::core::FrameAddedEvent& e);
 
         // CFGClient methods
         virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);

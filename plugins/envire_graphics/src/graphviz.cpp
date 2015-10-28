@@ -27,6 +27,7 @@
 #include <envire_core/events/ItemAddedEvent.hpp>
 #include <envire_core/events/TransformAddedEvent.hpp>
 #include <envire_core/events/TransformModifiedEvent.hpp>
+#include <envire_core/events/FrameAddedEvent.hpp>
 #include <envire_core/graph/TransformGraphExceptions.hpp>
 #include <mars/sim/ConfigMapItem.h>
 #include <base/TransformWithCovariance.hpp>
@@ -43,7 +44,7 @@ using namespace mars::sim;
 using namespace std;
 
 GraphViz::GraphViz(lib_manager::LibManager *theManager)
-  : MarsPluginTemplate(theManager, "GraphViz"), GraphEventDispatcher(), originId("" )
+  : MarsPluginTemplate(theManager, "GraphViz"), GraphEventDispatcher(), originId("")
 {
 
 }
@@ -57,42 +58,44 @@ void GraphViz::init()
 void GraphViz::reset() {
 }
 
+void GraphViz::frameAdded(const FrameAddedEvent& e)
+{
+  //use the first frame we get as originId
+  if(originId.empty())
+  {
+    changeOrigin(e.addedFrame);
+  }
+}
+
+
 void GraphViz::transformAdded(const envire::core::TransformAddedEvent& e)
 {
   const vertex_descriptor target = control->graph->vertex(e.target);
   const vertex_descriptor origin = control->graph->vertex(e.origin);
-  if(tree.empty())
+  //update the tree structure
+  //find the vertex that was added
+  if(tree.find(origin) != tree.end() &&
+      tree.find(target) == tree.end())
   {
-    //use the first frame we get as originId
-    changeOrigin(e.origin);
+    //origin already is a parent in the tree and target is not
     tree[origin].insert(target);
+  }
+  else if(tree.find(origin) == tree.end() &&
+          tree.find(target) != tree.end())
+  {
+    //target already is a parent in the tree and origin is not
+    tree[target].insert(origin);
   }
   else
   {
-    //update the tree structure
-    //find the vertex that was added
-    if(tree.find(origin) != tree.end() &&
-       tree.find(target) == tree.end())
-    {
-      //origin already is a parent in the tree and target is not
-      tree[origin].insert(target);
-    }
-    else if(tree.find(origin) == tree.end() &&
-            tree.find(target) != tree.end())
-    {
-      //target already is a parent in the tree and origin is not
-      tree[target].insert(origin);
-    }
-    else
-    {
-      // This can happen in two cases:
-      // 1: A loop was added to the current tree, in this case a new, shorter
-      //    path might have been added, therefore we update the whole tree
-      // 2: A transform was added to another sub-tree, we dont care about this
-      //    but cannot distinguish between the 2 cases
-      updateTree(originId);
-    }
+    // This can happen in three cases:
+    // 1: A loop was added to the current tree, in this case a new, shorter
+    //    path might have been added, therefore we update the whole tree.
+    // 2: A transform was added to another sub-tree, we dont care about this.
+    // 3: The current tree is empty and this is the first transform that is added.
+    updateTree(originId);
   }
+  
 }
 
 void GraphViz::transformRemoved(const envire::core::TransformRemovedEvent& e)
@@ -147,8 +150,8 @@ void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
 
 void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
 {
-  boost::shared_ptr<ConfigMapItem> pItem;
-  if(pItem = boost::dynamic_pointer_cast<ConfigMapItem>(e.item))
+  boost::shared_ptr<PhysicsConfigMapItem> pItem;
+  if(pItem = boost::dynamic_pointer_cast<PhysicsConfigMapItem>(e.item))
   {
     //assert that this item has not been added before
     assert(uuidToGraphicsId.find(pItem->getID()) == uuidToGraphicsId.end());
@@ -208,6 +211,7 @@ void GraphViz::changeOrigin(const FrameId& origin)
 void GraphViz::updateTree(const FrameId& origin)
 {
   const vertex_descriptor newOrigin = control->graph->vertex(origin);
+  assert(newOrigin != control->graph->null_vertex());
   tree = control->graph->getTree(newOrigin);
   //update the origins position
   updatePosition(newOrigin);
@@ -239,12 +243,12 @@ void GraphViz::updatePosition(const vertex_descriptor vertex) const
     orientation = tf.transform.orientation;
   }
   
-  using Iterator = TransformGraph::ItemIterator<ConfigMapItem::Ptr>;
+  using Iterator = TransformGraph::ItemIterator<PhysicsConfigMapItem::Ptr>;
   Iterator begin, end;
-  boost::tie(begin, end) = control->graph->getItems<ConfigMapItem::Ptr>(vertex);
+  boost::tie(begin, end) = control->graph->getItems<PhysicsConfigMapItem::Ptr>(vertex);
   for(;begin != end; ++begin)
   {
-    const ConfigMapItem::Ptr item = *begin;
+    const PhysicsConfigMapItem::Ptr item = *begin;
     //others might use ConfigMapItems as well, therefore check if if this is one of ours
     if(uuidToGraphicsId.find(item->getID()) != uuidToGraphicsId.end())
     {
