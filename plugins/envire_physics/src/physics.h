@@ -27,7 +27,7 @@ namespace mars {
 
       class GraphPhysics : public mars::interfaces::MarsPluginTemplate,
                            public envire::core::GraphEventDispatcher,
-                           public envire::core::GraphItemEventDispatcher<mars::sim::ConfigMapItem::Ptr>
+                           public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>
                      
       {
       public:
@@ -48,7 +48,7 @@ namespace mars {
         void transformRemoved(const envire::core::TransformRemovedEvent& e);
         void transformAdded(const envire::core::TransformAddedEvent& e);
         void transformModified(const envire::core::TransformModifiedEvent& e);
-        void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::ConfigMapItem::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
         void update(mars::interfaces::sReal time_ms);
         void updatePositions(const envire::core::vertex_descriptor origin,
                              const envire::core::vertex_descriptor target,

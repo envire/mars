@@ -70,14 +70,14 @@ namespace mars {
         data.init("floorData", Vector(0,0,0));
         data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(5, 5, 0.3), 0.1);
         data.movable = false;
-        boost::shared_ptr<ConfigMapItem> item(new ConfigMapItem);
+        PhysicsConfigMapItem::Ptr item(new PhysicsConfigMapItem);
         data.toConfigMap(&(item.get()->getData()));
         control->graph->addItemToFrame(floor, item);
         NodeData data2;
         data2.init("ballData", Vector(0,0,0));
         data2.initPrimitive(interfaces::NODE_TYPE_SPHERE, Vector(0.3, 0.3, 0.3), 0.1);
         data2.movable = true;
-        boost::shared_ptr<ConfigMapItem> item2(new ConfigMapItem);
+        PhysicsConfigMapItem::Ptr item2(new PhysicsConfigMapItem);
         data2.toConfigMap(&(item2.get()->getData()));
         control->graph->addItemToFrame(ball, item2); 
 
@@ -125,7 +125,7 @@ namespace mars {
         tf.transform.orientation = base::Quaterniond::Identity();
         control->graph->addTransform(floor, id, tf);    
         NodeData data = randomNodeData(id);
-        boost::shared_ptr<ConfigMapItem> item(new ConfigMapItem);
+        PhysicsConfigMapItem::Ptr item(new PhysicsConfigMapItem);
         data.toConfigMap(&(item.get()->getData()));
         control->graph->addItemToFrame(id, item); 
         

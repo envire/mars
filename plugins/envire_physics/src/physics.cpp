@@ -95,10 +95,10 @@ void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent&
   //for the first iteration we ignore transformation changes from outside this plugin
 }
 
-void GraphPhysics::itemAdded(const TypedItemAddedEvent<ConfigMapItem::Ptr>& e)
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr>& e)
 {
-  ConfigMapItem::Ptr pItem = e.item;
-  if(pItem = boost::dynamic_pointer_cast<ConfigMapItem>(e.item))
+  PhysicsConfigMapItem::Ptr pItem = e.item;
+  if(pItem = boost::dynamic_pointer_cast<PhysicsConfigMapItem>(e.item))
   {
     //assert that this item has not been added before
     assert(uuidToPhysics.find(pItem->getID()) == uuidToPhysics.end());
@@ -158,9 +158,9 @@ void GraphPhysics::updatePositions(const vertex_descriptor origin,
                                    const vertex_descriptor target,
                                    const TransformWithCovariance& originToRoot)
 {
-  using Iterator = TransformGraph::ItemIterator<ConfigMapItem::Ptr>;
+  using Iterator = TransformGraph::ItemIterator<PhysicsConfigMapItem::Ptr>;
   Iterator begin, end;
-  boost::tie(begin, end) = control->graph->getItems<ConfigMapItem::Ptr>(target);
+  boost::tie(begin, end) = control->graph->getItems<PhysicsConfigMapItem::Ptr>(target);
 
   Transform tf = control->graph->getTransform(origin, target);
   //take the first physics item in the item list and update the transform
