@@ -6,13 +6,14 @@
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <string>
 #include <envire_core/events/GraphEventDispatcher.hpp>
+#include <envire_core/events/GraphItemEventDispatcher.hpp>
+#include <envire_core/events/ItemAddedEvent.hpp>
 #include <envire_core/items/Frame.hpp>
 #include <envire_core/graph/TransformGraphTypes.hpp>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
-#include "Dispatcher.h"
-
+#include <mars/sim/ConfigMapItem.h>
 
 
 namespace mars {
@@ -25,11 +26,12 @@ namespace mars {
     namespace envire_physics {
 
       class GraphPhysics : public mars::interfaces::MarsPluginTemplate,
-                   public mars::envire_physics::Dispatcher
+                           public envire::core::GraphEventDispatcher,
+                           public envire::core::GraphItemEventDispatcher<mars::sim::ConfigMapItem::Ptr>
+                     
       {
       public:
         GraphPhysics(lib_manager::LibManager *theManager);
-        ~GraphPhysics();
         
         // LibInterface methods
         int getLibVersion() const
@@ -46,7 +48,7 @@ namespace mars {
         void transformRemoved(const envire::core::TransformRemovedEvent& e);
         void transformAdded(const envire::core::TransformAddedEvent& e);
         void transformModified(const envire::core::TransformModifiedEvent& e);
-        void itemAdded(const envire::core::ItemAddedEvent& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::ConfigMapItem::Ptr>& e);
         void update(mars::interfaces::sReal time_ms);
         void updatePositions(const envire::core::vertex_descriptor origin,
                              const envire::core::vertex_descriptor target,

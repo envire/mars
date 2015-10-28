@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <algorithm>
-
+#include <cassert>
 
 using namespace mars::plugins::envire_physics;
 using namespace mars::utils;
@@ -49,154 +49,101 @@ using namespace std;
 using namespace base;
 
 GraphPhysics::GraphPhysics(lib_manager::LibManager *theManager)
-  : MarsPluginTemplate(theManager, "GraphPhysics"), Dispatcher(*(control->graph)){
+  : MarsPluginTemplate(theManager, "GraphPhysics"){
 }
 
 void GraphPhysics::init() {
-  /*
-  if(control->graph != nullptr)
-  {
-    control->graph->subscribe(std::shared_ptr<GraphEventDispatcher>(this));
-  }
-  */
+  assert(control->graph != nullptr);
+  GraphEventDispatcher::subscribe(control->graph);
+  GraphItemEventDispatcher::subscribe(control->graph);
 }
 
 void GraphPhysics::reset() {
 }
 
-GraphPhysics::~GraphPhysics() {
-  /*
-  if(control->graph != nullptr)
-  {
-    control->graph->unsubscribe(std::shared_ptr<GraphEventDispatcher>(this));
-  }
-  */
-}
-
 void GraphPhysics::frameAdded(const FrameAddedEvent& e)
 {
-  /*
   //the first frame that is added is the root (for now)
   if(originId.empty())
   {
     originId = e.addedFrame;
   }
-  */
 }
 
 void GraphPhysics::frameRemoved(const FrameRemovedEvent& e)
 { 
-  /*
   //FIXME do something intelligent of the origin gets removed
-  assert(e.removedFrame != originId);
-  */
+  assert(e.removedFrame != originId); 
 }
 
 void GraphPhysics::transformRemoved(const envire::core::TransformRemovedEvent& e)
 {
-
   //Removing a transform can lead to non trivial changes in the tree.
   //Instead of thinking about them we just recalculate the tree.
   //This is fast enough for now.
- // tree = control->graph->getTree(originId);
- 
+  tree = control->graph->getTree(originId);
 }
 
 void GraphPhysics::transformAdded(const envire::core::TransformAddedEvent& e)
 {
-  /*
   //dont give a shit about performance for the first iteration
   tree = control->graph->getTree(originId);
-  */
 }
 
 void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent& e)
 {
-  /*
   //for the first iteration we ignore transformation changes from outside this plugin
-  */
 }
 
-void GraphPhysics::itemAdded(const envire::core::ItemAddedEvent& e)
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<ConfigMapItem::Ptr>& e)
 {
-  /*
-  boost::shared_ptr<ConfigMapItem> pItem;
+  ConfigMapItem::Ptr pItem = e.item;
   if(pItem = boost::dynamic_pointer_cast<ConfigMapItem>(e.item))
   {
     //assert that this item has not been added before
     assert(uuidToPhysics.find(pItem->getID()) == uuidToPhysics.end());
-    configmaps::ConfigMap mapAux = pItem->getData();
-    if (std::string(mapAux["name"]) != std::string("joint"))
-    {
-      try
-      {         
-	//try to convert the item into a node Data
-	NodeData node;
-	//FIXME fromConfigMap always returns true? There is no way to check
-	//      if the object is actually valid?! WTF
-	//      Return a false instead of crashing here:
-	if(node.fromConfigMap(&pItem->getData(), "")) // Here it breaks with the joint
-	{
-	  Transform fromOrigin = control->graph->getTransform(originId, e.frame); 
-	  node.pos = fromOrigin.transform.translation;
-	  node.rot = fromOrigin.transform.orientation;
-	  
-	  // create an interface object to the physics
-	  shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-	  if (physics->createNode(&node)) 
-	  {
-	    uuidToPhysics[pItem->getID()] = physics;
-	  }
-	}
-      }
-      catch(const UnknownTransformException& ex)
+
+    try
+    {         
+      //try to convert the item into a node Data
+      NodeData node;
+      //FIXME fromConfigMap always returns true? There is no way to check
+      //      if the object is actually valid?! WTF
+      if(node.fromConfigMap(&pItem->getData(), ""))
       {
-	cerr << ex.what() << endl;
+        Transform fromOrigin = control->graph->getTransform(originId, e.frame); 
+        node.pos = fromOrigin.transform.translation;
+        node.rot = fromOrigin.transform.orientation;
+        
+        // create an interface object to the physics
+        shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
+        if (physics->createNode(&node)) 
+        {
+          uuidToPhysics[pItem->getID()] = physics;
+        }
       }
     }
-    else
+    catch(const UnknownTransformException& ex)
     {
-      try
-      {         
-	JointData joint;
-	if(joint.fromConfigMap(&pItem->getData(), ""))
-	{
-	  Transform fromOrigin = control->graph->getTransform(originId, e.frame); 
-	  // create an interface object to the physics
-	  shared_ptr<JointInterface> physics(PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
-	  // Node 1 and node2 I guess are the ones that are being connected
-	  
-	  
-	  //if (physics->createJoint(&joint, &node1, &node2))
-	  //{
-	  //  uuidToPhysics[pItem->getID()] = physics;
-	  //}
-	  
-	  
-	}      
-      }
-      catch(const UnknownTransformException& ex)
-      {
-	cerr << ex.what() << endl;
-      }
+      cerr << ex.what() << endl;
     }
   }
-  */
 }
 
 void GraphPhysics::update(sReal time_ms) 
 {
-  /*
-  //dfs visit the tree and update all positions
+
+  //dfs visit the tree and update all positions.
+  //The transforms in the graph are relativ to their parent while the
+  //transform from simulation is relativ to the root.
+  //The relativ transformations are easy to calculate when dfs visiting the tree.
   const vertex_descriptor originDesc = control->graph->vertex(originId);
   updateChildPositions(originDesc, TransformWithCovariance::Identity());
-  */
 }
 
 void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
                                         const TransformWithCovariance& frameToRoot)
 {
-  /*
   if(tree.find(vertex) != tree.end())
   {
     const unordered_set<vertex_descriptor>& children = tree[vertex];
@@ -205,21 +152,24 @@ void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
       updatePositions(vertex, child, frameToRoot);
     }
   } 
-  */
 }
 
 void GraphPhysics::updatePositions(const vertex_descriptor origin,
                                    const vertex_descriptor target,
                                    const TransformWithCovariance& originToRoot)
 {
-  /*
-  const vector<ItemBase::Ptr>& items = control->graph->getItems(target);
+  using Iterator = TransformGraph::ItemIterator<ConfigMapItem::Ptr>;
+  Iterator begin, end;
+  boost::tie(begin, end) = control->graph->getItems<ConfigMapItem::Ptr>(target);
+
   Transform tf = control->graph->getTransform(origin, target);
   //take the first physics item in the item list and update the transform
-  std::cout << "Enters update positions " << std::endl;
-  for(const ItemBase::Ptr item : items)
+  //There should be only one physics item per frame. But there can be more than
+  //one ConfigMapItems. Therefore we have to iterate and find the physics item.
+  //FIXME This could be avoided by subclassing the ConfigMapItem
+  for(; begin != end; ++begin)
   {
-    const boost::uuids::uuid& id = item->getID();
+    const boost::uuids::uuid& id = (*begin)->getID();
     if(uuidToPhysics.find(id) != uuidToPhysics.end())
     {
       //found a physics item
@@ -229,12 +179,11 @@ void GraphPhysics::updatePositions(const vertex_descriptor origin,
       physics->getRotation(&absolutTransform.orientation);
       tf.setTransform(originToRoot * absolutTransform);
       control->graph->updateTransform(origin, target, tf);
-      break; //there should be **no** more than one physics item per frame
+      break; //there should be only one physics item per frame
     }
   }
   
   updateChildPositions(target, originToRoot * tf.transform.inverse());
-  */
 }
 
 

@@ -5,6 +5,5 @@ set(SOURCES
 
 set(HEADERS
     src/physics.h
-    src/Dispatcher.h
     PARENT_SCOPE
 )
