@@ -83,7 +83,9 @@ namespace mars {
       private:
         envire::core::FrameId getNextFrameId();
         void addNodeToFrame(envire::core::FrameId id, mars::interfaces::NodeData data);
-        void addJointToFrame(envire::core::FrameId id, mars::interfaces::JointData data);
+        /**Adds a joint between frames @p id and @p id2 to the frame @p jointId */
+        void addJointToFrame(envire::core::FrameId jointId, envire::core::FrameId id,
+                             const envire::core::FrameId& id2, mars::interfaces::JointData data);
 
 
       private:

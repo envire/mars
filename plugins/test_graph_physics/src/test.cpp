@@ -58,13 +58,7 @@ namespace mars {
         
         
         floor = "floor";
-        FrameId ball = "ball";
-
-        
-        Transform tf;
-        tf.transform.translation << 0, 0, 10;
-        tf.transform.orientation = base::Quaterniond::Identity();
-        control->graph->addTransform(floor, ball, tf);      
+        control->graph->addFrame(floor);
         
         NodeData data;
         data.init("floorData", Vector(0,0,0));
@@ -73,16 +67,8 @@ namespace mars {
         PhysicsConfigMapItem::Ptr item(new PhysicsConfigMapItem);
         data.toConfigMap(&(item.get()->getData()));
         control->graph->addItemToFrame(floor, item);
-        NodeData data2;
-        data2.init("ballData", Vector(0,0,0));
-        data2.initPrimitive(interfaces::NODE_TYPE_SPHERE, Vector(0.3, 0.3, 0.3), 0.1);
-        data2.movable = true;
-        PhysicsConfigMapItem::Ptr item2(new PhysicsConfigMapItem);
-        data2.toConfigMap(&(item2.get()->getData()));
-        control->graph->addItemToFrame(ball, item2); 
 
-        //jointedItems();
-        
+        jointedItems();
       }
       
       NodeData TestGraph2::randomNodeData(FrameId id)
@@ -114,9 +100,7 @@ namespace mars {
 
       void TestGraph2::dropItem()
       {
-        FrameId id = boost::lexical_cast<FrameId>(itemId);
-        ++itemId;
-        std::cout << "item count: " << itemId << std::endl;
+        FrameId id = getNextFrameId();
         boost::random::uniform_int_distribution<> rnd(-50, 50);
         const float x = rnd(rng)/ 10.0;
         const float y = rnd(rng)/ 10.0;
@@ -133,7 +117,7 @@ namespace mars {
 
       FrameId TestGraph2::getNextFrameId()
       {
-	++itemId;
+        ++itemId;
         FrameId id = boost::lexical_cast<FrameId>(itemId);
         return id;
       }
@@ -141,56 +125,67 @@ namespace mars {
       void TestGraph2::addNodeToFrame(FrameId id, NodeData data)
       {
         // Create a pointer to an item that stores a configmap
-        boost::shared_ptr<ConfigMapItem> item(new ConfigMapItem);
+        PhysicsConfigMapItem::Ptr item(new PhysicsConfigMapItem);
         // Totaly crazy way to set the data of the Item
         data.toConfigMap(&(item.get()->getData()));
-	//configmaps::ConfigMap myConfigMap;
-	//data.toConfigMap(&myConfigMap);
-	//std::cout << "Before puting in the graph" << item.get()->getData()["name"] << std::endl;
+        //configmaps::ConfigMap myConfigMap;
+        //data.toConfigMap(&myConfigMap);
+        //std::cout << "Before puting in the graph" << item.get()->getData()["name"] << std::endl;
         control->graph->addItemToFrame(id, item); 
       }
 
-      void TestGraph2::addJointToFrame(FrameId id, JointData data)
+      void TestGraph2::addJointToFrame(FrameId jointId, FrameId id, const FrameId& id2, JointData data)
       {
-        boost::shared_ptr<ConfigMapItem> item(new ConfigMapItem);
+        JointConfigMapItem::Ptr item(new JointConfigMapItem);
+        //parse the joint data into a config map
         data.toConfigMap(&(item.get()->getData()));
-        control->graph->addItemToFrame(id, item); 
+        //the physics plugin needs to know which frames should be connected
+        //therefore we add that data to the config map as well
+        //The ConfigMap can still be parsed into a JointData, these values will
+        //just be ignored
+        item->getData()["frameId1"][0] = configmaps::ConfigItem(id);
+        item->getData()["frameId2"][0] = configmaps::ConfigItem(id2);
+        control->graph->addItemToFrame(jointId, item); 
       }
 
       void TestGraph2::jointedItems()
       {
         // Create two linked objects
         // Create frame and transformation for the Envire Graph
-        FrameId id = getNextFrameId();
-        int object1Id = itemId;
+        FrameId id1 = getNextFrameId();
         Transform tf;
         tf.transform.translation << 1, 1, 10;
         tf.transform.orientation = base::Quaterniond::Identity();
         // Add transformation to frame from floor (root)
-        control->graph->addTransform(floor, id, tf); 
+        control->graph->addTransform(floor, id1, tf); 
         // Put the information about the object in an item and include it in the graph
-        NodeData data = randomNodeData(id);
-        addNodeToFrame(id, data);
+        NodeData data = randomNodeData(id1);
+        addNodeToFrame(id1, data);
+        
         // Same for the second object
-        id = getNextFrameId();
-        int object2Id = itemId;
-        tf.transform.translation << 2, 2, 10;
+        FrameId id2 = getNextFrameId();
+        tf.transform.translation << 6, 6, 10;
         tf.transform.orientation = base::Quaterniond::Identity();
-        control->graph->addTransform(floor, id, tf);
-        data = randomNodeData(id);
-        addNodeToFrame(id, data);
+        control->graph->addTransform(floor, id2, tf);
+        data = randomNodeData(id2);
+        addNodeToFrame(id2, data);
+        
         // Add the joint
         JointData jointData;
         std::string name = "joint";
         // The joint should put together the two last create objects
-        std::cout << "object1Id: " << object1Id << std::endl;
-        std::cout << "object2Id: " << object2Id << std::endl;
-        jointData.init(name, interfaces::JOINT_TYPE_FIXED, object1Id, object2Id);
-        id = getNextFrameId();
+        //the object ids are not initialized here because we do not know the 
+        //phyics ids of the items (and we do not want to know them)
+        //FIXME we are putting information into the configMap that we dont need
+        // (the object ids)
+        jointData.init(name, interfaces::JOINT_TYPE_FIXED, 0, 0);
+        
+        FrameId jointId = getNextFrameId();
+        //FIXME why do we store the joint in its own frame?!
         tf.transform.translation << 1.5, 1.5, 10;
         tf.transform.orientation = base::Quaterniond::Identity();
-        control->graph->addTransform(floor, id, tf);
-        addJointToFrame(id, jointData);
+        control->graph->addTransform(floor, jointId, tf);
+        addJointToFrame(jointId, id1, id2, jointData);
       }
       
 
@@ -204,7 +199,7 @@ namespace mars {
 
       void TestGraph2::update(sReal time_ms) 
       {
-          dropItem();
+          //dropItem();
       }
 
       void TestGraph2::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
