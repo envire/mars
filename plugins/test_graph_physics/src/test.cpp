@@ -81,7 +81,8 @@ namespace mars {
         data2.toConfigMap(&(item2.get()->getData()));
         control->graph->addItemToFrame(ball, item2); 
 
-        jointedItems();
+        //jointedItems();
+        
       }
       
       NodeData TestGraph2::randomNodeData(FrameId id)
@@ -161,7 +162,7 @@ namespace mars {
         // Create two linked objects
         // Create frame and transformation for the Envire Graph
         FrameId id = getNextFrameId();
-	int object1Id = itemId;
+        int object1Id = itemId;
         Transform tf;
         tf.transform.translation << 1, 1, 10;
         tf.transform.orientation = base::Quaterniond::Identity();
@@ -172,19 +173,19 @@ namespace mars {
         addNodeToFrame(id, data);
         // Same for the second object
         id = getNextFrameId();
-	int object2Id = itemId;
+        int object2Id = itemId;
         tf.transform.translation << 2, 2, 10;
         tf.transform.orientation = base::Quaterniond::Identity();
         control->graph->addTransform(floor, id, tf);
         data = randomNodeData(id);
         addNodeToFrame(id, data);
         // Add the joint
-	JointData jointData;
+        JointData jointData;
         std::string name = "joint";
         // The joint should put together the two last create objects
-	std::cout << "object1Id: " << object1Id << std::endl;
+        std::cout << "object1Id: " << object1Id << std::endl;
         std::cout << "object2Id: " << object2Id << std::endl;
-	jointData.init(name, interfaces::JOINT_TYPE_FIXED, object1Id, object2Id);
+        jointData.init(name, interfaces::JOINT_TYPE_FIXED, object1Id, object2Id);
         id = getNextFrameId();
         tf.transform.translation << 1.5, 1.5, 10;
         tf.transform.orientation = base::Quaterniond::Identity();
@@ -203,7 +204,7 @@ namespace mars {
 
       void TestGraph2::update(sReal time_ms) 
       {
-          //dropItem();
+          dropItem();
       }
 
       void TestGraph2::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
