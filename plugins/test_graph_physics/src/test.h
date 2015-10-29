@@ -82,10 +82,12 @@ namespace mars {
         virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
       private:
         envire::core::FrameId getNextFrameId();
-        void addNodeToFrame(envire::core::FrameId id, mars::interfaces::NodeData data);
+        
+        /**returns the uuid of the item that has been addded */
+        boost::uuids::uuid addNodeToFrame(envire::core::FrameId id, mars::interfaces::NodeData data);
         /**Adds a joint between frames @p id and @p id2 to the frame @p jointId */
-        void addJointToFrame(envire::core::FrameId jointId, envire::core::FrameId id,
-                             const envire::core::FrameId& id2, mars::interfaces::JointData data);
+        void addJointToFrame(envire::core::FrameId id, mars::interfaces::JointData& data,
+                             boost::uuids::uuid itemId1, boost::uuids::uuid itemId2);
 
 
       private:

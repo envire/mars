@@ -27,7 +27,8 @@ namespace mars {
 
       class GraphPhysics : public mars::interfaces::MarsPluginTemplate,
                            public envire::core::GraphEventDispatcher,
-                           public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>
+                           public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>,
+                           public envire::core::GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>
                      
       {
       public:
@@ -49,6 +50,7 @@ namespace mars {
         void transformAdded(const envire::core::TransformAddedEvent& e);
         void transformModified(const envire::core::TransformModifiedEvent& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
         void update(mars::interfaces::sReal time_ms);
         void updatePositions(const envire::core::vertex_descriptor origin,
                              const envire::core::vertex_descriptor target,
@@ -62,7 +64,7 @@ namespace mars {
         
       private:
         envire::core::FrameId originId;
-        envire::core::VertexMap tree;
+        envire::core::VertexRelationMap tree;
         std::unordered_map<boost::uuids::uuid, std::shared_ptr<interfaces::NodeInterface>, boost::hash<boost::uuids::uuid>> uuidToPhysics;
       };
       

@@ -55,7 +55,8 @@ GraphPhysics::GraphPhysics(lib_manager::LibManager *theManager)
 void GraphPhysics::init() {
   assert(control->graph != nullptr);
   GraphEventDispatcher::subscribe(control->graph);
-  GraphItemEventDispatcher::subscribe(control->graph);
+  GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>::subscribe(control->graph);
+  GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>::subscribe(control->graph);
 }
 
 void GraphPhysics::reset() {
@@ -95,38 +96,92 @@ void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent&
   //for the first iteration we ignore transformation changes from outside this plugin
 }
 
+
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e)
+{
+  /*
+  JointConfigMapItem::Ptr pItem = e.item;
+  JointData jointData;
+  if(jointData.fromConfigMap(&pItem->getData(), ""))
+  {
+    string id1 = pItem->getData().get("itemId1", "");
+    string id2 = pItem->getData().get("itemId1", "");
+    assert(!id1.empty());
+    assert(!id2.empty());
+    //the ids of the two items that should be connected by the joint
+    boost::uuids::uuid uuid1 = boost::lexical_cast<boost::uuids::uuid>(id1);
+    boost::uuids::uuid uuid2 = boost::lexical_cast<boost::uuids::uuid>(id2);
+    
+    if(uuidToPhysics.find(uuid1) != uuidToPhysics.end() &&
+       uuidToPhysics.find(uuid2) != uuidToPhysics.end())
+    {
+      shared_ptr<NodeInterface> node1 = uuidToPhysics[uuid1];
+      shared_ptr<NodeInterface> node2 = uuidToPhysics[uuid2];
+          
+      shared_ptr<JointInterface> jointInterface(PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
+      // create the physical node data
+      if(jointInterface->createJoint(jointData, node1, node2))
+      {
+      }
+      else
+      {
+        assert(false); //FIXME can this even fail?
+      }
+    else
+    {
+      assert(false);//There is a bug somewhere, we shouldn't miss items
+    }
+    
+    uuidToPhysics[pItem->getID()]
+    
+
+
+    
+  }
+  */
+  
+}
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr>& e)
 {
   PhysicsConfigMapItem::Ptr pItem = e.item;
-  if(pItem = boost::dynamic_pointer_cast<PhysicsConfigMapItem>(e.item))
-  {
-    //assert that this item has not been added before
-    assert(uuidToPhysics.find(pItem->getID()) == uuidToPhysics.end());
+  //assert that this item has not been added before
+  assert(uuidToPhysics.find(pItem->getID()) == uuidToPhysics.end());
 
-    try
-    {         
-      //try to convert the item into a node Data
-      NodeData node;
-      //FIXME fromConfigMap always returns true? There is no way to check
-      //      if the object is actually valid?! WTF
-      if(node.fromConfigMap(&pItem->getData(), ""))
+  try
+  {         
+    //try to convert the item into a node Data
+    NodeData node;
+    //FIXME fromConfigMap always returns true? There is no way to check
+    //      if the object is actually valid?! WTF
+    if(node.fromConfigMap(&pItem->getData(), ""))
+    {
+      Transform fromOrigin;
+      if(originId.compare(e.frame) == 0)
       {
-        Transform fromOrigin = control->graph->getTransform(originId, e.frame); 
-        node.pos = fromOrigin.transform.translation;
-        node.rot = fromOrigin.transform.orientation;
-        
-        // create an interface object to the physics
-        shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-        if (physics->createNode(&node)) 
-        {
-          uuidToPhysics[pItem->getID()] = physics;
-        }
+        //this special case happens when the graph only contains one frame
+        //and items are added to that frame. In that case aksing the graph 
+        //for the transformation would cause an exception
+        fromOrigin.setTransform(TransformWithCovariance::Identity());
+      }
+      else
+      {
+        fromOrigin = control->graph->getTransform(originId, e.frame); 
+      }
+      
+      node.pos = fromOrigin.transform.translation;
+      node.rot = fromOrigin.transform.orientation;
+      
+      // create an interface object to the physics
+      shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
+      if (physics->createNode(&node)) 
+      {
+        uuidToPhysics[pItem->getID()] = physics;
       }
     }
-    catch(const UnknownTransformException& ex)
-    {
-      cerr << ex.what() << endl;
-    }
+  }
+  catch(const UnknownTransformException& ex)
+  {
+    cerr << ex.what() << endl;
   }
 }
 
@@ -146,7 +201,7 @@ void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
 {
   if(tree.find(vertex) != tree.end())
   {
-    const unordered_set<vertex_descriptor>& children = tree[vertex];
+    const unordered_set<vertex_descriptor>& children = tree[vertex].children;
     for(const vertex_descriptor child : children)
     {
       updatePositions(vertex, child, frameToRoot);
@@ -178,6 +233,7 @@ void GraphPhysics::updatePositions(const vertex_descriptor origin,
       physics->getPosition(&absolutTransform.translation);
       physics->getRotation(&absolutTransform.orientation);
       tf.setTransform(originToRoot * absolutTransform);
+      
       control->graph->updateTransform(origin, target, tf);
       break; //there should be only one physics item per frame
     }

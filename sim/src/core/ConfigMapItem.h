@@ -1,6 +1,7 @@
 #pragma once
 #include <envire_core/items/Item.hpp>
 #include <configmaps/ConfigData.h>
+#include <string>
 
 namespace mars { namespace sim
 {
@@ -9,5 +10,15 @@ namespace mars { namespace sim
   using ConfigMapItem = envire::core::Item<configmaps::ConfigMap>;
   
   /**A ConfigMapItem that carries physics information */
-  struct PhysicsConfigMapItem : public ConfigMapItem {};
+  struct PhysicsConfigMapItem : public ConfigMapItem
+  {
+    using Ptr = ConfigMapItem::PtrType<PhysicsConfigMapItem>;
+  };
+  
+  /**A ConfigMapItem that  carries joint information */
+  struct JointConfigMapItem : public ConfigMapItem 
+  {
+    using Ptr = ConfigMapItem::PtrType<JointConfigMapItem>;
+  };
+  
 }}

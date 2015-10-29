@@ -68,7 +68,10 @@ namespace mars {
         data.toConfigMap(&(item.get()->getData()));
         control->graph->addItemToFrame(floor, item);
 
-        jointedItems();
+        dropItem();
+        dropItem();
+        dropItem();
+        //jointedItems();
       }
       
       NodeData TestGraph2::randomNodeData(FrameId id)
@@ -122,7 +125,7 @@ namespace mars {
         return id;
       }
 
-      void TestGraph2::addNodeToFrame(FrameId id, NodeData data)
+      boost::uuids::uuid TestGraph2::addNodeToFrame(FrameId id, NodeData data)
       {
         // Create a pointer to an item that stores a configmap
         PhysicsConfigMapItem::Ptr item(new PhysicsConfigMapItem);
@@ -132,20 +135,22 @@ namespace mars {
         //data.toConfigMap(&myConfigMap);
         //std::cout << "Before puting in the graph" << item.get()->getData()["name"] << std::endl;
         control->graph->addItemToFrame(id, item); 
+        return item->getID();
       }
 
-      void TestGraph2::addJointToFrame(FrameId jointId, FrameId id, const FrameId& id2, JointData data)
+      void TestGraph2::addJointToFrame(FrameId id, JointData& data,
+          boost::uuids::uuid itemId1, boost::uuids::uuid itemId2)
       {
         JointConfigMapItem::Ptr item(new JointConfigMapItem);
         //parse the joint data into a config map
         data.toConfigMap(&(item.get()->getData()));
-        //the physics plugin needs to know which frames should be connected
+        //the physics plugin needs to know which items should be connected
         //therefore we add that data to the config map as well
         //The ConfigMap can still be parsed into a JointData, these values will
         //just be ignored
-        item->getData()["frameId1"][0] = configmaps::ConfigItem(id);
-        item->getData()["frameId2"][0] = configmaps::ConfigItem(id2);
-        control->graph->addItemToFrame(jointId, item); 
+        item->getData()["itemId1"][0] = configmaps::ConfigItem(boost::lexical_cast<string>(itemId1));
+        item->getData()["itemId2"][0] = configmaps::ConfigItem(boost::lexical_cast<string>(itemId2));
+        control->graph->addItemToFrame(id, item); 
       }
 
       void TestGraph2::jointedItems()
@@ -160,7 +165,7 @@ namespace mars {
         control->graph->addTransform(floor, id1, tf); 
         // Put the information about the object in an item and include it in the graph
         NodeData data = randomNodeData(id1);
-        addNodeToFrame(id1, data);
+        boost::uuids::uuid uuid1 = addNodeToFrame(id1, data);
         
         // Same for the second object
         FrameId id2 = getNextFrameId();
@@ -168,7 +173,7 @@ namespace mars {
         tf.transform.orientation = base::Quaterniond::Identity();
         control->graph->addTransform(floor, id2, tf);
         data = randomNodeData(id2);
-        addNodeToFrame(id2, data);
+        boost::uuids::uuid uuid2 = addNodeToFrame(id2, data);
         
         // Add the joint
         JointData jointData;
@@ -185,7 +190,7 @@ namespace mars {
         tf.transform.translation << 1.5, 1.5, 10;
         tf.transform.orientation = base::Quaterniond::Identity();
         control->graph->addTransform(floor, jointId, tf);
-        addJointToFrame(jointId, id1, id2, jointData);
+        addJointToFrame(jointId, jointData, uuid1, uuid2);
       }
       
 
@@ -199,7 +204,7 @@ namespace mars {
 
       void TestGraph2::update(sReal time_ms) 
       {
-          //dropItem();
+          dropItem();
       }
 
       void TestGraph2::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {

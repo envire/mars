@@ -102,7 +102,7 @@ namespace mars {
         /**Maps the item's uuid to the graphics id used for drawing */
         std::unordered_map<boost::uuids::uuid, int, boost::hash<boost::uuids::uuid>> uuidToGraphicsId;
         envire::core::FrameId originId; /**<id of the current origin */
-        envire::core::VertexMap tree; /**<map from parent to children */
+        envire::core::VertexRelationMap tree; /**<map from parent to children */
         
 
       }; // end of class definition TestTreeMars

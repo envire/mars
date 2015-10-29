@@ -42,6 +42,7 @@ using namespace mars::interfaces;
 using namespace envire::core;
 using namespace mars::sim;
 using namespace std;
+using namespace base;
 
 GraphViz::GraphViz(lib_manager::LibManager *theManager)
   : MarsPluginTemplate(theManager, "GraphViz"), GraphEventDispatcher(), originId("")
@@ -78,13 +79,15 @@ void GraphViz::transformAdded(const envire::core::TransformAddedEvent& e)
       tree.find(target) == tree.end())
   {
     //origin already is a parent in the tree and target is not
-    tree[origin].insert(target);
+    tree[origin].children.insert(target);
+    tree[target].parent = origin;
   }
   else if(tree.find(origin) == tree.end() &&
           tree.find(target) != tree.end())
   {
     //target already is a parent in the tree and origin is not
-    tree[target].insert(origin);
+    tree[target].children.insert(origin);
+    tree[origin].parent = target;
   }
   else
   {
@@ -126,7 +129,6 @@ void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
     //about it.
     return;
   }
-  
   //update all children
   vector<vertex_descriptor> queue;
   queue.push_back(child);
@@ -140,7 +142,7 @@ void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
     //if the vertex has children, queue them
     if(tree.find(vertex) != tree.end())
     {
-      for(const vertex_descriptor vd : tree[vertex])
+      for(const vertex_descriptor vd : tree[vertex].children)
       {
         queue.emplace_back(vd);
       }
@@ -160,7 +162,18 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
       NodeData node;
       if(node.fromConfigMap(&pItem->getData(), ""))
       {
-        Transform fromOrigin = control->graph->getTransform(originId, e.frame); 
+        Transform fromOrigin;
+        if(originId.compare(e.frame) == 0)
+        {
+          //this special case happens when the graph only contains one frame
+          //and items are added to that frame. In that case aksing the graph 
+          //for the transformation would cause an exception
+          fromOrigin.setTransform(TransformWithCovariance::Identity());
+        }
+        else
+        {
+          fromOrigin = control->graph->getTransform(originId, e.frame); 
+        }
         node.pos = fromOrigin.transform.translation;
         node.rot = fromOrigin.transform.orientation;
         uuidToGraphicsId[pItem->getID()] = control->graphics->addDrawObject(node);
@@ -168,17 +181,17 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
     }
     catch(const UnknownTransformException& ex)
     {
-      cerr << ex.what() << endl;
+      cerr << "ERROR: " << ex.what() << endl;
     }
   }
 }
 
-bool GraphViz::isParent(vertex_descriptor a, vertex_descriptor b) const
+bool GraphViz::isParent(vertex_descriptor parent, vertex_descriptor child) const
 {
-  if(tree.find(a) != tree.end())
+  if(tree.find(child) != tree.end())
   {
-    //a is a parent, now check if b is the child of a
-    return std::find(tree.at(a).begin(), tree.at(a).end(), b) != tree.at(a).end();
+    bool res = tree.at(child).parent == parent;
+    return res;
   }
   return false;
 }
@@ -206,7 +219,7 @@ void GraphViz::changeOrigin(const FrameId& origin)
 {
   originId = origin;  
   updateTree(origin);
-}
+} 
 
 void GraphViz::updateTree(const FrameId& origin)
 {
@@ -218,7 +231,7 @@ void GraphViz::updateTree(const FrameId& origin)
   //update all childreen
   for(const auto& it : tree)
   {
-    for(const auto& vertex : it.second)
+    for(vertex_descriptor vertex : it.second.children)
     {
       updatePosition(vertex);
     }
