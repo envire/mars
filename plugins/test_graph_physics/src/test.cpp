@@ -179,26 +179,24 @@ namespace mars {
         // The joint should put together the two last create objects
         //the object ids are not initialized here because we do not know the 
         //phyics ids of the items (and we do not want to know them)
-        //FIXME we are putting information into the configMap that we dont need
-        // (the object ids)
-        jointData.init(name, interfaces::JOINT_TYPE_FIXED, 0, 0);
         
-        FrameId jointId = getNextFrameId();
-        //FIXME why do we store the joint in its own frame?!
+        jointData.init(name, interfaces::JOINT_TYPE_FIXED, 0, 0);
+        jointData.anchorPos = ANCHOR_CENTER;
+        
+        FrameId jointId("joint");
         tf.transform.translation << 1.5, 1.5, 10;
         tf.transform.orientation = base::Quaterniond::Identity();
-        control->graph->addTransform(floor, jointId, tf);
+        control->graph->addTransform(id1, jointId, tf);
+        control->graph->addTransform(id2, jointId, tf);
         addJointToFrame(jointId, jointData, uuid1, uuid2);
       }
       
-
       void TestGraph2::reset() {
       }
 
       TestGraph2::~TestGraph2() {
       
       }
-
 
       void TestGraph2::update(sReal time_ms) 
       {
