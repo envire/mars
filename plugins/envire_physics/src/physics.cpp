@@ -39,6 +39,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cassert>
+#include <boost/lexical_cast.hpp>
 
 using namespace mars::plugins::envire_physics;
 using namespace mars::utils;
@@ -99,13 +100,13 @@ void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent&
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e)
 {
-  /*
+  
   JointConfigMapItem::Ptr pItem = e.item;
   JointData jointData;
   if(jointData.fromConfigMap(&pItem->getData(), ""))
   {
-    string id1 = pItem->getData().get("itemId1", "");
-    string id2 = pItem->getData().get("itemId1", "");
+    string id1 = pItem->getData().get<string>("itemId1", "");
+    string id2 = pItem->getData().get<string>("itemId2", "");
     assert(!id1.empty());
     assert(!id2.empty());
     //the ids of the two items that should be connected by the joint
@@ -120,27 +121,27 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<mars::sim::JointConfigMap
           
       shared_ptr<JointInterface> jointInterface(PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
       // create the physical node data
-      if(jointInterface->createJoint(jointData, node1, node2))
+      if(jointInterface->createJoint(&jointData, node1.get(), node2.get()))
       {
+        //remember a pointer to the interface, otherwise it will be deleted.
+        uuidToJoints[pItem->getID()] = jointInterface;
+        control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
       }
       else
       {
-        assert(false); //FIXME can this even fail?
+        std::cerr << "ERROR: Failed to create joint" << std::endl;
+        assert(false);//this only happens if the JointConfigMapItem contains bad data, which it should never do
       }
+    }
     else
     {
-      assert(false);//There is a bug somewhere, we shouldn't miss items
+      std::cerr << "ERROR: Nodes do not exist in map" << std::endl;
+      assert(false); //bug somewhere, we shouldnt miss items
     }
-    
-    uuidToPhysics[pItem->getID()]
-    
-
-
-    
   }
-  */
-  
 }
+
+
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr>& e)
 {
   PhysicsConfigMapItem::Ptr pItem = e.item;

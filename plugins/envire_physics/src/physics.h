@@ -20,6 +20,7 @@ namespace mars {
   
   namespace interfaces {
     class NodeInterface;
+    class JointInterface;
   }
   
   namespace plugins {
@@ -66,6 +67,8 @@ namespace mars {
         envire::core::FrameId originId;
         envire::core::VertexRelationMap tree;
         std::unordered_map<boost::uuids::uuid, std::shared_ptr<interfaces::NodeInterface>, boost::hash<boost::uuids::uuid>> uuidToPhysics;
+        std::unordered_map<boost::uuids::uuid, std::shared_ptr<interfaces::JointInterface>, boost::hash<boost::uuids::uuid>> uuidToJoints;
+        
       };
       
     }

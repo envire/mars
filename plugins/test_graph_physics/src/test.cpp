@@ -68,10 +68,8 @@ namespace mars {
         data.toConfigMap(&(item.get()->getData()));
         control->graph->addItemToFrame(floor, item);
 
-        dropItem();
-        dropItem();
-        dropItem();
-        //jointedItems();
+
+        jointedItems();
       }
       
       NodeData TestGraph2::randomNodeData(FrameId id)
@@ -204,7 +202,7 @@ namespace mars {
 
       void TestGraph2::update(sReal time_ms) 
       {
-          dropItem();
+       //   dropItem();
       }
 
       void TestGraph2::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
