@@ -97,7 +97,6 @@ void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent&
   //for the first iteration we ignore transformation changes from outside this plugin
 }
 
-
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e)
 {
   
@@ -185,6 +184,24 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr
     cerr << ex.what() << endl;
   }
 }
+
+void GraphPhysics::itemRemoved(const TypedItemRemovedEvent< mars::sim::JointConfigMapItem::Ptr >& e)
+{
+  if(uuidToJoints.find(e.item->getID()) != uuidToJoints.end())
+  {
+    shared_ptr<JointInterface> jointInterface = uuidToJoints[e.item->getID()];
+    //removing it from the map will destroy the interface because the map
+    //was the only one that knew about the item.
+    //This will also remove the joint from ode
+    uuidToJoints.erase(e.item->getID());
+  }
+  else
+  {
+    std::cerr << "ERROR: Tried to remove a joint that was never added" << std::endl;
+    assert(false);
+  }
+}
+
 
 void GraphPhysics::update(sReal time_ms) 
 {

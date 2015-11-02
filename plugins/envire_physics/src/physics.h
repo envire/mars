@@ -26,6 +26,9 @@ namespace mars {
   namespace plugins {
     namespace envire_physics {
 
+      /** This plugin adds all PhysicsConfigMapItems and JointConfigMapItems
+       *  to the simulation and updates the transforms when the items move.
+       * */
       class GraphPhysics : public mars::interfaces::MarsPluginTemplate,
                            public envire::core::GraphEventDispatcher,
                            public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>,
@@ -52,6 +55,7 @@ namespace mars {
         void transformModified(const envire::core::TransformModifiedEvent& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
+        void itemRemoved(const  envire::core::TypedItemRemovedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
         void update(mars::interfaces::sReal time_ms);
         void updatePositions(const envire::core::vertex_descriptor origin,
                              const envire::core::vertex_descriptor target,
@@ -66,7 +70,12 @@ namespace mars {
       private:
         envire::core::FrameId originId;
         envire::core::VertexRelationMap tree;
+        
+        /**For each PhysicsConfigMapItem a corresponding NodeInterface is created
+         * in the simulation. This map stores the connection between the two. */
         std::unordered_map<boost::uuids::uuid, std::shared_ptr<interfaces::NodeInterface>, boost::hash<boost::uuids::uuid>> uuidToPhysics;
+        /**For each JointConfigMapItem a corresponding JointInterface is created in theManager
+         * simulation.*/
         std::unordered_map<boost::uuids::uuid, std::shared_ptr<interfaces::JointInterface>, boost::hash<boost::uuids::uuid>> uuidToJoints;
         
       };
