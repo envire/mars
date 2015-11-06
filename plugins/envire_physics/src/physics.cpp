@@ -72,6 +72,22 @@ void GraphPhysics::frameAdded(const FrameAddedEvent& e)
   }
 }
 
+void GraphPhysics::updateTree()
+{
+  treeView = control->graph->getTree(originId);
+  if(treeView.crossEdges.size() > 0)
+  {
+    const vertex_descriptor source = control->graph->source(treeView.crossEdges[0]);
+    const vertex_descriptor target = control->graph->target(treeView.crossEdges[0]);
+    const FrameId sourceId = control->graph->getFrameId(source);
+    const FrameId targetId = control->graph->getFrameId(target);
+    const string msg = "Loop in tree detected: " + sourceId + " --> " + targetId +
+                       ". The physics plugin cannot handle loops in the graph";
+    throw std::runtime_error(msg);
+  }
+}
+
+
 void GraphPhysics::frameRemoved(const FrameRemovedEvent& e)
 { 
   //FIXME do something intelligent of the origin gets removed
@@ -83,13 +99,13 @@ void GraphPhysics::transformRemoved(const envire::core::TransformRemovedEvent& e
   //Removing a transform can lead to non trivial changes in the tree.
   //Instead of thinking about them we just recalculate the tree.
   //This is fast enough for now.
-  tree = control->graph->getTree(originId).tree;
+  updateTree();
 }
 
 void GraphPhysics::transformAdded(const envire::core::TransformAddedEvent& e)
 {
   //dont give a shit about performance for the first iteration
-  tree = control->graph->getTree(originId).tree;
+  updateTree();
 }
 
 void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent& e)
@@ -217,9 +233,9 @@ void GraphPhysics::update(sReal time_ms)
 void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
                                         const TransformWithCovariance& frameToRoot)
 {
-  if(tree.find(vertex) != tree.end())
+  if(treeView.tree.find(vertex) != treeView.tree.end())
   {
-    const unordered_set<vertex_descriptor>& children = tree[vertex].children;
+    const unordered_set<vertex_descriptor>& children = treeView.tree[vertex].children;
     for(const vertex_descriptor child : children)
     {
       updatePositions(vertex, child, frameToRoot);

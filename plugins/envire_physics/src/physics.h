@@ -68,8 +68,10 @@ namespace mars {
         
         
       private:
+        void updateTree();
+        
         envire::core::FrameId originId;
-        envire::core::VertexRelationMap tree;
+        envire::core::TreeView treeView;
         
         /**For each PhysicsConfigMapItem a corresponding NodeInterface is created
          * in the simulation. This map stores the connection between the two. */
