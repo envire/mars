@@ -29,7 +29,6 @@
 
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/interfaces/sim/NodeManagerInterface.h>
-#include <mars/interfaces/sim/ItemManagerInterface.h>
 
 #include <mars/interfaces/sim/JointManagerInterface.h>
 #include <mars/interfaces/sim/SensorManagerInterface.h>
