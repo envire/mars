@@ -153,41 +153,37 @@ namespace mars {
 
       void TestGraph2::jointedItems()
       {
-        // Create two linked objects
-        // Create frame and transformation for the Envire Graph
+        //floor -> id1 -> joint -> id2
         FrameId id1 = getNextFrameId();
-        Transform tf;
-        tf.transform.translation << 1, 1, 10;
-        tf.transform.orientation = base::Quaterniond::Identity();
-        // Add transformation to frame from floor (root)
-        control->graph->addTransform(floor, id1, tf); 
-        // Put the information about the object in an item and include it in the graph
+        FrameId id2 = getNextFrameId();
+        FrameId jointId = "joint_" + getNextFrameId();
+        
+        //floor -> id1
+        Transform floorToId1;
+        floorToId1.transform.translation << 1, 1, 10;
+        floorToId1.transform.orientation = base::Quaterniond::Identity();        
+        control->graph->addTransform(floor, id1, floorToId1);         
         NodeData data = randomNodeData(id1);
         boost::uuids::uuid uuid1 = addNodeToFrame(id1, data);
+
+        //id1 -> joint (the joint is fixed and located half way between id1 and id2)
+        Transform id1ToJoint;
+        id1ToJoint.transform.translation << 2, 2, 0;
+        id1ToJoint.transform.orientation = base::Quaterniond::Identity(); 
+        control->graph->addTransform(id1, jointId, id1ToJoint);
         
-        // Same for the second object
-        FrameId id2 = getNextFrameId();
-        tf.transform.translation << 6, 6, 10;
-        tf.transform.orientation = base::Quaterniond::Identity();
-        control->graph->addTransform(floor, id2, tf);
+        //joint -> id2 (has to be done before we can add the JointData to joint
+        //              because we need the uuid of id2 item)
+        Transform jointToId2;
+        jointToId2.transform.translation << 2, 2, 0;
+        jointToId2.transform.orientation = base::Quaterniond::Identity();        
+        control->graph->addTransform(jointId, id2, jointToId2);      
         data = randomNodeData(id2);
         boost::uuids::uuid uuid2 = addNodeToFrame(id2, data);
         
         // Add the joint
         JointData jointData;
-        std::string name = "joint";
-        // The joint should put together the two last create objects
-        //the object ids are not initialized here because we do not know the 
-        //phyics ids of the items (and we do not want to know them)
-        
-        jointData.init(name, interfaces::JOINT_TYPE_FIXED, 0, 0);
-        jointData.anchorPos = ANCHOR_CENTER;
-        
-        FrameId jointId("joint");
-        tf.transform.translation << 1.5, 1.5, 10;
-        tf.transform.orientation = base::Quaterniond::Identity();
-        control->graph->addTransform(id1, jointId, tf);
-        control->graph->addTransform(id2, jointId, tf);
+        jointData.init("joint", interfaces::JOINT_TYPE_FIXED, 0, 0);
         addJointToFrame(jointId, jointData, uuid1, uuid2);
       }
       
