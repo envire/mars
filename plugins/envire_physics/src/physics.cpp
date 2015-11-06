@@ -83,13 +83,13 @@ void GraphPhysics::transformRemoved(const envire::core::TransformRemovedEvent& e
   //Removing a transform can lead to non trivial changes in the tree.
   //Instead of thinking about them we just recalculate the tree.
   //This is fast enough for now.
-  tree = control->graph->getTree(originId);
+  tree = control->graph->getTree(originId).tree;
 }
 
 void GraphPhysics::transformAdded(const envire::core::TransformAddedEvent& e)
 {
   //dont give a shit about performance for the first iteration
-  tree = control->graph->getTree(originId);
+  tree = control->graph->getTree(originId).tree;
 }
 
 void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent& e)

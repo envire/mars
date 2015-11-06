@@ -225,7 +225,7 @@ void GraphViz::updateTree(const FrameId& origin)
 {
   const vertex_descriptor newOrigin = control->graph->vertex(origin);
   assert(newOrigin != control->graph->null_vertex());
-  tree = control->graph->getTree(newOrigin);
+  tree = control->graph->getTree(newOrigin).tree;
   //update the origins position
   updatePosition(newOrigin);
   //update all childreen
