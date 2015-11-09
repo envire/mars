@@ -9,7 +9,7 @@
     <depend package="simulation/mars/common/data_broker" />
     <depend package="simulation/mars/interfaces" />
     <depend package="simulation/mars/entity_generation/entity_factory" />
-    <!-- <depend package="simulation/smurf_parser" />
-    <depend package="simulation/mars/smurf_loader" />-->
+    <depend package="tools/envire_smurf" />
+    <depend package="tools/orocos_cpp" />
     <tags>needs_opt</tags>
 </package>

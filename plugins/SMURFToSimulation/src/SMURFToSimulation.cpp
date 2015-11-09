@@ -30,6 +30,9 @@
 #include "SMURFToSimulation.h"
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
+#include <mars/interfaces/Logging.hpp>
+#include <envire_smurf/Robot.hpp>
+#include <orocos_cpp/YAMLConfiguration.hpp>
 
 namespace mars {
   namespace plugins {
@@ -44,15 +47,19 @@ namespace mars {
 
   
       void SMURFToSimulation::init() {
-
-        std::cout << "Init method start" << std::endl;
+	envire::envire_smurf::Robot asguard;
+	std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>");
+	LOG_DEBUG("Robot Path: %s",  path.c_str() );
+        asguard.loadFromSmurf(*(control->graph), path);
+	LOG_DEBUG("Loaded to Mars/Envire graph");
+	asguard.simulationReady(*(control->graph));
+        // Create a Simulated Robot from the information in the robot model
+        // robot.simulate();
         // Create configMap
         //
         // Load a Robot
         // robot = envire_smurf.loadFromSMURF(Robot);
-        // Create a Simulated Robot from the information in the robot model
-        // robot.simulate();
-        //configmaps::ConfigMap* map = new configmaps::ConfigMap;
+	//configmaps::ConfigMap* map = new configmaps::ConfigMap;
         //std::cout << "Create configMap" << std::endl;
         //// Update the configMap from a Smurf file
         //std::string path = std::string(std::getenv("AUTOPROJ_CURRENT_ROOT")) + "/models/robots/asguard_v4/smurf/";

@@ -4,8 +4,8 @@ set(PROJECT_DESCRIPTION "Tests")
 cmake_minimum_required(VERSION 2.6)
 include(FindPkgConfig)
 
-find_package(mars)
-mars_defaults()
+find_package(lib_manager)
+lib_defaults()
 define_module_info()
 
 
@@ -18,6 +18,8 @@ pkg_check_modules(PKGCONFIG REQUIRED
                             urdfdom
                             mars_sim
                             mars_smurf
+                            envire_smurf
+                            orocos_cpp
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
