@@ -31,8 +31,11 @@
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
 #include <mars/interfaces/Logging.hpp>
-#include <envire_smurf/Robot.hpp>
+
 #include <orocos_cpp/YAMLConfiguration.hpp>
+// For the floor
+#include <mars/interfaces/NodeData.h>
+#include <mars/sim/ConfigMapItem.h>
 
 namespace mars {
   namespace plugins {
@@ -45,14 +48,47 @@ namespace mars {
         : MarsPluginTemplate(theManager, "SMURFToSimulation") {
       }
 
+      envire::core::vertex_descriptor SMURFToSimulation::addFloor()
+      {
+	// TODO use vertex_descriptors 
+        envire::core::FrameId center = "center";
+	control->graph->addFrame(center);
+        NodeData data;
+        data.init("floorData", Vector(0,0,0));
+        data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(5, 5, 0.1), 0.1);
+        data.movable = false;
+	data.noPhysical = false;
+	mars::sim::PhysicsConfigMapItem::Ptr item(new mars::sim::PhysicsConfigMapItem);
+	//data.material. = mars::utils::Color(1.0, 0.6, 0.0, 0.0); TODO How does the colouring goes?
+        data.toConfigMap(&(item.get()->getData()));
+        control->graph->addItemToFrame(center, item);
+	return control->graph->vertex(center);
+      }
   
-      void SMURFToSimulation::init() {
+      envire::core::vertex_descriptor SMURFToSimulation::addRobot(envire::core::vertex_descriptor center)
+      {
 	envire::envire_smurf::Robot asguard;
 	std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>");
 	LOG_DEBUG("Robot Path: %s",  path.c_str() );
-        asguard.loadFromSmurf(*(control->graph), path);
+        envire::core::vertex_descriptor robotRoot = asguard.loadFromSmurf(*(control->graph), path, center);
 	LOG_DEBUG("Loaded to Mars/Envire graph");
 	asguard.simulationReady(*(control->graph));
+	return robotRoot;
+      }
+  
+      void SMURFToSimulation::init() {
+	envire::core::vertex_descriptor center = addFloor();
+	envire::core::vertex_descriptor robotRoot = addRobot(center);
+	// Place the robot
+	envire::core::Transform robotPose;
+        robotPose.transform.translation << 1, 1, 0.3;
+        robotPose.transform.orientation = base::Quaterniond::Identity();
+	// TODO use vertex_descriptor
+	envire::core::FrameId centerId = control->graph->getFrameId(center);
+	envire::core::FrameId robotRootId = control->graph->getFrameId(robotRoot);
+        control->graph->updateTransform(centerId, robotRootId, robotPose);
+
+	
         // Create a Simulated Robot from the information in the robot model
         // robot.simulate();
         // Create configMap

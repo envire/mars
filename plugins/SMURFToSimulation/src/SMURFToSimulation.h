@@ -41,6 +41,7 @@
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h> 
 
+#include <envire_smurf/Robot.hpp>
 #include <string>
 
 namespace mars {
@@ -86,6 +87,8 @@ namespace mars {
 
       private:
         cfg_manager::cfgPropertyStruct example;
+        envire::core::vertex_descriptor addFloor();
+        envire::core::vertex_descriptor addRobot(envire::core::vertex_descriptor center);
 
       }; // end of class definition SMURFToSimulation
 
