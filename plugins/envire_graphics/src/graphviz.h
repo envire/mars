@@ -30,13 +30,17 @@
 #include <mars/interfaces/sim/MarsPluginTemplate.h>
 #include <mars/interfaces/MARSDefs.h>
 #include <mars/cfg_manager/CFGManagerInterface.h>
+#include <mars/interfaces/NodeData.h>
 #include <string>
 #include <envire_core/events/GraphEventDispatcher.hpp>
+#include <envire_core/events/GraphItemEventDispatcher.hpp>
 #include <envire_core/items/Frame.hpp>
 #include <envire_core/graph/TransformGraphTypes.hpp>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
+#include <envire_core/items/Item.hpp>
+#include <smurf/Smurf.hpp>
 
 namespace envire {namespace core {
   class TransformGraph;
@@ -52,7 +56,8 @@ namespace mars {
        * transform graph into NodeData and draw it.
        * */
       class GraphViz : public mars::interfaces::MarsPluginTemplate,
-                       public envire::core::GraphEventDispatcher
+                       public envire::core::GraphEventDispatcher,
+		       public envire::core::GraphItemEventDispatcher<envire::core::Item<std::vector<smurf::Visual>>::Ptr>
       {
 
       public:
@@ -75,6 +80,7 @@ namespace mars {
         virtual void transformRemoved(const envire::core::TransformRemovedEvent& e);
         virtual void transformModified(const envire::core::TransformModifiedEvent& e);
         virtual void itemAdded(const envire::core::ItemAddedEvent& e);
+	void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::vector<smurf::Visual>>::Ptr>& e);
         virtual void frameAdded(const envire::core::FrameAddedEvent& e);
 
         // CFGClient methods
@@ -98,6 +104,8 @@ namespace mars {
                       
         /**Updates the drawing position of @p vertex */              
         void updatePosition(const envire::core::vertex_descriptor vertex) const;
+	void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
+	
       private:
         /**Maps the item's uuid to the graphics id used for drawing */
         std::unordered_map<boost::uuids::uuid, int, boost::hash<boost::uuids::uuid>> uuidToGraphicsId;

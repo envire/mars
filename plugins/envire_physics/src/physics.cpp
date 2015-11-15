@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <cassert>
 #include <boost/lexical_cast.hpp>
+//#include <base/Logging.hpp>
 
 using namespace mars::plugins::envire_physics;
 using namespace mars::utils;
@@ -58,6 +59,7 @@ void GraphPhysics::init() {
   GraphEventDispatcher::subscribe(control->graph);
   GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>::subscribe(control->graph);
   GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<smurf::Frame>::Ptr>::subscribe(control->graph);
 }
 
 void GraphPhysics::reset() {
@@ -156,6 +158,23 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<mars::sim::JointConfigMap
   }
 }
 
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>& e)
+{
+    LOG_DEBUG("ItemAdded event-triggered method: About to create a new node data");
+    // I think that the node data is generated in the physics plugin from the smurf::Frame 
+    mars::interfaces::NodeData node;
+    // This data has to be taken from the smurf::Frame object, but I think that that one doesn't have anything
+    node.init(e.frame, mars::utils::Vector(0,0,0)); //Node name
+    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.1, 0.1, 0.1), 0.1);
+    node.movable = true;
+    // create an interface object to the physics
+    shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
+    if (physics->createNode(&node)) 
+    {
+      uuidToPhysics[e.item->getID()] = physics;
+    }
+    // Should we keep the nodeData object also in the Tree or just delete it
+}
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr>& e)
 {

@@ -53,7 +53,8 @@ GraphViz::GraphViz(lib_manager::LibManager *theManager)
 void GraphViz::init() 
 {
   assert(control->graph != nullptr);
-  subscribe(control->graph);
+  GraphEventDispatcher::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<std::vector<smurf::Visual>>::Ptr>::subscribe(control->graph);
 }
 
 void GraphViz::reset() {
@@ -150,6 +151,24 @@ void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
   }
 }
 
+void GraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node)
+{
+    Transform fromOrigin;
+    if(originId.compare(frame) == 0)
+    {
+      //this special case happens when the graph only contains one frame
+      //and items are added to that frame. In that case aksing the graph 
+      //for the transformation would cause an exception
+      fromOrigin.setTransform(TransformWithCovariance::Identity());
+    }
+    else
+    {
+      fromOrigin = control->graph->getTransform(originId, frame); 
+    }
+    node.pos = fromOrigin.transform.translation;
+    node.rot = fromOrigin.transform.orientation;
+}   
+
 void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
 {
   boost::shared_ptr<PhysicsConfigMapItem> pItem;
@@ -162,21 +181,12 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
       NodeData node;
       if(node.fromConfigMap(&pItem->getData(), ""))
       {
-        Transform fromOrigin;
-        if(originId.compare(e.frame) == 0)
-        {
-          //this special case happens when the graph only contains one frame
-          //and items are added to that frame. In that case aksing the graph 
-          //for the transformation would cause an exception
-          fromOrigin.setTransform(TransformWithCovariance::Identity());
-        }
-        else
-        {
-          fromOrigin = control->graph->getTransform(originId, e.frame); 
-        }
-        node.pos = fromOrigin.transform.translation;
-        node.rot = fromOrigin.transform.orientation;
-        uuidToGraphicsId[pItem->getID()] = control->graphics->addDrawObject(node);
+	// TODO Fix: The emission Front is lost when going to config map and back
+	node.material.emissionFront = mars::utils::Color(1.0, 1.0, 1.0, 1.0);
+	node.material.transparency = 0.5;
+	LOG_DEBUG("Color of the Item: %f , %f, %f, %f", node.material.emissionFront.a , node.material.emissionFront.b, node.material.emissionFront.g, node.material.emissionFront.r );
+	setPos(e.frame, node);
+	uuidToGraphicsId[pItem->getID()] = control->graphics->addDrawObject(node);
       }
     }
     catch(const UnknownTransformException& ex)
@@ -184,6 +194,20 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
       cerr << "ERROR: " << ex.what() << endl;
     }
   }
+}
+
+void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::vector<smurf::Visual>>::Ptr>& e)
+{
+    LOG_DEBUG("[GraphViz Smurf] std::vector <Smurf::Visual> ItemAdded Event");
+    NodeData node;
+    // TODO use the visual list instead of a simple object
+    node.init(e.frame, mars::utils::Vector(0,0,0)); //Node name
+    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.1, 0.1, 0.1), 0.1);
+    node.movable = true;
+    node.material.emissionFront = mars::utils::Color(0.0, 0.0, 1.0, 1.0);
+    LOG_DEBUG( "Pose: ");
+    setPos(e.frame, node);
+    uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node);
 }
 
 bool GraphViz::isParent(vertex_descriptor parent, vertex_descriptor child) const

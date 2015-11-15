@@ -9,11 +9,13 @@
 #include <envire_core/events/GraphItemEventDispatcher.hpp>
 #include <envire_core/events/ItemAddedEvent.hpp>
 #include <envire_core/items/Frame.hpp>
+#include <envire_core/items/Item.hpp>
 #include <envire_core/graph/TransformGraphTypes.hpp>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <mars/sim/ConfigMapItem.h>
+#include <smurf/Smurf.hpp>
 
 
 namespace mars {
@@ -32,8 +34,8 @@ namespace mars {
       class GraphPhysics : public mars::interfaces::MarsPluginTemplate,
                            public envire::core::GraphEventDispatcher,
                            public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>,
-                           public envire::core::GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>
-                     
+                           public envire::core::GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>,
+			   public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>::Ptr>
       {
       public:
         GraphPhysics(lib_manager::LibManager *theManager);
@@ -53,6 +55,7 @@ namespace mars {
         void transformRemoved(const envire::core::TransformRemovedEvent& e);
         void transformAdded(const envire::core::TransformAddedEvent& e);
         void transformModified(const envire::core::TransformModifiedEvent& e);
+	void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>::Ptr>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
         void itemRemoved(const  envire::core::TypedItemRemovedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
