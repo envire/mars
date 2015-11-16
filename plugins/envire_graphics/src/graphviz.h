@@ -103,7 +103,7 @@ namespace mars {
                       const envire::core::vertex_descriptor b) const;
                       
         /**Updates the drawing position of @p vertex */              
-        void updatePosition(const envire::core::vertex_descriptor vertex) const;
+        template <class physicsType> void updatePosition(const envire::core::vertex_descriptor vertex) const;
 	void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
 	
       private:

@@ -138,7 +138,7 @@ void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
     const vertex_descriptor vertex = queue.back();
     queue.pop_back();
     
-    updatePosition(vertex);
+    updatePosition<Item<std::vector<smurf::Visual>>>(vertex);
     
     //if the vertex has children, queue them
     if(tree.find(vertex) != tree.end())
@@ -251,19 +251,53 @@ void GraphViz::updateTree(const FrameId& origin)
   assert(newOrigin != control->graph->null_vertex());
   tree = control->graph->getTree(newOrigin).tree;
   //update the origins position
-  updatePosition(newOrigin);
+  updatePosition<Item<std::vector<smurf::Visual>>>(newOrigin);
   //update all childreen
   for(const auto& it : tree)
   {
     for(vertex_descriptor vertex : it.second.children)
     {
-      updatePosition(vertex);
+      updatePosition<Item<std::vector<smurf::Visual>>>(vertex);
     }
   }
 }
 
+///**Updates the drawing position of @p vertex */              
+//void GraphViz::updatePosition(const vertex_descriptor vertex) const
+//{
+//  const FrameId& frameId = control->graph->getFrameId(vertex);
+//  base::Vector3d translation;
+//  base::Quaterniond orientation;
+//  if(originId.compare(frameId) == 0)
+//  {
+//    translation << 0, 0, 0;
+//    orientation.setIdentity();
+//  }
+//  else
+//  {
+//    const Transform tf = control->graph->getTransform(originId, frameId);
+//    translation = tf.transform.translation;
+//    orientation = tf.transform.orientation;
+//  }
+//  
+//  using Iterator = TransformGraph::ItemIterator<PhysicsConfigMapItem::Ptr>;
+//  Iterator begin, end;
+//  boost::tie(begin, end) = control->graph->getItems<PhysicsConfigMapItem::Ptr>(vertex);
+//  for(;begin != end; ++begin)
+//  {
+//    const PhysicsConfigMapItem::Ptr item = *begin;
+//    //others might use ConfigMapItems as well, therefore check if if this is one of ours
+//    if(uuidToGraphicsId.find(item->getID()) != uuidToGraphicsId.end())
+//    {
+//      const int graphicsId = uuidToGraphicsId.at(item->getID());
+//      control->graphics->setDrawObjectPos(graphicsId, translation);
+//      control->graphics->setDrawObjectRot(graphicsId, orientation);
+//    }
+//  }
+//}
+
 /**Updates the drawing position of @p vertex */              
-void GraphViz::updatePosition(const vertex_descriptor vertex) const
+template <class physicsType> void GraphViz::updatePosition(const vertex_descriptor vertex) const
 {
   const FrameId& frameId = control->graph->getFrameId(vertex);
   base::Vector3d translation;
@@ -280,12 +314,12 @@ void GraphViz::updatePosition(const vertex_descriptor vertex) const
     orientation = tf.transform.orientation;
   }
   
-  using Iterator = TransformGraph::ItemIterator<PhysicsConfigMapItem::Ptr>;
+  using Iterator = TransformGraph::ItemIterator< typename physicsType::Ptr>;
   Iterator begin, end;
-  boost::tie(begin, end) = control->graph->getItems<PhysicsConfigMapItem::Ptr>(vertex);
+  boost::tie(begin, end) = control->graph->getItems<typename physicsType::Ptr>(vertex);
   for(;begin != end; ++begin)
   {
-    const PhysicsConfigMapItem::Ptr item = *begin;
+    const typename physicsType::Ptr item = *begin;
     //others might use ConfigMapItems as well, therefore check if if this is one of ours
     if(uuidToGraphicsId.find(item->getID()) != uuidToGraphicsId.end())
     {
