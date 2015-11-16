@@ -60,11 +60,11 @@ namespace mars {
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
         void itemRemoved(const  envire::core::TypedItemRemovedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
         void update(mars::interfaces::sReal time_ms);
-        void updatePositions(const envire::core::vertex_descriptor origin,
-                             const envire::core::vertex_descriptor target,
-                             const base::TransformWithCovariance& originToRoot);
-        void updateChildPositions(const envire::core::vertex_descriptor vertex,
-                                  const base::TransformWithCovariance& frameToRoot);
+	template <class physicsType> void updatePositions(const envire::core::vertex_descriptor origin,
+							  const envire::core::vertex_descriptor target,
+						   const base::TransformWithCovariance& originToRoot);
+	template <class physicsType> void updateChildPositions(const envire::core::vertex_descriptor vertex,
+							       const base::TransformWithCovariance& frameToRoot);
         
         
         void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);

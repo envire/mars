@@ -40,7 +40,8 @@
 #include <algorithm>
 #include <cassert>
 #include <boost/lexical_cast.hpp>
-//#include <base/Logging.hpp>
+#include <envire_core/graph/GraphViz.hpp>
+
 
 using namespace mars::plugins::envire_physics;
 using namespace mars::utils;
@@ -246,37 +247,40 @@ void GraphPhysics::update(sReal time_ms)
   //transform from simulation is relativ to the root.
   //The relativ transformations are easy to calculate when dfs visiting the tree.
   const vertex_descriptor originDesc = control->graph->vertex(originId);
-  updateChildPositions(originDesc, TransformWithCovariance::Identity());
+  updateChildPositions<Item<smurf::Frame>>(originDesc, TransformWithCovariance::Identity());
+  updateChildPositions<PhysicsConfigMapItem>(originDesc, TransformWithCovariance::Identity());
+  /*
+   * // Uncomment to print the Graph
+  envire::core::GraphViz viz;
+  std::string timeStamp = base::Time::now().toString();
+  std::string name = "updatePhysics" + timeStamp + ".dot";
+  viz.write(*(control->graph), name);
+  */
 }
 
-void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
-                                        const TransformWithCovariance& frameToRoot)
+template <class physicsType>void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
+								    const TransformWithCovariance& frameToRoot)
 {
   if(treeView.tree.find(vertex) != treeView.tree.end())
   {
     const unordered_set<vertex_descriptor>& children = treeView.tree[vertex].children;
     for(const vertex_descriptor child : children)
     {
-      updatePositions(vertex, child, frameToRoot);
+      updatePositions<physicsType>(vertex, child, frameToRoot);
     }
   } 
 }
 
-void GraphPhysics::updatePositions(const vertex_descriptor origin,
-                                   const vertex_descriptor target,
-                                   const TransformWithCovariance& originToRoot)
+template <class physicsType> void GraphPhysics::updatePositions( const vertex_descriptor origin,
+								 const vertex_descriptor target,
+								 const TransformWithCovariance& originToRoot)
 {
-  using Iterator = TransformGraph::ItemIterator<PhysicsConfigMapItem::Ptr>;
-  Iterator begin, end;
-  boost::tie(begin, end) = control->graph->getItems<PhysicsConfigMapItem::Ptr>(target);
-
   Transform tf = control->graph->getTransform(origin, target);
-  //take the first physics item in the item list and update the transform
-  //There should be only one physics item per frame. But there can be more than
-  //one ConfigMapItems. Therefore we have to iterate and find the physics item.
-  //FIXME This could be avoided by subclassing the ConfigMapItem
-  for(; begin != end; ++begin)
+  if (control->graph->containsItems<typename physicsType::Ptr>(target))
   {
+    using Iterator = TransformGraph::ItemIterator<typename physicsType::Ptr>;
+    Iterator begin, end;
+    boost::tie(begin, end) = control->graph->getItems<typename physicsType::Ptr>(target);
     const boost::uuids::uuid& id = (*begin)->getID();
     if(uuidToPhysics.find(id) != uuidToPhysics.end())
     {
@@ -286,15 +290,11 @@ void GraphPhysics::updatePositions(const vertex_descriptor origin,
       physics->getPosition(&absolutTransform.translation);
       physics->getRotation(&absolutTransform.orientation);
       tf.setTransform(originToRoot * absolutTransform);
-      
       control->graph->updateTransform(origin, target, tf);
-      break; //there should be only one physics item per frame
     }
   }
-  
-  updateChildPositions(target, originToRoot * tf.transform.inverse());
+  updateChildPositions<physicsType>(target, originToRoot * tf.transform.inverse());
 }
-
 
 void GraphPhysics::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) 
 {
