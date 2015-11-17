@@ -16,6 +16,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <mars/sim/ConfigMapItem.h>
 #include <smurf/Smurf.hpp>
+#include <mars/interfaces/sim/NodeInterface.h>
 
 
 namespace mars {
@@ -55,6 +56,7 @@ namespace mars {
         void transformRemoved(const envire::core::TransformRemovedEvent& e);
         void transformAdded(const envire::core::TransformAddedEvent& e);
         void transformModified(const envire::core::TransformModifiedEvent& e);
+	void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
 	void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>::Ptr>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
