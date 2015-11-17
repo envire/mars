@@ -201,7 +201,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
     LOG_DEBUG("[GraphViz Smurf] std::vector <Smurf::Visual> ItemAdded Event");
     NodeData node;
     // TODO use the visual list instead of a simple object
-    node.init(e.frame, mars::utils::Vector(0,0,0)); //Node name
+    node.init(e.frame); //Node name
     node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.1, 0.1, 0.1), 0.1);
     node.movable = true;
     node.material.emissionFront = mars::utils::Color(0.0, 0.0, 1.0, 1.0);
