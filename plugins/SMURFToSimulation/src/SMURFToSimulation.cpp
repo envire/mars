@@ -36,6 +36,9 @@
 // For the floor
 #include <mars/interfaces/NodeData.h>
 #include <mars/sim/ConfigMapItem.h>
+// To log the graph
+#include <base/Time.hpp>
+#include <envire_core/graph/GraphViz.hpp>
 
 namespace mars {
   namespace plugins {
@@ -67,24 +70,30 @@ namespace mars {
 	return control->graph->getVertex(center);
       }
   
-      envire::core::vertex_descriptor SMURFToSimulation::addRobot(envire::core::vertex_descriptor center)
+      void SMURFToSimulation::addRobot(envire::core::vertex_descriptor center)
       {    
 	envire::core::Transform iniPose;
 	iniPose.transform.orientation = base::Quaterniond::Identity();
-	iniPose.transform.translation << 0.0, 0.0, 1.0;
+	iniPose.transform.translation << 1.0, 1.0, 1.0;
 	envire::envire_smurf::Robot asguard(iniPose);
 	std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>");
 	LOG_DEBUG("Robot Path: %s",  path.c_str() );
-        envire::core::vertex_descriptor robotRoot = asguard.loadFromSmurf(*(control->graph), path, center);
+        asguard.loadFromSmurf(*(control->graph), path, center);
+	asguard.loadPhysics(*control->graph);
 	asguard.loadVisuals(*(control->graph));
 	LOG_DEBUG("Loaded to Mars/Envire graph");
 	//asguard.simulationReady(*(control->graph));
-	return robotRoot;
       }
   
-      void SMURFToSimulation::init() {
+      void SMURFToSimulation::init()
+      {
 	envire::core::vertex_descriptor center = addFloor();
-	envire::core::vertex_descriptor robotRoot = addRobot(center);
+	addRobot(center);
+	// uncomment to print the graph
+	envire::core::GraphViz viz;
+	std::string timestamp = base::Time::now().toString();
+	std::string name = "smurfToSimulationInit" + timestamp + ".dot";
+	viz.write(*(control->graph), name);
 	// Place the robot
 	envire::core::Transform robotPose;
 	// Update Transform event handler is not implemented
