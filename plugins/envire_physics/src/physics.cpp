@@ -60,6 +60,7 @@ void GraphPhysics::init() {
   GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>::subscribe(control->graph);
   GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>::subscribe(control->graph);
   GraphItemEventDispatcher<Item<smurf::Frame>::Ptr>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<smurf::StaticTransformation>::Ptr>::subscribe(control->graph);
 }
 
 void GraphPhysics::reset() {
@@ -113,49 +114,6 @@ void GraphPhysics::transformAdded(const envire::core::TransformAddedEvent& e)
 void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent& e)
 {
   //for the first iteration we ignore transformation changes from outside this plugin
-}
-
-void GraphPhysics::itemAdded(const TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e)
-{
-  
-  JointConfigMapItem::Ptr pItem = e.item;
-  JointData jointData;
-  if(jointData.fromConfigMap(&pItem->getData(), ""))
-  {
-    string id1 = pItem->getData().get<string>("itemId1", "");
-    string id2 = pItem->getData().get<string>("itemId2", "");
-    assert(!id1.empty());
-    assert(!id2.empty());
-    //the ids of the two items that should be connected by the joint
-    boost::uuids::uuid uuid1 = boost::lexical_cast<boost::uuids::uuid>(id1);
-    boost::uuids::uuid uuid2 = boost::lexical_cast<boost::uuids::uuid>(id2);
-    
-    if(uuidToPhysics.find(uuid1) != uuidToPhysics.end() &&
-       uuidToPhysics.find(uuid2) != uuidToPhysics.end())
-    {
-      shared_ptr<NodeInterface> node1 = uuidToPhysics[uuid1];
-      shared_ptr<NodeInterface> node2 = uuidToPhysics[uuid2];
-          
-      shared_ptr<JointInterface> jointInterface(PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
-      // create the physical node data
-      if(jointInterface->createJoint(&jointData, node1.get(), node2.get()))
-      {
-        //remember a pointer to the interface, otherwise it will be deleted.
-        uuidToJoints[pItem->getID()] = jointInterface;
-        control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
-      }
-      else
-      {
-        std::cerr << "ERROR: Failed to create joint" << std::endl;
-        assert(false);//this only happens if the JointConfigMapItem contains bad data, which it should never do
-      }
-    }
-    else
-    {
-      std::cerr << "ERROR: Nodes do not exist in map" << std::endl;
-      assert(false); //bug somewhere, we shouldnt miss items
-    }
-  }
 }
 
 void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node)
@@ -237,6 +195,80 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr
     cerr << ex.what() << endl;
   }
 }
+
+// Joints
+
+void GraphPhysics::join(JointData& jointPhysics, const boost::uuids::uuid& uuid1, const boost::uuids::uuid& uuid2, const boost::uuids::uuid& jointID)
+{
+    
+    if(uuidToPhysics.find(uuid1) != uuidToPhysics.end() &&
+       uuidToPhysics.find(uuid2) != uuidToPhysics.end())
+    {
+      shared_ptr<NodeInterface> node1 = uuidToPhysics[uuid1];
+      shared_ptr<NodeInterface> node2 = uuidToPhysics[uuid2];
+          
+      shared_ptr<JointInterface> jointInterface(PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
+      // create the physical node data
+      LOG_DEBUG("[Envire Physics] Just before creating the physical joint");
+      if(jointInterface->createJoint(&jointPhysics, node1.get(), node2.get()))
+      {
+	LOG_DEBUG("[Envire Physics] Just after creating the physical joint");
+        //remember a pointer to the interface, otherwise it will be deleted.
+        uuidToJoints[jointID] = jointInterface;
+        control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
+      }
+      else
+      {
+        std::cerr << "ERROR: Failed to create joint" << std::endl;
+        assert(false);//this only happens if the JointConfigMapItem contains bad data, which it should never do
+      }
+    }
+    else
+    {
+      std::cerr << "ERROR: Nodes do not exist in map" << std::endl;
+      assert(false); //bug somewhere, we shouldnt miss items
+    }
+}
+
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e)
+{
+  
+  JointConfigMapItem::Ptr pItem = e.item;
+  JointData jointData;
+  if(jointData.fromConfigMap(&pItem->getData(), ""))
+  {
+    string id1 = pItem->getData().get<string>("itemId1", "");
+    string id2 = pItem->getData().get<string>("itemId2", "");
+    assert(!id1.empty());
+    assert(!id2.empty());
+    //the ids of the two items that should be connected by the joint
+    boost::uuids::uuid uuid1 = boost::lexical_cast<boost::uuids::uuid>(id1);
+    boost::uuids::uuid uuid2 = boost::lexical_cast<boost::uuids::uuid>(id2);
+    join(jointData, uuid1, uuid2, e.item->getID());
+  }
+}
+
+void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>::Ptr>& e)
+{
+    // Get the physic items in the two connected frames and join them
+    LOG_DEBUG( "[Envire Physics] itemAdded: envire::core::Item<smurf::StaticTransformation>::Ptr>");
+    smurf::StaticTransformation jointEnvire = e.item->getData();
+    string source = jointEnvire.getSourceFrame().getName(); // This is a smurf::Frame, not a envire::core::Frame but the name of the frame should be the same
+    string target = jointEnvire.getTargetFrame().getName();
+    // Get from that fram the item of type SMURF::Frame and from that one the uuid
+    using Iterator = TransformGraph::ItemIterator<Item<smurf::Frame>::Ptr>;
+    Iterator begin, end;
+    boost::tie(begin, end) = control->graph->getItems<Item<smurf::Frame>::Ptr>(source);
+    boost::uuids::uuid uuidSource = boost::lexical_cast<boost::uuids::uuid>((*begin)->getID());
+    boost::tie(begin, end) = control->graph->getItems<Item<smurf::Frame>::Ptr>(target);
+    boost::uuids::uuid uuidTarget = boost::lexical_cast<boost::uuids::uuid>((*begin)->getID());
+    LOG_DEBUG( "[Envire Physics] Ids for the joints created");
+    JointData jointPhysics; // We miss some data here
+    jointPhysics.init(source+"-"+target, mars::interfaces::JOINT_TYPE_FIXED, 0, 0);
+    // jointPhysics, uuidSource, uuidTarget, e.item->getID()
+    join(jointPhysics, uuidSource, uuidTarget, e.item->getID());
+}
+ 
 
 void GraphPhysics::itemRemoved(const TypedItemRemovedEvent< mars::sim::JointConfigMapItem::Ptr >& e)
 {

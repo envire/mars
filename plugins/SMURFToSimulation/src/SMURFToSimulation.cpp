@@ -80,6 +80,7 @@ namespace mars {
 	LOG_DEBUG("Robot Path: %s",  path.c_str() );
         asguard.loadFromSmurf(*(control->graph), path, center);
 	asguard.loadPhysics(*control->graph);
+	asguard.loadStaticJoints(*control->graph);
 	asguard.loadVisuals(*(control->graph));
 	LOG_DEBUG("Loaded to Mars/Envire graph");
 	//asguard.simulationReady(*(control->graph));
