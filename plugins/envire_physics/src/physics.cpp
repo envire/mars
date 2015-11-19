@@ -139,17 +139,19 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>&
     LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
     // I think that the node data is generated in the physics plugin from the smurf::Frame 
     mars::interfaces::NodeData node;
-    node.init(e.frame); //Node name
-    setPos(e.frame, node);
+    smurf::Frame link= e.item->getData();
+    LOG_DEBUG("[Envire Physics] Smurf frame name: " + link.getName());
+    node.init(link.getName()); //Node name
     node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.1, 0.1, 0.1), 0.1);
     node.movable = true;
+    setPos(e.frame, node);
     // create an interface object to the physics
     shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
     if (physics->createNode(&node)) 
     {
       uuidToPhysics[e.item->getID()] = physics;
     }
-    // Should we keep the nodeData object also in the Tree or just delete it
+    // Should we keep the nodeData object also in the Tree or just delete it?
 }
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr>& e)
