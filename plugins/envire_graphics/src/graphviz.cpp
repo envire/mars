@@ -184,7 +184,6 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
 	// TODO Fix: The emission Front is lost when going to config map and back
 	node.material.emissionFront = mars::utils::Color(1.0, 1.0, 1.0, 1.0);
 	node.material.transparency = 0.5;
-	LOG_DEBUG("Color of the Item: %f , %f, %f, %f", node.material.emissionFront.a , node.material.emissionFront.b, node.material.emissionFront.g, node.material.emissionFront.r );
 	setPos(e.frame, node);
 	uuidToGraphicsId[pItem->getID()] = control->graphics->addDrawObject(node);
       }
@@ -201,11 +200,12 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
     LOG_DEBUG("[GraphViz Smurf] std::vector <Smurf::Visual> ItemAdded Event");
     NodeData node;
     // TODO use the visual list instead of a simple object
-    node.init(e.frame); //Node name
+    //std::vector<smurf::Visual> link= e.item->getData(); // 
+    node.init(e.frame); //Visuals have no name, we use the frame name
     node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.1, 0.1, 0.1), 0.1);
     node.movable = true;
     node.material.emissionFront = mars::utils::Color(0.0, 0.0, 1.0, 1.0);
-    LOG_DEBUG( "Pose: ");
+    //LOG_DEBUG( "Pose: ");
     setPos(e.frame, node);
     uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node);
 }

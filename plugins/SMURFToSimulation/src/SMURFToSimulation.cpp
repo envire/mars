@@ -77,6 +77,7 @@ namespace mars {
 	iniPose.transform.translation << 1.0, 1.0, 1.0;
 	envire::envire_smurf::Robot asguard(iniPose);
 	std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>");
+	//std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SPACECLIMBER)%>"); // Crex simulation fails
 	LOG_DEBUG("Robot Path: %s",  path.c_str() );
         asguard.loadFromSmurf(*(control->graph), path, center);
 	asguard.loadPhysics(*control->graph);
@@ -91,10 +92,10 @@ namespace mars {
 	envire::core::vertex_descriptor center = addFloor();
 	addRobot(center);
 	// uncomment to print the graph
-	envire::core::GraphViz viz;
-	std::string timestamp = base::Time::now().toString();
-	std::string name = "smurfToSimulationInit" + timestamp + ".dot";
-	viz.write(*(control->graph), name);
+	//envire::core::GraphViz viz;
+	//std::string timestamp = base::Time::now().toString();
+	//std::string name = "smurfToSimulationInit" + timestamp + ".dot";
+	//viz.write(*(control->graph), name);
 	// Place the robot
 	envire::core::Transform robotPose;
 	// Update Transform event handler is not implemented

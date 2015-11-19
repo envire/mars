@@ -136,7 +136,7 @@ void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>& e)
 {
-    LOG_DEBUG("ItemAdded event-triggered method: About to create a new node data");
+    LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
     // I think that the node data is generated in the physics plugin from the smurf::Frame 
     mars::interfaces::NodeData node;
     node.init(e.frame); //Node name
@@ -296,22 +296,22 @@ void GraphPhysics::update(sReal time_ms)
   //transform from simulation is relativ to the root.
   //The relativ transformations are easy to calculate when dfs visiting the tree.
   const vertex_descriptor originDesc = control->graph->vertex(originId);
-  /*
+  
   // Uncomment to print the Graph
-  envire::core::GraphViz viz;
-  std::string timeStamp = base::Time::now().toString();
-  std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
-  viz.write(*(control->graph), name);
-  */
+  //envire::core::GraphViz viz;
+  //std::string timeStamp = base::Time::now().toString();
+  //std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
+  //viz.write(*(control->graph), name);
+  
   updateChildPositions<Item<smurf::Frame>>(originDesc, TransformWithCovariance::Identity());
   updateChildPositions<PhysicsConfigMapItem>(originDesc, TransformWithCovariance::Identity());
-  /*
-  // Uncomment to print the Graph
-  envire::core::GraphViz viz;
-  timeStamp = base::Time::now().toString();
-  name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
-  viz.write(*(control->graph), name);
-  */
+  
+  //// Uncomment to print the Graph
+  ////envire::core::GraphViz viz;
+  //timeStamp = base::Time::now().toString();
+  //name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
+  //viz.write(*(control->graph), name);
+  
   
 }
 
@@ -334,13 +334,14 @@ template <class physicsType> void GraphPhysics::updatePositions( const vertex_de
 								 const TransformWithCovariance& originToRoot)
 {
   Transform tf = control->graph->getTransform(origin, target);
-  LOG_DEBUG("[Envire Physics] Updating position of frame: " + control->graph->getFrame(target).getName());
+  LOG_DEBUG("[Envire Physics] Updating position of physical objects in frame: " + control->graph->getFrame(target).getName());
+  LOG_DEBUG("[envire_physics] Transformation to be updated: " +  control->graph->getFrame(origin).getName() + " to " + control->graph->getFrame(target).getName() );
   //How can I print the tf also using the LOG_DEBUG?
-  //LOG_DEBUG("[Envire Physics] Previous tf to father: " );
+  //LOG_DEBUG("[Envire Physics] Tf values before update: " );
   //std::cout << tf.transform << std::endl;
   if (control->graph->containsItems<typename physicsType::Ptr>(target))
   {
-    //LOG_DEBUG("[envire_physics] Origin to Root (of the tree) tf: " );
+    //LOG_DEBUG("[envire_physics] Tf from origin (of the tf to be updated) to root (of the tree): " );
     //std::cout << originToRoot << std::endl;
     using Iterator = TransformGraph::ItemIterator<typename physicsType::Ptr>;
     Iterator begin, end;
@@ -353,9 +354,8 @@ template <class physicsType> void GraphPhysics::updatePositions( const vertex_de
       TransformWithCovariance absolutTransform;
       physics->getPosition(&absolutTransform.translation);
       physics->getRotation(&absolutTransform.orientation);
-      // AbsolutTransform is wrong
       tf.setTransform(originToRoot * absolutTransform);
-      //LOG_DEBUG("[Envire Physics] AbsolutTransform: ");
+      //LOG_DEBUG("[Envire Physics] AbsolutTransform, provided by the physical engine: ");
       //std::cout << absolutTransform << std::endl;
       //LOG_DEBUG("[Envire Physics] Final updated transform = AbsolutTransform*origiToRoot: ");
       //std::cout << tf.transform << std::endl;
