@@ -364,7 +364,6 @@ template <class physicsType> void GraphPhysics::updatePositions( const vertex_de
       control->graph->updateTransform(origin, target, tf);
     }
   }
-  //updateChildPositions<physicsType>(target, originToRoot * tf.transform.inverse()); // This might be wrong
   updateChildPositions<physicsType>(target, tf.transform.inverse()*originToRoot);
 }
 
