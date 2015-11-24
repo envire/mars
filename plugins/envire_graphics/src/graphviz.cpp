@@ -202,7 +202,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
     // TODO use the visual list instead of a simple object
     //std::vector<smurf::Visual> link= e.item->getData(); // 
     node.init(e.frame); //Visuals have no name, we use the frame name
-    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.1, 0.1, 0.1), 0.1);
+    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.01, 0.01, 0.01), 0.1);
     node.movable = true;
     node.material.emissionFront = mars::utils::Color(0.0, 0.0, 1.0, 1.0);
     //LOG_DEBUG( "Pose: ");

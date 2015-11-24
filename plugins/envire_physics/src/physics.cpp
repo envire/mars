@@ -142,7 +142,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>&
     smurf::Frame link= e.item->getData();
     LOG_DEBUG("[Envire Physics] Smurf frame name: " + link.getName());
     node.init(link.getName()); //Node name
-    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.1, 0.1, 0.1), 0.1);
+    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.01, 0.01, 0.01), 0.1);
     node.movable = true;
     setPos(e.frame, node);
     // create an interface object to the physics
@@ -299,20 +299,24 @@ void GraphPhysics::update(sReal time_ms)
   //The relativ transformations are easy to calculate when dfs visiting the tree.
   const vertex_descriptor originDesc = control->graph->vertex(originId);
   
+  /*
   // Uncomment to print the Graph
-  //envire::core::GraphViz viz;
-  //std::string timeStamp = base::Time::now().toString();
-  //std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
-  //viz.write(*(control->graph), name);
+  envire::core::GraphViz viz;
+  std::string timeStamp = base::Time::now().toString();
+  std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
+  viz.write(*(control->graph), name);
+  */
   
   updateChildPositions<Item<smurf::Frame>>(originDesc, TransformWithCovariance::Identity());
   updateChildPositions<PhysicsConfigMapItem>(originDesc, TransformWithCovariance::Identity());
   
-  //// Uncomment to print the Graph
-  ////envire::core::GraphViz viz;
-  //timeStamp = base::Time::now().toString();
-  //name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
-  //viz.write(*(control->graph), name);
+  /*
+  // Uncomment to print the Graph
+  //envire::core::GraphViz viz;
+  timeStamp = base::Time::now().toString();
+  name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
+  viz.write(*(control->graph), name);
+  */
   
   
 }
