@@ -1,0 +1,14 @@
+<package>
+    <description brief="envire_joints">
+      Create
+   </description>
+    <maintainer>Raul.Dominguez/Raul.Dominguez@dfki.de</maintainer>
+    <author>Raul.Dominguez/Raul.Dominguez@dfki.de</author>
+    <depend package="simulation/mars/scripts/cmake" />
+    <depend package="simulation/lib_manager" />
+    <depend package="simulation/mars/common/data_broker" />
+    <depend package="simulation/mars/interfaces" />
+    <depend package="slam/envire_core" />
+    <depend package="tools/smurf" />
+    <tags>needs_opt</tags>
+</package>

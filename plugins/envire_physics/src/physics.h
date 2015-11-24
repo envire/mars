@@ -38,8 +38,8 @@ namespace mars {
                            public envire::core::GraphEventDispatcher,
                            public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>,
                            public envire::core::GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>,
-			   public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>::Ptr>,
-			   public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::StaticTransformation>::Ptr>
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>::Ptr>,
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::StaticTransformation>::Ptr>
       {
       public:
         GraphPhysics(lib_manager::LibManager *theManager);
@@ -59,21 +59,21 @@ namespace mars {
         void transformRemoved(const envire::core::TransformRemovedEvent& e);
         void transformAdded(const envire::core::TransformAddedEvent& e);
         void transformModified(const envire::core::TransformModifiedEvent& e);
-	// Frames (links)
-	void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
-	void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>::Ptr>& e);
-	void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
-	// Joints (Static ones)
-	void join(mars::interfaces::JointData& jointPhysics, const boost::uuids::uuid& uuid1, const boost::uuids::uuid& uuid2, const boost::uuids::uuid& jointID);
+        // Frames (links)
+        void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
+        // Joints (Static ones)
+        void join(mars::interfaces::JointData& jointPhysics, const boost::uuids::uuid& uuid1, const boost::uuids::uuid& uuid2, const boost::uuids::uuid& jointID);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
-	void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>::Ptr>& e);
         void itemRemoved(const  envire::core::TypedItemRemovedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
         void update(mars::interfaces::sReal time_ms);
-	template <class physicsType> void updatePositions(const envire::core::vertex_descriptor origin,
-							  const envire::core::vertex_descriptor target,
-						   const base::TransformWithCovariance& originToRoot);
-	template <class physicsType> void updateChildPositions(const envire::core::vertex_descriptor vertex,
-							       const base::TransformWithCovariance& frameToRoot);
+        template <class physicsType> void updatePositions(const envire::core::vertex_descriptor origin,
+                                                          const envire::core::vertex_descriptor target,
+                                                          const base::TransformWithCovariance& originToRoot);
+        template <class physicsType> void updateChildPositions(const envire::core::vertex_descriptor vertex,
+                                                               const base::TransformWithCovariance& frameToRoot);
         
         
         void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
