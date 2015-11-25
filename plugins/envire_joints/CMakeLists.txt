@@ -12,10 +12,11 @@ define_module_info()
 add_definitions(-DODE11=1 -DdDOUBLE)
 
 pkg_check_modules(PKGCONFIG REQUIRED
-			    lib_manager
-			    data_broker
-			    mars_interfaces
-          envire_core
+                lib_manager
+                data_broker
+                mars_interfaces
+                smurf
+                envire_smurf
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
