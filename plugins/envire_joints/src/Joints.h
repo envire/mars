@@ -37,6 +37,7 @@
 #include <envire_core/events/ItemAddedEvent.hpp>
 #include <envire_core/items/Item.hpp>
 #include <smurf/Smurf.hpp>
+#include <mars/interfaces/sim/NodeInterface.h>
 
 namespace mars {
   namespace plugins {
@@ -65,6 +66,8 @@ namespace mars {
         
         // EnvireJoints methods
 
+        std::shared_ptr<mars::interfaces::NodeInterface> getPhysicsInterface(const std::string& frameName);
+          
       private:
         
       }; // end of class definition EnvireJoints

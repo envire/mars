@@ -11,6 +11,7 @@
 #include <envire_core/items/Frame.hpp>
 #include <envire_core/items/Item.hpp>
 #include <envire_core/graph/TransformGraphTypes.hpp>
+#include <envire_core/graph/TreeView.hpp>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>

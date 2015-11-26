@@ -151,7 +151,10 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>&
     {
       uuidToPhysics[e.item->getID()] = physics;
     }
-    // Should we keep the nodeData object also in the Tree or just delete it?
+    // We add the shared_ptr of the physical node interface to access from other plugins
+    using physicsItemPtr = envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr;
+    physicsItemPtr physicsItem(new envire::core::Item<std::shared_ptr<NodeInterface>>(physics));
+    control->graph->addItemToFrame(e.frame, physicsItem);
 }
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr>& e)
@@ -250,14 +253,17 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<mars::sim::JointConfigMap
   }
 }
 
+
+
 void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>::Ptr>& e)
 {
     // Get the physic items in the two connected frames and join them
     LOG_DEBUG( "[Envire Physics] itemAdded: envire::core::Item<smurf::StaticTransformation>::Ptr>");
     smurf::StaticTransformation jointEnvire = e.item->getData();
+    // TODO: Improve this code
     string source = jointEnvire.getSourceFrame().getName(); // This is a smurf::Frame, not a envire::core::Frame but the name of the frame should be the same
     string target = jointEnvire.getTargetFrame().getName();
-    // Get from that fram the item of type SMURF::Frame and from that one the uuid
+    // Get from that frame the item of type SMURF::Frame and from that one the uuid
     using Iterator = TransformGraph::ItemIterator<Item<smurf::Frame>::Ptr>;
     Iterator begin, end;
     boost::tie(begin, end) = control->graph->getItems<Item<smurf::Frame>::Ptr>(source);
@@ -299,30 +305,30 @@ void GraphPhysics::update(sReal time_ms)
   //The relativ transformations are easy to calculate when dfs visiting the tree.
   const vertex_descriptor originDesc = control->graph->vertex(originId);
   
-  /*
+  
   // Uncomment to print the Graph
   envire::core::GraphViz viz;
   std::string timeStamp = base::Time::now().toString();
   std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
   viz.write(*(control->graph), name);
-  */
+  
   
   updateChildPositions<Item<smurf::Frame>>(originDesc, TransformWithCovariance::Identity());
   updateChildPositions<PhysicsConfigMapItem>(originDesc, TransformWithCovariance::Identity());
   
-  /*
+  
   // Uncomment to print the Graph
   //envire::core::GraphViz viz;
   timeStamp = base::Time::now().toString();
   name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
   viz.write(*(control->graph), name);
-  */
+  
   
   
 }
 
 template <class physicsType>void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
-								    const TransformWithCovariance& frameToRoot)
+                                                                    const TransformWithCovariance& frameToRoot)
 {
   // Perform updatePositions for each of your childs
   if(treeView.tree.find(vertex) != treeView.tree.end())
@@ -336,8 +342,8 @@ template <class physicsType>void GraphPhysics::updateChildPositions(const vertex
 }
 
 template <class physicsType> void GraphPhysics::updatePositions( const vertex_descriptor origin,
-								 const vertex_descriptor target,
-								 const TransformWithCovariance& originToRoot)
+                                                                 const vertex_descriptor target,
+                                                                 const TransformWithCovariance& originToRoot)
 {
   Transform tf = control->graph->getTransform(origin, target);
   LOG_DEBUG("[Envire Physics] Updating position of physical objects in frame: " + control->graph->getFrame(target).getName());
