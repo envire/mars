@@ -65,10 +65,16 @@ namespace mars {
         void update(mars::interfaces::sReal time_ms);
         
         // EnvireJoints methods
+        bool instantiable(smurf::Joint smurfJoint);
+        void instantiate(smurf::Joint smurfJoint);
+        void addDependencies(std::vector< std::string > missingObjects, smurf::Joint dependentJoint);
 
         std::shared_ptr<mars::interfaces::NodeInterface> getPhysicsInterface(const std::string& frameName);
-          
+
+        
       private:
+        
+        std::map<envire::core::FrameId, std::vector<smurf::Joint>> dependencies;
         
       }; // end of class definition EnvireJoints
 

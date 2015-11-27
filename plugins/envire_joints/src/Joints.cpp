@@ -60,6 +60,8 @@ namespace mars {
       
       std::shared_ptr<mars::interfaces::NodeInterface> EnvireJoints::getPhysicsInterface(const std::string& frameName){
         using physicsItemPtr = Item<std::shared_ptr<mars::interfaces::NodeInterface>>::Ptr;
+        if (!(control->graph->containsItems<physicsItemPtr>(frameName)))
+          LOG_DEBUG("[Envire Joints]::getPhysicsInterface: There is no share_ptr to a node interface in "+ frameName);
         using Iterator = TransformGraph::ItemIterator<physicsItemPtr>;
         Iterator begin, end;
         LOG_DEBUG("[Envire Joints]::getPhysicsInterface: Frame name is "+frameName);
@@ -74,6 +76,74 @@ namespace mars {
         return result;
       }
         
+
+        //For the dependencies a hash with the name been the frame and the contents the joints that depend on it
+        // for each joint depending on it see if instantiable
+        
+      bool EnvireJoints::instantiable(smurf::Joint smurfJoint){
+        // See that the shared_ptrs of the source and target are in the graph
+        // Set in the vector of missing physical objects these ones
+        std::string jointName = smurfJoint.getName();
+        // We now need the node id for the source and target object to bind, which corresponds to the shared_ptr of the simulated objects
+        std::string sourceName = smurfJoint.getSourceFrame().getName();
+        std::string targetName = smurfJoint.getTargetFrame().getName();
+        LOG_DEBUG("[Envire Joints] The joint binds " + sourceName + " with " + targetName);
+        /*
+        if (! objectInstantiated(sourceName))
+        {
+          dependencies[sourceName].push_back(smurfJoint);
+        }
+        if (! objectInstantiated(targetName))
+        {
+          dependencies[targetName].push_back(smurfJoint);
+        }
+        */
+        std::shared_ptr<NodeInterface> source = getPhysicsInterface(sourceName);
+        std::shared_ptr<NodeInterface> target = getPhysicsInterface(targetName);
+        /*
+         *      shared_ptr<JointInterface> jointInterface(PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
+         *      // create the physical node data
+         *      LOG_DEBUG("[Envire Physics] Just before creating the physical joint");
+         *      if(jointInterface->createJoint(&jointPhysics, node1.get(), node2.get()))
+         *      {
+         *  LOG_DEBUG("[Envire Physics] Just after creating the physical joint");
+         *        //remember a pointer to the interface, otherwise it will be deleted.
+         *        uuidToJoints[jointID] = jointInterface;
+         *        control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
+      }
+      else
+      {
+      std::cerr << "ERROR: Failed to create joint" << std::endl;
+      assert(false);//this only happens if the JointConfigMapItem contains bad data, which it should never do
+      }
+      
+      }
+      */
+        return dependencies;
+      }
+      
+      void EnvireJoints::addDependencies(std::vector<std::string> missingObjects, smurf::Joint dependentJoint){
+
+      }
+          
+      void EnvireJoints::itemAdded(const TypedItemAddedEvent<Item<smurf::Joint>::Ptr>& e){
+        smurf::Joint smurfJoint = e.item->getData();
+        if (instantiable(smurfJoint)) //This also sets the dependencies if it isn't
+        {
+          instantiate(smurfJoint);
+        }
+      }
+      
+      void EnvireJoints::instantiate(smurf::Joint smurfJoint)
+      {
+        using namespace mars::interfaces;
+        // The type of joints correspondences is taken from mars::smurf::SMURF::handleKinematics
+        LOG_DEBUG("[Envire Joints] A joint was added to the graph");
+        // See what type of joint is and generate the correspondent simulated one
+        
+        boost::shared_ptr<urdf::Joint> jointModel = smurfJoint.getJointModel();
+        std::string logType;
+        JointType jointType;
       /*
        *  Mars Joint Types
        * // Definition of Joint Types
@@ -91,15 +161,6 @@ namespace mars {
        * 
        * 
        */
-      void EnvireJoints::itemAdded(const TypedItemAddedEvent<Item<smurf::Joint>::Ptr>& e){
-        using namespace mars::interfaces;
-        // The type of joints correspondences is taken from mars::smurf::SMURF::handleKinematics
-        LOG_DEBUG("[Envire Joints] A joint was added to the graph");
-        // See what type of joint is and generate the correspondent simulated one
-        smurf::Joint smurfJoint = e.item->getData();
-        boost::shared_ptr<urdf::Joint> jointModel = smurfJoint.getJointModel();
-        std::string logType;
-        JointType jointType;
         switch (jointModel->type)
         {
           case urdf::Joint::FIXED:
@@ -152,32 +213,7 @@ namespace mars {
           
         }
         LOG_DEBUG("[Envire Joints] The joint type is: " + logType); 
-        std::string jointName = smurfJoint.getName();
-        // We now need the node id for the source and target object to bind, which corresponds to the shared_ptr of the simulated objects
-        std::string sourceName = smurfJoint.getSourceFrame().getName();
-        std::string targetName = smurfJoint.getTargetFrame().getName();
-        LOG_DEBUG("[Envire Joints] The joint target is: " + targetName); 
-        std::shared_ptr<NodeInterface> source = getPhysicsInterface(sourceName);
-        std::shared_ptr<NodeInterface> target = getPhysicsInterface(targetName);
-        /*
-         *      shared_ptr<JointInterface> jointInterface(PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
-         *      // create the physical node data
-         *      LOG_DEBUG("[Envire Physics] Just before creating the physical joint");
-         *      if(jointInterface->createJoint(&jointPhysics, node1.get(), node2.get()))
-         *      {
-         *  LOG_DEBUG("[Envire Physics] Just after creating the physical joint");
-         *        //remember a pointer to the interface, otherwise it will be deleted.
-         *        uuidToJoints[jointID] = jointInterface;
-         *        control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
-          }
-          else
-          {
-          std::cerr << "ERROR: Failed to create joint" << std::endl;
-          assert(false);//this only happens if the JointConfigMapItem contains bad data, which it should never do
-          }
-          
-          }
-          */
+
         
         //control->graph->addItemToFrame(e.frame, physicsItem);
         
