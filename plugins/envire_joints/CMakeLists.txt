@@ -16,8 +16,10 @@ pkg_check_modules(PKGCONFIG REQUIRED
                 data_broker
                 mars_interfaces
                 smurf
+                envire_core
                 envire_smurf
-)
+                mars_sim)
+
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
 add_definitions(${PKGCONFIG_CFLAGS_OTHER})  #flags excluding the ones with -I

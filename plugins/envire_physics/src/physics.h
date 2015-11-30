@@ -39,8 +39,8 @@ namespace mars {
                            public envire::core::GraphEventDispatcher,
                            public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>,
                            public envire::core::GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>,
-                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>::Ptr>,
-                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::StaticTransformation>::Ptr>
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>::Ptr>
+                           //public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::StaticTransformation>::Ptr>
       {
       public:
         GraphPhysics(lib_manager::LibManager *theManager);
@@ -64,11 +64,7 @@ namespace mars {
         void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>::Ptr>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
-        // Joints (Static ones)
-        void join(mars::interfaces::JointData& jointPhysics, const boost::uuids::uuid& uuid1, const boost::uuids::uuid& uuid2, const boost::uuids::uuid& jointID);
-        void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>::Ptr>& e);
-        void itemRemoved(const  envire::core::TypedItemRemovedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
+
         void update(mars::interfaces::sReal time_ms);
         template <class physicsType> void updatePositions(const envire::core::vertex_descriptor origin,
                                                           const envire::core::vertex_descriptor target,
@@ -86,6 +82,7 @@ namespace mars {
         envire::core::FrameId originId;
         envire::core::TreeView treeView;
         
+        // We could also store the uuidToPhysics and the uuidToJoints in the EnvireTree
         /**For each PhysicsConfigMapItem a corresponding NodeInterface is created
          * in the simulation. This map stores the connection between the two. */
         std::unordered_map<boost::uuids::uuid, std::shared_ptr<interfaces::NodeInterface>, boost::hash<boost::uuids::uuid>> uuidToPhysics;

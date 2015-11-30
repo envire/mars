@@ -38,6 +38,8 @@
 #include <envire_core/items/Item.hpp>
 #include <smurf/Smurf.hpp>
 #include <mars/interfaces/sim/NodeInterface.h>
+#include <mars/interfaces/JointData.h>
+#include <mars/interfaces/sim/JointInterface.h>
 
 namespace mars {
   namespace plugins {
@@ -45,7 +47,8 @@ namespace mars {
 
       class EnvireJoints: public mars::interfaces::MarsPluginTemplate,
                           public envire::core::GraphEventDispatcher,
-                          public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Joint>::Ptr>      
+                          //public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Joint>::Ptr>,
+                          public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::StaticTransformation>::Ptr>
       {
 
       public:
@@ -61,19 +64,32 @@ namespace mars {
         // MarsPlugin methods
         void init();
         void reset();
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Joint>::Ptr>& e);
         void update(mars::interfaces::sReal time_ms);
         
         // EnvireJoints methods
-        bool instantiable(smurf::Joint smurfJoint);
-        void instantiate(smurf::Joint smurfJoint);
-        void addDependencies(std::vector< std::string > missingObjects, smurf::Joint dependentJoint);
+        
+        // Joints (Static ones)
 
-        std::shared_ptr<mars::interfaces::NodeInterface> getPhysicsInterface(const std::string& frameName);
+        //void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>::Ptr>& e);
+        //void addDependencies(std::vector< std::string > missingObjects, smurf::Joint dependentJoint);
+        //std::shared_ptr<mars::interfaces::NodeInterface> getPhysicsInterface(const std::string& frameName);
 
+        // Dynamic Joints
+        //void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Joint>::Ptr>& e);
         
       private:
         
+        // Static Joints
+        bool getSimObject(const envire::core::FrameId& frameName, std::shared_ptr<mars::interfaces::NodeInterface>& objectSim);
+        bool instantiable(const smurf::StaticTransformation& smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim);
+        void storeSimJoint(const mars::interfaces::JointData& jointPhysics, std::shared_ptr<mars::interfaces::JointInterface>& jointInterface,                                        smurf::StaticTransformation smurfJoint);
+        void join(mars::interfaces::JointData& jointPhysics, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, const smurf::StaticTransformation smurfJoint);
+        void instantiate(const smurf::StaticTransformation smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim);         
+          
+        //bool instantiable(smurf::Joint smurfJoint);
+        
+        std::map<envire::core::FrameId, std::vector<smurf::StaticTransformation>> staticDependencies;
         std::map<envire::core::FrameId, std::vector<smurf::Joint>> dependencies;
         
       }; // end of class definition EnvireJoints
