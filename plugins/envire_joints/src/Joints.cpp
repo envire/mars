@@ -63,53 +63,68 @@ namespace mars {
       }
       
 
+
       /*
        * When a new physical object is added it is checked if there is any joint missing that physical object to be generated. This is checked using the staticDependencies map
        */
       void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr>& e){
-        LOG_DEBUG( "[Envire Joints] itemAdded: envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr");
+        using staticTfsIterator = TransformGraph::ItemIterator<Item<smurf::StaticTransformation>::Ptr>;
+        using dynamicTfsIterator = TransformGraph::ItemIterator<Item<smurf::Joint>::Ptr>;
+        LOG_DEBUG( "[Envire Joints] itemAdded: envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr: in frame "+ e.frame);
         std::map<FrameId, std::vector<FrameId>>::iterator iterStatic = dependencies.find(e.frame);
         if (iterStatic != dependencies.end()){
-          using staticTfsIterator = TransformGraph::ItemIterator<Item<smurf::StaticTransformation>::Ptr>;
-          LOG_DEBUG( "[Envire Joints] itemAdded: envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr is matching a dependency");
+          LOG_DEBUG( "[Envire Joints] itemAdded in frame "+ e.frame + " is matching a dependency");
           std::vector<FrameId> dependentFrames = dependencies[e.frame];
           for(FrameId frame : dependentFrames){
-            // See what is in the frame that has the dependency and proceed with checkAndInstantiate
-            // Is it a StaticTransformation ?
+            /*
+             *            if (!(instantiateDependents<smurf::StaticTransformation>(frame)))
+             *            {
+             *              instantiateDependents<smurf::Joint>(frame);
+          }
+          */
             staticTfsIterator beginTfs, endTfs;
             boost::tie(beginTfs, endTfs) = control->graph->getItems<Item<smurf::StaticTransformation>::Ptr>(frame);
             if (beginTfs != endTfs)
             {
               smurf::StaticTransformation* smurfTf = &((*beginTfs)->getData());
-              checkAndInstantiate(smurfTf);
+              bool addDeps = false; // So that no dependencies are included twice
+              checkAndInstantiate(smurfTf, frame, addDeps);
             }
-            // else check for dynamic transformations
+            else
+            {
+              dynamicTfsIterator beginTfs, endTfs;
+              boost::tie(beginTfs, endTfs) = control->graph->getItems<Item<smurf::Joint>::Ptr>(frame);
+              if (beginTfs != endTfs)
+              {
+                smurf::Joint * smurfTf = &((*beginTfs)->getData());
+                bool addDeps = false;
+                checkAndInstantiate(smurfTf, frame, addDeps);
+              }
+            }
+            dependencies.erase(e.frame);
           }
-          dependencies.erase(e.frame);
         }
       }
-            
+
+      
       /*
        * If all the dependencies to instantiate the joint in the simulator are met, the joints is instantated, otherwise the missing dependencies get tracked into the staticDependencies map
        */
       void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>::Ptr>& e){ 
-        LOG_DEBUG( "[Envire Joints] itemAdded: envire::core::Item<smurf::StaticTransformation>::Ptr>");
+        LOG_DEBUG( "[Envire Joints] itemAdded: envire::core::Item<smurf::StaticTransformation>::Ptr>" + e.frame);
         smurf::StaticTransformation* smurfJoint = &(e.item->getData());
         // Upcast to a transformation, so we can use the same methods for dynamic joints
         //smurf::Transformation *pJoint = &smurfJoint;
-        checkAndInstantiate(smurfJoint, e.frame);
+        checkAndInstantiate<smurf::StaticTransformation*>(smurfJoint, e.frame);
       }
       
-
-      /*
       void EnvireJoints::itemAdded(const TypedItemAddedEvent<Item<smurf::Joint>::Ptr>& e){
-        smurf::Joint smurfJoint = e.item->getData();
-        if (instantiable(smurfJoint)) //This also sets the dependencies if it isn't
-        {
-          instantiate(smurfJoint);
-        }
+        LOG_DEBUG( "[Envire Joints] itemAdded: envire::core::Item<smurf::Joint>::Ptr>: " + e.frame);
+        smurf::Joint* smurfJoint = &(e.item->getData());
+        // Upcast to a transformation, so we can use the same methods for dynamic joints
+        checkAndInstantiate<smurf::Joint*>(smurfJoint, e.frame);
       }
-      */
+      
       
       // Private Methods
       // Static Joints
@@ -119,7 +134,6 @@ namespace mars {
        */
       bool EnvireJoints::getSimObject(const FrameId& frameName, std::shared_ptr<NodeInterface>& objectSim){
         bool found = false;
-        LOG_DEBUG("[Envire Joints]::getSimObject: Frame name is "+ frameName);
         using physicsItemPtr = Item<std::shared_ptr<NodeInterface>>::Ptr;
         using Iterator = TransformGraph::ItemIterator<physicsItemPtr>;
         Iterator begin, end;
@@ -127,15 +141,35 @@ namespace mars {
         if (begin != end){
           objectSim = (*begin)->getData();
           found = true;
+          LOG_DEBUG("[Envire Joints]::getSimObject: Found the physical object in frame "+ frameName);
         }
         return found;
+      }
+      
+      /*
+       * storageFrame is the frame in which the joint is stored to be recovered when the dependencies are met
+       */
+      void EnvireJoints::addDependencies(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
+      {
+        std::string dependencyName = smurfJoint->getSourceFrame().getName();
+        if (! getSimObject(dependencyName, sourceSim))
+        {
+          dependencies[dependencyName].push_back(storageFrame); 
+          LOG_DEBUG("[Envire Joints] The joint " + smurfJoint->getName() + " misses the " + smurfJoint->getSourceFrame().getName() + " object. The dependency is now tracked. ");
+        }
+        dependencyName = smurfJoint->getTargetFrame().getName();
+        if (! getSimObject(dependencyName, targetSim))
+        {
+          dependencies[dependencyName].push_back(storageFrame);
+          LOG_DEBUG("[Envire Joints] The joint " + smurfJoint->getName() + " misses the " + smurfJoint->getTargetFrame().getName() + " object. The dependency is now tracked. ");
+        }
       }
       
       /*
        * See that the shared_ptrs of the source and target are in the graph
        * Set in the vector of missing physical objects these ones
        */
-      bool EnvireJoints::instantiable(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
+      bool EnvireJoints::instantiable(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim)
       {
         LOG_DEBUG("[Envire Joints] The joint " + smurfJoint->getName() + " binds " + smurfJoint->getSourceFrame().getName() + " with " + smurfJoint->getTargetFrame().getName());
         bool instantiable = true;
@@ -143,21 +177,11 @@ namespace mars {
         if (! getSimObject(dependencyName, sourceSim))
         {
           instantiable = false;
-          if (storageFrame != "")
-          {
-            dependencies[dependencyName].push_back(storageFrame); 
-            LOG_DEBUG("[Envire Joints] The joint " + smurfJoint->getName() + " misses the " + smurfJoint->getSourceFrame().getName() + " object. The dependency is now tracked. ");
-          }
         }
         dependencyName = smurfJoint->getTargetFrame().getName();
         if (! getSimObject(dependencyName, targetSim))
         {
           instantiable = false;
-          if (storageFrame != "")
-          {
-            dependencies[dependencyName].push_back(storageFrame);
-            LOG_DEBUG("[Envire Joints] The joint " + smurfJoint->getName() + " misses the " + smurfJoint->getTargetFrame().getName() + " object. The dependency is now tracked. ");
-          }
         }
         return instantiable;
       }
@@ -166,17 +190,15 @@ namespace mars {
         using physicsItemPtr = envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>::Ptr;
         physicsItemPtr physicsItem(new envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>(jointInterface));
         control->graph->addItemToFrame(storageFrame, physicsItem);          
-        LOG_DEBUG("[Envire Joints] Joint interface stored in frame: " +storageFrame);
+        LOG_DEBUG("[Envire Joints] XXXXX Joint interface stored after creation in frame: " +storageFrame);
       }
       
       void EnvireJoints::join(JointData& jointPhysics, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
       {
         std::shared_ptr<mars::interfaces::JointInterface> jointInterface(mars::sim::PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
         // create the physical node data
-        LOG_DEBUG("[Envire Joints] Just before creating the physical joint");
         if(jointInterface->createJoint(&jointPhysics, sourceSim.get(), targetSim.get()))
         {
-          LOG_DEBUG("[Envire Joints] Just after creating the physical joint");
           control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
           storeSimJoint(jointInterface, storageFrame);
         }
@@ -187,15 +209,80 @@ namespace mars {
         }
       }
       
-      void EnvireJoints::instantiate(smurf::StaticTransformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim)
+      void EnvireJoints::instantiate(smurf::StaticTransformation* smurfJoint, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
       {                                
         JointData jointPhysics;
         std::string jointName = smurfJoint->getSourceFrame().getName() + "-" + smurfJoint->getTargetFrame().getName();
-        jointPhysics.init(jointName, mars::interfaces::JOINT_TYPE_FIXED, 0, 0);
+        jointPhysics.init(jointName, mars::interfaces::JOINT_TYPE_FIXED); // Let's see what happens if we don't use uuids
         // Static transformations are stored in the source frame
-        join(jointPhysics, sourceSim, targetSim, smurfJoint->getSourceFrame().getName());
+        join(jointPhysics, sourceSim, targetSim, storageFrame);
       }
       
+      JointType getJointType(smurf::Joint* joint){
+        boost::shared_ptr<urdf::Joint> jointModel = joint->getJointModel();
+        std::string logType;
+        JointType jointType;
+        switch (jointModel->type)
+        {
+          case urdf::Joint::FIXED:
+          {
+            logType = "Fixed";
+            jointType = JOINT_TYPE_FIXED; // use consts so that all are defined only once
+            break;
+          }
+          case urdf::Joint::FLOATING:
+          {
+            //TODO We have some but seem not to be supported by mars?  Ask
+            logType = "Floating";
+            jointType = JOINT_TYPE_FIXED;
+            break;
+          }
+          case urdf::Joint::CONTINUOUS:
+          {
+            // We have some
+            logType = "Continuous"; 
+            jointType = JOINT_TYPE_HINGE;
+            break;
+          }
+          case urdf::Joint::PRISMATIC:
+          {
+            logType = "Prismatic"; 
+            jointType = JOINT_TYPE_SLIDER;
+            break;
+          }
+          case urdf::Joint::REVOLUTE:
+          {
+            // We have some
+            logType = "Revolute"; 
+            jointType = JOINT_TYPE_HINGE;
+            break;
+          }
+          case urdf::Joint::PLANAR:
+          {
+            logType = "Planar"; 
+            // TODO No support? Set fixed
+            jointType = JOINT_TYPE_FIXED;
+            break;
+          }
+          case urdf::Joint::UNKNOWN:
+          default:
+          {
+            logType = "Unknown"; 
+            jointType = JOINT_TYPE_FIXED;
+            break;
+          }
+        }
+        LOG_DEBUG("[Envire Joints] The joint type is: " + logType); 
+        return jointType;
+      }
+      
+      void EnvireJoints::instantiate(smurf::Joint* smurfJoint, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
+      {                                
+        std::string jointName = smurfJoint->getSourceFrame().getName() + "-" + smurfJoint->getTargetFrame().getName();        
+        JointData jointPhysics(jointName, getJointType(smurfJoint)); // Maybe we need the uuids, ask
+        join(jointPhysics, sourceSim, targetSim, storageFrame);
+      }
+
       /*
       void EnvireJoints::checkAndInstantiate(const envire::core::FrameId frameId){
         std::shared_ptr<NodeInterface> sourceSim;
@@ -208,6 +295,49 @@ namespace mars {
       }
       */
       
+      template <class jointType>
+      void EnvireJoints::checkAndInstantiate(jointType smurfJoint, const FrameId storageFrame, bool addDeps)
+      {
+        std::shared_ptr<NodeInterface> sourceSim;
+        std::shared_ptr<NodeInterface> targetSim;
+        smurf::Transformation* smurfTf = smurfJoint;
+        if (instantiable(smurfTf, sourceSim, targetSim))
+        {
+          instantiate(smurfJoint, sourceSim, targetSim, storageFrame);
+        }
+        else
+        {
+          if (addDeps)
+            addDependencies(smurfTf, sourceSim, targetSim, storageFrame);
+        }
+      }
+      
+      
+      /*
+       * This method is called when a new physical objects is added that could meet some of the dependencies
+       * 
+       */
+      /*
+       * TODO Ask how to do this
+      template <class jointType>
+      bool EnvireJoints::instantiateDependents(jointType joint, const FrameId & frame){
+        bool found = false;
+        using Iterator = TransformGraph::ItemIterator<Item<jointType>::Ptr>;
+        Iterator beginTfs, endTfs;
+        boost::tie(beginTfs, endTfs) = control->graph->getItems<Item<jointType>::Ptr>(frame);
+        if (beginTfs != endTfs)
+        {
+          jointType* smurfTf = &((*beginTfs)->getData());
+          bool addDeps = false; // So that no dependencies are included twice
+          checkAndInstantiate(smurfTf, frame, addDeps);
+          found = true;
+        }
+        return found;
+      }
+      */
+      
+      /*
+       * Templating this method to not repeat it for each joint type
       void EnvireJoints::checkAndInstantiate(smurf::StaticTransformation* smurfJoint, const FrameId storageFrame)
       {
         std::shared_ptr<NodeInterface> sourceSim;
@@ -218,6 +348,9 @@ namespace mars {
           instantiate(smurfJoint, sourceSim, targetSim);
         }
       }
+      */
+      
+      
       
       
       /*
@@ -340,6 +473,15 @@ namespace mars {
       }
           
 
+      void EnvireJoints::instantiate(smurf::StaticTransformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim)
+      {                                
+        JointData jointPhysics;
+        std::string jointName = smurfJoint->getSourceFrame().getName() + "-" + smurfJoint->getTargetFrame().getName();
+        jointPhysics.init(jointName, mars::interfaces::JOINT_TYPE_FIXED, 0, 0);
+        // Static transformations are stored in the source frame
+        join(jointPhysics, sourceSim, targetSim, smurfJoint->getSourceFrame().getName());
+      }
+      
           
       void EnvireJoints::instantiate(smurf::Joint smurfJoint)
       {
