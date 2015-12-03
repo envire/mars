@@ -35,6 +35,9 @@
 #include <urdf_model/model.h>
 #include <mars/sim/PhysicsMapper.h>
 
+#include <mars/interfaces/sim/JointInterface.h>
+#include <mars/interfaces/sim/NodeInterface.h>
+
 namespace mars {
   namespace plugins {
     namespace envire_joints {
@@ -193,12 +196,20 @@ namespace mars {
         LOG_DEBUG("[Envire Joints] XXXXX Joint interface stored after creation in frame: " +storageFrame);
       }
       
-      void EnvireJoints::join(JointData& jointPhysics, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
+      void EnvireJoints::join(JointData* &jointPhysics, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
       {
         std::shared_ptr<mars::interfaces::JointInterface> jointInterface(mars::sim::PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
+        LOG_DEBUG("[Envire Joints] Instantiated jointInterface to the physics. Next is createJoint ");
         // create the physical node data
-        if(jointInterface->createJoint(&jointPhysics, sourceSim.get(), targetSim.get()))
+        NodeInterface* source = sourceSim.get();
+        utils::Vector pos;
+        source->getPosition(&pos);
+        std::cout << pos << std::endl;
+        
+        //if(jointInterface->createJoint(jointPhysics, sourceSim.get(), targetSim.get()))
+        if(jointInterface->createJoint(jointPhysics, sourceSim.get(), targetSim.get()))
         {
+          LOG_DEBUG("[Envire Joints] Objects joined, ");
           control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
           storeSimJoint(jointInterface, storageFrame);
         }
@@ -211,9 +222,10 @@ namespace mars {
       
       void EnvireJoints::instantiate(smurf::StaticTransformation* smurfJoint, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
       {                                
-        JointData jointPhysics;
+        JointData* jointPhysics = new(JointData);
         std::string jointName = smurfJoint->getSourceFrame().getName() + "-" + smurfJoint->getTargetFrame().getName();
-        jointPhysics.init(jointName, mars::interfaces::JOINT_TYPE_FIXED); // Let's see what happens if we don't use uuids
+        jointPhysics->init(jointName, mars::interfaces::JOINT_TYPE_FIXED); // Let's see what happens if we don't use uuids
+        LOG_DEBUG("[Envire Joints] Joint Data created and inititated, not yet objects joined");
         // Static transformations are stored in the source frame
         join(jointPhysics, sourceSim, targetSim, storageFrame);
       }
@@ -279,7 +291,9 @@ namespace mars {
       void EnvireJoints::instantiate(smurf::Joint* smurfJoint, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
       {                                
         std::string jointName = smurfJoint->getSourceFrame().getName() + "-" + smurfJoint->getTargetFrame().getName();        
-        JointData jointPhysics(jointName, getJointType(smurfJoint)); // Maybe we need the uuids, ask
+        JointData* jointPhysics = new(JointData);
+        jointPhysics->init(jointName, getJointType(smurfJoint)); // Maybe we need the uuids, ask
+        LOG_DEBUG("[Envire Joints] Joint Data created and inititated, not yet objects joined");
         join(jointPhysics, sourceSim, targetSim, storageFrame);
       }
 
