@@ -96,7 +96,7 @@ namespace mars {
                 //std::string name = "smurfToSimulationInit" + timestamp + ".dot";
                 //viz.write(*(control->graph), name);
                 // Place the robot
-                envire::core::Transform robotPose;
+                //envire::core::Transform robotPose;
                 // Update Transform event handler is not implemented
                 //robotPose.transform.translation << 2, 3, 1.0;
                 //robotPose.transform.orientation = base::Quaterniond::Identity();

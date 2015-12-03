@@ -57,7 +57,7 @@ namespace mars {
        * */
       class GraphViz : public mars::interfaces::MarsPluginTemplate,
                        public envire::core::GraphEventDispatcher,
-		       public envire::core::GraphItemEventDispatcher<envire::core::Item<std::vector<smurf::Visual>>::Ptr>
+		       public envire::core::GraphItemEventDispatcher<envire::core::Item<std::vector<urdf::Visual>>::Ptr>
       {
 
       public:
@@ -80,12 +80,16 @@ namespace mars {
         virtual void transformRemoved(const envire::core::TransformRemovedEvent& e);
         virtual void transformModified(const envire::core::TransformModifiedEvent& e);
         virtual void itemAdded(const envire::core::ItemAddedEvent& e);
-	void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::vector<smurf::Visual>>::Ptr>& e);
+        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::vector<urdf::Visual>>::Ptr>& e);
         virtual void frameAdded(const envire::core::FrameAddedEvent& e);
 
         // CFGClient methods
         virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
       private:
+        
+        /**Add a visual node to the simulation */
+        void addVisual(const urdf::Visual& visual, const envire::core::FrameId& frameId,
+                       const boost::uuids::uuid& uuid);
         
         /** Set @p origin as the new origin frame.
           * This will update the tree and recalculate all draw positions.
@@ -104,7 +108,7 @@ namespace mars {
                       
         /**Updates the drawing position of @p vertex */              
         template <class physicsType> void updatePosition(const envire::core::vertex_descriptor vertex) const;
-	void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
+        void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
 	
       private:
         /**Maps the item's uuid to the graphics id used for drawing */

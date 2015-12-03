@@ -54,7 +54,7 @@ void GraphViz::init()
 {
   assert(control->graph != nullptr);
   GraphEventDispatcher::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<std::vector<smurf::Visual>>::Ptr>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<std::vector<urdf::Visual>>::Ptr>::subscribe(control->graph);
 }
 
 void GraphViz::reset() {
@@ -138,7 +138,7 @@ void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
     const vertex_descriptor vertex = queue.back();
     queue.pop_back();
     
-    updatePosition<Item<std::vector<smurf::Visual>>>(vertex);
+    updatePosition<Item<std::vector<urdf::Visual>>>(vertex);
     
     //if the vertex has children, queue them
     if(tree.find(vertex) != tree.end())
@@ -181,11 +181,11 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
       NodeData node;
       if(node.fromConfigMap(&pItem->getData(), ""))
       {
-	// TODO Fix: The emission Front is lost when going to config map and back
-	node.material.emissionFront = mars::utils::Color(1.0, 1.0, 1.0, 1.0);
-	node.material.transparency = 0.5;
-	setPos(e.frame, node);
-	uuidToGraphicsId[pItem->getID()] = control->graphics->addDrawObject(node);
+        // TODO Fix: The emission Front is lost when going to config map and back
+        node.material.emissionFront = mars::utils::Color(1.0, 1.0, 1.0, 1.0);
+        node.material.transparency = 0.5;
+        setPos(e.frame, node);
+        uuidToGraphicsId[pItem->getID()] = control->graphics->addDrawObject(node);
       }
     }
     catch(const UnknownTransformException& ex)
@@ -195,20 +195,53 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
   }
 }
 
-void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::vector<smurf::Visual>>::Ptr>& e)
+void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::vector<urdf::Visual>>::Ptr>& e)
 {
-    LOG_DEBUG("[GraphViz Smurf] std::vector <Smurf::Visual> ItemAdded Event");
-    NodeData node;
     // TODO use the visual list instead of a simple object
-    //std::vector<smurf::Visual> link= e.item->getData(); // 
-    node.init(e.frame); //Visuals have no name, we use the frame name
-    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.01, 0.01, 0.01), 0.1);
-    node.movable = true;
-    node.material.emissionFront = mars::utils::Color(0.0, 0.0, 1.0, 1.0);
-    //LOG_DEBUG( "Pose: ");
-    setPos(e.frame, node);
-    uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node);
+    std::vector<urdf::Visual> link = e.item->getData();
+    LOG_DEBUG_S("[GraphViz] std::vector <Smurf::Visual> ItemAdded Event. Visual count: " + boost::lexical_cast<std::string>(link.size()));
+    
+    for(const urdf::Visual& vis : link)
+    {
+      addVisual(vis, e.frame, e.item->getID());
+    }
+    
 }
+
+void GraphViz::addVisual(const urdf::Visual& visual, const FrameId& frameId,
+                         const boost::uuids::uuid& uuid)
+{
+  switch(visual.geometry->type)
+  {
+    case urdf::Geometry::BOX:
+      LOG_DEBUG("[GraphViz] NOT IMPLEMENTED add BOX visual " + visual.name);
+      break;
+    case urdf::Geometry::CYLINDER:
+      LOG_DEBUG("[GraphViz] NOT IMPLEMENTED add CYLINDER visual " + visual.name);
+      break;
+    case urdf::Geometry::MESH:
+    {
+      boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh>(visual.geometry);
+      assert(mesh.get() != nullptr);
+      LOG_DEBUG("[GraphViz] add MESH visual " + visual.name + " from " + mesh->filename);
+      NodeData node;
+      node.init(frameId + "_" + visual.name);
+      node.filename = mesh->filename;
+      node.physicMode = NodeType::NODE_TYPE_MESH;
+      node.movable = true;
+      
+      setPos(frameId, node);
+      uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); 
+    }
+      break;
+    case urdf::Geometry::SPHERE:
+      LOG_DEBUG("[GraphViz] NOT IMPLEMENTED add SPHERE visual " + visual.name);
+      break;
+    default:
+      LOG_ERROR("[GraphViz] ERROR: unknown geometry type");
+  }
+}
+
 
 bool GraphViz::isParent(vertex_descriptor parent, vertex_descriptor child) const
 {
@@ -251,50 +284,17 @@ void GraphViz::updateTree(const FrameId& origin)
   assert(newOrigin != control->graph->null_vertex());
   tree = control->graph->getTree(newOrigin).tree;
   //update the origins position
-  updatePosition<Item<std::vector<smurf::Visual>>>(newOrigin);
+  updatePosition<Item<std::vector<urdf::Visual>>>(newOrigin);
   //update all childreen
   for(const auto& it : tree)
   {
     for(vertex_descriptor vertex : it.second.children)
     {
-      updatePosition<Item<std::vector<smurf::Visual>>>(vertex);
+      updatePosition<Item<std::vector<urdf::Visual>>>(vertex);
     }
   }
 }
 
-///**Updates the drawing position of @p vertex */              
-//void GraphViz::updatePosition(const vertex_descriptor vertex) const
-//{
-//  const FrameId& frameId = control->graph->getFrameId(vertex);
-//  base::Vector3d translation;
-//  base::Quaterniond orientation;
-//  if(originId.compare(frameId) == 0)
-//  {
-//    translation << 0, 0, 0;
-//    orientation.setIdentity();
-//  }
-//  else
-//  {
-//    const Transform tf = control->graph->getTransform(originId, frameId);
-//    translation = tf.transform.translation;
-//    orientation = tf.transform.orientation;
-//  }
-//  
-//  using Iterator = TransformGraph::ItemIterator<PhysicsConfigMapItem::Ptr>;
-//  Iterator begin, end;
-//  boost::tie(begin, end) = control->graph->getItems<PhysicsConfigMapItem::Ptr>(vertex);
-//  for(;begin != end; ++begin)
-//  {
-//    const PhysicsConfigMapItem::Ptr item = *begin;
-//    //others might use ConfigMapItems as well, therefore check if if this is one of ours
-//    if(uuidToGraphicsId.find(item->getID()) != uuidToGraphicsId.end())
-//    {
-//      const int graphicsId = uuidToGraphicsId.at(item->getID());
-//      control->graphics->setDrawObjectPos(graphicsId, translation);
-//      control->graphics->setDrawObjectRot(graphicsId, orientation);
-//    }
-//  }
-//}
 
 /**Updates the drawing position of @p vertex */              
 template <class physicsType> void GraphViz::updatePosition(const vertex_descriptor vertex) const
