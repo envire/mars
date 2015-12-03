@@ -199,7 +199,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
 {
     // TODO use the visual list instead of a simple object
     std::vector<urdf::Visual> link = e.item->getData();
-    LOG_DEBUG_S("[GraphViz] std::vector <Smurf::Visual> ItemAdded Event. Visual count: " + boost::lexical_cast<std::string>(link.size()));
+    LOG_DEBUG("[GraphViz] std::vector <Smurf::Visual> ItemAdded Event. Visual count: " + boost::lexical_cast<std::string>(link.size()));
     
     for(const urdf::Visual& vis : link)
     {
