@@ -76,10 +76,11 @@ namespace mars {
         
         // Static Joints
         bool getSimObject(const envire::core::FrameId& frameName, std::shared_ptr<mars::interfaces::NodeInterface>& objectSim);
+        unsigned long getSimObjectId(const envire::core::FrameId& frameName);
         bool instantiable(smurf::Transformation* smurfJoint, std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, std::shared_ptr< mars::interfaces::NodeInterface >& targetSim);
         void addDependencies(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, envire::core::FrameId storageFrame);
         void storeSimJoint(std::shared_ptr< mars::interfaces::JointInterface >& jointInterface, envire::core::FrameId storageFrame);
-        void join(mars::interfaces::JointData*& jointPhysics, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);
+        void join(mars::interfaces::JointData* jointPhysics, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);
         void instantiate(smurf::StaticTransformation* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
         void instantiate(smurf::Joint* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
         //template <class jointType>
@@ -92,7 +93,6 @@ namespace mars {
           
         //bool instantiable(smurf::Joint smurfTf);
         std::map<envire::core::FrameId, std::vector<envire::core::FrameId>> dependencies;
-        
       }; // end of class definition EnvireJoints
 
     } // end of namespace envire_joints

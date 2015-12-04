@@ -45,6 +45,8 @@ namespace mars {
       using namespace mars::utils;
       using namespace mars::interfaces;
       using namespace envire::core;
+      using physicsNodeItemPtr = Item<std::shared_ptr<NodeInterface>>::Ptr;
+      using physicsJointItemPtr = envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>::Ptr;
 
       // Public Methods
       EnvireJoints::EnvireJoints(lib_manager::LibManager *theManager): MarsPluginTemplate(theManager, "EnvireJoints"), GraphEventDispatcher(){
@@ -137,10 +139,9 @@ namespace mars {
        */
       bool EnvireJoints::getSimObject(const FrameId& frameName, std::shared_ptr<NodeInterface>& objectSim){
         bool found = false;
-        using physicsItemPtr = Item<std::shared_ptr<NodeInterface>>::Ptr;
-        using Iterator = TransformGraph::ItemIterator<physicsItemPtr>;
+        using Iterator = TransformGraph::ItemIterator<physicsNodeItemPtr>;
         Iterator begin, end;
-        boost::tie(begin, end) = control->graph->getItems<physicsItemPtr>(frameName);
+        boost::tie(begin, end) = control->graph->getItems<physicsNodeItemPtr>(frameName);
         if (begin != end){
           objectSim = (*begin)->getData();
           found = true;
@@ -190,23 +191,30 @@ namespace mars {
       }
       
       void EnvireJoints::storeSimJoint(std::shared_ptr<mars::interfaces::JointInterface>& jointInterface, FrameId storageFrame){
-        using physicsItemPtr = envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>::Ptr;
-        physicsItemPtr physicsItem(new envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>(jointInterface));
+
+        physicsJointItemPtr physicsItem(new envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>(jointInterface));
         control->graph->addItemToFrame(storageFrame, physicsItem);          
         LOG_DEBUG("[Envire Joints] XXXXX Joint interface stored after creation in frame: " +storageFrame);
       }
       
-      void EnvireJoints::join(JointData* &jointPhysics, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
+      void EnvireJoints::join(JointData* jointPhysics, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
       {
         std::shared_ptr<mars::interfaces::JointInterface> jointInterface(mars::sim::PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
         LOG_DEBUG("[Envire Joints] Instantiated jointInterface to the physics. Next is createJoint ");
+        
         // create the physical node data
+        
+        /* SouceSim and Target sim look good
         NodeInterface* source = sourceSim.get();
         utils::Vector pos;
         source->getPosition(&pos);
         std::cout << pos << std::endl;
-        
-        //if(jointInterface->createJoint(jointPhysics, sourceSim.get(), targetSim.get()))
+        NodeInterface* target = targetSim.get();
+        target->getPosition(&pos);
+        std::cout << pos << std::endl;
+        */
+        LOG_DEBUG("[Envire Joints] Joint %d;  %d  ;  %d  ;  %.4f, %.4f, %.4f  ;  %.4f, %.4f, %.4f\n",  jointPhysics->index, jointPhysics->nodeIndex1, jointPhysics->nodeIndex2,  jointPhysics->anchor.x(), jointPhysics->anchor.y(), jointPhysics->anchor.z(), jointPhysics->axis1.x(), jointPhysics->axis1.y(), jointPhysics->axis1.z());
+        LOG_DEBUG("[Envire Joints] About to create joint " + jointPhysics->name);
         if(jointInterface->createJoint(jointPhysics, sourceSim.get(), targetSim.get()))
         {
           LOG_DEBUG("[Envire Joints] Objects joined, ");
@@ -219,12 +227,42 @@ namespace mars {
           assert(false);
         }
       }
+      /*
+      unsigned long EnvireJoints::getSimObjectId(const FrameId& frameName){
+        unsigned long id = 0;
+        
+        using Iterator = TransformGraph::ItemIterator<physicsNodeItemPtr>;
+        Iterator begin, end;
+        boost::tie(begin, end) = control->graph->getItems<physicsNodeItemPtr>(frameName);
+        if (begin != end){
+          std::string tmp = boost::lexical_cast<std::string>((*begin)->getID());
+          LOG_DEBUG("[Envire Joints]::getSimObjectId String from the uuid "+ tmp);
+          
+          //std::string::size_type sz;
+          //id = std::stol(tmp, &sz); //TODO use in mars core also uuid
+          //LOG_DEBUG("[Envire Joints]::getSimObject: Found the physical object in frame "+ frameName);
+        }
+        
+        return id;
+      }
+      */
       
       void EnvireJoints::instantiate(smurf::StaticTransformation* smurfJoint, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
       {                                
         JointData* jointPhysics = new(JointData);
         std::string jointName = smurfJoint->getSourceFrame().getName() + "-" + smurfJoint->getTargetFrame().getName();
+        /*
+        unsigned long id1 = getSimObjectId(smurfJoint->getSourceFrame().getName());
+        unsigned long id2 = getSimObjectId(smurfJoint->getSourceFrame().getName());
+        LOG_DEBUG("[Envire Joints] ID1 : "+ id1);
+        LOG_DEBUG("[Envire Joints] ID2 : "+ id2);
+        */
         jointPhysics->init(jointName, mars::interfaces::JOINT_TYPE_FIXED); // Let's see what happens if we don't use uuids
+        envire::core::Transform jointPos = control->graph->getTransform("center", storageFrame); // TODO: We should have this as constant somewhere for all the plugins
+        utils::Vector anchor = jointPos.transform.translation;
+        jointPhysics->anchor = anchor;
+        jointPhysics->axis1.x() = 1.0;
+        LOG_DEBUG("[Envire Joints] The vector anchor is: %.4f, %.4f, %.4f", anchor.x(), anchor.y(), anchor.z());
         LOG_DEBUG("[Envire Joints] Joint Data created and inititated, not yet objects joined");
         // Static transformations are stored in the source frame
         join(jointPhysics, sourceSim, targetSim, storageFrame);
@@ -290,9 +328,19 @@ namespace mars {
       
       void EnvireJoints::instantiate(smurf::Joint* smurfJoint, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
       {                                
-        std::string jointName = smurfJoint->getSourceFrame().getName() + "-" + smurfJoint->getTargetFrame().getName();        
         JointData* jointPhysics = new(JointData);
-        jointPhysics->init(jointName, getJointType(smurfJoint)); // Maybe we need the uuids, ask
+        std::string jointName = smurfJoint->getSourceFrame().getName() + "-" + smurfJoint->getTargetFrame().getName();        
+        jointPhysics->init(jointName, getJointType(smurfJoint));
+        // Set anchor and axis1 of the jointPhysics
+        envire::core::Transform jointPos = control->graph->getTransform("center", storageFrame); // TODO: We should have this as constant somewhere for all the plugins
+        utils::Vector anchor = jointPos.transform.translation;
+        jointPhysics->anchor = anchor;
+        LOG_DEBUG("[Envire Joints] The vector anchor is: %.4f, %.4f, %.4f", anchor.x(), anchor.y(), anchor.z());
+        Eigen::Affine3d axisTf = smurfJoint -> getAxisTransformation();
+        utils::Vector axis = axisTf.translation();
+        jointPhysics->axis1 = axis;
+        jointPhysics->axis1.x() = 1.0;
+        LOG_DEBUG("[Envire Joints] The vector axis is: %.4f, %.4f, %.4f", axis.x(), axis.y(), axis.z());
         LOG_DEBUG("[Envire Joints] Joint Data created and inititated, not yet objects joined");
         join(jointPhysics, sourceSim, targetSim, storageFrame);
       }
