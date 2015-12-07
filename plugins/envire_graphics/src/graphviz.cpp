@@ -138,7 +138,7 @@ void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
     const vertex_descriptor vertex = queue.back();
     queue.pop_back();
     
-    updatePosition<Item<std::vector<urdf::Visual>>>(vertex);
+    updatePosition<Item<envire::smurf::Visual>>(vertex);
     
     //if the vertex has children, queue them
     if(tree.find(vertex) != tree.end())
@@ -257,7 +257,7 @@ bool GraphViz::isParent(vertex_descriptor parent, vertex_descriptor child) const
 
 void GraphViz::update(sReal time_ms) {
   //uncomment this to randomly change the origin
-  
+  /*
   static sReal secondsPassed = 0;
   secondsPassed += time_ms / 1000;
   if(secondsPassed > 500)
@@ -268,7 +268,7 @@ void GraphViz::update(sReal time_ms) {
     changeOrigin(control->graph->getFrameId(it->first));
     secondsPassed = 0;
   }
-
+*/
 }
 
 void GraphViz::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
