@@ -222,14 +222,21 @@ void GraphViz::addVisual(const urdf::Visual& visual, const FrameId& frameId,
     case urdf::Geometry::MESH:
     {
       boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh>(visual.geometry);
+      const boost::shared_ptr<urdf::Material> material = visual.material;
       assert(mesh.get() != nullptr);
-      LOG_DEBUG("[GraphViz] add MESH visual. name: " + visual.name + ", frame: " + frameId + ", file: " + mesh->filename);
+      LOG_DEBUG("[GraphViz] add MESH visual. name: " + visual.name + ", frame: "
+                + frameId + ", file: " + mesh->filename);
       NodeData node;
       node.init(frameId + "_" + visual.name);
       node.filename = mesh->filename;
       node.physicMode = NodeType::NODE_TYPE_MESH;
+      node.visual_scale << mesh->scale.x, mesh->scale.y, mesh->scale.z;
       node.movable = true;
       
+      node.material.texturename = material->texture_filename;
+      node.material.diffuseFront = mars::utils::Color(material->color.r, material->color.g,
+                                                      material->color.b, material->color.a);
+
       setPos(frameId, node); //set link position
       //add visual offset
       node.visual_offset_pos = base::Vector3d(visual.origin.position.x, visual.origin.position.y, visual.origin.position.z);
