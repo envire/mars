@@ -167,10 +167,13 @@ void GraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces::Node
     }
     node.pos = fromOrigin.transform.translation;
     node.rot = fromOrigin.transform.orientation;
+    std::cerr << "[GraphViz] setPos: " << frame << ", pos: " << node.pos.transpose() <<
+                 "rot: " << node.rot.coeffs().transpose() << std::endl;
 }   
 
 void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
 {
+  //FIXME replace with specific itemAddedEvent for PhysicsConfigMapItem
   boost::shared_ptr<PhysicsConfigMapItem> pItem;
   if(pItem = boost::dynamic_pointer_cast<PhysicsConfigMapItem>(e.item))
   {
@@ -197,10 +200,7 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
 
 void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::vector<urdf::Visual>>::Ptr>& e)
 {
-    // TODO use the visual list instead of a simple object
     std::vector<urdf::Visual> link = e.item->getData();
-    LOG_DEBUG("[GraphViz] std::vector <Smurf::Visual> ItemAdded Event. Visual count: " + boost::lexical_cast<std::string>(link.size()));
-    
     for(const urdf::Visual& vis : link)
     {
       addVisual(vis, e.frame, e.item->getID());
@@ -223,14 +223,18 @@ void GraphViz::addVisual(const urdf::Visual& visual, const FrameId& frameId,
     {
       boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh>(visual.geometry);
       assert(mesh.get() != nullptr);
-      LOG_DEBUG("[GraphViz] add MESH visual " + visual.name + " from " + mesh->filename);
+      LOG_DEBUG("[GraphViz] add MESH visual. name: " + visual.name + ", frame: " + frameId + ", file: " + mesh->filename);
       NodeData node;
       node.init(frameId + "_" + visual.name);
       node.filename = mesh->filename;
       node.physicMode = NodeType::NODE_TYPE_MESH;
       node.movable = true;
       
-      setPos(frameId, node);
+      setPos(frameId, node); //set link position
+      //add visual offset
+      node.visual_offset_pos = base::Vector3d(visual.origin.position.x, visual.origin.position.y, visual.origin.position.z);
+      node.visual_offset_rot = base::Orientation(visual.origin.rotation.x, visual.origin.rotation.y,
+                                                 visual.origin.rotation.z, visual.origin.rotation.w);
       uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); 
     }
       break;
