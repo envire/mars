@@ -41,6 +41,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <envire_core/items/Item.hpp>
 #include <smurf/Smurf.hpp>
+#include <envire_smurf/Robot.hpp>
 
 namespace envire {namespace core {
   class TransformGraph;
@@ -57,7 +58,7 @@ namespace mars {
        * */
       class GraphViz : public mars::interfaces::MarsPluginTemplate,
                        public envire::core::GraphEventDispatcher,
-		       public envire::core::GraphItemEventDispatcher<envire::core::Item<std::vector<urdf::Visual>>::Ptr>
+		       public envire::core::GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>::Ptr>
       {
 
       public:
@@ -80,7 +81,7 @@ namespace mars {
         virtual void transformRemoved(const envire::core::TransformRemovedEvent& e);
         virtual void transformModified(const envire::core::TransformModifiedEvent& e);
         virtual void itemAdded(const envire::core::ItemAddedEvent& e);
-        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::vector<urdf::Visual>>::Ptr>& e);
+        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>::Ptr>& e);
         virtual void frameAdded(const envire::core::FrameAddedEvent& e);
 
         // CFGClient methods
@@ -88,7 +89,7 @@ namespace mars {
       private:
         
         /**Add a visual node to the simulation */
-        void addVisual(const urdf::Visual& visual, const envire::core::FrameId& frameId,
+        void addVisual(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
                        const boost::uuids::uuid& uuid);
         
         /** Set @p origin as the new origin frame.

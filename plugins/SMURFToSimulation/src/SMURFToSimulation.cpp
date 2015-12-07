@@ -78,7 +78,7 @@ namespace mars {
                 //std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SPACECLIMBER)%>"); // Crex simulation fails
                 std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>"); // Crex simulation fails
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
-                envire::envire_smurf::Robot asguard(iniPose, path);
+                envire::smurf::Robot asguard(iniPose, path);
                 asguard.loadFromSmurf(*(control->graph), center);
                 asguard.loadPhysics(*control->graph);
                 asguard.loadStaticJoints(*control->graph);

@@ -54,7 +54,7 @@ void GraphViz::init()
 {
   assert(control->graph != nullptr);
   GraphEventDispatcher::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<std::vector<urdf::Visual>>::Ptr>::subscribe(control->graph);
+  GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>::Ptr>::subscribe(control->graph);
 }
 
 void GraphViz::reset() {
@@ -167,8 +167,6 @@ void GraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces::Node
     }
     node.pos = fromOrigin.transform.translation;
     node.rot = fromOrigin.transform.orientation;
-    std::cerr << "[GraphViz] setPos: " << frame << ", pos: " << node.pos.transpose() <<
-                 "rot: " << node.rot.coeffs().transpose() << std::endl;
 }   
 
 void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
@@ -198,17 +196,14 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
   }
 }
 
-void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::vector<urdf::Visual>>::Ptr>& e)
+void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>::Ptr>& e)
 {
-    std::vector<urdf::Visual> link = e.item->getData();
-    for(const urdf::Visual& vis : link)
-    {
-      addVisual(vis, e.frame, e.item->getID());
-    }
+    envire::smurf::Visual vis = e.item->getData();
+    addVisual(vis, e.frame, e.item->getID());
     
 }
 
-void GraphViz::addVisual(const urdf::Visual& visual, const FrameId& frameId,
+void GraphViz::addVisual(const envire::smurf::Visual& visual, const FrameId& frameId,
                          const boost::uuids::uuid& uuid)
 {
   switch(visual.geometry->type)
@@ -238,11 +233,7 @@ void GraphViz::addVisual(const urdf::Visual& visual, const FrameId& frameId,
                                                       material->color.b, material->color.a);
 
       setPos(frameId, node); //set link position
-      //add visual offset
-      node.visual_offset_pos = base::Vector3d(visual.origin.position.x, visual.origin.position.y, visual.origin.position.z);
-      node.visual_offset_rot = base::Orientation(visual.origin.rotation.x, visual.origin.rotation.y,
-                                                 visual.origin.rotation.z, visual.origin.rotation.w);
-      uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); 
+      uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); //remeber graphics handle
     }
       break;
     case urdf::Geometry::SPHERE:
@@ -266,18 +257,18 @@ bool GraphViz::isParent(vertex_descriptor parent, vertex_descriptor child) const
 
 void GraphViz::update(sReal time_ms) {
   //uncomment this to randomly change the origin
-  /*
+  
   static sReal secondsPassed = 0;
   secondsPassed += time_ms / 1000;
   if(secondsPassed > 500)
   {
-    VertexMap::iterator it = tree.begin();
+    VertexRelationMap::iterator it = tree.begin();
     int randomIndex = rand() % tree.size();
     std::advance(it, randomIndex);
     changeOrigin(control->graph->getFrameId(it->first));
     secondsPassed = 0;
   }
-*/
+
 }
 
 void GraphViz::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
@@ -295,13 +286,13 @@ void GraphViz::updateTree(const FrameId& origin)
   assert(newOrigin != control->graph->null_vertex());
   tree = control->graph->getTree(newOrigin).tree;
   //update the origins position
-  updatePosition<Item<std::vector<urdf::Visual>>>(newOrigin);
+  updatePosition<Item<envire::smurf::Visual>>(newOrigin);
   //update all childreen
   for(const auto& it : tree)
   {
     for(vertex_descriptor vertex : it.second.children)
     {
-      updatePosition<Item<std::vector<urdf::Visual>>>(vertex);
+      updatePosition<Item<envire::smurf::Visual>>(vertex);
     }
   }
 }
@@ -313,6 +304,7 @@ template <class physicsType> void GraphViz::updatePosition(const vertex_descript
   const FrameId& frameId = control->graph->getFrameId(vertex);
   base::Vector3d translation;
   base::Quaterniond orientation;
+   
   if(originId.compare(frameId) == 0)
   {
     translation << 0, 0, 0;
@@ -331,7 +323,7 @@ template <class physicsType> void GraphViz::updatePosition(const vertex_descript
   for(;begin != end; ++begin)
   {
     const typename physicsType::Ptr item = *begin;
-    //others might use ConfigMapItems as well, therefore check if if this is one of ours
+    //others might use the same types as well, therefore check if if this is one of ours
     if(uuidToGraphicsId.find(item->getID()) != uuidToGraphicsId.end())
     {
       const int graphicsId = uuidToGraphicsId.at(item->getID());
