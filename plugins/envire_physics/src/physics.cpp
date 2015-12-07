@@ -134,14 +134,25 @@ void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::
     node.rot = fromOrigin.transform.orientation;
 }   
 
+/**
+ * TODO: Modify so that smurf::Frame objects create frames in the graph but no physical objects.
+ * TODO: Add a itemAdded method that generates physical objects from smurf::Links
+ * 
+ * 
+ */
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>& e)
 {
     LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
     // I think that the node data is generated in the physics plugin from the smurf::Frame 
+    // Look at how the collidable data should generate the physics objects
+    // 1. Load a in a config map the data from the SMURF (SMURF::handleCollision) 
+    // 2. Dump this configMap in a NodeData with JointData::fromConfigMap 
+    // 3. Instantiate the physical objec with NodePhysics::createNode(node)
+    
     mars::interfaces::NodeData node;
     smurf::Frame link= e.item->getData();
     LOG_DEBUG("[Envire Physics] Smurf frame name: " + link.getName());
-    node.init(link.getName()); //Node name
+    node.init(link.getName());
     node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.01, 0.01, 0.01), 0.1);
     node.movable = true;
     setPos(e.frame, node);
@@ -214,10 +225,10 @@ void GraphPhysics::update(sReal time_ms)
   
   
   // Uncomment to print the Graph
-  envire::core::GraphViz viz;
-  std::string timeStamp = base::Time::now().toString();
-  std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
-  viz.write(*(control->graph), name);
+  //envire::core::GraphViz viz;
+  //std::string timeStamp = base::Time::now().toString();
+  //std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
+  //viz.write(*(control->graph), name);
   
   
   updateChildPositions<Item<smurf::Frame>>(originDesc, TransformWithCovariance::Identity());
@@ -226,9 +237,9 @@ void GraphPhysics::update(sReal time_ms)
   
   // Uncomment to print the Graph
   //envire::core::GraphViz viz;
-  timeStamp = base::Time::now().toString();
-  name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
-  viz.write(*(control->graph), name);
+  //timeStamp = base::Time::now().toString();
+  //name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
+  //viz.write(*(control->graph), name);
   
   
   
