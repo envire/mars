@@ -32,9 +32,9 @@
 #include <mars/sim/ConfigMapItem.h>
 #include <base/TransformWithCovariance.hpp>
 #include <stdlib.h>
-#include <iostream>
 #include <algorithm>
 #include <cassert>
+#include <sstream>
 
 using namespace mars::plugins::graph_viz_plugin;
 using namespace mars::utils;
@@ -43,6 +43,13 @@ using namespace envire::core;
 using namespace mars::sim;
 using namespace std;
 using namespace base;
+
+//LOG_DEBUG with stringstream for easy conversion
+#define LOG_DEBUG_S(...) \
+  std::stringstream ss; \
+  ss << __VA_ARGS__; \
+  LOG_DEBUG(ss.str());
+
 
 GraphViz::GraphViz(lib_manager::LibManager *theManager)
   : MarsPluginTemplate(theManager, "GraphViz"), GraphEventDispatcher(), originId("")
@@ -96,7 +103,8 @@ void GraphViz::transformAdded(const envire::core::TransformAddedEvent& e)
     // 1: A loop was added to the current tree, in this case a new, shorter
     //    path might have been added, therefore we update the whole tree.
     // 2: A transform was added to another sub-tree, we dont care about this.
-    // 3: The current tree is empty and this is the first transform that is added.
+    // 3:
+#define L The current tree is empty and this is the first transform that is added.
     updateTree(originId);
   }
   
@@ -191,7 +199,7 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
     }
     catch(const UnknownTransformException& ex)
     {
-      cerr << "ERROR: " << ex.what() << endl;
+      LOG_ERROR(ex.what());
     }
   }
 }
@@ -209,39 +217,102 @@ void GraphViz::addVisual(const envire::smurf::Visual& visual, const FrameId& fra
   switch(visual.geometry->type)
   {
     case urdf::Geometry::BOX:
-      LOG_DEBUG("[GraphViz] NOT IMPLEMENTED add BOX visual " + visual.name);
+      addBox(visual, frameId, uuid);
       break;
     case urdf::Geometry::CYLINDER:
-      LOG_DEBUG("[GraphViz] NOT IMPLEMENTED add CYLINDER visual " + visual.name);
+      addCylinder(visual, frameId, uuid);
       break;
     case urdf::Geometry::MESH:
-    {
-      boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh>(visual.geometry);
-      const boost::shared_ptr<urdf::Material> material = visual.material;
-      assert(mesh.get() != nullptr);
-      LOG_DEBUG("[GraphViz] add MESH visual. name: " + visual.name + ", frame: "
-                + frameId + ", file: " + mesh->filename);
-      NodeData node;
-      node.init(frameId + "_" + visual.name);
-      node.filename = mesh->filename;
-      node.physicMode = NodeType::NODE_TYPE_MESH;
-      node.visual_scale << mesh->scale.x, mesh->scale.y, mesh->scale.z;
-      node.movable = true;
-      
-      node.material.texturename = material->texture_filename;
-      node.material.diffuseFront = mars::utils::Color(material->color.r, material->color.g,
-                                                      material->color.b, material->color.a);
-
-      setPos(frameId, node); //set link position
-      uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); //remeber graphics handle
-    }
+      addMesh(visual, frameId, uuid);
       break;
     case urdf::Geometry::SPHERE:
-      LOG_DEBUG("[GraphViz] NOT IMPLEMENTED add SPHERE visual " + visual.name);
+      addSphere(visual, frameId, uuid);
       break;
     default:
-      LOG_ERROR("[GraphViz] ERROR: unknown geometry type");
+      LOG_ERROR("[Envire Graphics] ERROR: unknown geometry type");
   }
+}
+
+void GraphViz::addSphere(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+{
+  boost::shared_ptr<urdf::Sphere> sphere = boost::dynamic_pointer_cast<urdf::Sphere>(visual.geometry);
+  assert(sphere.get() != nullptr);
+  
+  //y and z are unused
+  base::Vector3d extents(sphere->radius, 0, 0);
+  LOG_DEBUG_S("[Envire Graphics] add SPHERE visual. name: " << visual.name << ", frame: "
+              << frameId << ", radius: " << sphere->radius);
+  
+  NodeData node;
+  node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0); //mass is zero because it doesnt matter for visual representation
+  setNodeDataMaterial(node, visual.material);
+  
+  setPos(frameId, node); //set link position
+  uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); //remeber graphics handle
+}
+
+
+void GraphViz::addBox(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+{
+  boost::shared_ptr<urdf::Box> box = boost::dynamic_pointer_cast<urdf::Box>(visual.geometry);
+  assert(box.get() != nullptr);
+  
+  base::Vector3d extents(box->dim.x, box->dim.y, box->dim.z);
+  LOG_DEBUG_S("[Envire Graphics] add BOX visual. name: " << visual.name << ", frame: "
+              << frameId << ", size: " << extents.transpose());
+  
+  NodeData node;
+  node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
+  setNodeDataMaterial(node, visual.material);
+  
+  setPos(frameId, node); //set link position
+  uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); //remeber graphics handle
+}
+
+void GraphViz::addCylinder(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+{
+  boost::shared_ptr<urdf::Cylinder> cylinder = boost::dynamic_pointer_cast<urdf::Cylinder>(visual.geometry);
+  assert(cylinder.get() != nullptr);
+    
+  //x = length, y = radius, z = not used
+  base::Vector3d extents(cylinder->radius, cylinder->length, 0);
+  
+  LOG_DEBUG_S("[Envire Graphics] add CYLINDER visual. name: " << visual.name << ", frame: "
+              << frameId << ", radius: " << cylinder->radius << ", length: " << cylinder->length);
+
+  NodeData node;
+  node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
+  setNodeDataMaterial(node, visual.material);
+  
+  setPos(frameId, node); //set link position
+  uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); //remeber graphics handle
+}
+
+
+void GraphViz::addMesh(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+{
+  boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh>(visual.geometry);
+  assert(mesh.get() != nullptr);
+  
+  LOG_DEBUG("[Envire Graphics] add MESH visual. name: " + visual.name + ", frame: "
+            + frameId + ", file: " + mesh->filename);
+  
+  NodeData node;
+  node.init(frameId + "_" + visual.name);
+  node.filename = mesh->filename;
+  node.physicMode = NodeType::NODE_TYPE_MESH;
+  node.visual_scale << mesh->scale.x, mesh->scale.y, mesh->scale.z;
+  setNodeDataMaterial(node, visual.material);
+
+  setPos(frameId, node); //set link position
+  uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); //remeber graphics handle
+}
+
+void GraphViz::setNodeDataMaterial(NodeData& nodeData, boost::shared_ptr< urdf::Material > material) const
+{
+  nodeData.material.texturename = material->texture_filename;
+  nodeData.material.diffuseFront = mars::utils::Color(material->color.r, material->color.g,
+                                                      material->color.b, material->color.a);
 }
 
 

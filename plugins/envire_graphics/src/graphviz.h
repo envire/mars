@@ -91,6 +91,28 @@ namespace mars {
         /**Add a visual node to the simulation */
         void addVisual(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
                        const boost::uuids::uuid& uuid);
+
+        /**Adds a mesh visual to the simulation. Only call this method if you are sure that
+         * visual.geometry is a MESH*/
+        void addMesh(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
+                     const boost::uuids::uuid& uuid);
+        
+        /**Adds a box visual to the simulation. Only call this method if you are sure that
+         * visual.geometry is a BOX*/
+        void addBox(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
+                     const boost::uuids::uuid& uuid);
+        
+        /**Adds a sphere visual to the simulation. Only call this method if you are sure that
+         * visual.geometry is a SPHERE*/
+        void addSphere(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
+                      const boost::uuids::uuid& uuid);
+        
+        /**Adds a cylinder visual to the simulation. Only call this method if you are sure that
+         * visual.geometry is a CYLINDER*/
+        void addCylinder(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
+                         const boost::uuids::uuid& uuid);
+        
+        void setNodeDataMaterial(mars::interfaces::NodeData& nodeData, boost::shared_ptr<urdf::Material> material) const;
         
         /** Set @p origin as the new origin frame.
           * This will update the tree and recalculate all draw positions.
