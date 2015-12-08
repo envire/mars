@@ -134,6 +134,91 @@ void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::
     node.rot = fromOrigin.transform.orientation;
 }   
 
+/*
+boost::shared_ptr<NodeData>  GraphPhysics::sphereNodeData(const boost::shared_ptr<urdf::Geometry> geometry){
+  NodeData result;
+        size.x() = ((urdf::Sphere*) tmpGeometry.get())->radius;
+        (*map)["physicmode"] = "sphere";
+  return result;
+}
+
+boost::shared_ptr<NodeData> GraphPhysics::boxNodeData(const boost::shared_ptr<urdf::Geometry> geometry){
+  NodeData result;
+        v = ((urdf::Box*) tmpGeometry.get())->dim;
+        size = Vector(v.x, v.y, v.z);
+        (*map)["physicmode"] = "box";
+  return result;
+}
+
+boost::shared_ptr<NodeData> GraphPhysics::cylinderNodeData(const boost::shared_ptr<urdf::Geometry> geometry){
+        size.x() = ((urdf::Cylinder*) tmpGeometry.get())->radius;
+        size.y() = ((urdf::Cylinder*) tmpGeometry.get())->length;
+        (*map)["physicmode"] = "cylinder";
+}
+
+boost::shared_ptr<NodeData> GraphPhysics::meshNodeData(const boost::shared_ptr<urdf::Geometry> geometry){
+        scale = Vector(v.x, v.y, v.z);
+        (*map)["filename"] = ((urdf::Mesh*) tmpGeometry.get())->filename;
+        (*map)["origname"] = "";
+        (*map)["physicmode"] = "mesh";
+}
+
+void GraphPhysics::getNodes(const std::vector<boost::shared_ptr<urdf::Collision>> & collidables) {
+  std::vector<boost::shared_ptr<NodeData>> result;
+  for(boost::shared_ptr<urdf::Collision> collidable : collidables){
+    boost::shared_ptr<urdf::Geometry> tmpGeometry = collidable->geometry;
+    Vector size(0.0, 0.0, 0.0);
+    Vector scale(1.0, 1.0, 1.0);
+    urdf::Vector3 v;
+    boost::shared_ptr<NodeData> toInstantiate;
+    switch (tmpGeometry->type) {
+      case urdf::Geometry::SPHERE:
+        toInstantiate = sphereNodeData(tmpGeometry);
+        break;
+      case urdf::Geometry::BOX:
+        toInstantiate = boxNodeData(tmpGeometry);
+        break;
+      case urdf::Geometry::CYLINDER:
+        toInstantiate = cylinderNodeData(tmpGeometry);
+        break;
+      case urdf::Geometry::MESH:
+        v = ((urdf::Mesh*) tmpGeometry.get())->scale;
+        toInstantiate = meshNodeData(tmpGeometry);
+        break;
+      default:
+        break;
+    }
+    result.push_back(toInstantiate);
+  }
+  return result;
+}
+
+*/
+/*
+  TODO THIS IS MISSING WHERE MAYBE:
+  // 1. Load a in a config map the data from the SMURF (SMURF::handleCollision) 
+  // TODO receive a vector instead of just a collidable
+  
+  vectorToConfigItem(&(*map)["extend"][0], &size);
+  vectorToConfigItem(&(*map)["scale"][0], &scale);
+  // todo: we need to deal correctly with the scale and size in MARS
+  //       if we have a mesh here, as a first hack we use the scale as size
+  if (tmpGeometry->type == urdf::Geometry::MESH) {
+    vectorToConfigItem(&(*map)["extend"][0], &scale);
+  }
+ * 
+ */
+
+
+  // 2. Dump this configMap in a NodeData with NodeData::fromConfigMap
+  // TODO don't use the configmap
+  
+  
+    // 3. Instantiate the physical objec with NodePhysics::createNode(node)
+  
+  
+  // 4. Add the created node physics to the graph
+
 /**
  * TODO: Modify so that smurf::Frame objects create frames in the graph but no physical objects.
  * TODO: Add a itemAdded method that generates physical objects from smurf::Links
@@ -142,21 +227,20 @@ void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::
  */
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>& e)
 {
-    LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
-    // I think that the node data is generated in the physics plugin from the smurf::Frame 
-    // Look at how the collidable data should generate the physics objects
-    // 1. Load a in a config map the data from the SMURF (SMURF::handleCollision) 
-    // 2. Dump this configMap in a NodeData with JointData::fromConfigMap 
-    // 3. Instantiate the physical objec with NodePhysics::createNode(node)
-    
+    //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
     mars::interfaces::NodeData node;
     smurf::Frame link= e.item->getData();
-    LOG_DEBUG("[Envire Physics] Smurf frame name: " + link.getName());
+    //LOG_DEBUG("[Envire Physics] Smurf frame name: " + link.getName());
     node.init(link.getName());
+    /*
+    std::vector<boost::shared_ptr<urdf::Collision>> collidables = link.getCollidables();
+    std::vector<boost::shared_ptr<NodeData>> collidableNodes = getNodes(collidables);
+    // The next things can be done in getNodes:
+    */
     node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.01, 0.01, 0.01), 0.1);
     node.movable = true;
     setPos(e.frame, node);
-    // create an interface object to the physics
+    // Create the physical object and save it in the Graph
     shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
     if (physics->createNode(&node)) 
     {
@@ -166,7 +250,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>&
     using physicsItemPtr = envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr;
     physicsItemPtr physicsItem(new envire::core::Item<std::shared_ptr<NodeInterface>>(physics));
     control->graph->addItemToFrame(e.frame, physicsItem);
-    LOG_DEBUG("[Envire Physics] ItemAdded event smurf::Frame - an item containing share_ptr to a nodeInterface was stored in " + e.frame);
+    //LOG_DEBUG("[Envire Physics] ItemAdded event smurf::Frame - an item containing share_ptr to a nodeInterface was stored in " + e.frame);
 }
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr>& e)
@@ -264,8 +348,8 @@ template <class physicsType> void GraphPhysics::updatePositions( const vertex_de
                                                                  const TransformWithCovariance& originToRoot)
 {
   Transform tf = control->graph->getTransform(origin, target);
-  LOG_DEBUG("[Envire Physics] Updating position of physical objects in frame: " + control->graph->getFrame(target).getName());
-  LOG_DEBUG("[envire_physics] Transformation to be updated: " +  control->graph->getFrame(origin).getName() + " to " + control->graph->getFrame(target).getName() );
+  //LOG_DEBUG("[Envire Physics] Updating position of physical objects in frame: " + control->graph->getFrame(target).getName());
+  //LOG_DEBUG("[envire_physics] Transformation to be updated: " +  control->graph->getFrame(origin).getName() + " to " + control->graph->getFrame(target).getName() );
   //How can I print the tf also using the LOG_DEBUG?
   //LOG_DEBUG("[Envire Physics] Tf values before update: " );
   //std::cout << tf.transform << std::endl;
