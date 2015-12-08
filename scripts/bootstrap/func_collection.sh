@@ -373,8 +373,8 @@ function fetch_ode_mars() {
     pushd . > /dev/null 2>&1
     mkdir -p ${MARS_DEV_ROOT}/external
     cd ${MARS_DEV_ROOT}/external
-    if [ ! -e "ode-0.12.tar.gz" ]; then
-        wget http://sourceforge.net/projects/opende/files/ODE/0.12/ode-0.12.tar.gz
+    if [ ! -e "ode-0.13.1.tar.gz" ]; then
+        wget http://bitbucket.org/odedevs/ode/downloads/ode-0.13.1.tar.gz
         if [ -d "ode_mars" ]; then 
             uninstall_package "external/ode_mars"
             rm -rf ode_mars
@@ -382,8 +382,8 @@ function fetch_ode_mars() {
     fi
 
     if [ ! -d "ode_mars" ]; then 
-        tar -xzvf ode-0.12.tar.gz
-        mv ode-0.12 ode_mars
+        tar -xzvf ode-0.13.1.tar.gz
+        mv ode-0.13.1 ode_mars
     fi
     cd ..
     popd > /dev/null 2>&1
@@ -536,7 +536,7 @@ function patch_eigen {
 }
 
 function patch_ode_mars {
-    printBold "patching external/ode_mars version 0.12 ..."
+    printBold "patching external/ode_mars version 0.13.1 ..."
     setScriptDir
     setupConfig
     # patch was accepted upstream (http://sf.net/p/opende/patches/180) and
@@ -547,7 +547,7 @@ function patch_ode_mars {
     patch -N -p0 -d ${MARS_DEV_ROOT}/external/ode_mars -i ${MARS_SCRIPT_DIR}/patches/ode-0.12-export_joint_internals.patch
     # patch was submitted upstream (http://sf.net/p/opende/patches/187)
     patch -N -p0 -d ${MARS_DEV_ROOT}/external/ode_mars -i ${MARS_SCRIPT_DIR}/patches/ode-0.12-abort.patch
-    printBold "... done patching external/ode_mars version 0.12."
+    printBold "... done patching external/ode_mars version 0.13.1."
 }
 
 
@@ -622,6 +622,7 @@ function install_ode_mars {
       export CFLAGS=-fPIC
       export CXXFLAGS=-fPIC
       # --enable-release
+      ./bootstrap
       ./configure CPPFLAGS="-DdNODEBUG" CXXFLAGS="-O2 -ffast-math -fPIC" CFLAGS="-O2 -ffast-math -fPIC" --enable-double-precision --prefix=$prefix --with-drawstuff=none --disable-demos
       if [ "${platform}" = "linux" ]; then
         if [ x`which libtool` != x ]; then
