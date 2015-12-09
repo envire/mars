@@ -60,7 +60,7 @@ void GraphPhysics::init() {
   GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>::subscribe(control->graph);
   GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>::subscribe(control->graph);
   GraphItemEventDispatcher<Item<smurf::Frame>::Ptr>::subscribe(control->graph);
-  //GraphItemEventDispatcher<Item<smurf::StaticTransformation>::Ptr>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<std::vector<boost::shared_ptr<urdf::Collision>>>::Ptr>::subscribe(control->graph);
 }
 
 void GraphPhysics::reset() {
@@ -118,106 +118,72 @@ void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent&
 
 void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node)
 {
-    Transform fromOrigin;
-    if(originId.compare(frame) == 0)
-    {
-      //this special case happens when the graph only contains one frame
-      //and items are added to that frame. In that case aksing the graph 
-      //for the transformation would cause an exception
-      fromOrigin.setTransform(TransformWithCovariance::Identity());
-    }
-    else
-    {
-      fromOrigin = control->graph->getTransform(originId, frame); 
-    }
-    node.pos = fromOrigin.transform.translation;
-    node.rot = fromOrigin.transform.orientation;
+  Transform fromOrigin;
+  if(originId.compare(frame) == 0)
+  {
+    //this special case happens when the graph only contains one frame
+    //and items are added to that frame. In that case aksing the graph 
+    //for the transformation would cause an exception
+    fromOrigin.setTransform(TransformWithCovariance::Identity());
+  }
+  else
+  {
+    fromOrigin = control->graph->getTransform(originId, frame); 
+  }
+  node.pos = fromOrigin.transform.translation;
+  node.rot = fromOrigin.transform.orientation;
 }   
 
-/*
-boost::shared_ptr<NodeData>  GraphPhysics::sphereNodeData(const boost::shared_ptr<urdf::Geometry> geometry){
-  NodeData result;
-        size.x() = ((urdf::Sphere*) tmpGeometry.get())->radius;
-        (*map)["physicmode"] = "sphere";
-  return result;
-}
-
-boost::shared_ptr<NodeData> GraphPhysics::boxNodeData(const boost::shared_ptr<urdf::Geometry> geometry){
-  NodeData result;
-        v = ((urdf::Box*) tmpGeometry.get())->dim;
-        size = Vector(v.x, v.y, v.z);
-        (*map)["physicmode"] = "box";
-  return result;
-}
-
-boost::shared_ptr<NodeData> GraphPhysics::cylinderNodeData(const boost::shared_ptr<urdf::Geometry> geometry){
-        size.x() = ((urdf::Cylinder*) tmpGeometry.get())->radius;
-        size.y() = ((urdf::Cylinder*) tmpGeometry.get())->length;
-        (*map)["physicmode"] = "cylinder";
-}
-
-boost::shared_ptr<NodeData> GraphPhysics::meshNodeData(const boost::shared_ptr<urdf::Geometry> geometry){
-        scale = Vector(v.x, v.y, v.z);
-        (*map)["filename"] = ((urdf::Mesh*) tmpGeometry.get())->filename;
-        (*map)["origname"] = "";
-        (*map)["physicmode"] = "mesh";
-}
-
-void GraphPhysics::getNodes(const std::vector<boost::shared_ptr<urdf::Collision>> & collidables) {
+std::vector<boost::shared_ptr<NodeData>> GraphPhysics::getNodes(const std::vector<boost::shared_ptr<urdf::Collision>> & collidables, const envire::core::FrameId& frame) {
+  // TODO: Set same pos for all collidables?
   std::vector<boost::shared_ptr<NodeData>> result;
-  for(boost::shared_ptr<urdf::Collision> collidable : collidables){
-    boost::shared_ptr<urdf::Geometry> tmpGeometry = collidable->geometry;
-    Vector size(0.0, 0.0, 0.0);
-    Vector scale(1.0, 1.0, 1.0);
-    urdf::Vector3 v;
-    boost::shared_ptr<NodeData> toInstantiate;
-    switch (tmpGeometry->type) {
-      case urdf::Geometry::SPHERE:
-        toInstantiate = sphereNodeData(tmpGeometry);
-        break;
-      case urdf::Geometry::BOX:
-        toInstantiate = boxNodeData(tmpGeometry);
-        break;
-      case urdf::Geometry::CYLINDER:
-        toInstantiate = cylinderNodeData(tmpGeometry);
-        break;
-      case urdf::Geometry::MESH:
-        v = ((urdf::Mesh*) tmpGeometry.get())->scale;
-        toInstantiate = meshNodeData(tmpGeometry);
-        break;
-      default:
-        break;
-    }
-    result.push_back(toInstantiate);
+  for(boost::shared_ptr<urdf::Collision> collidable : collidables)
+  {
+    boost::shared_ptr<NodeData> node;
+    node->init(collidable->name);
+    node->fromGeometry(collidable->geometry);
+    setPos(frame, (*node));
+    node->movable = true;
+    result.push_back(node);
   }
   return result;
 }
-
-*/
+    
 /*
-  TODO THIS IS MISSING WHERE MAYBE:
-  // 1. Load a in a config map the data from the SMURF (SMURF::handleCollision) 
-  // TODO receive a vector instead of just a collidable
+  1. Load a in a config map the data from the SMURF (SMURF::handleCollision) 
+  TODO In the geometry object we don't have any of the contact information
+  TODO Inertia information is neither there
+  TODO Set moveable somewhere. I guess this happens within the Inertia stuff
   
-  vectorToConfigItem(&(*map)["extend"][0], &size);
-  vectorToConfigItem(&(*map)["scale"][0], &scale);
-  // todo: we need to deal correctly with the scale and size in MARS
-  //       if we have a mesh here, as a first hack we use the scale as size
-  if (tmpGeometry->type == urdf::Geometry::MESH) {
-    vectorToConfigItem(&(*map)["extend"][0], &scale);
-  }
+  2. Dump this configMap in a NodeData with NodeData::fromConfigMap
+  
+  3. Instantiate the physical object see NodePhysics::createNode(node)
+  
+  4. Add the created node physics to the graph
+*/
+
+/*
+ * Create the physical objects and save them in the Graph
+ * We add the shared_ptr of the physical node interface to access from other plugins
  * 
  */
+void GraphPhysics::instantiateNodes(const std::vector<boost::shared_ptr<NodeData>> nodes, const envire::core::FrameId& frame)
+{
+  std::vector<shared_ptr<NodeInterface>> physicCollidables;
+  for(boost::shared_ptr<NodeData> node : nodes)
+  {
+    shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
+    if (!(physics->createNode(&(*node))))
+    {
+      std::cerr << "[Envire Physics] Error creating a physics node" ;
+    }
+    physicCollidables.push_back(physics);
+  }
+  using physicsItemPtr = envire::core::Item<std::vector<std::shared_ptr<NodeInterface>>>::Ptr;
+  physicsItemPtr physicsItem(new envire::core::Item<std::vector<std::shared_ptr<NodeInterface>>>(physicCollidables));
+  control->graph->addItemToFrame(frame, physicsItem);
+}
 
-
-  // 2. Dump this configMap in a NodeData with NodeData::fromConfigMap
-  // TODO don't use the configmap
-  
-  
-    // 3. Instantiate the physical objec with NodePhysics::createNode(node)
-  
-  
-  // 4. Add the created node physics to the graph
 
 /**
  * TODO: Modify so that smurf::Frame objects create frames in the graph but no physical objects.
@@ -225,40 +191,47 @@ void GraphPhysics::getNodes(const std::vector<boost::shared_ptr<urdf::Collision>
  * 
  * 
  */
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<std::vector<boost::shared_ptr<urdf::Collision>>>::Ptr>& e)
+{
+  //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
+  // TODO: Can be more efficient by making in a single loop the getCollidables and the instantiate nodes. But this is more clear to understand.
+  std::vector<boost::shared_ptr<urdf::Collision>> collidables = e.item->getData();
+  std::vector<boost::shared_ptr<NodeData>> collidableNodes = getNodes(collidables, e.frame);
+  instantiateNodes(collidableNodes, e.frame);
+}
+
+//TODO item added also for frames, the one above should be for collidables
+
+/** 
+ * The nodes created by the storage of a smurf Frame are the ones the joints link
+ * 
+ */
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>& e)
 {
-    //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
     mars::interfaces::NodeData node;
-    smurf::Frame link= e.item->getData();
-    //LOG_DEBUG("[Envire Physics] Smurf frame name: " + link.getName());
+    smurf::Frame link = e.item->getData();
     node.init(link.getName());
-    /*
-    std::vector<boost::shared_ptr<urdf::Collision>> collidables = link.getCollidables();
-    std::vector<boost::shared_ptr<NodeData>> collidableNodes = getNodes(collidables);
-    // The next things can be done in getNodes:
-    */
-    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.01, 0.01, 0.01), 0.1);
+    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.00001, 0.000001, 0.00001), 0.0);
     node.movable = true;
     setPos(e.frame, node);
-    // Create the physical object and save it in the Graph
     shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-    if (physics->createNode(&node)) 
+    if (!(physics->createNode(&node)))
     {
-      uuidToPhysics[e.item->getID()] = physics;
+      std::cerr << "[Envire Physics] Error creating a physics node" ;
     }
-    // We add the shared_ptr of the physical node interface to access from other plugins
     using physicsItemPtr = envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr;
     physicsItemPtr physicsItem(new envire::core::Item<std::shared_ptr<NodeInterface>>(physics));
     control->graph->addItemToFrame(e.frame, physicsItem);
-    //LOG_DEBUG("[Envire Physics] ItemAdded event smurf::Frame - an item containing share_ptr to a nodeInterface was stored in " + e.frame);
+    LOG_DEBUG("[Envire Physics] ItemAdded event smurf::Frame - an item containing share_ptr to a nodeInterface was stored in " + e.frame);
 }
+ 
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr>& e)
 {
   PhysicsConfigMapItem::Ptr pItem = e.item;
   //assert that this item has not been added before
   assert(uuidToPhysics.find(pItem->getID()) == uuidToPhysics.end());
-
+  
   try
   {         
     //try to convert the item into a node Data
@@ -300,7 +273,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr
 
 void GraphPhysics::update(sReal time_ms) 
 {
-
+  
   //dfs visit the tree and update all positions.
   //The transforms in the graph are relativ to their parent while the
   //transform from simulation is relativ to the root.
