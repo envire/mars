@@ -30,6 +30,7 @@
 #include <cstdio>
 
 
+
 #define GET_VALUE(str, val, type)                    \
   if((it = config->find(str)) != config->end())      \
     val = it->second[0].get##type()
@@ -379,8 +380,43 @@ namespace mars {
       if(terrain)
         fileList->push_back(terrain->srcname);
     }
-
-
+    
+    void NodeData::fromGeometry(const boost::shared_ptr<urdf::Geometry>& geometry){
+      // TODO In the geometry object we don't have any of the contact information
+      // TODO Inertia information is neither there
+      Vector size(0.0, 0.0, 0.0);
+      urdf::Vector3 v;
+      // TODO what about the scale? Seems not to be used...
+      switch (geometry->type) {
+        case urdf::Geometry::SPHERE:
+          physicMode = NODE_TYPE_SPHERE;
+          size.x() = ((urdf::Sphere*) geometry.get())->radius;
+          break;
+        case urdf::Geometry::BOX:
+          physicMode = NODE_TYPE_BOX;
+          v = ((urdf::Box*) geometry.get())->dim;
+          size = Vector(v.x, v.y, v.z);
+          break;
+        case urdf::Geometry::CYLINDER:
+          physicMode = NODE_TYPE_CYLINDER;
+          size.x() = ((urdf::Cylinder*) geometry.get())->radius;
+          size.y() = ((urdf::Cylinder*) geometry.get())->length;
+          break;
+        case urdf::Geometry::MESH:
+          physicMode = NODE_TYPE_MESH;
+          v = ((urdf::Mesh*) geometry.get())->scale;
+          //scale = Vector(v.x, v.y, v.z);
+          filename = ((urdf::Mesh*) geometry.get())->filename;
+          origName = "";
+          // TODO: we need to deal correctly with the scale and size in MARS if we have a mesh here, as a first hack we use the scale as size
+          size = Vector(v.x, v.y, v.z); //"extend" in the ConfigMaps
+          break;
+        default:
+          break;
+      }
+      ext = size;
+    }
+    
   } // end of namespace interfaces
 
 } // end of namespace mars

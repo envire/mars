@@ -32,6 +32,7 @@
 #include <string>
 #include <map>
 
+#include <urdf_model/link.h>
 
 namespace mars {
   namespace interfaces {
@@ -136,6 +137,8 @@ namespace mars {
       void toConfigMap(configmaps::ConfigMap *config,
                        bool skipFilenamePrefix = false);
       void getFilesToSave(std::vector<std::string> *fileList);
+      
+      void fromGeometry(const boost::shared_ptr< urdf::Geometry >& geometry);
 
       /**
        * The name of the node. \verbatim Default value: "" \endverbatim
