@@ -40,7 +40,7 @@ namespace mars {
                            public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>,
                            public envire::core::GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>,
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>::Ptr>,
-                           public envire::core::GraphItemEventDispatcher<envire::core::Item<std::vector<boost::shared_ptr<urdf::Collision>>>::Ptr>
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<urdf::Collision>::Ptr>
       {
       public:
         GraphPhysics(lib_manager::LibManager *theManager);
@@ -61,10 +61,11 @@ namespace mars {
         void transformAdded(const envire::core::TransformAddedEvent& e);
         void transformModified(const envire::core::TransformModifiedEvent& e);
         // Frames (links)
-        std::vector< boost::shared_ptr< interfaces::NodeData > > getNodes(const std::vector< boost::shared_ptr< urdf::Collision > >& collidables, const envire::core::FrameId& frame);
+        
+        mars::interfaces::NodeData getNode(const urdf::Collision& collision, const envire::core::FrameId& frame);
         void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>::Ptr>& e);
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::vector<boost::shared_ptr<urdf::Collision>>>::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<urdf::Collision>::Ptr>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
 
         void update(mars::interfaces::sReal time_ms);
@@ -80,7 +81,7 @@ namespace mars {
         
       private:
         void updateTree();
-        void instantiateNodes(const std::vector< boost::shared_ptr< mars::interfaces::NodeData > > nodes, const envire::core::FrameId& frame);
+        void instantiateNode(mars::interfaces::NodeData node, const envire::core::FrameId& frame, const boost::uuids::uuid uniqueID);
         
         envire::core::FrameId originId;
         envire::core::TreeView treeView;

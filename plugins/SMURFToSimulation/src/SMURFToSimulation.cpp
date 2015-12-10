@@ -82,6 +82,7 @@ namespace mars {
                 asguard.loadFromSmurf(*(control->graph), center);
                 asguard.loadPhysics(*control->graph);
                 asguard.loadStaticJoints(*control->graph);
+                asguard.loadCollisions(*control->graph);
                 asguard.loadVisuals(*(control->graph));
                 LOG_DEBUG("Loaded to Mars/Envire graph");
                 //asguard.simulationReady(*(control->graph));

@@ -60,7 +60,7 @@ void GraphPhysics::init() {
   GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>::subscribe(control->graph);
   GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>::subscribe(control->graph);
   GraphItemEventDispatcher<Item<smurf::Frame>::Ptr>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<std::vector<boost::shared_ptr<urdf::Collision>>>::Ptr>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<urdf::Collision>::Ptr>::subscribe(control->graph);
 }
 
 void GraphPhysics::reset() {
@@ -134,21 +134,6 @@ void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::
   node.rot = fromOrigin.transform.orientation;
 }   
 
-std::vector<boost::shared_ptr<NodeData>> GraphPhysics::getNodes(const std::vector<boost::shared_ptr<urdf::Collision>> & collidables, const envire::core::FrameId& frame) {
-  // TODO: Set same pos for all collidables?
-  std::vector<boost::shared_ptr<NodeData>> result;
-  for(boost::shared_ptr<urdf::Collision> collidable : collidables)
-  {
-    boost::shared_ptr<NodeData> node;
-    node->init(collidable->name);
-    node->fromGeometry(collidable->geometry);
-    setPos(frame, (*node));
-    node->movable = true;
-    result.push_back(node);
-  }
-  return result;
-}
-    
 /*
   1. Load a in a config map the data from the SMURF (SMURF::handleCollision) 
   TODO In the geometry object we don't have any of the contact information
@@ -161,46 +146,46 @@ std::vector<boost::shared_ptr<NodeData>> GraphPhysics::getNodes(const std::vecto
   
   4. Add the created node physics to the graph
 */
-
-/*
- * Create the physical objects and save them in the Graph
- * We add the shared_ptr of the physical node interface to access from other plugins
- * 
- */
-void GraphPhysics::instantiateNodes(const std::vector<boost::shared_ptr<NodeData>> nodes, const envire::core::FrameId& frame)
-{
-  std::vector<shared_ptr<NodeInterface>> physicCollidables;
-  for(boost::shared_ptr<NodeData> node : nodes)
-  {
-    shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-    if (!(physics->createNode(&(*node))))
-    {
-      std::cerr << "[Envire Physics] Error creating a physics node" ;
-    }
-    physicCollidables.push_back(physics);
-  }
-  using physicsItemPtr = envire::core::Item<std::vector<std::shared_ptr<NodeInterface>>>::Ptr;
-  physicsItemPtr physicsItem(new envire::core::Item<std::vector<std::shared_ptr<NodeInterface>>>(physicCollidables));
-  control->graph->addItemToFrame(frame, physicsItem);
+NodeData GraphPhysics::getNode(const urdf::Collision& collision, const envire::core::FrameId& frame) {
+  NodeData node;
+  node.init(collision.name);
+  node.fromGeometry(collision.geometry);
+  setPos(frame, (node));
+  node.movable = true;
+  return node;
 }
 
+/*
+* Create the physical objects and save them in the Graph
+* We add the shared_ptr of the physical node interface to access from other plugins
+* 
+*/
+void GraphPhysics::instantiateNode(NodeData node, const envire::core::FrameId& frame, const boost::uuids::uuid uniqueID)
+{
+  shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
+  if (physics->createNode(&node))
+  {
+    uuidToPhysics[uniqueID] = physics;
+  }
+  // TODO: Save the nodePhysics in the graph somehow
+  //using physicsItemPtr = envire::core::Item<NodeInterface>::Ptr;
+  //physicsItemPtr physicsItem(new envire::core::Item<NodeInterface>(physics));
+  //control->graph->addItemToFrame(frame, physicsItem);
+}
 
 /**
- * TODO: Modify so that smurf::Frame objects create frames in the graph but no physical objects.
- * TODO: Add a itemAdded method that generates physical objects from smurf::Links
+ * TODO:
  * 
  * 
  */
-void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<std::vector<boost::shared_ptr<urdf::Collision>>>::Ptr>& e)
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>::Ptr>& e)
 {
   //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
   // TODO: Can be more efficient by making in a single loop the getCollidables and the instantiate nodes. But this is more clear to understand.
-  std::vector<boost::shared_ptr<urdf::Collision>> collidables = e.item->getData();
-  std::vector<boost::shared_ptr<NodeData>> collidableNodes = getNodes(collidables, e.frame);
-  instantiateNodes(collidableNodes, e.frame);
+  urdf::Collision collision = e.item->getData();
+  NodeData collisionNode = getNode(collision, e.frame);
+  instantiateNode(collisionNode, e.frame, e.item->getID());
 }
-
-//TODO item added also for frames, the one above should be for collidables
 
 /** 
  * The nodes created by the storage of a smurf Frame are the ones the joints link
@@ -211,13 +196,13 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>&
     mars::interfaces::NodeData node;
     smurf::Frame link = e.item->getData();
     node.init(link.getName());
-    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.00001, 0.000001, 0.00001), 0.0);
+    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.1, 0.1, 0.1), 0.1);
     node.movable = true;
     setPos(e.frame, node);
     shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-    if (!(physics->createNode(&node)))
+    if (physics->createNode(&node)) 
     {
-      std::cerr << "[Envire Physics] Error creating a physics node" ;
+      uuidToPhysics[e.item->getID()] = physics;
     }
     using physicsItemPtr = envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr;
     physicsItemPtr physicsItem(new envire::core::Item<std::shared_ptr<NodeInterface>>(physics));
@@ -290,6 +275,7 @@ void GraphPhysics::update(sReal time_ms)
   
   updateChildPositions<Item<smurf::Frame>>(originDesc, TransformWithCovariance::Identity());
   updateChildPositions<PhysicsConfigMapItem>(originDesc, TransformWithCovariance::Identity());
+  updateChildPositions<Item<urdf::Collision>>(originDesc, TransformWithCovariance::Identity()); //Not sure of this...
   
   
   // Uncomment to print the Graph
