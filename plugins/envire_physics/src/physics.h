@@ -16,7 +16,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <mars/sim/ConfigMapItem.h>
-#include <smurf/Smurf.hpp>
+#include <smurf/Robot.hpp>
 #include <mars/interfaces/sim/NodeInterface.h>
 #include <mars/interfaces/JointData.h>
 
