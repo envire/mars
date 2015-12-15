@@ -14,7 +14,8 @@ pkg_check_modules(PKGCONFIG REQUIRED
                 data_broker
                 mars_interfaces
                 envire_core
-                mars_graphics)
+                mars_graphics
+                smurf)
                 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})

@@ -40,7 +40,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <envire_core/items/Item.hpp>
-#include <smurf/Smurf.hpp>
+#include <smurf/Robot.hpp>
 #include <envire_smurf/Robot.hpp>
 
 namespace envire {namespace core {

@@ -240,8 +240,7 @@ void GraphViz::addSphere(const envire::smurf::Visual& visual, const FrameId& fra
   
   //y and z are unused
   base::Vector3d extents(sphere->radius, 0, 0);
-  LOG_DEBUG_S("[Envire Graphics] add SPHERE visual. name: " << visual.name << ", frame: "
-              << frameId << ", radius: " << sphere->radius);
+  //LOG_DEBUG_S("[Envire Graphics] add SPHERE visual. name: " << visual.name << ", frame: "   << frameId << ", radius: " << sphere->radius);
   
   NodeData node;
   node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0); //mass is zero because it doesnt matter for visual representation
@@ -258,8 +257,7 @@ void GraphViz::addBox(const envire::smurf::Visual& visual, const FrameId& frameI
   assert(box.get() != nullptr);
   
   base::Vector3d extents(box->dim.x, box->dim.y, box->dim.z);
-  LOG_DEBUG_S("[Envire Graphics] add BOX visual. name: " << visual.name << ", frame: "
-              << frameId << ", size: " << extents.transpose());
+  //LOG_DEBUG_S("[Envire Graphics] add BOX visual. name: " << visual.name << ", frame: "  << frameId << ", size: " << extents.transpose());
   
   NodeData node;
   node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
@@ -277,8 +275,7 @@ void GraphViz::addCylinder(const envire::smurf::Visual& visual, const FrameId& f
   //x = length, y = radius, z = not used
   base::Vector3d extents(cylinder->radius, cylinder->length, 0);
   
-  LOG_DEBUG_S("[Envire Graphics] add CYLINDER visual. name: " << visual.name << ", frame: "
-              << frameId << ", radius: " << cylinder->radius << ", length: " << cylinder->length);
+  //LOG_DEBUG_S("[Envire Graphics] add CYLINDER visual. name: " << visual.name << ", frame: "   << frameId << ", radius: " << cylinder->radius << ", length: " << cylinder->length);
 
   NodeData node;
   node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
@@ -294,8 +291,7 @@ void GraphViz::addMesh(const envire::smurf::Visual& visual, const FrameId& frame
   boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh>(visual.geometry);
   assert(mesh.get() != nullptr);
   
-  LOG_DEBUG("[Envire Graphics] add MESH visual. name: " + visual.name + ", frame: "
-            + frameId + ", file: " + mesh->filename);
+  //LOG_DEBUG("[Envire Graphics] add MESH visual. name: " + visual.name + ", frame: "  + frameId + ", file: " + mesh->filename);
   
   NodeData node;
   node.init(frameId + "_" + visual.name);

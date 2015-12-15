@@ -11,5 +11,6 @@
     <depend package="slam/envire_core" />
     <depend package="simulation/mars/graphics" />
     <depend package="tools/envire_smurf" />
+    <depend package="tools/smurf" />
     <tags>needs_opt</tags>
 </package>
