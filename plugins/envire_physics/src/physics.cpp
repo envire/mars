@@ -207,7 +207,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>&
     using physicsItemPtr = envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr;
     physicsItemPtr physicsItem(new envire::core::Item<std::shared_ptr<NodeInterface>>(physics));
     control->graph->addItemToFrame(e.frame, physicsItem);
-    LOG_DEBUG("[Envire Physics] ItemAdded event smurf::Frame - an item containing share_ptr to a nodeInterface was stored in " + e.frame);
+    //LOG_DEBUG("[Envire Physics] ItemAdded event smurf::Frame - an item containing share_ptr to a nodeInterface was stored in " + e.frame);
 }
  
 
