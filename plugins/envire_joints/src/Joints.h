@@ -36,7 +36,7 @@
 #include <envire_core/events/GraphItemEventDispatcher.hpp>
 #include <envire_core/events/ItemAddedEvent.hpp>
 #include <envire_core/items/Item.hpp>
-#include <smurf/Smurf.hpp>
+#include <smurf/Robot.hpp>
 #include <mars/interfaces/sim/NodeInterface.h>
 #include <mars/interfaces/JointData.h>
 #include <mars/interfaces/sim/JointInterface.h>
