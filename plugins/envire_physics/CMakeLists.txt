@@ -16,7 +16,10 @@ pkg_check_modules(PKGCONFIG REQUIRED
                 data_broker
                 mars_interfaces
                 envire_core
-                mars_sim)
+                mars_sim
+                smurf
+                urdfdom
+                )
                 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})

@@ -61,6 +61,8 @@ void GraphPhysics::init() {
   GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>::subscribe(control->graph);
   GraphItemEventDispatcher<Item<smurf::Frame>::Ptr>::subscribe(control->graph);
   GraphItemEventDispatcher<Item<urdf::Collision>::Ptr>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<smurf::Collidable>::Ptr>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<smurf::Inertial>::Ptr>::subscribe(control->graph);
 }
 
 void GraphPhysics::reset() {
@@ -135,27 +137,6 @@ void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::
 }   
 
 /*
-  1. Load a in a config map the data from the SMURF (SMURF::handleCollision) 
-  TODO In the geometry object we don't have any of the contact information
-  TODO Inertia information is neither there
-  TODO Set moveable somewhere. I guess this happens within the Inertia stuff
-  
-  2. Dump this configMap in a NodeData with NodeData::fromConfigMap
-  
-  3. Instantiate the physical object see NodePhysics::createNode(node)
-  
-  4. Add the created node physics to the graph
-*/
-NodeData GraphPhysics::getNode(const urdf::Collision& collision, const envire::core::FrameId& frame) {
-  NodeData node;
-  node.init(collision.name);
-  node.fromGeometry(collision.geometry);
-  setPos(frame, (node));
-  node.movable = true;
-  return node;
-}
-
-/*
 * Create the physical objects and save them in the Graph
 * We add the shared_ptr of the physical node interface to access from other plugins
 * 
@@ -173,6 +154,83 @@ void GraphPhysics::instantiateNode(NodeData node, const envire::core::FrameId& f
   //control->graph->addItemToFrame(frame, physicsItem);
 }
 
+/*
+  1. Load a in a config map the data from the SMURF (SMURF::handleCollision) 
+  TODO In the geometry object we don't have any of the contact information
+  TODO Inertia information is neither there
+  TODO Set moveable somewhere. I guess this happens within the Inertia stuff
+  
+  2. Dump this configMap in a NodeData with NodeData::fromConfigMap
+  
+  3. Instantiate the physical object see NodePhysics::createNode(node)
+  
+  4. Add the created node physics to the graph
+*/
+NodeData GraphPhysics::getCollidableNode(const smurf::Collidable& collidable, const envire::core::FrameId& frame) {
+  NodeData node;
+  urdf::Collision collision = collidable.getCollision();
+  node.init(collision.name);
+  node.fromGeometry(collision.geometry);
+  setPos(frame, (node));
+  node.movable = true;
+  node.c_params.coll_bitmask = collidable.getBitmask();
+  node.groupID = collidable.getGroupId();
+  return node;
+}
+
+/**
+ * TODO:
+ * 
+ * 
+ */
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>::Ptr>& e)
+{
+  //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
+  smurf::Collidable collidable = e.item->getData();
+  NodeData collisionNode = getCollidableNode(collidable, e.frame);
+  instantiateNode(collisionNode, e.frame, e.item->getID());
+}
+
+/**
+ * TODO:
+ * 
+ * 
+ */
+NodeData GraphPhysics::getInertialNode(const smurf::Inertial& inertial, const envire::core::FrameId& frame)
+{
+  NodeData result;
+  urdf::Inertial inertialUrdf = inertial.getUrdfInertial();
+  result.init(inertial.getName());
+  result.groupID = inertial.getGroupId();
+  result.movable = true;
+  result.inertia[0][0] = inertialUrdf.ixx;
+  result.inertia[0][1] = inertialUrdf.ixy;
+  result.inertia[0][2] = inertialUrdf.ixz;
+  result.inertia[1][0] = inertialUrdf.ixy;
+  result.inertia[1][1] = inertialUrdf.iyy;
+  result.inertia[1][2] = inertialUrdf.iyz;
+  result.inertia[2][0] = inertialUrdf.ixz;
+  result.inertia[2][1] = inertialUrdf.iyz;
+  result.inertia[2][2] = inertialUrdf.izz;
+  result.inertia_set = true;
+  result.mass = inertialUrdf.mass;
+  result.density = 0.0;
+  setPos(frame, result);
+  return result;
+}
+
+/**
+ * TODO:
+ * 
+ * 
+ */
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>::Ptr>& e)
+{
+  smurf::Inertial inertial = e.item->getData();
+  NodeData inertialNode = getInertialNode(inertial, e.frame);
+  instantiateNode(inertialNode, e.frame, e.item->getID());
+}
+
 /**
  * TODO:
  * 
@@ -183,8 +241,12 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>::Pt
   //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
   // TODO: Can be more efficient by making in a single loop the getCollidables and the instantiate nodes. But this is more clear to understand.
   urdf::Collision collision = e.item->getData();
-  NodeData collisionNode = getNode(collision, e.frame);
-  instantiateNode(collisionNode, e.frame, e.item->getID());
+  NodeData node;
+  node.init(collision.name);
+  node.fromGeometry(collision.geometry);
+  setPos(e.frame, (node));
+  node.movable = true;
+  instantiateNode(node, e.frame, e.item->getID());
 }
 
 /** 
@@ -196,8 +258,9 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>&
     mars::interfaces::NodeData node;
     smurf::Frame link = e.item->getData();
     node.init(link.getName());
-    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.1, 0.1, 0.1), 0.1);
+    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.1, 0.1, 0.1), 0.0);
     node.movable = true;
+    node.groupID = link.getGroupId();
     setPos(e.frame, node);
     shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
     if (physics->createNode(&node)) 
@@ -275,7 +338,9 @@ void GraphPhysics::update(sReal time_ms)
   
   updateChildPositions<Item<smurf::Frame>>(originDesc, TransformWithCovariance::Identity());
   updateChildPositions<PhysicsConfigMapItem>(originDesc, TransformWithCovariance::Identity());
-  updateChildPositions<Item<urdf::Collision>>(originDesc, TransformWithCovariance::Identity()); //Not sure of this...
+  //updateChildPositions<Item<urdf::Collision>>(originDesc, TransformWithCovariance::Identity()); 
+  updateChildPositions<Item<smurf::Collidable>>(originDesc, TransformWithCovariance::Identity()); 
+  updateChildPositions<Item<smurf::Inertial>>(originDesc, TransformWithCovariance::Identity()); 
   
   
   // Uncomment to print the Graph

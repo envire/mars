@@ -80,9 +80,8 @@ namespace mars {
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 envire::smurf::Robot asguard(iniPose, path);
                 asguard.loadFromSmurf(*(control->graph), center);
-                asguard.loadPhysics(*control->graph);
-                asguard.loadStaticJoints(*control->graph);
-                asguard.loadCollisions(*control->graph);
+                asguard.loadStaticJoints(*control->graph); //TODO: Why static joints are loaded separately? Do we need this here??
+                asguard.loadPhysics(*control->graph, nextGroupId);
                 asguard.loadVisuals(*(control->graph));
                 LOG_DEBUG("Loaded to Mars/Envire graph");
                 //asguard.simulationReady(*(control->graph));
@@ -90,6 +89,7 @@ namespace mars {
             
             void SMURFToSimulation::init()
             {
+                nextGroupId = 0;
                 envire::core::vertex_descriptor center = addFloor();
                 addRobot(center);
                 // uncomment to print the graph

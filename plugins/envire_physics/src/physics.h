@@ -19,6 +19,9 @@
 #include <smurf/Robot.hpp>
 #include <mars/interfaces/sim/NodeInterface.h>
 #include <mars/interfaces/JointData.h>
+#include <smurf/Inertial.hpp>
+#include <urdf_model/model.h>
+#include <smurf/Collidable.hpp>
 
 
 
@@ -40,7 +43,9 @@ namespace mars {
                            public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>,
                            public envire::core::GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>,
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>::Ptr>,
-                           public envire::core::GraphItemEventDispatcher<envire::core::Item<urdf::Collision>::Ptr>
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>::Ptr>,
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<urdf::Collision>::Ptr>,
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Inertial>::Ptr>
       {
       public:
         GraphPhysics(lib_manager::LibManager *theManager);
@@ -62,9 +67,11 @@ namespace mars {
         void transformModified(const envire::core::TransformModifiedEvent& e);
         // Frames (links)
         
-        mars::interfaces::NodeData getNode(const urdf::Collision& collision, const envire::core::FrameId& frame);
+
         void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Inertial>::Ptr>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<urdf::Collision>::Ptr>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
 
@@ -82,6 +89,8 @@ namespace mars {
       private:
         void updateTree();
         void instantiateNode(mars::interfaces::NodeData node, const envire::core::FrameId& frame, const boost::uuids::uuid uniqueID);
+        mars::interfaces::NodeData getCollidableNode(const smurf::Collidable& collidable, const envire::core::FrameId& frame);
+        mars::interfaces::NodeData getInertialNode(const smurf::Inertial& inertial,const envire::core::FrameId& frame);
         
         envire::core::FrameId originId;
         envire::core::TreeView treeView;

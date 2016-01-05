@@ -89,6 +89,7 @@ namespace mars {
         cfg_manager::cfgPropertyStruct example;
         envire::core::vertex_descriptor addFloor();
         void addRobot(envire::core::vertex_descriptor center);
+        int nextGroupId;
 
       }; // end of class definition SMURFToSimulation
 
