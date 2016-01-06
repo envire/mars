@@ -173,7 +173,7 @@ NodeData GraphPhysics::getCollidableNode(const smurf::Collidable& collidable, co
   node.fromGeometry(collision.geometry);
   setPos(frame, (node));
   node.movable = true;
-  node.c_params.coll_bitmask = collidable.getBitmask();
+  node.c_params = collidable.getContactParams();
   node.groupID = collidable.getGroupId();
   return node;
 }
@@ -258,7 +258,8 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>&
     mars::interfaces::NodeData node;
     smurf::Frame link = e.item->getData();
     node.init(link.getName());
-    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.1, 0.1, 0.1), 0.0);
+    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.05, 0.05, 0.05), 0.00);
+    node.c_params.coll_bitmask = 0;
     node.movable = true;
     node.groupID = link.getGroupId();
     setPos(e.frame, node);

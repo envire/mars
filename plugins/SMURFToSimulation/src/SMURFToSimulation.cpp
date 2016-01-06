@@ -89,7 +89,7 @@ namespace mars {
             
             void SMURFToSimulation::init()
             {
-                nextGroupId = 0;
+                nextGroupId = 1;
                 envire::core::vertex_descriptor center = addFloor();
                 addRobot(center);
                 // uncomment to print the graph
