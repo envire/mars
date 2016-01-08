@@ -83,6 +83,7 @@ namespace mars {
         void join(mars::interfaces::JointData* jointPhysics, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);
         void instantiate(smurf::StaticTransformation* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
         void instantiate(smurf::Joint* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
+        mars::interfaces::JointType getJointType(smurf::Joint* joint);
         //template <class jointType>
         //bool instantiateDependents (jointType joint, const envire::core::FrameId& frame);
         template <class jointType>
@@ -93,6 +94,9 @@ namespace mars {
           
         //bool instantiable(smurf::Joint smurfTf);
         std::map<envire::core::FrameId, std::vector<envire::core::FrameId>> dependencies;
+        
+        
+        bool debug = true;
       }; // end of class definition EnvireJoints
 
     } // end of namespace envire_joints
