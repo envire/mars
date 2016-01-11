@@ -260,7 +260,7 @@ void GraphViz::addBox(const envire::smurf::Visual& visual, const FrameId& frameI
   //LOG_DEBUG_S("[Envire Graphics] add BOX visual. name: " << visual.name << ", frame: "  << frameId << ", size: " << extents.transpose());
   
   NodeData node;
-  node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
+  node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, extents, 0); //mass is zero because it doesnt matter for visual representation
   setNodeDataMaterial(node, visual.material);
   
   setPos(frameId, node); //set link position
