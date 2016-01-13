@@ -214,6 +214,7 @@ NodeData GraphPhysics::getInertialNode(const smurf::Inertial& inertial, const en
   result.inertia[2][2] = inertialUrdf.izz;
   result.inertia_set = true;
   result.mass = inertialUrdf.mass;
+  if (debug) { LOG_DEBUG("[GraphPhysics::getInertialNode] Inertial object's mass: %f", inertialUrdf.mass);}
   result.density = 0.0;
   setPos(frame, result);
   return result;
@@ -226,6 +227,8 @@ NodeData GraphPhysics::getInertialNode(const smurf::Inertial& inertial, const en
  */
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>::Ptr>& e)
 {
+  
+  if (debug) { LOG_DEBUG("[GraphPhysics::itemAdded] smurf::inertial object received in frame ***" + e.frame + "***");}
   smurf::Inertial inertial = e.item->getData();
   NodeData inertialNode = getInertialNode(inertial, e.frame);
   instantiateNode(inertialNode, e.frame, e.item->getID());
@@ -255,10 +258,11 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>::Pt
  */
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>& e)
 {
+    if (debug) {LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Frame item received in frame ***" + e.frame + "***");}
     mars::interfaces::NodeData node;
     smurf::Frame link = e.item->getData();
     node.init(link.getName());
-    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.05, 0.05, 0.05), 0.00);
+    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.5, 0.5, 0.5), 0.1);
     node.c_params.coll_bitmask = 0;
     node.movable = true;
     node.groupID = link.getGroupId();
@@ -271,7 +275,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>&
     using physicsItemPtr = envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr;
     physicsItemPtr physicsItem(new envire::core::Item<std::shared_ptr<NodeInterface>>(physics));
     control->graph->addItemToFrame(e.frame, physicsItem);
-    //LOG_DEBUG("[Envire Physics] ItemAdded event smurf::Frame - an item containing share_ptr to a nodeInterface was stored in " + e.frame);
+    if (debug) {LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Frame - an item containing share_ptr to a nodeInterface was stored in ***" + e.frame + "***");}
 }
  
 

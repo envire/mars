@@ -103,7 +103,7 @@ namespace mars {
          * simulation.*/
         std::unordered_map<boost::uuids::uuid, std::shared_ptr<interfaces::JointInterface>, boost::hash<boost::uuids::uuid>> uuidToJoints;
         
-        const bool debug = true;
+        const bool debug = false;
         
       };
       
