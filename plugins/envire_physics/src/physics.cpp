@@ -41,7 +41,6 @@
 #include <boost/lexical_cast.hpp>
 #include <envire_core/graph/GraphViz.hpp>
 
-
 using namespace mars::plugins::envire_physics;
 using namespace mars::utils;
 using namespace mars::interfaces;
@@ -141,17 +140,18 @@ void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::
 * We add the shared_ptr of the physical node interface to access from other plugins
 * 
 */
-void GraphPhysics::instantiateNode(NodeData node, const envire::core::FrameId& frame, const boost::uuids::uuid uniqueID)
+bool GraphPhysics::instantiateNode(NodeData node, const envire::core::FrameId& frame)
 {
   shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-  if (physics->createNode(&node))
+  bool instantiated = (physics->createNode(&node));
+  if (instantiated)
   {
-    uuidToPhysics[uniqueID] = physics;
+    using physicsItemPtr = envire::core::Item<shared_ptr<NodeInterface>>::Ptr;
+    physicsItemPtr physicsItem(new envire::core::Item<shared_ptr<NodeInterface>>(physics));
+    control->graph->addItemToFrame(frame, physicsItem);
+    if (debug) {LOG_DEBUG("[GraphPhysics::instantiateNode] Item<shared_ptr<NodeInterface>> stored in ***" + frame + "***");}
   }
-  // TODO: Save the nodePhysics in the graph somehow
-  //using physicsItemPtr = envire::core::Item<NodeInterface>::Ptr;
-  //physicsItemPtr physicsItem(new envire::core::Item<NodeInterface>(physics));
-  //control->graph->addItemToFrame(frame, physicsItem);
+  return instantiated;
 }
 
 /*
@@ -166,6 +166,21 @@ void GraphPhysics::instantiateNode(NodeData node, const envire::core::FrameId& f
   
   4. Add the created node physics to the graph
 */
+/*
+ * If there is collidable information, this should be loaded also to the node data.
+ * 
+ * There is not always collidable information, thus waiting is maybe not the best option.
+ * 
+ * Option 1) Create the nodes but not instantiate them until all collision and collidable objects have been added, once all added instantiate each node
+ * 
+ * Option 2) Include in the collidable objects the collision object and then load only the collidables in the cases where both exists. The problem here is that not all collision objects might have a correspondent collidable. Those will have only the collision attribute. DONE THIS WAY 
+ */
+
+/**
+ * TODO:
+ * 
+ * 
+ */
 NodeData GraphPhysics::getCollidableNode(const smurf::Collidable& collidable, const envire::core::FrameId& frame) {
   NodeData node;
   urdf::Collision collision = collidable.getCollision();
@@ -188,7 +203,12 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>::
   //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
   smurf::Collidable collidable = e.item->getData();
   NodeData collisionNode = getCollidableNode(collidable, e.frame);
-  instantiateNode(collisionNode, e.frame, e.item->getID());
+  if (instantiateNode(collisionNode, e.frame))
+  {
+    if (debug) {
+      LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Collidable - Instantiated the node correspondent to the collidable in frame ***" + e.frame +"***");
+    }
+  }
 }
 
 /**
@@ -231,7 +251,11 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>::Pt
   if (debug) { LOG_DEBUG("[GraphPhysics::itemAdded] smurf::inertial object received in frame ***" + e.frame + "***");}
   smurf::Inertial inertial = e.item->getData();
   NodeData inertialNode = getInertialNode(inertial, e.frame);
-  instantiateNode(inertialNode, e.frame, e.item->getID());
+  if (instantiateNode(inertialNode, e.frame))
+  {
+    LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Inertial - Instantiated the node correspondent to the inertial in frame ***" + e.frame +"***");
+  } 
+  
 }
 
 /**
@@ -241,15 +265,16 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>::Pt
  */
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>::Ptr>& e)
 {
-  //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
-  // TODO: Can be more efficient by making in a single loop the getCollidables and the instantiate nodes. But this is more clear to understand.
   urdf::Collision collision = e.item->getData();
   NodeData node;
   node.init(collision.name);
   node.fromGeometry(collision.geometry);
   setPos(e.frame, (node));
   node.movable = true;
-  instantiateNode(node, e.frame, e.item->getID());
+  if (instantiateNode(node, e.frame))
+  {
+    LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Collision - Instantiated the node correspondent to the collision in frame ***" + e.frame +"***");
+  }
 }
 
 /** 
@@ -267,23 +292,17 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>&
     node.movable = true;
     node.groupID = link.getGroupId();
     setPos(e.frame, node);
-    shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-    if (physics->createNode(&node)) 
+    if (instantiateNode(node, e.frame))
     {
-      uuidToPhysics[e.item->getID()] = physics;
+        if (debug) {LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Frame - Instantiated the node correspondent to the smurf::Frame in frame ***" + e.frame + "***");}
     }
-    using physicsItemPtr = envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr;
-    physicsItemPtr physicsItem(new envire::core::Item<std::shared_ptr<NodeInterface>>(physics));
-    control->graph->addItemToFrame(e.frame, physicsItem);
-    if (debug) {LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Frame - an item containing share_ptr to a nodeInterface was stored in ***" + e.frame + "***");}
 }
- 
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr>& e)
 {
   PhysicsConfigMapItem::Ptr pItem = e.item;
   //assert that this item has not been added before
-  assert(uuidToPhysics.find(pItem->getID()) == uuidToPhysics.end());
+  //assert(uuidToPhysics.find(pItem->getID()) == uuidToPhysics.end());
   
   try
   {         
@@ -313,7 +332,11 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr
       shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
       if (physics->createNode(&node)) 
       {
-        uuidToPhysics[pItem->getID()] = physics;
+        //uuidToPhysics[pItem->getID()] = physics;
+        using physicsItemPtr = envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr;
+        physicsItemPtr physicsItem(new envire::core::Item<std::shared_ptr<NodeInterface>>(physics));
+        control->graph->addItemToFrame(e.frame, physicsItem);
+        if (debug) {LOG_DEBUG("[GraphPhysics::ItemAdded] PhysicsConfigMapItem - Instantiated the node correspondent to the PhysicsConfigItem in frame ***" + e.frame + "***");}
       }
     }
   }
@@ -335,30 +358,31 @@ void GraphPhysics::update(sReal time_ms)
   
   
   // Uncomment to print the Graph
-  //envire::core::GraphViz viz;
-  //std::string timeStamp = base::Time::now().toString();
-  //std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
-  //viz.write(*(control->graph), name);
+  /*
+  envire::core::GraphViz viz;
+  std::string timeStamp = base::Time::now().toString();
+  std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
+  viz.write(*(control->graph), name);
+  */
   
+  //updateChildPositions<Item<smurf::Frame>>(originDesc, TransformWithCovariance::Identity());
+  //updateChildPositions<PhysicsConfigMapItem>(originDesc, TransformWithCovariance::Identity());
+  ////updateChildPositions<Item<urdf::Collision>>(originDesc, TransformWithCovariance::Identity()); 
+  //updateChildPositions<Item<smurf::Collidable>>(originDesc, TransformWithCovariance::Identity()); 
+  //updateChildPositions<Item<smurf::Inertial>>(originDesc, TransformWithCovariance::Identity()); 
+  updateChildPositions(originDesc, TransformWithCovariance::Identity()); 
   
-  updateChildPositions<Item<smurf::Frame>>(originDesc, TransformWithCovariance::Identity());
-  updateChildPositions<PhysicsConfigMapItem>(originDesc, TransformWithCovariance::Identity());
-  //updateChildPositions<Item<urdf::Collision>>(originDesc, TransformWithCovariance::Identity()); 
-  updateChildPositions<Item<smurf::Collidable>>(originDesc, TransformWithCovariance::Identity()); 
-  updateChildPositions<Item<smurf::Inertial>>(originDesc, TransformWithCovariance::Identity()); 
-  
-  
+  /*
   // Uncomment to print the Graph
   //envire::core::GraphViz viz;
-  //timeStamp = base::Time::now().toString();
-  //name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
-  //viz.write(*(control->graph), name);
-  
-  
+  timeStamp = base::Time::now().toString();
+  name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
+  viz.write(*(control->graph), name);
+  */
   
 }
 
-template <class physicsType>void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
+void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
                                                                     const TransformWithCovariance& frameToRoot)
 {
   // Perform updatePositions for each of your childs
@@ -367,33 +391,34 @@ template <class physicsType>void GraphPhysics::updateChildPositions(const vertex
     const unordered_set<vertex_descriptor>& children = treeView.tree[vertex].children;
     for(const vertex_descriptor child : children)
     {
-      updatePositions<physicsType>(vertex, child, frameToRoot);
+      updatePositions(vertex, child, frameToRoot);
     }
   } 
 }
 
-template <class physicsType> void GraphPhysics::updatePositions( const vertex_descriptor origin,
+void GraphPhysics::updatePositions( const vertex_descriptor origin,
                                                                  const vertex_descriptor target,
                                                                  const TransformWithCovariance& originToRoot)
 {
+  using physicsType = Item<shared_ptr<NodeInterface>>;
   Transform tf = control->graph->getTransform(origin, target);
   //LOG_DEBUG("[Envire Physics] Updating position of physical objects in frame: " + control->graph->getFrame(target).getName());
   //LOG_DEBUG("[envire_physics] Transformation to be updated: " +  control->graph->getFrame(origin).getName() + " to " + control->graph->getFrame(target).getName() );
   //How can I print the tf also using the LOG_DEBUG?
   //LOG_DEBUG("[Envire Physics] Tf values before update: " );
   //std::cout << tf.transform << std::endl;
-  if (control->graph->containsItems<typename physicsType::Ptr>(target))
+  if (control->graph->containsItems<physicsType::Ptr>(target))
   {
     //LOG_DEBUG("[envire_physics] Tf from origin (of the tf to be updated) to root (of the tree): " );
     //std::cout << originToRoot << std::endl;
-    using Iterator = TransformGraph::ItemIterator<typename physicsType::Ptr>;
+    using Iterator = TransformGraph::ItemIterator<physicsType::Ptr>;
     Iterator begin, end;
-    boost::tie(begin, end) = control->graph->getItems<typename physicsType::Ptr>(target);
-    const boost::uuids::uuid& id = (*begin)->getID();
-    if(uuidToPhysics.find(id) != uuidToPhysics.end())
+    boost::tie(begin, end) = control->graph->getItems<physicsType::Ptr>(target);
+    // The type should be the shared_ptr to nodeInterface and in each frame the position delivered by each of them should be the same
+    for (;begin!=end; begin++)
     {
       //found a physics item
-      const shared_ptr<NodeInterface> physics = uuidToPhysics[id];
+      const shared_ptr<NodeInterface> physics = (*begin)->getData();
       TransformWithCovariance absolutTransform;
       physics->getPosition(&absolutTransform.translation);
       physics->getRotation(&absolutTransform.orientation);
@@ -405,9 +430,8 @@ template <class physicsType> void GraphPhysics::updatePositions( const vertex_de
       control->graph->updateTransform(origin, target, tf);
     }
   }
-  updateChildPositions<physicsType>(target, tf.transform.inverse()*originToRoot);
+  updateChildPositions(target, tf.transform.inverse()*originToRoot);
 }
-
 void GraphPhysics::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) 
 {
 }
