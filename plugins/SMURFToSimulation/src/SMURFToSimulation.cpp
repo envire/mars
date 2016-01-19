@@ -80,7 +80,7 @@ namespace mars {
                 std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes.smurf"); 
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 envire::smurf::Robot asguard(iniPose, path);
-                asguard.loadFromSmurf(*(control->graph), center);
+                asguard.initRobotGraph(*(control->graph), center);
                 //asguard.loadStaticJoints(*control->graph); //TODO: Why static joints are loaded separately? Do we need this here??
                 asguard.loadPhysics(*control->graph, nextGroupId);
                 asguard.loadVisuals(*(control->graph));
