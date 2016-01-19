@@ -69,36 +69,36 @@ namespace mars {
       void EnvireJoints::update(sReal time_ms) {
       }
       
-
-
-      /*
-       * When a new physical object is added it is checked if there is any joint missing that physical object to be generated. This is checked using the staticDependencies map
-       */
       void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr>& e){
-        using staticTfsIterator = TransformGraph::ItemIterator<Item<smurf::StaticTransformation>::Ptr>;
         using dynamicTfsIterator = TransformGraph::ItemIterator<Item<smurf::Joint>::Ptr>;
-        //LOG_DEBUG( "[Envire Joints] itemAdded: envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr: in frame "+ e.frame);
-        std::map<FrameId, std::vector<FrameId>>::iterator iterStatic = dependencies.find(e.frame);
-        if (iterStatic != dependencies.end()){
-          //LOG_DEBUG( "[Envire Joints] itemAdded in frame "+ e.frame + " is matching a dependency");
+        using staticTfsIterator = TransformGraph::ItemIterator<Item<smurf::StaticTransformation>::Ptr>;
+        if (debug) { LOG_DEBUG( "[Envire Joints] itemAdded A new <std::shared_ptr<NodeInterface>> was added to frame '"+ e.frame+"'"); }
+        std::map<FrameId, std::vector<FrameId>>::iterator iterDeps = dependencies.find(e.frame);
+        if (iterDeps != dependencies.end())
+        {
+          if (debug) { LOG_DEBUG( "[Envire Joints] itemAdded in frame '"+ e.frame + "' is matching at least a dependency"); }
           std::vector<FrameId> dependentFrames = dependencies[e.frame];
-          for(FrameId frame : dependentFrames){
-            staticTfsIterator beginTfs, endTfs;
-            boost::tie(beginTfs, endTfs) = control->graph->getItems<Item<smurf::StaticTransformation>::Ptr>(frame);
-            if (beginTfs != endTfs)
+          for(FrameId frame : dependentFrames)
+          {
+            staticTfsIterator beginStaticTfs, endStaticTfs;
+            boost::tie(beginStaticTfs, endStaticTfs) = control->graph->getItems<Item<smurf::StaticTransformation>::Ptr>(frame);
+            if (beginStaticTfs != endStaticTfs)
             {
-              smurf::StaticTransformation* smurfTf = &((*beginTfs)->getData());
-              bool addDeps = false; // So that no dependencies are included twice
+              if (debug) { LOG_DEBUG( "[Envire Joints] itemAdded in frame '"+ e.frame + "' is matching a static dependency"); }
+              smurf::StaticTransformation* smurfTf = &((*beginStaticTfs)->getData());
+              bool addDeps = false; // This avoids dependencies to be included twice
               checkAndInstantiate(smurfTf, frame, addDeps);
             }
             else
             {
-              dynamicTfsIterator beginTfs, endTfs;
-              boost::tie(beginTfs, endTfs) = control->graph->getItems<Item<smurf::Joint>::Ptr>(frame);
-              if (beginTfs != endTfs)
+              // Dynamic transformations should have their own frame, therefore they can not be together in a frame with a static one
+              dynamicTfsIterator beginDynTfs, endDynTfs;
+              boost::tie(beginDynTfs, endDynTfs) = control->graph->getItems<Item<smurf::Joint>::Ptr>(frame);
+              if (beginDynTfs != endDynTfs)
               {
-                smurf::Joint * smurfTf = &((*beginTfs)->getData());
-                bool addDeps = false;
+                if (debug) { LOG_DEBUG( "[Envire Joints] itemAdded in frame '"+ e.frame + "' is matching a dynamic dependency"); }
+                smurf::Joint * smurfTf = &((*beginDynTfs)->getData());
+                bool addDeps = false; // This avoids dependencies to be included twice
                 checkAndInstantiate(smurfTf, frame, addDeps);
               }
             }
@@ -106,7 +106,6 @@ namespace mars {
           }
         }
       }
-
       
       /*
        * If all the dependencies to instantiate the joint in the simulator are met, the joints is instantated, otherwise the missing dependencies get tracked into the staticDependencies map

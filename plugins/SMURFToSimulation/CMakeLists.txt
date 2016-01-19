@@ -10,17 +10,17 @@ define_module_info()
 
 
 pkg_check_modules(PKGCONFIG REQUIRED
-			    lib_manager
-			    data_broker
-			    mars_interfaces
-                            smurf_parser
-                            configmaps
-                            urdfdom
-                            mars_sim
-                            mars_smurf
-                            envire_smurf
-                            orocos_cpp
-                            base-lib
+          lib_manager
+          data_broker
+          mars_interfaces
+          smurf_parser
+          configmaps
+          urdfdom
+          mars_sim
+          mars_smurf
+          envire_smurf
+          orocos_cpp
+          base-lib
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})

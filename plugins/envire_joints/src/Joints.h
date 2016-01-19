@@ -66,7 +66,11 @@ namespace mars {
         void init();
         void reset();
         void update(mars::interfaces::sReal time_ms);        
-        // EnvireJoints methods
+        /*
+         * When a new physical object is added it is checked if there is any 
+         * joint missing that physical object to be generated. This is checked
+         * using the dependencies map.
+         */
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<mars::interfaces::NodeInterface>>::Ptr>& e);
         //void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>::Ptr>& e);

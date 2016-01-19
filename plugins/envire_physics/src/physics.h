@@ -65,44 +65,92 @@ namespace mars {
         void transformRemoved(const envire::core::TransformRemovedEvent& e);
         void transformAdded(const envire::core::TransformAddedEvent& e);
         void transformModified(const envire::core::TransformModifiedEvent& e);
-        // Frames (links)
-        
-
-        void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
+        /** 
+         * When a smurf::Frame object is introduced a NodeData is created with
+         * simple shape and that can not collide with other objects. The 
+         * correspondent physical node is instantiated in the physical 
+         * simulator. The interface to the simulated object is stored through a
+         * shared_ptr in the frame where the Collidable was found. The nodes 
+         * created by the storage of a smurf Frame are the ones the joints 
+         * link.
+         */
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>::Ptr>& e);
+        /**
+         * When a smurf::Collidable objects is introduced a NodeData is 
+         * generated with the information of the collidable and it is 
+         * instantiated in the physical simulator. The interface to the 
+         * simulated object is stored through a shared_ptr in the frame where 
+         * the Collidable was found.
+         */
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>::Ptr>& e);
+        /**
+         * When a smurf::Inertial objects is introduced, a NodeData is 
+         * generated with the information of the inertial and it is 
+         * instantiated in the physical simulator. The interface to the 
+         * simulated object is stored through a shared_ptr in the frame where 
+         * the Inertial was found.
+         */
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Inertial>::Ptr>& e);
+        /**
+         * Same as for the method that detects a new collidable object, in this
+         * case the simulated node will be based only on the urdf collision 
+         * object.
+         */
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<urdf::Collision>::Ptr>& e);
+        /**
+         * When a PhysicsConfigMapItem objects is introduced, a NodeData is 
+         * generated with the information of the object and it is 
+         * instantiated in the physical simulator. The interface to the 
+         * simulated object is stored through a shared_ptr in the frame where 
+         * the PhysicsConfigMapItem was found.
+         */
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
-
-        void update(mars::interfaces::sReal time_ms);
         /*
-        template <class physicsType> void updatePositions(const envire::core::vertex_descriptor origin,
-                                                          const envire::core::vertex_descriptor target,
-                                                          const base::TransformWithCovariance& originToRoot);
-        template <class physicsType> void updateChildPositions(const envire::core::vertex_descriptor vertex,
-                                                               const base::TransformWithCovariance& frameToRoot);
-                                                               */
-        
-        void updatePositions(const envire::core::vertex_descriptor origin,
-                             const envire::core::vertex_descriptor target,
-                             const base::TransformWithCovariance& originToRoot);
-        void updateChildPositions(const envire::core::vertex_descriptor vertex,
-                                  const base::TransformWithCovariance& frameToRoot);
-        
+         *  dfs visit the tree and update all positions.
+         *  The transforms in the graph are relative to their parent while the
+         *  transform from simulation is relative to the root.
+         *  The relative:w
+         * transformations are easy to calculate when dfs visiting the tree.
+         */
+        void update(mars::interfaces::sReal time_ms);
+
         void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
-        
         
       private:
         void updateTree();
-        bool instantiateNode(mars::interfaces::NodeData node, const envire::core::FrameId& frame);
+        /**
+         * Returns a Nodedata with the configuration provided by the smurf collidable and positioned according to the frame
+         */
         mars::interfaces::NodeData getCollidableNode(const smurf::Collidable& collidable, const envire::core::FrameId& frame);
-        mars::interfaces::NodeData getInertialNode(const smurf::Inertial& inertial,const envire::core::FrameId& frame);
+        /**
+         * Returns a NodeData configured with the data provided by the smurf::Inertial object and positioned according to the frame
+         */
+        mars::interfaces::NodeData getInertialNode(const smurf::Inertial& inertial,const envire::core::FrameId& frame);        
+        /*
+         * Create the physical objects and save them in the Graph
+         * We add the shared_ptr of the physical node interface to access to the physical simulation of the object
+         */
+        bool instantiateNode(mars::interfaces::NodeData node, const envire::core::FrameId& frame);
+        /*
+         * Sets to the nodeData the position that corresponds to the given frame id
+         */
+        void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
+
+        /*
+         *  Perform updatePositions for each of your childs
+         */
+        void updateChildPositions(const envire::core::vertex_descriptor vertex,
+                                  const base::TransformWithCovariance& frameToRoot);
+        void updatePositions(const envire::core::vertex_descriptor origin,
+                             const envire::core::vertex_descriptor target,
+                             const base::TransformWithCovariance& originToRoot);
         
         envire::core::FrameId originId;
         envire::core::TreeView treeView;
         
-        const bool debug = false;
+        const bool debug = true;
+        const bool printGraph = false;
+        const bool debugUpdatePos = false;
         
       };
       
