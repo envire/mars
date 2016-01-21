@@ -78,14 +78,20 @@ namespace mars {
                 //std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SPACECLIMBER)%>"); 
                 //std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>"); 
                 std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes.smurf"); 
+                //std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_dynamic_joint.smurf"); 
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 envire::smurf::Robot asguard(iniPose, path);
-                //asguard.initRobotGraph(*(control->graph), center);
-                ////asguard.loadStaticJoints(*control->graph); //TODO: Why static joints are loaded separately? Do we need this here??
+                asguard.initGraph(*(control->graph), center);
+                asguard.loadLinks(*(control->graph), nextGroupId);
+                asguard.loadCollidables(*(control->graph));
+                asguard.loadInertials(*(control->graph));
+                asguard.loadFixedJoints(*(control->graph));
+                asguard.loadDynamicJoints(*(control->graph));
+                //asguard.loadStaticJoints(*control->graph); //TODO: Why static joints are loaded separately? Do we need this here??
                 //asguard.loadPhysics(*control->graph, nextGroupId);
-                //asguard.loadVisuals(*(control->graph));
-                //LOG_DEBUG("Loaded to Mars/Envire graph");
-                ////asguard.simulationReady(*(control->graph));
+                asguard.loadVisuals(*(control->graph));
+                LOG_DEBUG("Loaded to Mars/Envire graph");
+                //asguard.simulationReady(*(control->graph));
             }
             
             void SMURFToSimulation::init()
