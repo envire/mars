@@ -54,12 +54,12 @@ GraphPhysics::GraphPhysics(lib_manager::LibManager *theManager)
 void GraphPhysics::init() {
   assert(control->graph != nullptr);
   GraphEventDispatcher::subscribe(control->graph);
-  GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>::subscribe(control->graph);
-  GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<smurf::Frame>::Ptr>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<urdf::Collision>::Ptr>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<smurf::Collidable>::Ptr>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<smurf::Inertial>::Ptr>::subscribe(control->graph);
+  GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem>::subscribe(control->graph);
+  GraphItemEventDispatcher<mars::sim::JointConfigMapItem>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<smurf::Frame>>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<urdf::Collision>>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<smurf::Collidable>>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<smurf::Inertial>>::subscribe(control->graph);
 }
 
 void GraphPhysics::reset() {
@@ -99,7 +99,7 @@ void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent&
   //for the first iteration we ignore transformation changes from outside this plugin
 }
 
-void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>& e)
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>>& e)
 {
     if (debug) {LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Frame item received in frame ***" + e.frame + "***");}
     mars::interfaces::NodeData node;
@@ -116,7 +116,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>::Ptr>&
     }
 }
 
-void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>::Ptr>& e)
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>>& e)
 {
   //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
   smurf::Collidable collidable = e.item->getData();
@@ -129,7 +129,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>::
   }
 }
 
-void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>::Ptr>& e)
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>>& e)
 {
   if (debug) { LOG_DEBUG("[GraphPhysics::itemAdded] smurf::inertial object received in frame ***" + e.frame + "***");}
   smurf::Inertial inertial = e.item->getData();
@@ -140,7 +140,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>::Pt
   } 
 }
 
-void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>::Ptr>& e)
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e)
 {
   if (debug) { LOG_DEBUG("[GraphPhysics::itemAdded] smurf::Collision object received in frame ***" + e.frame + "***");}
   urdf::Collision collision = e.item->getData();
@@ -155,7 +155,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>::Pt
   }
 }
 
-void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem::Ptr>& e)
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
 {
   if (debug) {LOG_DEBUG("[GraphPhysics::ItemAdded] PhysicsConfigMapItem item received in frame ***" + e.frame + "***");}
   PhysicsConfigMapItem::Ptr pItem = e.item;
@@ -340,19 +340,19 @@ void GraphPhysics::updatePositions( const vertex_descriptor origin,
     LOG_DEBUG("[updatePositions] Tf values before update: " );
     std::cout << tf.transform << std::endl;
   }
-  if (control->graph->containsItems<physicsType::Ptr>(target))
+  if (control->graph->containsItems<physicsType>(target))
   {
     if (debugUpdatePos)
     {
       LOG_DEBUG("[updatePositions] Tf from origin (of the tf to be updated) to root (of the tree): " );
       std::cout << originToRoot << std::endl;
     }
-    using Iterator = TransformGraph::ItemIterator<physicsType::Ptr>;
+    using Iterator = TransformGraph::ItemIterator<physicsType>;
     Iterator begin, end;
-    boost::tie(begin, end) = control->graph->getItems<physicsType::Ptr>(target);
+    boost::tie(begin, end) = control->graph->getItems<physicsType>(target);
     for (;begin!=end; begin++)
     {
-      const shared_ptr<NodeInterface> physics = (*begin)->getData();
+      const shared_ptr<NodeInterface> physics = begin->getData();
       TransformWithCovariance absolutTransform;
       physics->getPosition(&absolutTransform.translation);
       physics->getRotation(&absolutTransform.orientation);

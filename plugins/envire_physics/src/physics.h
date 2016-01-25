@@ -40,12 +40,12 @@ namespace mars {
        * */
       class GraphPhysics : public mars::interfaces::MarsPluginTemplate,
                            public envire::core::GraphEventDispatcher,
-                           public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem::Ptr>,
-                           public envire::core::GraphItemEventDispatcher<mars::sim::JointConfigMapItem::Ptr>,
-                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>::Ptr>,
-                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>::Ptr>,
-                           public envire::core::GraphItemEventDispatcher<envire::core::Item<urdf::Collision>::Ptr>,
-                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Inertial>::Ptr>
+                           public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem>,
+                           public envire::core::GraphItemEventDispatcher<mars::sim::JointConfigMapItem>,
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>,
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<urdf::Collision>>,
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Inertial>>
       {
       public:
         GraphPhysics(lib_manager::LibManager *theManager);
@@ -74,7 +74,7 @@ namespace mars {
          * created by the storage of a smurf Frame are the ones the joints 
          * link.
          */
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e);
         /**
          * When a smurf::Collidable objects is introduced a NodeData is 
          * generated with the information of the collidable and it is 
@@ -82,7 +82,7 @@ namespace mars {
          * simulated object is stored through a shared_ptr in the frame where 
          * the Collidable was found.
          */
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e);
         /**
          * When a smurf::Inertial objects is introduced, a NodeData is 
          * generated with the information of the inertial and it is 
@@ -90,13 +90,13 @@ namespace mars {
          * simulated object is stored through a shared_ptr in the frame where 
          * the Inertial was found.
          */
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Inertial>::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Inertial>>& e);
         /**
          * Same as for the method that detects a new collidable object, in this
          * case the simulated node will be based only on the urdf collision 
          * object.
          */
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<urdf::Collision>::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<urdf::Collision>>& e);
         /**
          * When a PhysicsConfigMapItem objects is introduced, a NodeData is 
          * generated with the information of the object and it is 
@@ -104,7 +104,7 @@ namespace mars {
          * simulated object is stored through a shared_ptr in the frame where 
          * the PhysicsConfigMapItem was found.
          */
-        void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem>& e);
         /*
          *  dfs visit the tree and update all positions.
          *  The transforms in the graph are relative to their parent while the
