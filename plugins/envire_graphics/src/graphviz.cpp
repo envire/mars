@@ -61,7 +61,7 @@ void GraphViz::init()
 {
   assert(control->graph != nullptr);
   GraphEventDispatcher::subscribe(control->graph);
-  GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>::Ptr>::subscribe(control->graph);
+  GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>::subscribe(control->graph);
 }
 
 void GraphViz::reset() {
@@ -204,7 +204,7 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
   }
 }
 
-void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>::Ptr>& e)
+void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>>& e)
 {
     envire::smurf::Visual vis = e.item->getData();
     addVisual(vis, e.frame, e.item->getID());
@@ -384,16 +384,16 @@ template <class physicsType> void GraphViz::updatePosition(const vertex_descript
     orientation = tf.transform.orientation;
   }
   
-  using Iterator = TransformGraph::ItemIterator< typename physicsType::Ptr>;
+  using Iterator = TransformGraph::ItemIterator<physicsType>;
   Iterator begin, end;
-  boost::tie(begin, end) = control->graph->getItems<typename physicsType::Ptr>(vertex);
+  boost::tie(begin, end) = control->graph->getItems<physicsType>(vertex);
   for(;begin != end; ++begin)
   {
-    const typename physicsType::Ptr item = *begin;
+    const physicsType& item = *begin;
     //others might use the same types as well, therefore check if if this is one of ours
-    if(uuidToGraphicsId.find(item->getID()) != uuidToGraphicsId.end())
+    if(uuidToGraphicsId.find(item.getID()) != uuidToGraphicsId.end())
     {
-      const int graphicsId = uuidToGraphicsId.at(item->getID());
+      const int graphicsId = uuidToGraphicsId.at(item.getID());
       control->graphics->setDrawObjectPos(graphicsId, translation);
       control->graphics->setDrawObjectRot(graphicsId, orientation);
     }
