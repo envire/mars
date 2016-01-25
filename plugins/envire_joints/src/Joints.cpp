@@ -48,7 +48,7 @@ namespace mars {
       using namespace mars::utils;
       using namespace mars::interfaces;
       using namespace envire::core;
-      using physicsNodeItemPtr = Item<std::shared_ptr<NodeInterface>>::Ptr;
+      using physicsNodeItem = Item<std::shared_ptr<NodeInterface>>;
       using physicsJointItemPtr = envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>::Ptr;
 
       // Public Methods
@@ -58,9 +58,9 @@ namespace mars {
       void EnvireJoints::init() {
         assert(control->graph != nullptr);
         GraphEventDispatcher::subscribe(control->graph);
-        GraphItemEventDispatcher<Item<smurf::StaticTransformation>::Ptr>::subscribe(control->graph);
-        GraphItemEventDispatcher<Item<std::shared_ptr<NodeInterface>>::Ptr>::subscribe(control->graph);
-        GraphItemEventDispatcher<Item<smurf::Joint>::Ptr>::subscribe(control->graph);
+        GraphItemEventDispatcher<Item<smurf::StaticTransformation>>::subscribe(control->graph);
+        GraphItemEventDispatcher<Item<std::shared_ptr<NodeInterface>>>::subscribe(control->graph);
+        GraphItemEventDispatcher<Item<smurf::Joint>>::subscribe(control->graph);
       }
       
       void EnvireJoints::reset() {
@@ -69,9 +69,9 @@ namespace mars {
       void EnvireJoints::update(sReal time_ms) {
       }
       
-      void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<NodeInterface>>::Ptr>& e){
-        using dynamicTfsIterator = TransformGraph::ItemIterator<Item<smurf::Joint>::Ptr>;
-        using staticTfsIterator = TransformGraph::ItemIterator<Item<smurf::StaticTransformation>::Ptr>;
+      void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<NodeInterface>>>& e){
+        using dynamicTfsIterator = TransformGraph::ItemIterator<Item<smurf::Joint>>;
+        using staticTfsIterator = TransformGraph::ItemIterator<Item<smurf::StaticTransformation>>;
         if (debug) { LOG_DEBUG( "[Envire Joints] itemAdded A new <std::shared_ptr<NodeInterface>> was added to frame '"+ e.frame+"'"); }
         std::map<FrameId, std::vector<FrameId>>::iterator iterDeps = dependencies.find(e.frame);
         if (iterDeps != dependencies.end())
@@ -81,11 +81,11 @@ namespace mars {
           for(FrameId frame : dependentFrames)
           {
             staticTfsIterator beginStaticTfs, endStaticTfs;
-            boost::tie(beginStaticTfs, endStaticTfs) = control->graph->getItems<Item<smurf::StaticTransformation>::Ptr>(frame);
+            boost::tie(beginStaticTfs, endStaticTfs) = control->graph->getItems<Item<smurf::StaticTransformation>>(frame);
             if (beginStaticTfs != endStaticTfs)
             {
               if (debug) { LOG_DEBUG( "[Envire Joints] itemAdded in frame '"+ e.frame + "' is matching a static dependency"); }
-              smurf::StaticTransformation* smurfTf = &((*beginStaticTfs)->getData());
+              smurf::StaticTransformation* smurfTf = &(beginStaticTfs->getData());
               bool addDeps = false; // This avoids dependencies to be included twice
               checkAndInstantiate(smurfTf, frame, addDeps);
             }
@@ -93,11 +93,11 @@ namespace mars {
             {
               // Dynamic transformations should have their own frame, therefore they can not be together in a frame with a static one
               dynamicTfsIterator beginDynTfs, endDynTfs;
-              boost::tie(beginDynTfs, endDynTfs) = control->graph->getItems<Item<smurf::Joint>::Ptr>(frame);
+              boost::tie(beginDynTfs, endDynTfs) = control->graph->getItems<Item<smurf::Joint>>(frame);
               if (beginDynTfs != endDynTfs)
               {
                 if (debug) { LOG_DEBUG( "[Envire Joints] itemAdded in frame '"+ e.frame + "' is matching a dynamic dependency"); }
-                smurf::Joint * smurfTf = &((*beginDynTfs)->getData());
+                smurf::Joint * smurfTf = &(beginDynTfs->getData());
                 bool addDeps = false; // This avoids dependencies to be included twice
                 checkAndInstantiate(smurfTf, frame, addDeps);
               }
@@ -110,7 +110,7 @@ namespace mars {
       /*
        * If all the dependencies to instantiate the joint in the simulator are met, the joints is instantated, otherwise the missing dependencies get tracked into the staticDependencies map
        */
-      void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>::Ptr>& e){ 
+      void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>>& e){ 
         if (debug) { LOG_DEBUG( "[EnvireJoints::itemAdded] smurf::StaticTransformation received in Frame ***" + e.frame + "***");}
         smurf::StaticTransformation* smurfJoint = &(e.item->getData());
         // Upcast to a transformation, so we can use the same methods for dynamic joints
@@ -118,7 +118,7 @@ namespace mars {
         checkAndInstantiate<smurf::StaticTransformation*>(smurfJoint, e.frame);
       }
       
-      void EnvireJoints::itemAdded(const TypedItemAddedEvent<Item<smurf::Joint>::Ptr>& e){
+      void EnvireJoints::itemAdded(const TypedItemAddedEvent<Item<smurf::Joint>>& e){
         //LOG_DEBUG( "[Envire Joints] itemAdded: envire::core::Item<smurf::Joint>::Ptr>: " + e.frame);
         smurf::Joint* smurfJoint = &(e.item->getData());
         // Upcast to a transformation, so we can use the same methods for dynamic joints
@@ -134,11 +134,11 @@ namespace mars {
        */
       bool EnvireJoints::getSimObject(const FrameId& frameName, std::shared_ptr<NodeInterface>& objectSim){
         bool found = false;
-        using Iterator = TransformGraph::ItemIterator<physicsNodeItemPtr>;
+        using Iterator = TransformGraph::ItemIterator<physicsNodeItem>;
         Iterator begin, end;
-        boost::tie(begin, end) = control->graph->getItems<physicsNodeItemPtr>(frameName);
+        boost::tie(begin, end) = control->graph->getItems<physicsNodeItem>(frameName);
         if (begin != end){
-          objectSim = (*begin)->getData();
+          objectSim = begin->getData();
           found = true;
           //LOG_DEBUG("[Envire Joints]::getSimObject: Found the physical object in frame "+ frameName);
         }

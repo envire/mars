@@ -47,9 +47,9 @@ namespace mars {
 
       class EnvireJoints: public mars::interfaces::MarsPluginTemplate,
                           public envire::core::GraphEventDispatcher,
-                          public envire::core::GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::interfaces::NodeInterface>>::Ptr>,
-                          public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::StaticTransformation>::Ptr>,
-                          public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Joint>::Ptr>
+                          public envire::core::GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::interfaces::NodeInterface>>>,
+                          public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::StaticTransformation>>,
+                          public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Joint>>
       {
 
       public:
@@ -71,10 +71,10 @@ namespace mars {
          * joint missing that physical object to be generated. This is checked
          * using the dependencies map.
          */
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<mars::interfaces::NodeInterface>>::Ptr>& e);
-        //void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem::Ptr>& e);
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>::Ptr>& e);
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Joint>::Ptr>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<mars::interfaces::NodeInterface>>>& e);
+        //void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Joint>>& e);
 
       private:
         
