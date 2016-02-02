@@ -8,9 +8,9 @@
     <depend package="simulation/lib_manager" />
     <depend package="simulation/mars/common/data_broker" />
     <depend package="simulation/mars/interfaces" />
-    <depend package="slam/envire_core" />
+    <depend package="envire/envire_core" />
     <depend package="simulation/mars/graphics" />
-    <depend package="tools/envire_smurf" />
+    <depend package="envire/envire_smurf" />
     <depend package="tools/smurf" />
     <tags>needs_opt</tags>
 </package>
