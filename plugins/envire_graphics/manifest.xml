@@ -12,5 +12,6 @@
     <depend package="simulation/mars/graphics" />
     <depend package="envire/envire_smurf" />
     <depend package="tools/smurf" />
+    <depend package="simulation/mars/sim" />
     <tags>needs_opt</tags>
 </package>
