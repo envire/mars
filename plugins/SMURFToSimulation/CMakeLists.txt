@@ -19,7 +19,7 @@ pkg_check_modules(PKGCONFIG REQUIRED
           mars_sim
           mars_smurf
           envire_smurf
-          orocos_cpp
+          lib_config
           base-lib
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
