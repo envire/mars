@@ -17,7 +17,6 @@ pkg_check_modules(PKGCONFIG REQUIRED
           configmaps
           urdfdom
           mars_sim
-          mars_smurf
           envire_smurf
           lib_config
           base-lib
