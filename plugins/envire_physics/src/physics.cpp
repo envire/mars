@@ -55,6 +55,7 @@ GraphPhysics::GraphPhysics(lib_manager::LibManager *theManager)
 void GraphPhysics::init() {
   assert(control->graph != nullptr);
   GraphEventDispatcher::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<configmaps::ConfigMap>>::subscribe(control->graph);
   GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem>::subscribe(control->graph);
   GraphItemEventDispatcher<mars::sim::JointConfigMapItem>::subscribe(control->graph);
   GraphItemEventDispatcher<Item<smurf::Frame>>::subscribe(control->graph);
@@ -155,6 +156,45 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e
     LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Collision - Instantiated and stored the nodeInterface in frame ***" + e.frame +"***").c_str());
   }
 }
+
+void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<configmaps::ConfigMap>>& e)
+{
+  if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] ConfigMap item received in frame ***" + e.frame + "***").c_str());}
+  configmaps::ConfigMap configMap = e.item->getData();
+  try
+  {         
+    //try to convert the item into a node Data
+    NodeData node;
+    //FIXME fromConfigMap always returns true? There is no way to check
+    //      if the object is actually valid?! WTF
+    //if(node.fromConfigMap(&(item.getData()), ""))
+    if(node.fromConfigMap(&(configMap), ""))
+    {
+      Transform fromOrigin;
+      if(originId.compare(e.frame) == 0)
+      {
+        //this special case happens when the graph only contains one frame
+        //and items are added to that frame. In that case aksing the graph 
+        //for the transformation would cause an exception
+        fromOrigin.setTransform(TransformWithCovariance::Identity());
+      }
+      else
+      {
+        fromOrigin = control->graph->getTransform(originId, e.frame); 
+      }
+      node.pos = fromOrigin.transform.translation;
+      node.rot = fromOrigin.transform.orientation;
+      if (instantiateNode(node, e.frame))
+      {
+        if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] PhysicsConfigMapItem - Instantiated and stored the nodeInterface in frame ***" + e.frame + "***").c_str());}
+      }
+    }
+  }
+  catch(const UnknownTransformException& ex)
+  {
+    cerr << ex.what() << endl;
+  }
+}   
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
 {

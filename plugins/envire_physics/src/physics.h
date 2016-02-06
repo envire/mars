@@ -40,6 +40,7 @@ namespace mars {
        * */
       class GraphPhysics : public mars::interfaces::MarsPluginTemplate,
                            public envire::core::GraphEventDispatcher,
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<configmaps::ConfigMap>>,
                            public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem>,
                            public envire::core::GraphItemEventDispatcher<mars::sim::JointConfigMapItem>,
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
@@ -104,6 +105,7 @@ namespace mars {
          * simulated object is stored through a shared_ptr in the frame where 
          * the PhysicsConfigMapItem was found.
          */
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<configmaps::ConfigMap>>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem>& e);
         /*
          *  dfs visit the tree and update all positions.

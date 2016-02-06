@@ -75,10 +75,10 @@ namespace mars {
                 envire::core::Transform iniPose;
                 iniPose.transform.orientation = base::Quaterniond::Identity();
                 iniPose.transform.translation << 1.0, 1.0, 1.0;
-                //std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SPACECLIMBER)%>"); 
-                //std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>"); 
-                std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes.smurf"); 
-                //std::string path = orocos_cpp::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_dynamic_joint.smurf"); 
+                std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SPACECLIMBER)%>"); 
+                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>"); 
+                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes.smurf"); 
+                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_dynamic_joint.smurf"); 
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 envire::smurf::Robot asguard(iniPose, path);
                 asguard.initGraph(*(control->graph), center);
