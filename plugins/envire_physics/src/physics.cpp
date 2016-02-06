@@ -21,6 +21,7 @@
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
+#include <mars/interfaces/Logging.hpp>
 #include <envire_core/items/Transform.hpp>
 #include <envire_core/graph/TransformGraph.hpp>
 #include <envire_core/events/ItemAddedEvent.hpp>
@@ -101,7 +102,7 @@ void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent&
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>>& e)
 {
-    if (debug) {LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Frame item received in frame ***" + e.frame + "***");}
+    if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Frame item received in frame *** " + e.frame + "***").c_str());}
     mars::interfaces::NodeData node;
     smurf::Frame link = e.item->getData();
     node.init(link.getName());
@@ -112,7 +113,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>>& e)
     setPos(e.frame, node);
     if (instantiateNode(node, e.frame))
     {
-        if (debug) {LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Frame - Instantiated the nodeInterface in frame ***" + e.frame + "***");}
+        if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Frame - Instantiated the nodeInterface in frame ***" + e.frame + "***").c_str());}
     }
 }
 
@@ -124,25 +125,25 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>>&
   if (instantiateNode(collisionNode, e.frame))
   {
     if (debug) {
-      LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Collidable - Instantiated and stored the nodeInterface correspondent to the collidable in frame ***" + e.frame +"***");
+      LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Collidable - Instantiated and stored the nodeInterface correspondent to the collidable in frame ***" + e.frame +"***").c_str());
     }
   }
 }
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>>& e)
 {
-  if (debug) { LOG_DEBUG("[GraphPhysics::itemAdded] smurf::inertial object received in frame ***" + e.frame + "***");}
+  if (debug) { LOG_DEBUG(("[GraphPhysics::itemAdded] smurf::inertial object received in frame ***" + e.frame + "***").c_str());}
   smurf::Inertial inertial = e.item->getData();
   NodeData inertialNode = getInertialNode(inertial, e.frame);
   if (instantiateNode(inertialNode, e.frame))
   {
-    LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Inertial - Instantiated and Stored the nodeInterface in frame ***" + e.frame +"***");
+    LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Inertial - Instantiated and Stored the nodeInterface in frame ***" + e.frame +"***").c_str());
   } 
 }
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e)
 {
-  if (debug) { LOG_DEBUG("[GraphPhysics::itemAdded] smurf::Collision object received in frame ***" + e.frame + "***");}
+  if (debug) { LOG_DEBUG(("[GraphPhysics::itemAdded] smurf::Collision object received in frame ***" + e.frame + "***").c_str());}
   urdf::Collision collision = e.item->getData();
   NodeData node;
   node.init(collision.name);
@@ -151,13 +152,13 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e
   node.movable = true;
   if (instantiateNode(node, e.frame))
   {
-    LOG_DEBUG("[GraphPhysics::ItemAdded] Smurf::Collision - Instantiated and stored the nodeInterface in frame ***" + e.frame +"***");
+    LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Collision - Instantiated and stored the nodeInterface in frame ***" + e.frame +"***").c_str());
   }
 }
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
 {
-  if (debug) {LOG_DEBUG("[GraphPhysics::ItemAdded] PhysicsConfigMapItem item received in frame ***" + e.frame + "***");}
+  if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] PhysicsConfigMapItem item received in frame ***" + e.frame + "***").c_str());}
   PhysicsConfigMapItem::Ptr pItem = e.item;
   try
   {         
@@ -183,7 +184,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
       node.rot = fromOrigin.transform.orientation;
       if (instantiateNode(node, e.frame))
       {
-        if (debug) {LOG_DEBUG("[GraphPhysics::ItemAdded] PhysicsConfigMapItem - Instantiated and stored the nodeInterface in frame ***" + e.frame + "***");}
+        if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] PhysicsConfigMapItem - Instantiated and stored the nodeInterface in frame ***" + e.frame + "***").c_str());}
       }
     }
   }
@@ -334,8 +335,8 @@ void GraphPhysics::updatePositions( const vertex_descriptor origin,
   Transform tf = control->graph->getTransform(origin, target);
   if (debugUpdatePos)
   {
-    LOG_DEBUG("[updatePositions] Updating position of physical objects in frame: " + control->graph->getFrame(target).getName());
-    LOG_DEBUG("[updatePositions] Transformation to be updated: " +  control->graph->getFrame(origin).getName() + " to " + control->graph->getFrame(target).getName() );
+    LOG_DEBUG(("[updatePositions] Updating position of physical objects in frame: " + control->graph->getFrame(target).getName()).c_str());
+    LOG_DEBUG(("[updatePositions] Transformation to be updated: " +  control->graph->getFrame(origin).getName() + " to " + control->graph->getFrame(target).getName() ).c_str());
     //How can I print the tf also using the LOG_DEBUG?
     LOG_DEBUG("[updatePositions] Tf values before update: " );
     std::cout << tf.transform << std::endl;
