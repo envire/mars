@@ -100,7 +100,7 @@ namespace mars {
         std::map<envire::core::FrameId, std::vector<envire::core::FrameId>> dependencies;
         
         
-        bool debug = true;
+        bool debug = false;
       }; // end of class definition EnvireJoints
 
     } // end of namespace envire_joints

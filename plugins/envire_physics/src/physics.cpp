@@ -138,7 +138,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>>& e
   NodeData inertialNode = getInertialNode(inertial, e.frame);
   if (instantiateNode(inertialNode, e.frame))
   {
-    LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Inertial - Instantiated and Stored the nodeInterface in frame ***" + e.frame +"***").c_str());
+    if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Inertial - Instantiated and Stored the nodeInterface in frame ***" + e.frame +"***").c_str());}
   } 
 }
 

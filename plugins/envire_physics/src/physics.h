@@ -150,7 +150,7 @@ namespace mars {
         envire::core::FrameId originId;
         envire::core::TreeView treeView;
         
-        const bool debug = true;
+        const bool debug = false;
         const bool printGraph = false;
         const bool debugUpdatePos = false;
         
