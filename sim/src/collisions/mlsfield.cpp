@@ -118,7 +118,7 @@ void dxMlsfieldData::ComputeHeightBounds()
     float *data_float;
     double *data_double;
 
-    switch ( m_nGetHeightMode )    //TBD...
+    switch ( m_nGetHeightMode )  
     {
 
         // callback
@@ -376,10 +376,6 @@ dxMlsfield::dxMlsfield( dSpaceID space,
     
     this->m_p_data = data;
     
-	std::cout <<  "obj-type = " << type <<",     space = " << space << std::endl;
-    
-    //this->space_id = space;
-
 }
 
 
@@ -816,8 +812,6 @@ int dxMlsfield::dCollideMlsfieldZone( const int minX, const int maxX, const int 
     int numTerrainContacts = 0;
     // localize and const for faster access
     
-//printf("...(numX,numZ)(%d %d)....\n",numX,numZ);
-    
     const dReal cfSampleWidth = m_p_data->m_fSampleWidth;
     const dReal cfSampleDepth = m_p_data->m_fSampleDepth;
     {
@@ -843,20 +837,16 @@ int dxMlsfield::dCollideMlsfieldZone( const int minX, const int maxX, const int 
                 MlsFieldRow[z_local].vertex[0] = c_Xpos;
                 MlsFieldRow[z_local].vertex[1] = h;
                 MlsFieldRow[z_local].vertex[2] = Ypos;
-                //MlsFieldRow[z_local].coords[0] = x;
-                //MlsFieldRow[z_local].coords[1] = z;
 
                 maxY = dMAX(maxY, h);
                 minY = dMIN(minY, h);
             }
         }
-//printf("...(%f %f)....\n",minO2Height,maxY);
+
 
         if (minO2Height - maxY > -dEpsilon )    //TODO: make clear!!
         {
             //totally above Mlsfield
-            
-//printf("...(%f %f)totally above Mlsfield..\n",minO2Height,maxY);
             return 0;
         }
         
@@ -911,7 +901,6 @@ printf(".totally under Mlsfield...\n");
          z
     */  
 
-//printf(".called mls...2...\n");
     // keep only rectangular that does intersect geom
     const unsigned int maxX_local = maxX - minX;
     const unsigned int maxZ_local = maxZ - minZ;
@@ -944,17 +933,10 @@ printf(".totally under Mlsfield...\n");
             const bool isCCollide = CHeight > minO2Height;
             const bool isDCollide = DHeight > minO2Height;
 
-
-            //A->state = !(isACollide);
-            //B->state = !(isBCollide);
-            //C->state = !(isCCollide);
-            //D->state = !(isDCollide);
-
             if (isACollide || isBCollide || isCCollide || isDCollide)
             {
                 MlsFieldRectangular * const CurrRectUp = &tempRectangularBuffer[numRect++];
 
-              //  CurrRectUp->state = false;
               // changing point order here implies to change it in isOnHeightField
                 CurrRectUp->vertices[0] = A;
                 CurrRectUp->vertices[1] = B;
@@ -968,6 +950,7 @@ printf(".totally under Mlsfield...\n");
     //make dxBox[numRect] which have collided     
     dIASSERT (numRect != 0);
     int maxBoxNum = 4;
+    double boxlength = 0.5;
     
 	dxBox* colliding_box[maxBoxNum];
 	for(int i=0; i<4; i++) colliding_box[i] = new dxBox (0,1,1,1);   //TODE space pointer has to be added
@@ -980,14 +963,12 @@ printf(".totally under Mlsfield...\n");
 		   //set positions and size of Boxs A,B,C,D from collision
 		   dVector3Copy(colRect->vertices[i]->vertex, colliding_box[i]->final_posr->pos); 
 		   colliding_box[i]->side[0] = colRect->vertices[1]->vertex[0]-colRect->vertices[0]->vertex[0];				   
-		   colliding_box[i]->side[1] = 0.5;//colRect->vertices[i]->vertex[1];	
+		   colliding_box[i]->side[1] = boxlength;	
 		   colliding_box[i]->side[2] = colRect->vertices[2]->vertex[2]-colRect->vertices[0]->vertex[2];	
 		   colliding_box[i]->final_posr->pos[0] -= (colliding_box[i]->side[0]/2);   
-		   //colliding_box[i]->final_posr->pos[1] /= 2;   
-		   colliding_box[i]->final_posr->pos[1] = colliding_box[i]->final_posr->pos[1] - 0.5/2;  	
+		   colliding_box[i]->final_posr->pos[1] = colliding_box[i]->final_posr->pos[1] - boxlength/2;  	
 		   colliding_box[i]->final_posr->pos[2] -= (colliding_box[i]->side[2]/2); 			   		   	   
 		   int collided = dCollideSphereBox (o2, colliding_box[i], flags, BoxContact, skip);
-//printf(".side (%f %f %f)......\n",colliding_box[i]->side[0],colliding_box[i]->side[1],colliding_box[i]->side[2]);
 
 		   if(collided && numTerrainContacts < 4) {	   
   		       pContact = CONTACT(contact, numTerrainContacts*skip);			   
@@ -995,14 +976,9 @@ printf(".totally under Mlsfield...\n");
                //create contact using Plane Normal
                dOPESIGN(pContact->normal, =, -, BoxContact->normal);	       
 		       pContact->depth = BoxContact->depth;	
-		       //pContact->g1 = colliding_box[i];
-		       //pContact->g2 = o2;
-               //     pContact->side1 = -1;
-               //     pContact->side2 = -1;		       
+       
  	           numTerrainContacts++;	
- 	           //printf(".normal (%f %f %f)......\n",pContact->normal[0],pContact->normal[1],pContact->normal[2]);
 		   }
-		   //if(numTerrainContacts == 4) break;	
 		}
 
 	}
@@ -1118,16 +1094,13 @@ int dCollideMlsfield( dxGeom *o1, dxGeom *o2, int flags, dContactGeom* contact, 
 
             dIASSERT ((nMinX < nMaxX) && (nMinZ < nMaxZ));
         }
-//printf("(%d %d) (nMaxX, nMaxZ)\n",nMaxX, nMaxZ);
 
         numTerrainOrigContacts = numTerrainContacts;
         numTerrainContacts += terrain->dCollideMlsfieldZone(
             nMinX,nMaxX,nMinZ,nMaxZ,o2,numMaxTerrainContacts - numTerrainContacts,
             flags,CONTACT(contact,numTerrainContacts*skip),skip	);
-//    printf("..numTerrainContacts , numMaxTerrainContacts = (%d %d)\n",numTerrainContacts,numMaxTerrainContacts);
-       
+      
         dIASSERT( numTerrainContacts <= numMaxTerrainContacts );
-     //  	    printf(".out.2..dCollideMlsfield...\n");         
     }
     
 
