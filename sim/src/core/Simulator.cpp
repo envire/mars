@@ -45,7 +45,7 @@
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <lib_manager/LibInterface.hpp>
 #include <mars/interfaces/Logging.hpp>
-#include <envire_core/graph/TransformGraph.hpp>
+#include <envire_core/graph/EnvireGraph.hpp>
 
 #include <signal.h>
 #include <getopt.h>
@@ -252,7 +252,7 @@ namespace mars {
       control->sensors = new SensorManager(control);
       control->controllers = new ControllerManager(control);
       control->entities = new EntityManager(control);
-      control->graph = new envire::core::TransformGraph();
+      control->graph = new envire::core::EnvireGraph();
             
       control->controllers->setDefaultPort(std_port);
       control->nodes->setVisualRep(0, cfgVisRep.iValue);
