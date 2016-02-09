@@ -31,6 +31,7 @@
 #include <envire_core/graph/TransformGraphExceptions.hpp>
 #include <mars/sim/ConfigMapItem.h>
 #include <base/TransformWithCovariance.hpp>
+#include <envire/core/Transform.hpp>
 #include <stdlib.h>
 #include <algorithm>
 #include <cassert>
@@ -64,6 +65,7 @@ void GraphViz::init()
   GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>::subscribe(control->graph);
   GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>::subscribe(control->graph);
   GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>::subscribe(control->graph);
+  GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph);
 }
 
 void GraphViz::reset() {
@@ -271,7 +273,29 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
       default:
         LOG_ERROR("[Envire Graphics] ERROR: unknown geometry type");
     }
+}
+
+void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e)
+{
+    const FrameId source = e.item->getData().getSourceFrame().getName();
+    const FrameId target = e.item->getData().getTargetFrame().getName();
     
+    
+    const envire::core::Transform tf = control->graph->getTransform(source, target);
+    const double length = tf.transform.translation.norm();
+    base::Vector3d extents(0.01, length, 0);
+    
+    NodeData node;
+    node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
+    node.material.emissionFront = mars::utils::Color(0.0, 1.0, 0.0, 1.0);    
+    node.material.transparency = 0.5;
+    
+    const envire::core::Transform originToSource = control->graph->getTransform(originId, source); 
+    const envire::core::Transform originToTarget = control->graph->getTransform(originId, target); 
+    node.pos = (originToSource.transform.translation + originToTarget.transform.translation) / 2.0;
+    node.rot = e.item->getData().getParentToJointOrigin().rotation();
+    
+    uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
 }
 
 void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e)
