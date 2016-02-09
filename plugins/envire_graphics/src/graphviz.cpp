@@ -62,6 +62,7 @@ void GraphViz::init()
   assert(control->graph != nullptr);
   GraphEventDispatcher::subscribe(control->graph);
   GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>::subscribe(control->graph);
+  GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>::subscribe(control->graph);
 }
 
 void GraphViz::reset() {
@@ -147,6 +148,7 @@ void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
     queue.pop_back();
     
     updatePosition<Item<envire::smurf::Visual>>(vertex);
+    updatePosition<Item<smurf::Frame>>(vertex);
     
     //if the vertex has children, queue them
     if(tree.find(vertex) != tree.end())
@@ -209,6 +211,23 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
     envire::smurf::Visual vis = e.item->getData();
     addVisual(vis, e.frame, e.item->getID());
     
+}
+void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e)
+{
+    boost::shared_ptr<urdf::Sphere> sphere( new urdf::Sphere);
+    sphere->radius = 0.01;
+    //y and z are unused
+    base::Vector3d extents(sphere->radius, 0, 0);
+    //LOG_DEBUG_S("[Envire Graphics] add SPHERE visual. name: " << visual.name << ", frame: "   << frameId << ", radius: " << sphere->radius);
+    
+    NodeData node;
+    node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0); //mass is zero because it doesnt matter for visual representation
+    //setNodeDataMaterial(node, visual.material);
+    //node.material.transparency = 0.5;
+    node.material.emissionFront = mars::utils::Color(1.0, 0.0, 0.0, 1.0);
+    
+    setPos(e.frame, node); //set link position
+    uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
 }
 
 void GraphViz::addVisual(const envire::smurf::Visual& visual, const FrameId& frameId,

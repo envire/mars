@@ -74,7 +74,7 @@ namespace mars {
             {    
                 envire::core::Transform iniPose;
                 iniPose.transform.orientation = base::Quaterniond::Identity();
-                iniPose.transform.translation << 1.0, 1.0, 1.0;
+                iniPose.transform.translation << 1.0, 1.0, 0.3;
                 std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SPACECLIMBER)%>"); 
                 //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>"); 
                 //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes.smurf"); 
@@ -82,22 +82,37 @@ namespace mars {
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 envire::smurf::Robot asguard(iniPose, path);
                 asguard.initGraph(*(control->graph), center);
+                envire::core::GraphViz viz;
+                std::string timestamp = base::Time::now().toString();
+                std::string name = "initGraph" + timestamp + ".dot";
+                viz.write(*(control->graph), name);
                 asguard.loadLinks(*(control->graph), nextGroupId);
+                //name = "loadLinks" + timestamp + ".dot";
+                //viz.write(*(control->graph), name);
                 asguard.loadCollidables(*(control->graph));
                 asguard.loadInertials(*(control->graph));
+                //name = "loadInertialAndCollidables" + timestamp + ".dot";
+                //viz.write(*(control->graph), name);
                 asguard.loadFixedJoints(*(control->graph));
+                //name = "loadFixedJoints" + timestamp + ".dot";
+                //viz.write(*(control->graph), name);
                 asguard.loadDynamicJoints(*(control->graph));
-                //asguard.loadStaticJoints(*control->graph); //TODO: Why static joints are loaded separately? Do we need this here??
-                //asguard.loadPhysics(*control->graph, nextGroupId);
+                //name = "loadDynamicJoints" + timestamp + ".dot";
+                //viz.write(*(control->graph), name);
                 asguard.loadVisuals(*(control->graph));
-                LOG_DEBUG("Loaded to Mars/Envire graph");
-                //asguard.simulationReady(*(control->graph));
+                //name = "loadVisuals" + timestamp + ".dot";
+                //viz.write(*(control->graph), name);
+                //LOG_DEBUG("Loaded to Mars/Envire graph");
             }
             
             void SMURFToSimulation::init()
             {
                 nextGroupId = 1;
                 envire::core::vertex_descriptor center = addFloor();
+                //envire::core::GraphViz viz;
+                //std::string timestamp = base::Time::now().toString();
+                //std::string name = "justFloor" + timestamp + ".dot";
+                //viz.write(*(control->graph), name);
                 addRobot(center);
                 // uncomment to print the graph
                 //envire::core::GraphViz viz;

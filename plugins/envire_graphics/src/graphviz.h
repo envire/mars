@@ -58,7 +58,8 @@ namespace mars {
        * */
       class GraphViz : public mars::interfaces::MarsPluginTemplate,
                        public envire::core::GraphEventDispatcher,
-		       public envire::core::GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>
+		       public envire::core::GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>,
+               public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>
       {
 
       public:
@@ -82,6 +83,7 @@ namespace mars {
         virtual void transformModified(const envire::core::TransformModifiedEvent& e);
         virtual void itemAdded(const envire::core::ItemAddedEvent& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>>& e);
+        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e);
         virtual void frameAdded(const envire::core::FrameAddedEvent& e);
 
         // CFGClient methods
