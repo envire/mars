@@ -22,14 +22,6 @@
 #include <mars/data_broker/DataPackage.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/interfaces/Logging.hpp>
-#include <envire_core/items/Transform.hpp>
-#include <envire_core/graph/TransformGraph.hpp>
-#include <envire_core/events/ItemAddedEvent.hpp>
-#include <envire_core/events/TransformAddedEvent.hpp>
-#include <envire_core/events/TransformModifiedEvent.hpp>
-#include <envire_core/events/FrameAddedEvent.hpp>
-#include <envire_core/events/FrameRemovedEvent.hpp>
-#include <envire_core/graph/TransformGraphExceptions.hpp>
 #include <mars/sim/ConfigMapItem.h>
 #include <mars/sim/PhysicsMapper.h>
 #include <base/TransformWithCovariance.hpp>
@@ -38,7 +30,10 @@
 #include <algorithm>
 #include <cassert>
 #include <boost/lexical_cast.hpp>
+
+#include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/graph/GraphViz.hpp>
+
 
 using namespace mars::plugins::envire_physics;
 using namespace mars::utils;
@@ -82,7 +77,7 @@ void GraphPhysics::frameRemoved(const FrameRemovedEvent& e)
   assert(e.removedFrame != originId); 
 }
 
-void GraphPhysics::transformRemoved(const envire::core::TransformRemovedEvent& e)
+void GraphPhysics::edgeRemoved(const envire::core::EdgeRemovedEvent& e)
 {
   //Removing a transform can lead to non trivial changes in the tree.
   //Instead of thinking about them we just recalculate the tree.
@@ -90,13 +85,16 @@ void GraphPhysics::transformRemoved(const envire::core::TransformRemovedEvent& e
   updateTree();
 }
 
-void GraphPhysics::transformAdded(const envire::core::TransformAddedEvent& e)
+
+
+
+void GraphPhysics::edgeAdded(const envire::core::EdgeAddedEvent& e)
 {
   //dont give a shit about performance for the first iteration
   updateTree();
 }
 
-void GraphPhysics::transformModified(const envire::core::TransformModifiedEvent& e)
+void GraphPhysics::edgeModified(const envire::core::EdgeModifiedEvent& e)
 {
   //for the first iteration we ignore transformation changes from outside this plugin
 }
@@ -236,7 +234,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
 
 void GraphPhysics::update(sReal time_ms) 
 {
-  const vertex_descriptor originDesc = control->graph->vertex(originId);
+  const GraphTraits::vertex_descriptor originDesc = control->graph->vertex(originId);
   if(printGraph)
   {
     envire::core::GraphViz viz;
@@ -274,8 +272,8 @@ void GraphPhysics::updateTree()
   treeView = control->graph->getTree(originId);
   if(treeView.crossEdges.size() > 0)
   {
-    const vertex_descriptor source = control->graph->source(treeView.crossEdges[0]);
-    const vertex_descriptor target = control->graph->target(treeView.crossEdges[0]);
+    const GraphTraits::vertex_descriptor source = control->graph->source(treeView.crossEdges[0]);
+    const GraphTraits::vertex_descriptor target = control->graph->target(treeView.crossEdges[0]);
     const FrameId sourceId = control->graph->getFrameId(source);
     const FrameId targetId = control->graph->getFrameId(target);
     const string msg = "Loop in tree detected: " + sourceId + " --> " + targetId +
@@ -354,29 +352,28 @@ void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::
   node.rot = fromOrigin.transform.orientation;
 }   
 
-void GraphPhysics::updateChildPositions(const vertex_descriptor vertex,
+void GraphPhysics::updateChildPositions(const GraphTraits::vertex_descriptor vertex,
                                         const TransformWithCovariance& frameToRoot)
 {
   if(treeView.tree.find(vertex) != treeView.tree.end())
   {
-    const unordered_set<vertex_descriptor>& children = treeView.tree[vertex].children;
-    for(const vertex_descriptor child : children)
+    const unordered_set<GraphTraits::vertex_descriptor>& children = treeView.tree[vertex].children;
+    for(const GraphTraits::vertex_descriptor child : children)
     {
       updatePositions(vertex, child, frameToRoot);
     }
   } 
 }
 
-void GraphPhysics::updatePositions( const vertex_descriptor origin,
-                                    const vertex_descriptor target,
+void GraphPhysics::updatePositions( const GraphTraits::vertex_descriptor origin,
+                                    const GraphTraits::vertex_descriptor target,
                                     const TransformWithCovariance& originToRoot)
 {
   using physicsType = Item<shared_ptr<NodeInterface>>;
   Transform tf = control->graph->getTransform(origin, target);
   if (debugUpdatePos)
   {
-    LOG_DEBUG(("[updatePositions] Updating position of physical objects in frame: " + control->graph->getFrame(target).getName()).c_str());
-    LOG_DEBUG(("[updatePositions] Transformation to be updated: " +  control->graph->getFrame(origin).getName() + " to " + control->graph->getFrame(target).getName() ).c_str());
+
     //How can I print the tf also using the LOG_DEBUG?
     LOG_DEBUG("[updatePositions] Tf values before update: " );
     std::cout << tf.transform << std::endl;
@@ -388,7 +385,7 @@ void GraphPhysics::updatePositions( const vertex_descriptor origin,
       LOG_DEBUG("[updatePositions] Tf from origin (of the tf to be updated) to root (of the tree): " );
       std::cout << originToRoot << std::endl;
     }
-    using Iterator = TransformGraph::ItemIterator<physicsType>;
+    using Iterator = EnvireGraph::ItemIterator<physicsType>;
     Iterator begin, end;
     boost::tie(begin, end) = control->graph->getItems<physicsType>(target);
     for (;begin!=end; begin++)

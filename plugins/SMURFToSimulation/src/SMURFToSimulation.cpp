@@ -40,6 +40,8 @@
 #include <base/Time.hpp>
 #include <envire_core/graph/GraphViz.hpp>
 
+using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
+
 namespace mars {
     namespace plugins {
         namespace SMURFToSimulation {
@@ -51,7 +53,7 @@ namespace mars {
             : MarsPluginTemplate(theManager, "SMURFToSimulation") {
             }
             
-            envire::core::vertex_descriptor SMURFToSimulation::addFloor()
+            vertex_descriptor SMURFToSimulation::addFloor()
             {
                 envire::core::FrameId center = "center";
                 control->graph->addFrame(center);
@@ -70,7 +72,7 @@ namespace mars {
                 return control->graph->getVertex(center);
             }
             
-            void SMURFToSimulation::addRobot(envire::core::vertex_descriptor center)
+            void SMURFToSimulation::addRobot(vertex_descriptor center)
             {    
                 envire::core::Transform iniPose;
                 iniPose.transform.orientation = base::Quaterniond::Identity();
@@ -108,7 +110,7 @@ namespace mars {
             void SMURFToSimulation::init()
             {
                 nextGroupId = 1;
-                envire::core::vertex_descriptor center = addFloor();
+                vertex_descriptor center = addFloor();
                 //envire::core::GraphViz viz;
                 //std::string timestamp = base::Time::now().toString();
                 //std::string name = "justFloor" + timestamp + ".dot";

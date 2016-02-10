@@ -42,6 +42,7 @@
 #include <mars/interfaces/sim/ControlCenter.h> 
 
 #include <envire_smurf/Robot.hpp>
+#include <envire_core/graph/GraphTypes.hpp>
 #include <string>
 
 namespace mars {
@@ -87,8 +88,8 @@ namespace mars {
 
       private:
         cfg_manager::cfgPropertyStruct example;
-        envire::core::vertex_descriptor addFloor();
-        void addRobot(envire::core::vertex_descriptor center);
+        envire::core::GraphTraits::vertex_descriptor addFloor();
+        void addRobot(envire::core::GraphTraits::vertex_descriptor center);
         int nextGroupId;
 
       }; // end of class definition SMURFToSimulation
