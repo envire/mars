@@ -43,6 +43,8 @@
 #include <smurf/Robot.hpp>
 #include <envire_smurf/Robot.hpp>
 
+
+
 namespace envire {namespace core {
   class TransformGraph;
   class Transform;
@@ -61,6 +63,7 @@ namespace mars {
                public envire::core::GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>,
                public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
                public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Collidable>>,
+               public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::StaticTransformation>>,
                public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>
       {
 
@@ -87,6 +90,7 @@ namespace mars {
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e);
+        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::StaticTransformation>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e);
         virtual void frameAdded(const envire::core::FrameAddedEvent& e);
 

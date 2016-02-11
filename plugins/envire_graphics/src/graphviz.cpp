@@ -37,6 +37,10 @@
 #include <cassert>
 #include <sstream>
 
+#include <osg/Geometry>
+#include <osg/Geode>
+#include <osg/LineWidth>
+
 using namespace mars::plugins::graph_viz_plugin;
 using namespace mars::utils;
 using namespace mars::interfaces;
@@ -65,6 +69,7 @@ void GraphViz::init()
   GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>::subscribe(control->graph);
   GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>::subscribe(control->graph);
   GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>::subscribe(control->graph);
+  GraphItemEventDispatcher<envire::core::Item<smurf::StaticTransformation>>::subscribe(control->graph);
   GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph);
 }
 
@@ -275,27 +280,60 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
     }
 }
 
-void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e)
+void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::StaticTransformation>>& e)
 {
+    
     const FrameId source = e.item->getData().getSourceFrame().getName();
     const FrameId target = e.item->getData().getTargetFrame().getName();
+    const envire::core::Transform originToSource = control->graph->getTransform(originId, source); 
+    const envire::core::Transform originToTarget = control->graph->getTransform(originId, target);
+    osg::Geode* lineGeode = new osg::Geode();
+    osg::Geometry* lineGeometry = new osg::Geometry();
+    lineGeode->addDrawable(lineGeometry);
+    osg::Vec3Array* points = new  osg::Vec3Array;
+    points->push_back(osg::Vec3(originToSource.transform.translation[0], originToSource.transform.translation[1], originToSource.transform.translation[2]));
+    points->push_back(osg::Vec3(originToTarget.transform.translation[0], originToTarget.transform.translation[1], originToTarget.transform.translation[2]));
+    lineGeometry->setVertexArray(points);
+    lineGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, 2));
+    osg::LineWidth* linewidth = new osg::LineWidth();
+    linewidth->setWidth(4.0f);
+    lineGeode->getOrCreateStateSet()->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
+    osg::Vec4Array* c = new osg::Vec4Array;
+    c->push_back(osg::Vec4(1.0,0.0,0.0,1.0)); // red
+    lineGeometry->setColorArray(c);
+    lineGeometry->setColorBinding(osg::Geometry::BIND_OVERALL); 
+    lineGeode->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    control->graphics->addOSGNode(lineGeode);
+}
+
+
+void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e)
+{
     
-    
-    const envire::core::Transform tf = control->graph->getTransform(source, target);
-    const double length = tf.transform.translation.norm();
-    base::Vector3d extents(0.01, length, 0);
-    
-    NodeData node;
-    node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
-    node.material.emissionFront = mars::utils::Color(0.0, 1.0, 0.0, 1.0);    
-    node.material.transparency = 0.5;
-    
+    const FrameId source = e.item->getData().getSourceFrame().getName();
+    const FrameId target = e.item->getData().getTargetFrame().getName();
     const envire::core::Transform originToSource = control->graph->getTransform(originId, source); 
     const envire::core::Transform originToTarget = control->graph->getTransform(originId, target); 
-    node.pos = (originToSource.transform.translation + originToTarget.transform.translation) / 2.0;
-    node.rot = e.item->getData().getParentToJointOrigin().rotation();
+    osg::Geode* lineGeode = new osg::Geode();
+    osg::Geometry* lineGeometry = new osg::Geometry();
+    lineGeode->addDrawable(lineGeometry);
+    osg::Vec3Array* points = new  osg::Vec3Array;
+    points->push_back(osg::Vec3(originToSource.transform.translation[0], originToSource.transform.translation[1], originToSource.transform.translation[2]));
+    points->push_back(osg::Vec3(originToTarget.transform.translation[0], originToTarget.transform.translation[1], originToTarget.transform.translation[2]));
+    lineGeometry->setVertexArray(points);
+    lineGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, 2));
+  
+    osg::LineWidth* linewidth = new osg::LineWidth();
+    linewidth->setWidth(4.0f);
+    lineGeode->getOrCreateStateSet()->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
     
-    uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+    osg::Vec4Array* c = new osg::Vec4Array;
+    c->push_back(osg::Vec4(0.0,1.0,0.0,1.0)); // green
+    lineGeometry->setColorArray(c);
+    lineGeometry->setColorBinding(osg::Geometry::BIND_OVERALL); 
+    
+    lineGeode->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    control->graphics->addOSGNode(lineGeode);
 }
 
 void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e)
@@ -305,13 +343,11 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
     //y and z are unused
     base::Vector3d extents(sphere->radius, 0, 0);
     //LOG_DEBUG_S("[Envire Graphics] add SPHERE visual. name: " << visual.name << ", frame: "   << frameId << ", radius: " << sphere->radius);
-    
     NodeData node;
     node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0); //mass is zero because it doesnt matter for visual representation
     //setNodeDataMaterial(node, visual.material);
-    //node.material.transparency = 0.5;
+    node.material.transparency = 0.5;
     node.material.emissionFront = mars::utils::Color(1.0, 0.0, 0.0, 1.0);
-    
     setPos(e.frame, node); //set link position
     uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
 }
