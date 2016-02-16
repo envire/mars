@@ -499,7 +499,7 @@ namespace mars {
         return;
 
       if(!b1 && !b2 && !geom_data1->ray_sensor && !geom_data2->ray_sensor) return;
-  				  printf(".1.nearCallback..\n");    
+
       int maxNumContacts = 0;
       if(geom_data1->c_params.max_num_contacts <
          geom_data2->c_params.max_num_contacts) {

@@ -797,7 +797,6 @@ int dxMlsfield::dCollideMlsfieldZone( const int minX, const int maxX, const int 
                                            int skip )
 {
     dContactGeom *pContact = 0;
-printf(".called mls...1...\n");
     int  x, z;
     // check if not above or inside terrain first
     // while filling a Mlsmap partial temporary buffer
