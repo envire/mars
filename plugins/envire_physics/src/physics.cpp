@@ -21,6 +21,7 @@
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
+#include <mars/interfaces/terrainStruct.h>
 #include <mars/interfaces/Logging.hpp>
 #include <envire_core/items/Transform.hpp>
 #include <envire_core/graph/TransformGraph.hpp>
@@ -39,6 +40,7 @@
 #include <cassert>
 #include <boost/lexical_cast.hpp>
 #include <envire_core/graph/GraphViz.hpp>
+#include <stdio.h>
 
 using namespace mars::plugins::envire_physics;
 using namespace mars::utils;
@@ -120,6 +122,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>>& e)
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>>& e)
 {
+	
   //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
   smurf::Collidable collidable = e.item->getData();
   NodeData collisionNode = getCollidableNode(collidable, e.frame);
@@ -170,6 +173,8 @@ void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::cor
     //if(node.fromConfigMap(&(item.getData()), ""))
     if(node.fromConfigMap(&(configMap), ""))
     {
+//		    std::cout <<"node.physicMode = " << node.physicMode<< "..node.pos = (" << node.pos.x() <<"," << node.pos.y() <<","<< node.pos.z() <<")"<< std::endl; 	
+
       Transform fromOrigin;
       if(originId.compare(e.frame) == 0)
       {
@@ -177,13 +182,18 @@ void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::cor
         //and items are added to that frame. In that case aksing the graph 
         //for the transformation would cause an exception
         fromOrigin.setTransform(TransformWithCovariance::Identity());
+        
+std::cout <<"physicMode = " << node.physicMode<< "...fromOrigin = (" << fromOrigin.transform.translation.x() << 
+   "," << fromOrigin.transform.translation.y() <<","<< fromOrigin.transform.translation.z() <<")"<< std::endl; 	
+        
       }
       else
       {
         fromOrigin = control->graph->getTransform(originId, e.frame); 
       }
-      node.pos = fromOrigin.transform.translation;
+     // node.pos = fromOrigin.transform.translation;
       node.rot = fromOrigin.transform.orientation;
+      
       if (instantiateNode(node, e.frame))
       {
         if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] PhysicsConfigMapItem - Instantiated and stored the nodeInterface in frame ***" + e.frame + "***").c_str());}
@@ -192,6 +202,7 @@ void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::cor
   }
   catch(const UnknownTransformException& ex)
   {
+	  printf("unknown...\n");
     cerr << ex.what() << endl;
   }
 }   
@@ -324,6 +335,16 @@ NodeData GraphPhysics::getInertialNode(const smurf::Inertial& inertial, const en
 
 bool GraphPhysics::instantiateNode(NodeData node, const envire::core::FrameId& frame)
 {
+  if(node.physicMode == NODE_TYPE_TERRAIN) {
+	mars::interfaces::terrainStruct* terrain = new(mars::interfaces::terrainStruct);//mars::interfaces::terrainStruct(*terrain);
+    node.terrain = terrain;
+    int targetWidth, targetHeight, scale;
+    terrain->targetWidth = 14;
+    terrain->targetHeight = 14;
+    terrain->scale = 1;
+  }		
+  //std::cout << "instantiateNode..." << frame << std::endl;  
+  //std::cout << "node.physicMode..." << node.physicMode << std::endl; 		  		  	
   shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
   bool instantiated = (physics->createNode(&node));
   if (instantiated)

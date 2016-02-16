@@ -61,6 +61,7 @@ include_directories(
                src/interfaces/sensors
                src/physics
                src/sensors
+#               src/collisions
 )
 
 
@@ -118,6 +119,16 @@ set(SOURCES_H
        src/sensors/ScanningSonar.h
        
        src/interfaces/sensors/GridSensorInterface.h
+       
+       src/collisions/mlsfield.h
+       src/collisions/collision_kernel.h
+       src/collisions/collision_std.h
+       src/collisions/collision_util.h
+       src/collisions/config.h
+       src/collisions/objects.h
+       src/collisions/odeou.h
+       src/collisions/odetls.h
+       src/collisions/array.h
     )
 
 set(TARGET_SRC
@@ -163,6 +174,8 @@ set(TARGET_SRC
        src/sensors/RaySensor.cpp
 
        src/sensors/ScanningSonar.cpp
+       
+       src/collisions/mlsfield.cpp
 )
 
 #cmake variables

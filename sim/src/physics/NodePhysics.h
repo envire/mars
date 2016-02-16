@@ -35,10 +35,16 @@
 #include "WorldPhysics.h"
 
 #include <mars/interfaces/sim/NodeInterface.h>
+#include <stdio.h>
+//#include "../collisions/mlsfield.h"
+#include <mars/sim/mlsfield.h>
 
 #ifndef ODE11
   #define dTriIndex int
 #endif
+
+#define _MLS_ // if using this, comment out the related option of _PTPSOIL_  in WorldPhysics.h
+//#define SERIALIZATION   //TODO connect mls loader using serialization 
 
 namespace mars {
   namespace sim {
@@ -52,6 +58,7 @@ namespace mars {
       void setZero(){
         num_ground_collisions = 0;
         ray_sensor = 0;
+        height_field = 0;    //20150414 added
         sense_contact_force = 1;
         value = 0;
         c_params.setZero();
@@ -68,6 +75,7 @@ namespace mars {
       bool node1;
       interfaces::contact_params c_params;
       bool ray_sensor;
+      bool height_field;
       bool sense_contact_force;
       interfaces::sReal value;
       dGeomID parent_geom;
@@ -133,8 +141,19 @@ namespace mars {
       void addMassToCompositeBody(dBodyID theBody, dMass *bodyMass);
       void getAbsMass(dMass *pMass) const;
       dReal heightCallback(int x, int y);
+      dReal mlsCallback(int x, int y);           
+      
+      virtual double getHeightmapHeight(int x, int y);   //ptp
 
     protected:
+    
+#ifndef SERIALIZATION
+    	FILE *fp; 
+		double data[3];
+		char buf[50000];		
+		double mls_mean[20000];
+#endif		
+    
       WorldPhysics *theWorld;
       dBodyID nBody;
       dGeomID nGeom;
@@ -146,6 +165,7 @@ namespace mars {
       geom_data node_data;
       interfaces::terrainStruct *terrain;
       dReal *height_data;
+      dReal *mls_data;       
       std::vector<sensor_list_element> sensor_list;
       bool createMesh(interfaces::NodeData *node);
       bool createBox(interfaces::NodeData *node);
@@ -154,6 +174,7 @@ namespace mars {
       bool createCylinder(interfaces::NodeData *node);
       bool createPlane(interfaces::NodeData *node);
       bool createHeightfield(interfaces::NodeData *node);
+      bool createMlsfield(interfaces::NodeData *node);        
       void setProperties(interfaces::NodeData *node);
       void setInertiaMass(interfaces::NodeData *node);
     };

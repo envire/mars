@@ -373,7 +373,7 @@ dxMlsfield::dxMlsfield( dSpaceID space,
     dGeomClass mls_colliders;	
     mls_colliders.collider = setColliders;   
     type = dCreateGeomClass(&mls_colliders);
-    
+ 	printf("dxMlsfield type= %d\n", type);   
     this->m_p_data = data;
     
 }
@@ -797,7 +797,7 @@ int dxMlsfield::dCollideMlsfieldZone( const int minX, const int maxX, const int 
                                            int skip )
 {
     dContactGeom *pContact = 0;
-//printf(".called mls...1...\n");
+printf(".called mls...1...\n");
     int  x, z;
     // check if not above or inside terrain first
     // while filling a Mlsmap partial temporary buffer

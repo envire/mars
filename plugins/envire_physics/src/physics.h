@@ -49,6 +49,7 @@ namespace mars {
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Inertial>>
       {
       public:
+      
         GraphPhysics(lib_manager::LibManager *theManager);
         
         // LibInterface methods
@@ -133,6 +134,7 @@ namespace mars {
          * We add the shared_ptr of the physical node interface to access to the physical simulation of the object
          */
         bool instantiateNode(mars::interfaces::NodeData node, const envire::core::FrameId& frame);
+		
         /*
          * Sets to the nodeData the position that corresponds to the given frame id
          */
@@ -153,6 +155,7 @@ namespace mars {
         const bool debug = false;
         const bool printGraph = false;
         const bool debugUpdatePos = false;
+        
         
       };
       

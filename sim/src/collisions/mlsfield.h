@@ -12,7 +12,8 @@
 //------------------------------------------------------------------------------
 
 #include <ode/common.h>
-#include "collision_kernel.h"
+//#include "collision_kernel.h"
+#include <mars/sim/collision_kernel.h>
 
 
 #define MLSFIELDMAXCONTACTPERCELL 4   // maximum contacts per object

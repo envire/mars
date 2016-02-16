@@ -433,6 +433,7 @@ namespace mars {
      * in the simulation.
      */
     void WorldPhysics::nearCallback (dGeomID o1, dGeomID o2) {
+		
       int i;
       int numc;
       //up to MAX_CONTACTS contact per Box-box
@@ -454,6 +455,10 @@ namespace mars {
       geom_data* geom_data1 = (geom_data*)dGeomGetData(o1);
       geom_data* geom_data2 = (geom_data*)dGeomGetData(o2);
 
+//printf("geom_data1,2 id(%lu %lu)\n", geom_data1->id,geom_data2->id);	
+//printf("o1,2 types(%d %d)\n", o1->type,o2->type);
+//printf("o1 pos(%f %f %f)\n", o1->final_posr->pos[0],o1->final_posr->pos[1],o1->final_posr->pos[2]);
+//printf("o2 pos(%f %f %f)\n", o2->final_posr->pos[0],o2->final_posr->pos[1],o2->final_posr->pos[2]);
             // test if we have a ray sensor:
       if(geom_data1->ray_sensor) {
         dContact contact;
@@ -489,12 +494,12 @@ namespace mars {
         }
         return;
       }
-      
+
       if(b1 && b2 && dAreConnectedExcluding(b1,b2,dJointTypeContact))
         return;
 
       if(!b1 && !b2 && !geom_data1->ray_sensor && !geom_data2->ray_sensor) return;
-
+  				  printf(".1.nearCallback..\n");    
       int maxNumContacts = 0;
       if(geom_data1->c_params.max_num_contacts <
          geom_data2->c_params.max_num_contacts) {
@@ -547,8 +552,6 @@ namespace mars {
      return;
      }
       */
-  
-
   
       // frist we set the softness values:
       contact[0].surface.mode = dContactSoftERP | dContactSoftCFM;
@@ -657,6 +660,7 @@ namespace mars {
 
       numc=dCollide(o1,o2, maxNumContacts, &contact[0].geom,sizeof(dContact));
       if(numc){ 
+		  
         dJointFeedback *fb;
         draw_item item;
         Vector contact_point;
