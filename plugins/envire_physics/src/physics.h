@@ -5,13 +5,6 @@
 #include <mars/interfaces/MARSDefs.h>
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <string>
-#include <envire_core/events/GraphEventDispatcher.hpp>
-#include <envire_core/events/GraphItemEventDispatcher.hpp>
-#include <envire_core/events/ItemAddedEvent.hpp>
-#include <envire_core/items/Frame.hpp>
-#include <envire_core/items/Item.hpp>
-#include <envire_core/graph/TransformGraphTypes.hpp>
-#include <envire_core/graph/TreeView.hpp>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -22,6 +15,11 @@
 #include <smurf/Inertial.hpp>
 #include <urdf_model/model.h>
 #include <smurf/Collidable.hpp>
+#include <base/TransformWithCovariance.hpp>
+
+#include <envire_core/events/GraphEventDispatcher.hpp>
+#include <envire_core/events/GraphItemEventDispatcher.hpp>
+#include <envire_core/graph/TreeView.hpp>
 
 
 
@@ -63,9 +61,9 @@ namespace mars {
         
         void frameAdded(const envire::core::FrameAddedEvent& e);
         void frameRemoved(const envire::core::FrameRemovedEvent& e);
-        void transformRemoved(const envire::core::TransformRemovedEvent& e);
-        void transformAdded(const envire::core::TransformAddedEvent& e);
-        void transformModified(const envire::core::TransformModifiedEvent& e);
+        void edgeRemoved(const envire::core::EdgeRemovedEvent& e);
+        void edgeAdded(const envire::core::EdgeAddedEvent& e);
+        void edgeModified(const envire::core::EdgeModifiedEvent& e);
         /** 
          * When a smurf::Frame object is introduced a NodeData is created with
          * simple shape and that can not collide with other objects. The 
@@ -141,10 +139,10 @@ namespace mars {
         /*
          *  Perform updatePositions for each of your childs
          */
-        void updateChildPositions(const envire::core::vertex_descriptor vertex,
+        void updateChildPositions(const envire::core::GraphTraits::vertex_descriptor vertex,
                                   const base::TransformWithCovariance& frameToRoot);
-        void updatePositions(const envire::core::vertex_descriptor origin,
-                             const envire::core::vertex_descriptor target,
+        void updatePositions(const envire::core::GraphTraits::vertex_descriptor origin,
+                             const envire::core::GraphTraits::vertex_descriptor target,
                              const base::TransformWithCovariance& originToRoot);
         
         envire::core::FrameId originId;

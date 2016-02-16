@@ -32,19 +32,18 @@
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <mars/interfaces/NodeData.h>
 #include <string>
-#include <envire_core/events/GraphEventDispatcher.hpp>
-#include <envire_core/events/GraphItemEventDispatcher.hpp>
-#include <envire_core/items/Frame.hpp>
-#include <envire_core/graph/TransformGraph.hpp>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
-#include <envire_core/items/Item.hpp>
 #include <smurf/Robot.hpp>
 #include <envire_smurf/Robot.hpp>
 
+#include <envire_core/items/Item.hpp>
+#include <envire_core/events/GraphEventDispatcher.hpp>
+#include <envire_core/events/GraphItemEventDispatcher.hpp>
+#include <envire_core/items/ItemBase.hpp>
+
 namespace envire {namespace core {
-  class TransformGraph;
   class Transform;
 }}
 
@@ -58,10 +57,10 @@ namespace mars {
        * */
       class GraphViz : public mars::interfaces::MarsPluginTemplate,
                        public envire::core::GraphEventDispatcher,
-               public envire::core::GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>,
-               public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
-               public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Collidable>>,
-               public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>,
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Collidable>>,
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>
       {
 
       public:
@@ -80,9 +79,9 @@ namespace mars {
         void update(mars::interfaces::sReal time_ms);
         
         
-        virtual void transformAdded(const envire::core::TransformAddedEvent& e);
-        virtual void transformRemoved(const envire::core::TransformRemovedEvent& e);
-        virtual void transformModified(const envire::core::TransformModifiedEvent& e);
+        virtual void edgeAdded(const envire::core::EdgeAddedEvent& e);
+        virtual void edgeRemoved(const envire::core::EdgeRemovedEvent& e);
+        virtual void edgeModified(const envire::core::EdgeModifiedEvent& e);
         virtual void itemAdded(const envire::core::ItemAddedEvent& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e);
@@ -132,11 +131,11 @@ namespace mars {
         void updateTree(const envire::core::FrameId& origin);
         
         /**Determine whether @p a is the parent of @p b */
-        bool isParent(const envire::core::vertex_descriptor a,
-                      const envire::core::vertex_descriptor b) const;
+        bool isParent(const envire::core::GraphTraits::vertex_descriptor a,
+                      const envire::core::GraphTraits::vertex_descriptor b) const;
                       
         /**Updates the drawing position of @p vertex */              
-        template <class physicsType> void updatePosition(const envire::core::vertex_descriptor vertex) const;
+        template <class physicsType> void updatePosition(const envire::core::GraphTraits::vertex_descriptor vertex) const;
         void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
 	
       private:

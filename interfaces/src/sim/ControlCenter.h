@@ -53,7 +53,7 @@
 
 
 namespace envire { namespace core {
-  class TransformGraph;
+  class EnvireGraph;
 }}
 
 namespace mars {
@@ -102,7 +102,7 @@ namespace mars {
         graph = NULL;
         
 
-      }
+      } 
 
       cfg_manager::CFGManagerInterface *cfg;
       NodeManagerInterface *nodes;
@@ -122,7 +122,7 @@ namespace mars {
        
       LoadCenter *loadCenter;
       
-      envire::core::TransformGraph* graph;
+      envire::core::EnvireGraph* graph;
 
       static data_broker::DataBrokerInterface *theDataBroker;
     };
