@@ -22,16 +22,8 @@
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
-#include <envire_core/items/Transform.hpp>
-#include <envire_core/graph/TransformGraph.hpp>
-#include <envire_core/events/ItemAddedEvent.hpp>
-#include <envire_core/events/TransformAddedEvent.hpp>
-#include <envire_core/events/TransformModifiedEvent.hpp>
-#include <envire_core/events/FrameAddedEvent.hpp>
-#include <envire_core/graph/TransformGraphExceptions.hpp>
 #include <mars/sim/ConfigMapItem.h>
 #include <base/TransformWithCovariance.hpp>
-#include <envire/core/Transform.hpp>
 #include <stdlib.h>
 #include <algorithm>
 #include <cassert>
@@ -44,6 +36,7 @@ using namespace envire::core;
 using namespace mars::sim;
 using namespace std;
 using namespace base;
+using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
 
 //LOG_DEBUG with stringstream for easy conversion
 #define LOG_DEBUG_S(...) \
@@ -81,7 +74,7 @@ void GraphViz::frameAdded(const FrameAddedEvent& e)
 }
 
 
-void GraphViz::transformAdded(const envire::core::TransformAddedEvent& e)
+void GraphViz::edgeAdded(const envire::core::EdgeAddedEvent& e)
 {
   const vertex_descriptor target = control->graph->vertex(e.target);
   const vertex_descriptor origin = control->graph->vertex(e.origin);
@@ -114,7 +107,7 @@ void GraphViz::transformAdded(const envire::core::TransformAddedEvent& e)
   
 }
 
-void GraphViz::transformRemoved(const envire::core::TransformRemovedEvent& e)
+void GraphViz::edgeRemoved(const envire::core::EdgeRemovedEvent& e)
 {
   //Removing a transform can lead to non trivial changes in the tree.
   //Instead of thinking about them we just recalculate the tree.
@@ -122,7 +115,7 @@ void GraphViz::transformRemoved(const envire::core::TransformRemovedEvent& e)
   updateTree(originId);
 }
 
-void GraphViz::transformModified(const envire::core::TransformModifiedEvent& e)
+void GraphViz::edgeModified(const envire::core::EdgeModifiedEvent& e)
 {
   const vertex_descriptor target = control->graph->vertex(e.target);
   const vertex_descriptor origin = control->graph->vertex(e.origin);
@@ -489,7 +482,7 @@ template <class physicsType> void GraphViz::updatePosition(const vertex_descript
     orientation = tf.transform.orientation;
   }
   
-  using Iterator = TransformGraph::ItemIterator<physicsType>;
+  using Iterator = EnvireGraph::ItemIterator<physicsType>;
   Iterator begin, end;
   boost::tie(begin, end) = control->graph->getItems<physicsType>(vertex);
   for(;begin != end; ++begin)

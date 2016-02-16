@@ -33,7 +33,7 @@
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
 
-#include <envire_core/graph/TransformGraph.hpp>
+#include <envire_core/graph/EnvireGraph.hpp>
 
 #include <mars/sim/PhysicsMapper.h>
 
@@ -70,8 +70,8 @@ namespace mars {
       }
       
       void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<NodeInterface>>>& e){
-        using dynamicTfsIterator = TransformGraph::ItemIterator<Item<smurf::Joint>>;
-        using staticTfsIterator = TransformGraph::ItemIterator<Item<smurf::StaticTransformation>>;
+        using dynamicTfsIterator = EnvireGraph::ItemIterator<Item<smurf::Joint>>;
+        using staticTfsIterator = EnvireGraph::ItemIterator<Item<smurf::StaticTransformation>>;
         if (debug) { LOG_DEBUG( "[Envire Joints] itemAdded A new <std::shared_ptr<NodeInterface>> was added to frame '"+ e.frame+"'"); }
         std::map<FrameId, std::vector<FrameId>>::iterator iterDeps = dependencies.find(e.frame);
         if (iterDeps != dependencies.end())
@@ -134,7 +134,7 @@ namespace mars {
        */
       bool EnvireJoints::getSimObject(const FrameId& frameName, std::shared_ptr<NodeInterface>& objectSim){
         bool found = false;
-        using Iterator = TransformGraph::ItemIterator<physicsNodeItem>;
+        using Iterator = EnvireGraph::ItemIterator<physicsNodeItem>;
         Iterator begin, end;
         boost::tie(begin, end) = control->graph->getItems<physicsNodeItem>(frameName);
         if (begin != end){

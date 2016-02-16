@@ -13,12 +13,20 @@ namespace mars { namespace sim
   struct PhysicsConfigMapItem : public ConfigMapItem
   {
     using Ptr = ConfigMapItem::PtrType<PhysicsConfigMapItem>;
+    virtual std::type_index getTypeIndex() const
+    {
+        return std::type_index(typeid(PhysicsConfigMapItem));
+    }
   };
   
   /**A ConfigMapItem that  carries joint information */
   struct JointConfigMapItem : public ConfigMapItem 
   {
     using Ptr = ConfigMapItem::PtrType<JointConfigMapItem>;
+    virtual std::type_index getTypeIndex() const
+    {
+        return std::type_index(typeid(JointConfigMapItem));
+    }
   };
   
 }}
