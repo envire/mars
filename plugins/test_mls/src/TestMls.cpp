@@ -88,7 +88,7 @@ namespace mars {
 		data.density = 0;
 		data.mass = 1;
 		
-		Vector pos(1,1,3);
+		Vector pos(1,1,30);
 		
 		data.pos = pos;
 		mars::sim::PhysicsConfigMapItem::Ptr item(new mars::sim::PhysicsConfigMapItem);
