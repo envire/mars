@@ -572,7 +572,7 @@ void dGeomMlsfieldDataBuildCallback( dMlsfieldDataID d,
     d->m_pUserData = pUserData;
     d->m_pGetHeightCallback = pCallback;
     
-    printf("--------------(widthSamples, depthSamples) = (%d %d) \n",widthSamples, depthSamples);
+ //   printf("--------------(widthSamples, depthSamples) = (%d %d) \n",widthSamples, depthSamples);
 
     // set info
     d->SetData( widthSamples, depthSamples, width, depth, scale, offset, thickness, bWrap );

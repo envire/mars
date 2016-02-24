@@ -81,6 +81,7 @@ namespace mars {
 		//envire::core::FrameId center = "center";
 		//control->graph->addFrame(center);
 
+
 		NodeData data;
 		data.init("floorData", Vector(0,0,0));
 		data.initPrimitive(interfaces::NODE_TYPE_SPHERE, Vector(3, 3, 3), 0.1);
