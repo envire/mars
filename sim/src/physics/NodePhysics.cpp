@@ -45,6 +45,7 @@
 #include <mars/interfaces/terrainStruct.h>
 #include <cmath>
 #include <set>
+#include <iostream>
 
 
 namespace mars {
@@ -79,9 +80,7 @@ namespace mars {
       //node_data.num_ground_collisions = 0;
       node_data.setZero();
       height_data = 0;
-      mls_data = 0;      
       dMassSetZero(&nMass);
-
     }
 
     /**
@@ -118,18 +117,10 @@ namespace mars {
       }
       if(myTriMeshData) dGeomTriMeshDataDestroy(myTriMeshData);
     }
-	double NodePhysics::getHeightmapHeight(int x, int y){   //ptp
-		double height = heightCallback(x,y);
-		return height;
-	}
+
     dReal heightfield_callback(void* pUserData, int x, int z ) {
       return ((NodePhysics*)pUserData)->heightCallback(x, z);
     }
-    dReal mlsfield_callback(void* pUserData, int x, int z ) {
-      return ((NodePhysics*)pUserData)->mlsCallback(x, z);
-    }
-        
-  
 
     /**
      * \brief The method creates an ode node, which properties are given by
@@ -155,7 +146,7 @@ namespace mars {
       MutexLocker locker(&(theWorld->iMutex));
       if(theWorld && theWorld->existsWorld()) {
         bool ret;
-        //LOG_DEBUG("physicMode %d", node->physicMode);
+       // LOG_DEBUG("physicMode %d", node->physicMode);
         // first we create a ode geometry for the node
         switch(node->physicMode) {
         case NODE_TYPE_MESH:
@@ -177,12 +168,7 @@ namespace mars {
           ret = createPlane(node);
           break;
         case NODE_TYPE_TERRAIN:
-#ifdef _MLS_  
-		  //to test mls collision we call createMlsfield temporary 
-		  ret = createMlsfield(node); 
-#else
-          ret = createHeightfield(node);		        
-#endif          
+          ret = createHeightfield(node);
           break;
         default:
           // no correct type is spezified, so no physically node will be created
@@ -245,6 +231,7 @@ namespace mars {
         pos->x() = (sReal)tmp[0];
         pos->y() = (sReal)tmp[1];
         pos->z() = (sReal)tmp[2];
+
         /*
           if(composite) {
           tmp = dGeomGetOffsetPosition(nGeom);
@@ -285,72 +272,70 @@ namespace mars {
      *     - otherwise, we have to do nothing
      */
     const Vector NodePhysics::setPosition(const Vector &pos, bool move_group) {
-    dBodySetPosition(nBody, (dReal)pos.x(), (dReal)pos.y(), (dReal)pos.z());
-      //const dReal *tpos;
-      //const dReal *tpos2;
-      //dReal npos[3];
-      //Vector offset;
-      //MutexLocker locker(&(theWorld->iMutex));
+      const dReal *tpos;
+      const dReal *tpos2;
+      dReal npos[3];
+      Vector offset;
+      MutexLocker locker(&(theWorld->iMutex));
 
-      //if(composite) {
-        //if(move_group) {
-          ///*
-            //brot = dBodyGetQuaternion(nBody);
-            //tpos2 = dGeomGetOffsetPosition(nGeom);
-            //tpos = dBodyGetPosition(nBody);
-            //dQtoR(brot, R);
-            //dMULTIPLY0_331(npos, R, tpos2);
-            //offset.x = pos->x - (sReal)(tpos[0]+npos[0]);
-            //offset.y = pos->y - (sReal)(tpos[1]+npos[1]);
-            //offset.z = pos->z - (sReal)(tpos[2]+npos[2]);
-          //*/
-          //tpos2 = dGeomGetPosition(nGeom);
-          //offset.x() = pos.x() - (sReal)(tpos2[0]);
-          //offset.y() = pos.y() - (sReal)(tpos2[1]);
-          //offset.z() = pos.z() - (sReal)(tpos2[2]);
-          //tpos = dBodyGetPosition(nBody);
-          //dBodySetPosition(nBody, tpos[0] + (dReal)offset.x(),
-                           //tpos[1] + (dReal)offset.y(),
-                           //tpos[2] + (dReal)offset.z());
-          //return offset;
-        //}
-        //else {
-          //tpos = dBodyGetPosition(nBody);
-          //tpos2 = dGeomGetOffsetPosition(nGeom);
-          //npos[0] = tpos[0] + tpos2[0];
-          //npos[1] = tpos[1] + tpos2[1];
-          //npos[2] = tpos[2] + tpos2[2];
-          //offset.x() = pos.x() - (sReal)(npos[0]);
-          //offset.y() = pos.y() - (sReal)(npos[1]);
-          //offset.z() = pos.z() - (sReal)(npos[2]);
-          ////std::cout << " " << pos.z();
-          //dGeomSetOffsetWorldPosition(nGeom, (dReal)pos.x(), (dReal)pos.y(),
-                                      //(dReal)pos.z());
-          //// here we have to recalculate the mass
-          //theWorld->resetCompositeMass(nBody);
-          //return offset;
-        //}
-      //}
-      //else {
-        //if(nBody) {
-          //tpos = dBodyGetPosition(nBody);
-          //offset.x() = pos.x() - (sReal)(tpos[0]);
-          //offset.y() = pos.y() - (sReal)(tpos[1]);
-          //offset.z() = pos.z() - (sReal)(tpos[2]);
-          //dBodySetPosition(nBody, (dReal)pos.x(), (dReal)pos.y(), (dReal)pos.z());
-          //return offset;
-        //}
-        //else if(nGeom) {
-          ////tpos = dGeomGetPosition(nGeom);
-          ////offset.x() = pos->x - (sReal)(tpos[0]);
-          ////offset.y() = pos->y - (sReal)(tpos[1]);
-          ////offset.z() = pos->z - (sReal)(tpos[2]);
-          //dGeomSetPosition(nGeom, (dReal)pos.x(), (dReal)pos.y(), (dReal)pos.z());
-          //return offset;
-        //}
-      //}
-      //return offset;
-      
+      if(composite) {
+        if(move_group) {
+          /*
+            brot = dBodyGetQuaternion(nBody);
+            tpos2 = dGeomGetOffsetPosition(nGeom);
+            tpos = dBodyGetPosition(nBody);
+            dQtoR(brot, R);
+            dMULTIPLY0_331(npos, R, tpos2);
+            offset.x = pos->x - (sReal)(tpos[0]+npos[0]);
+            offset.y = pos->y - (sReal)(tpos[1]+npos[1]);
+            offset.z = pos->z - (sReal)(tpos[2]+npos[2]);
+          */
+          tpos2 = dGeomGetPosition(nGeom);
+          offset.x() = pos.x() - (sReal)(tpos2[0]);
+          offset.y() = pos.y() - (sReal)(tpos2[1]);
+          offset.z() = pos.z() - (sReal)(tpos2[2]);
+          tpos = dBodyGetPosition(nBody);
+          dBodySetPosition(nBody, tpos[0] + (dReal)offset.x(),
+                           tpos[1] + (dReal)offset.y(),
+                           tpos[2] + (dReal)offset.z());
+          return offset;
+        }
+        else {
+          tpos = dBodyGetPosition(nBody);
+          tpos2 = dGeomGetOffsetPosition(nGeom);
+          npos[0] = tpos[0] + tpos2[0];
+          npos[1] = tpos[1] + tpos2[1];
+          npos[2] = tpos[2] + tpos2[2];
+          offset.x() = pos.x() - (sReal)(npos[0]);
+          offset.y() = pos.y() - (sReal)(npos[1]);
+          offset.z() = pos.z() - (sReal)(npos[2]);
+          //std::cout << " " << pos.z();
+          dGeomSetOffsetWorldPosition(nGeom, (dReal)pos.x(), (dReal)pos.y(),
+                                      (dReal)pos.z());
+          // here we have to recalculate the mass
+          theWorld->resetCompositeMass(nBody);
+          return offset;
+        }
+      }
+      else {
+        if(nBody) {
+          tpos = dBodyGetPosition(nBody);
+          offset.x() = pos.x() - (sReal)(tpos[0]);
+          offset.y() = pos.y() - (sReal)(tpos[1]);
+          offset.z() = pos.z() - (sReal)(tpos[2]);
+          dBodySetPosition(nBody, (dReal)pos.x(), (dReal)pos.y(), (dReal)pos.z());
+          return offset;
+        }
+        else if(nGeom) {
+          //tpos = dGeomGetPosition(nGeom);
+          //offset.x() = pos->x - (sReal)(tpos[0]);
+          //offset.y() = pos->y - (sReal)(tpos[1]);
+          //offset.z() = pos->z - (sReal)(tpos[2]);
+          dGeomSetPosition(nGeom, (dReal)pos.x(), (dReal)pos.y(), (dReal)pos.z());
+          return offset;
+        }
+      }
+      return offset;
     }
 
     /**
@@ -524,77 +509,76 @@ namespace mars {
      * position method.
      */
     const Quaternion NodePhysics::setRotation(const Quaternion &q, bool move_group) {
-        //  dBodySetQuaternion(nBody, (double)&q);
-               //dQuaternion tmp, tmp2, tmp3, tmp4, tmp5;  dddd
-      //const dReal *brot, *bpos, *gpos;
-      //Quaternion q2;
-      //dMatrix3 R;
-      //dVector3 pos, new_pos, new2_pos;
-      //MutexLocker locker(&(theWorld->iMutex));
+      dQuaternion tmp, tmp2, tmp3, tmp4, tmp5;
+      const dReal *brot, *bpos, *gpos;
+      Quaternion q2;
+      dMatrix3 R;
+      dVector3 pos, new_pos, new2_pos;
+      MutexLocker locker(&(theWorld->iMutex));
 
-      //pos[0] = pos[1] = pos[2] = 0;
-      //tmp[1] = (dReal)q.x();
-      //tmp[2] = (dReal)q.y();
-      //tmp[3] = (dReal)q.z();
-      //tmp[0] = (dReal)q.w();
-      //if(nBody) {
-        //bpos = dBodyGetPosition(nBody);
-        //pos[0] = bpos[0];
-        //pos[1] = bpos[1];
-        //pos[2] = bpos[2];
-        //brot = dBodyGetQuaternion(nBody);
-        //tmp4[0] = brot[0];
-        //tmp4[1] = brot[1];
-        //tmp4[2] = brot[2];
-        //tmp4[3] = brot[3];
-        //if(composite && !move_group) {
-          //dGeomGetQuaternion(nGeom, tmp2);
-          //dGeomSetOffsetWorldQuaternion(nGeom, tmp);
-        //}
-        //else if (composite) {
-          //dGeomGetQuaternion(nGeom, tmp2);
-          //dGeomGetOffsetQuaternion(nGeom, tmp3);
-          //tmp3[1] *= -1;
-          //tmp3[2] *= -1;
-          //tmp3[3] *= -1;
-          //dQMultiply0(tmp5, tmp, tmp3);
-          //dBodySetQuaternion(nBody, tmp5);
-        //}
-        //else {
-          //tmp2[0] = brot[0];
-          //tmp2[1] = brot[1];
-          //tmp2[2] = brot[2];
-          //tmp2[3] = brot[3];
-          //dBodySetQuaternion(nBody, tmp);
-        //}
-      //}
-      //else if(nGeom) {
-        //dGeomGetQuaternion(nGeom, tmp2);
-        //dGeomSetQuaternion(nGeom, tmp);
-      //}
-      //dQMultiply2(tmp3, tmp, tmp2);
-      //q2.x() = (sReal)tmp3[1];
-      //q2.y() = (sReal)tmp3[2];
-      //q2.z() = (sReal)tmp3[3];
-      //q2.w() = (sReal)tmp3[0];
-      //if(nBody && composite && move_group) {
-        //gpos = dGeomGetOffsetPosition(nGeom);
-        //dQtoR(tmp4, R);
-        //dMULTIPLY0_331(new_pos, R, gpos);
-        //pos[0] += new_pos[0];
-        //pos[1] += new_pos[1];
-        //pos[2] += new_pos[2];
-        //new_pos[0] *= -1;
-        //new_pos[1] *= -1;
-        //new_pos[2] *= -1;
-        //dQtoR(tmp3, R);
-        //dMULTIPLY0_331(new2_pos, R, new_pos);
-        //new_pos[0] = pos[0]+new2_pos[0];
-        //new_pos[1] = pos[1]+new2_pos[1];
-        //new_pos[2] = pos[2]+new2_pos[2];
-        //dBodySetPosition(nBody, new_pos[0], new_pos[1], new_pos[2]);
-      //}
-    return q;//2;
+      pos[0] = pos[1] = pos[2] = 0;
+      tmp[1] = (dReal)q.x();
+      tmp[2] = (dReal)q.y();
+      tmp[3] = (dReal)q.z();
+      tmp[0] = (dReal)q.w();
+      if(nBody) {
+        bpos = dBodyGetPosition(nBody);
+        pos[0] = bpos[0];
+        pos[1] = bpos[1];
+        pos[2] = bpos[2];
+        brot = dBodyGetQuaternion(nBody);
+        tmp4[0] = brot[0];
+        tmp4[1] = brot[1];
+        tmp4[2] = brot[2];
+        tmp4[3] = brot[3];
+        if(composite && !move_group) {
+          dGeomGetQuaternion(nGeom, tmp2);
+          dGeomSetOffsetWorldQuaternion(nGeom, tmp);
+        }
+        else if (composite) {
+          dGeomGetQuaternion(nGeom, tmp2);
+          dGeomGetOffsetQuaternion(nGeom, tmp3);
+          tmp3[1] *= -1;
+          tmp3[2] *= -1;
+          tmp3[3] *= -1;
+          dQMultiply0(tmp5, tmp, tmp3);
+          dBodySetQuaternion(nBody, tmp5);
+        }
+        else {
+          tmp2[0] = brot[0];
+          tmp2[1] = brot[1];
+          tmp2[2] = brot[2];
+          tmp2[3] = brot[3];
+          dBodySetQuaternion(nBody, tmp);
+        }
+      }
+      else if(nGeom) {
+        dGeomGetQuaternion(nGeom, tmp2);
+        dGeomSetQuaternion(nGeom, tmp);
+      }
+      dQMultiply2(tmp3, tmp, tmp2);
+      q2.x() = (sReal)tmp3[1];
+      q2.y() = (sReal)tmp3[2];
+      q2.z() = (sReal)tmp3[3];
+      q2.w() = (sReal)tmp3[0];
+      if(nBody && composite && move_group) {
+        gpos = dGeomGetOffsetPosition(nGeom);
+        dQtoR(tmp4, R);
+        dMULTIPLY0_331(new_pos, R, gpos);
+        pos[0] += new_pos[0];
+        pos[1] += new_pos[1];
+        pos[2] += new_pos[2];
+        new_pos[0] *= -1;
+        new_pos[1] *= -1;
+        new_pos[2] *= -1;
+        dQtoR(tmp3, R);
+        dMULTIPLY0_331(new2_pos, R, new_pos);
+        new_pos[0] = pos[0]+new2_pos[0];
+        new_pos[1] = pos[1]+new2_pos[1];
+        new_pos[2] = pos[2]+new2_pos[2];
+        dBodySetPosition(nBody, new_pos[0], new_pos[1], new_pos[2]);
+      }
+      return q2;
     }
 
     /**
@@ -702,6 +686,8 @@ namespace mars {
         dReal tempMass =(dReal)(node->mass);
         dMassSetBoxTotal(&nMass, tempMass, (dReal)(node->ext.x()),
                          (dReal)(node->ext.y()),(dReal)(node->ext.z()));
+                         
+
       }
       return true;
     }
@@ -718,8 +704,10 @@ namespace mars {
                   node->name.c_str(), node->index, node->ext.x());
         return false;
       }
+
       // build the ode representation
       nGeom = dCreateSphere(theWorld->getSpace(), (dReal)node->ext.x());
+
       // create the mass object for the sphere
       if(node->inertia_set) {
         setInertiaMass(node);
@@ -815,16 +803,13 @@ namespace mars {
       unsigned long size;
       int x, y;
       terrain = node->terrain;
-  
-      size = terrain->width*terrain->height;      
+      size = terrain->width*terrain->height;
       if(!height_data) height_data = (dReal*)calloc(size, sizeof(dReal));
-      
       for(x=0; x<terrain->height; x++) {
         for(y=0; y<terrain->width; y++) {
           height_data[(terrain->height-(x+1))*terrain->width+y] = (dReal)terrain->pixelData[x*terrain->width+y];
         }
       }
-
       // build the ode representation
       dHeightfieldDataID heightid = dGeomHeightfieldDataCreate();
 
@@ -835,9 +820,6 @@ namespace mars {
                                         terrain->width, terrain->height,
                                         REAL(1.0), REAL( 0.0 ),
                                         REAL(1.0), 0);
-                                        
-     // printf("++ %f %f %d %d ++\n", terrain->targetWidth,
-	//	terrain->targetHeight,terrain->width, terrain->height);
       // Give some very bounds which, while conservative,
       // makes AABB computation more accurate than +/-INF.
       dGeomHeightfieldDataSetBounds(heightid, REAL(-terrain->scale*2.0),
@@ -847,101 +829,9 @@ namespace mars {
       dRSetIdentity(R);
       dRFromAxisAndAngle(R, 1, 0, 0, M_PI/2);
       dGeomSetRotation(nGeom, R);
-      //node_data.height_field = 1;   //20150414 added
-     // printf("...(%d %d) (%f) (%f %f)######\n",terrain->width, terrain->height, terrain->scale, 
-     //  terrain->targetWidth,terrain->targetHeight);
-      
       return true;
     }
-    
-// create mlsfield  /////////////////////
-bool NodePhysics::createMlsfield(NodeData* node) {
-      dMatrix3 R;
-      unsigned long size;
-      int x, y;
-      terrain = node->terrain;
-#ifndef SERIALIZATION
-    terrain->height =140;
-    terrain->width =140;       
-#endif      
-      size = terrain->width*terrain->height;
-   
-      if(!mls_data) mls_data = (dReal*)calloc(size, sizeof(dReal));     
 
-//<----this code is just for test of MLS Heightfield object without using serialization
-#ifndef SERIALIZATION
-    
-	char *ptr;
-	char *err;
-	double f;
-	int i,j=0;
-	fp=fopen("DataHeight.txt", "r");  //this file should be stayed where Mars_app runs
-	while(!feof(fp)) 		
-	{
- 
-			fgets(buf, 50, fp);
-			//if(buf[0]=='%' || buf[0] == 10) continue;
-			i=0;
-			ptr = strtok( buf, ",");
-			
-			do{
-
-				f = strtod( ptr, &err);
-				data[i] = f;
-				//printf("%f %s\t",f,err);
-				i++;
-			}while(ptr = strtok(NULL, ","));
-
-			mls_mean[j++] = data[2];
-			//printf("(%d,%d,%f)\n", (int)data[0],(int)data[1],mls_mean[j-1]);			
-		
-	}
-		fclose(fp);				
-
-      int count = 0;
-       for(x=0; x<terrain->height; x++) {
-        for(y=0; y<terrain->width; y++) {
-          mls_data[(terrain->height-(x+1))*terrain->width+y] = mls_mean[count];    
-		  count++;
-        }
-      }  
-      
-         printf("mls grid has bee loaded from file..(%d %d) (%f) (%f %f)######\n",terrain->width, terrain->height, terrain->scale,terrain->targetWidth,terrain->targetHeight);      
-//---> unitl here the test code is 
-#else
-      size = terrain->width*terrain->height;
-      if(!mls_data) mls_data = (dReal*)calloc(size, sizeof(dReal));
-      for(x=0; x<terrain->height; x++) {
-        for(y=0; y<terrain->width; y++) {
-          mls_data[(terrain->height-(x+1))*terrain->width+y] = (dReal)terrain->pixelData[x*terrain->width+y];
-        }
-      }
-
-#endif	    
-      // build the ode representation
-	  dMlsfieldDataID mlsid;
-	  mlsid = dGeomMlsfieldDataCreate();      
-	
-      // Create an finite heightfield.
-      dGeomMlsfieldDataBuildCallback(mlsid, this, mlsfield_callback,
-                                        terrain->targetWidth,
-                                        terrain->targetHeight,
-                                        terrain->width, terrain->height,
-                                        REAL(1.0), REAL( 0.0 ),
-                                        REAL(1.0), 0);
-
-      // Give some very bounds which, while conservative,
-      // makes AABB computation more accurate than +/-INF.
-      dGeomMlsfieldDataSetBounds(mlsid, REAL(-terrain->scale*2.0),
-                                    REAL(terrain->scale*2.0));
-      nGeom = dCreateMlsfield(theWorld->getSpace(), mlsid, 1);
-  
-      dRSetIdentity(R);
-      dRFromAxisAndAngle(R, 1, 0, 0, M_PI/2);
-      dGeomSetRotation(nGeom, R);
- 
-      return true;
-    }
     /**
      * This method sets some properties for the node. The properties includes
      * the posistion, the rotation, the movability and the coposite group number
@@ -951,17 +841,19 @@ bool NodePhysics::createMlsfield(NodeData* node) {
       bool body_created = 1;
       dQuaternion tmp;
 
-
       tmp[1] = (dReal)node->rot.x();
       tmp[2] = (dReal)node->rot.y();
       tmp[3] = (dReal)node->rot.z();
       tmp[0] = (dReal)node->rot.w();
+      
+      //printf("(%f %f %f %f %f)...\n", tmp[1], tmp[2], tmp[3], tmp[0], node->density);
 
       // first we must find or create a physically body for the node
       // and connect the geometry to the body
       if(node->groupID) {
         body_created = theWorld->getCompositeBody(node->groupID, &nBody, this);
         composite = true;
+        
       }
       else {
         if(!nBody) nBody = dBodyCreate(theWorld->getWorld());
@@ -975,6 +867,7 @@ bool NodePhysics::createMlsfield(NodeData* node) {
       // and rotation of the geom
       if(body_created) {
         dBodySetMass(nBody, &nMass);
+        
         dBodySetPosition(nBody, (dReal)(node->pos.x()),
                          (dReal)(node->pos.y()),
                          (dReal)(node->pos.z()));
@@ -1416,17 +1309,9 @@ bool NodePhysics::createMlsfield(NodeData* node) {
     }
 
     dReal NodePhysics::heightCallback(int x, int y) {
+
       return (dReal)height_data[(y*terrain->width)+x]*terrain->scale;
     }
-
-    dReal NodePhysics::mlsCallback(int x, int y) {
-#ifndef	SERIALIZATION	
-		//this is just for test mls heightfield without using serialization  
-		terrain->width =140;
-		terrain->scale = 1;	
-#endif
-      return (dReal)mls_data[(y*terrain->width)+x]*terrain->scale;
-    }      
 
     void NodePhysics::setContactParams(contact_params& c_params) {
       MutexLocker locker(&(theWorld->iMutex));
@@ -1840,7 +1725,6 @@ bool NodePhysics::createMlsfield(NodeData* node) {
       }
       return 0.0;
     }
-   
 
   } // end of namespace sim
 } // end of namespace mars

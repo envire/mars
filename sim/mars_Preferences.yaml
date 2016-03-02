@@ -1,5 +1,0 @@
----
-Preferences:
-  - name: resources_path
-    type: string
-    value: /home/dfki.uni-bremen.de/yoo/en022016/install/share
