@@ -24,6 +24,7 @@
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/sim/ConfigMapItem.h>
 #include <base/TransformWithCovariance.hpp>
+#include <envire_core/graph/EnvireGraph.hpp>
 #include <stdlib.h>
 #include <algorithm>
 #include <cassert>

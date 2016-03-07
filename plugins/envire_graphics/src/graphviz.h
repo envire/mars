@@ -42,6 +42,7 @@
 #include <envire_core/events/GraphEventDispatcher.hpp>
 #include <envire_core/events/GraphItemEventDispatcher.hpp>
 #include <envire_core/items/ItemBase.hpp>
+#include <envire_core/graph/TreeView.hpp>
 
 namespace envire {namespace core {
   class Transform;

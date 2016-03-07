@@ -39,6 +39,7 @@
 // To log the graph
 #include <base/Time.hpp>
 #include <envire_core/graph/GraphViz.hpp>
+#include <envire_core/graph/EnvireGraph.hpp>
 
 using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
 
