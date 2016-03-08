@@ -212,102 +212,111 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
 
 void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e)
 {
-    LOG_DEBUG("Added Collidable");
-    smurf::Collidable col = e.item->getData();
-    urdf::Collision collision = col.getCollision();
-    boost::shared_ptr<urdf::Geometry> geom = collision.geometry;
-    switch(geom->type)
+    if (viewCollidables)
     {
-      case urdf::Geometry::BOX:
-      {
-          LOG_DEBUG("BOX");
-          //FIXME copy paste code from addBox()
-          boost::shared_ptr<urdf::Box> box = boost::dynamic_pointer_cast<urdf::Box>(geom);
-          base::Vector3d extents(box->dim.x, box->dim.y, box->dim.z);
-          NodeData node;
-          node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, extents, 0);
-          node.material.transparency = 0.5;
-          node.material.emissionFront = mars::utils::Color(0.0, 0.0, 0.8, 1.0);  
-          setPos(e.frame, node);
-          uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
-      }
-          break;
-      case urdf::Geometry::CYLINDER:
-      {
-          LOG_DEBUG("CYLINDER");
-          //FIXME copy paste code from addCylinder()
-          boost::shared_ptr<urdf::Cylinder> cylinder = boost::dynamic_pointer_cast<urdf::Cylinder>(geom);
-          //x = length, y = radius, z = not used
-          base::Vector3d extents(cylinder->radius, cylinder->length, 0);
-          NodeData node;
-          node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
-          node.material.transparency = 0.5;
-          node.material.emissionFront = mars::utils::Color(0.0, 0.0, 0.8, 1.0);  
-          setPos(e.frame, node); //set link position
-          uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
-      }
-        break;
-      case urdf::Geometry::MESH:
-        LOG_DEBUG("MESH");
-        //addMesh(visual, frameId, uuid);
-        break;
-      case urdf::Geometry::SPHERE:
-      {
-        boost::shared_ptr<urdf::Sphere> sphere = boost::dynamic_pointer_cast<urdf::Sphere>(geom);      
-        //y and z are unused
-        base::Vector3d extents(sphere->radius, 0, 0);
-        NodeData node;
-        node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0); //mass is zero because it doesnt matter for visual representation
-        node.material.transparency = 0.5;
-        node.material.emissionFront = mars::utils::Color(0.0, 0.0, 0.8, 1.0);  
-        setPos(e.frame, node); //set link position
-        uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
-      }
-        break;
-      default:
-        LOG_ERROR("[Envire Graphics] ERROR: unknown geometry type");
+        LOG_DEBUG("Added Collidable");
+        smurf::Collidable col = e.item->getData();
+        urdf::Collision collision = col.getCollision();
+        boost::shared_ptr<urdf::Geometry> geom = collision.geometry;
+        switch(geom->type)
+        {
+            case urdf::Geometry::BOX:
+            {
+                LOG_DEBUG("BOX");
+                //FIXME copy paste code from addBox()
+                boost::shared_ptr<urdf::Box> box = boost::dynamic_pointer_cast<urdf::Box>(geom);
+                base::Vector3d extents(box->dim.x, box->dim.y, box->dim.z);
+                NodeData node;
+                node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, extents, 0);
+                node.material.transparency = 0.5;
+                node.material.emissionFront = mars::utils::Color(0.0, 0.0, 0.8, 1.0);  
+                setPos(e.frame, node);
+                uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+            }
+            break;
+            case urdf::Geometry::CYLINDER:
+            {
+                LOG_DEBUG("CYLINDER");
+                //FIXME copy paste code from addCylinder()
+                boost::shared_ptr<urdf::Cylinder> cylinder = boost::dynamic_pointer_cast<urdf::Cylinder>(geom);
+                //x = length, y = radius, z = not used
+                base::Vector3d extents(cylinder->radius, cylinder->length, 0);
+                NodeData node;
+                node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
+                node.material.transparency = 0.5;
+                node.material.emissionFront = mars::utils::Color(0.0, 0.0, 0.8, 1.0);  
+                setPos(e.frame, node); //set link position
+                uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+            }
+            break;
+            case urdf::Geometry::MESH:
+                LOG_DEBUG("MESH");
+                //addMesh(visual, frameId, uuid);
+                break;
+            case urdf::Geometry::SPHERE:
+            {
+                boost::shared_ptr<urdf::Sphere> sphere = boost::dynamic_pointer_cast<urdf::Sphere>(geom);      
+                //y and z are unused
+                base::Vector3d extents(sphere->radius, 0, 0);
+                NodeData node;
+                node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0); //mass is zero because it doesnt matter for visual representation
+                node.material.transparency = 0.5;
+                node.material.emissionFront = mars::utils::Color(0.0, 0.0, 0.8, 1.0);  
+                setPos(e.frame, node); //set link position
+                uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+            }
+            break;
+            default:
+                LOG_ERROR("[Envire Graphics] ERROR: unknown geometry type");
+        }
     }
 }
 
 void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e)
 {
-    const FrameId source = e.item->getData().getSourceFrame().getName();
-    const FrameId target = e.item->getData().getTargetFrame().getName();
-    
-    
-    const envire::core::Transform tf = control->graph->getTransform(source, target);
-    const double length = tf.transform.translation.norm();
-    base::Vector3d extents(0.01, length, 0);
-    
-    NodeData node;
-    node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
-    node.material.emissionFront = mars::utils::Color(0.0, 1.0, 0.0, 1.0);    
-    node.material.transparency = 0.5;
-    
-    const envire::core::Transform originToSource = control->graph->getTransform(originId, source); 
-    const envire::core::Transform originToTarget = control->graph->getTransform(originId, target); 
-    node.pos = (originToSource.transform.translation + originToTarget.transform.translation) / 2.0;
-    node.rot = e.item->getData().getParentToJointOrigin().rotation();
-    
-    uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+    if (viewJoints)
+    {
+        const FrameId source = e.item->getData().getSourceFrame().getName();
+        const FrameId target = e.item->getData().getTargetFrame().getName();
+        
+        
+        const envire::core::Transform tf = control->graph->getTransform(source, target);
+        const double length = tf.transform.translation.norm();
+        base::Vector3d extents(0.01, length, 0);
+        
+        NodeData node;
+        node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
+        node.material.emissionFront = mars::utils::Color(0.0, 1.0, 0.0, 1.0);    
+        node.material.transparency = 0.5;
+        
+        const envire::core::Transform originToSource = control->graph->getTransform(originId, source); 
+        const envire::core::Transform originToTarget = control->graph->getTransform(originId, target); 
+        node.pos = (originToSource.transform.translation + originToTarget.transform.translation) / 2.0;
+        node.rot = e.item->getData().getParentToJointOrigin().rotation();
+        
+        uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+    }
 }
 
 void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e)
 {
-    boost::shared_ptr<urdf::Sphere> sphere( new urdf::Sphere);
-    sphere->radius = 0.01;
-    //y and z are unused
-    base::Vector3d extents(sphere->radius, 0, 0);
-    //LOG_DEBUG_S("[Envire Graphics] add SPHERE visual. name: " << visual.name << ", frame: "   << frameId << ", radius: " << sphere->radius);
-    
-    NodeData node;
-    node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0); //mass is zero because it doesnt matter for visual representation
-    //setNodeDataMaterial(node, visual.material);
-    //node.material.transparency = 0.5;
-    node.material.emissionFront = mars::utils::Color(1.0, 0.0, 0.0, 1.0);
-    
-    setPos(e.frame, node); //set link position
-    uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+    if (viewFrames)
+    {
+        boost::shared_ptr<urdf::Sphere> sphere( new urdf::Sphere);
+        sphere->radius = 0.01;
+        //y and z are unused
+        base::Vector3d extents(sphere->radius, 0, 0);
+        //LOG_DEBUG_S("[Envire Graphics] add SPHERE visual. name: " << visual.name << ", frame: "   << frameId << ", radius: " << sphere->radius);
+        
+        NodeData node;
+        node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0); //mass is zero because it doesnt matter for visual representation
+        //setNodeDataMaterial(node, visual.material);
+        //node.material.transparency = 0.5;
+        node.material.emissionFront = mars::utils::Color(1.0, 0.0, 0.0, 1.0);
+        
+        setPos(e.frame, node); //set link position
+        uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+    }
 }
 
 void GraphViz::addVisual(const envire::smurf::Visual& visual, const FrameId& frameId,

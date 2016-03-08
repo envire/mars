@@ -85,10 +85,10 @@ namespace mars {
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 envire::smurf::Robot asguard(iniPose, path);
                 asguard.initGraph(*(control->graph), center);
-                envire::core::GraphViz viz;
-                std::string timestamp = base::Time::now().toString();
-                std::string name = "initGraph" + timestamp + ".dot";
-                viz.write(*(control->graph), name);
+                //envire::core::GraphViz viz;
+                //std::string timestamp = base::Time::now().toString();
+                //std::string name = "initGraph" + timestamp + ".dot";
+                //viz.write(*(control->graph), name);
                 asguard.loadLinks(*(control->graph), nextGroupId);
                 //name = "loadLinks" + timestamp + ".dot";
                 //viz.write(*(control->graph), name);
