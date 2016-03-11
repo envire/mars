@@ -84,6 +84,7 @@ namespace mars {
         
       private:
         const bool debug = true;
+        unsigned int motorIndex;
 
       }; // end of class definition EnvireMotors
 

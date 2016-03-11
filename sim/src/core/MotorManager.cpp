@@ -42,6 +42,10 @@
 #include <mars/interfaces/sim/JointManagerInterface.h>
 #include <mars/utils/MutexLocker.h>
 
+#include <envire_core/items/Item.hpp>
+#include <envire_core/graph/EnvireGraph.hpp>
+
+
 namespace mars {
   namespace sim {
   
@@ -86,9 +90,36 @@ namespace mars {
       }
   
       SimMotor* newMotor = new SimMotor(control, *motorS);
+      // Here we have to access the joint through the graph
+      
+      // given the id of the joint get the joint from the graph
+      envire::core::FrameId frameName = motorS->name;
+      LOG_DEBUG(("[MotorManager]::addMotor: The frame to look for the joint is "+ frameName).c_str());
+      
+      // Get from this frame the correspondent joint
+      
+      using motorItem = envire::core::Item<std::shared_ptr<MotorData>>;
+      using Iterator = envire::core::EnvireGraph::ItemIterator<motorItem>;
+      Iterator begin, end;
+      boost::tie(begin, end) = control->graph->getItems<motorItem>(frameName);
+      if (begin != end){
+          LOG_DEBUG(("[MotorManager]::addMotor: Found the joint to which the motor should be attaeched in frame "+ frameName).c_str());
+      }
+      
+      //  using Iterator = EnvireGraph::ItemIterator<physicsNodeItem>;
+      //  Iterator begin, end;
+      //  boost::tie(begin, end) = control->graph->getItems<physicsNodeItem>(frameName);
+      //  if (begin != end){
+      //    objectSim = begin->getData();
+      //    found = true;
+      //    //LOG_DEBUG("[Envire Joints]::getSimObject: Found the physical object in frame "+ frameName);
+      //  }
+      
+      
       newMotor->attachJoint(control->joints->getSimJoint(motorS->jointIndex));
   
       if(motorS->jointIndex2)
+        // Here we have to access the joint through the graph
         newMotor->attachPlayJoint(control->joints->getSimJoint(motorS->jointIndex2));
   
       newMotor->setSMotor(*motorS);
@@ -98,7 +129,6 @@ namespace mars {
       control->sim->sceneHasChanged(false);
       return motorS->index;
     }
-
 
     /**
      *\brief Returns the number of motors that are currently present in the simulation.
