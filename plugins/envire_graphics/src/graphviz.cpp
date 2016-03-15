@@ -70,7 +70,7 @@ void GraphViz::frameAdded(const FrameAddedEvent& e)
   //use the first frame we get as originId
   if(originId.empty())
   {
-    changeOrigin(e.addedFrame);
+    changeOrigin(e.frame);
   }
 }
 
