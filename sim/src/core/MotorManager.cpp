@@ -41,6 +41,7 @@
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/interfaces/sim/JointManagerInterface.h>
 #include <mars/utils/MutexLocker.h>
+#include <mars/interfaces/Logging.hpp>
 
 #include <envire_core/items/Item.hpp>
 #include <envire_core/graph/EnvireGraph.hpp>
@@ -94,33 +95,30 @@ namespace mars {
       
       // given the id of the joint get the joint from the graph
       envire::core::FrameId frameName = motorS->name;
-      LOG_DEBUG(("[MotorManager]::addMotor: The frame to look for the joint is "+ frameName).c_str());
+      LOG_DEBUG(("[MotorManager::addMotor]: The frame to look for the joint is "+ frameName).c_str());
       
-      // Get from this frame the correspondent joint
-      
-      using motorItem = envire::core::Item<std::shared_ptr<MotorData>>;
-      using Iterator = envire::core::EnvireGraph::ItemIterator<motorItem>;
+      using jointItem = envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>;
+      using Iterator = envire::core::EnvireGraph::ItemIterator<jointItem>;
       Iterator begin, end;
-      boost::tie(begin, end) = control->graph->getItems<motorItem>(frameName);
+      boost::tie(begin, end) = control->graph->getItems<jointItem>(frameName);
       if (begin != end){
-          LOG_DEBUG(("[MotorManager]::addMotor: Found the joint to which the motor should be attaeched in frame "+ frameName).c_str());
+          mars::interfaces::JointInterface joint = begin->getData();
+          found = true;
+          LOG_DEBUG(("[MotorManager::addMotor]: Found the joint to which the motor should be attaeched in frame "+ frameName).c_str());
+          //newMotor->attachJoint(control->joints->getSimJoint(motorS->jointIndex));
+          newMotor->attachJoint(joint);
       }
-      
       //  using Iterator = EnvireGraph::ItemIterator<physicsNodeItem>;
       //  Iterator begin, end;
       //  boost::tie(begin, end) = control->graph->getItems<physicsNodeItem>(frameName);
       //  if (begin != end){
-      //    objectSim = begin->getData();
-      //    found = true;
+
       //    //LOG_DEBUG("[Envire Joints]::getSimObject: Found the physical object in frame "+ frameName);
       //  }
       
-      
-      newMotor->attachJoint(control->joints->getSimJoint(motorS->jointIndex));
-  
-      if(motorS->jointIndex2)
-        // Here we have to access the joint through the graph
-        newMotor->attachPlayJoint(control->joints->getSimJoint(motorS->jointIndex2));
+      //if(motorS->jointIndex2)
+      //  // Here we have to access the joint through the graph
+      //  newMotor->attachPlayJoint(control->joints->getSimJoint(motorS->jointIndex2));
   
       newMotor->setSMotor(*motorS);
       iMutex.lock();

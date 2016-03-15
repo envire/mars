@@ -15,29 +15,19 @@ pkg_check_modules(PKGCONFIG REQUIRED
 			    mars_interfaces
                 smurf
                 envire_core
+                mars_sim
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
 add_definitions(${PKGCONFIG_CFLAGS_OTHER})  #flags excluding the ones with -I
 
-include_directories(
-	src
-)
-
-set(SOURCES 
-	src/EnvireMotors.cpp
-)
-
-set(HEADERS
-	src/EnvireMotors.hpp
-)
-
-
+add_subdirectory(src)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME}
                       ${PKGCONFIG_LIBRARIES}
+                      ${BASE_LIBRARIES}
 )
 
 if(WIN32)
