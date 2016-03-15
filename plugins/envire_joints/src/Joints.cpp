@@ -49,7 +49,8 @@ namespace mars {
       using namespace mars::interfaces;
       using namespace envire::core;
       using physicsNodeItem = Item<std::shared_ptr<NodeInterface>>;
-      using physicsJointItemPtr = envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>::Ptr;
+      using physicsJointItemPtr = Item<std::shared_ptr<mars::interfaces::JointInterface>>::Ptr;
+      using simJointItemPtr = Item<std::shared_ptr<mars::sim::SimJoint>>::Ptr;
 
       // Public Methods
       EnvireJoints::EnvireJoints(lib_manager::LibManager *theManager): MarsPluginTemplate(theManager, "EnvireJoints"), GraphEventDispatcher(){
@@ -185,11 +186,19 @@ namespace mars {
         return instantiable;
       }
       
-      void EnvireJoints::storeSimJoint(std::shared_ptr<mars::interfaces::JointInterface>& jointInterface, FrameId storageFrame){
+      void EnvireJoints::storeSimJoint (std::shared_ptr<mars::interfaces::JointInterface>& jointInterface, mars::interfaces::JointData* jointPhysics, FrameId storageFrame){
 
         physicsJointItemPtr physicsItem(new envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>(jointInterface));
+        // src/core/SimJoint.cpp:40:    SimJoint::SimJoint(ControlCenter *c, const JointData &sJoint_)
+        // Create the simJoint from the control center and the jointData
+        mars::sim::SimJoint simJoint(control, (*jointPhysics));
+        // Make a shared_pointer directed to the simjoint and store the shared_ptr in the graph
+        simJointItemPtr simJointItem(new envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>(simJoint));
+        control->graph->addItemToFrame(storageFrame, simJointItem);          
         control->graph->addItemToFrame(storageFrame, physicsItem);          
         //LOG_DEBUG("[Envire Joints] Joint interface stored after creation in frame: " +storageFrame);
+        //
+        //FIXME this guy should store a SimJoint and not a JointInterface
       }
       
       /*
@@ -205,7 +214,7 @@ namespace mars {
         {
           if (debug) { LOG_DEBUG("[EnvireJoints::join] Physical joint '" + jointPhysics->name + "' created.");}
           control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
-          storeSimJoint(jointInterface, storageFrame);
+          storeSimJoint(jointInterface, jointPhysics, storageFrame);
         }
         else
         {
