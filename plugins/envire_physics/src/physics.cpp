@@ -67,7 +67,7 @@ void GraphPhysics::frameAdded(const FrameAddedEvent& e)
   //the first frame that is added is the root (for now)
   if(originId.empty())
   {
-    originId = e.addedFrame;
+    originId = e.frame;
   }
 }
 
