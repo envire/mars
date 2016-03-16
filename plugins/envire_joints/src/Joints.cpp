@@ -191,7 +191,7 @@ namespace mars {
         physicsJointItemPtr physicsItem(new envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>(jointInterface));
         // src/core/SimJoint.cpp:40:    SimJoint::SimJoint(ControlCenter *c, const JointData &sJoint_)
         // Create the simJoint from the control center and the jointData
-        mars::sim::SimJoint simJoint(control, (*jointPhysics));
+        mars::sim::SimJoint* simJoint(new mars::sim::SimJoint(control, (*jointPhysics)));
         // Make a shared_pointer directed to the simjoint and store the shared_ptr in the graph
         simJointItemPtr simJointItem(new envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>(simJoint));
         control->graph->addItemToFrame(storageFrame, simJointItem);          
