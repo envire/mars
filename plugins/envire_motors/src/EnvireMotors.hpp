@@ -30,15 +30,15 @@
 #define MARS_PLUGINS_ENVIRE_MOTORS_H
 
 #ifdef _PRINT_HEADER_
-  #warning "EnvireMotors.h"
+  #warning "EnvireMotors.hpp"
 #endif
 
 // set define if you want to extend the gui
 //#define PLUGIN_WITH_MARS_GUI
 #include <mars/interfaces/sim/MarsPluginTemplate.h>
 #include <mars/interfaces/MARSDefs.h>
-#include <mars/data_broker/ReceiverInterface.h>
-#include <mars/cfg_manager/CFGManagerInterface.h>
+//#include <mars/data_broker/ReceiverInterface.h>
+//#include <mars/cfg_manager/CFGManagerInterface.h>
 
 
 #include <envire_core/events/GraphEventDispatcher.hpp>

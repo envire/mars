@@ -48,6 +48,7 @@ namespace mars {
       using namespace mars::utils;
       using namespace mars::interfaces;
       using namespace envire::core;
+      using namespace mars::sim;
       using physicsNodeItem = Item<std::shared_ptr<NodeInterface>>;
       using physicsJointItemPtr = Item<std::shared_ptr<mars::interfaces::JointInterface>>::Ptr;
       using simJointItemPtr = Item<std::shared_ptr<mars::sim::SimJoint>>::Ptr;
@@ -186,12 +187,13 @@ namespace mars {
         return instantiable;
       }
       
-      void EnvireJoints::storeSimJoint (std::shared_ptr<mars::interfaces::JointInterface>& jointInterface, mars::interfaces::JointData* jointPhysics, FrameId storageFrame){
+      void EnvireJoints::storeSimJoint (const std::shared_ptr<mars::interfaces::JointInterface>& jointInterface, mars::interfaces::JointData* jointData, FrameId storageFrame){
 
         physicsJointItemPtr physicsItem(new envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>(jointInterface));
         // src/core/SimJoint.cpp:40:    SimJoint::SimJoint(ControlCenter *c, const JointData &sJoint_)
         // Create the simJoint from the control center and the jointData
-        mars::sim::SimJoint* simJoint(new mars::sim::SimJoint(control, (*jointPhysics)));
+        mars::sim::SimJoint* simJoint(new mars::sim::SimJoint(control, (*jointData)));
+        simJoint->setInterface(jointInterface.get());
         // Make a shared_pointer directed to the simjoint and store the shared_ptr in the graph
         simJointItemPtr simJointItem(new envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>(simJoint));
         control->graph->addItemToFrame(storageFrame, simJointItem);          
@@ -205,16 +207,22 @@ namespace mars {
        * Create the physical node data
        * 
        */
-      void EnvireJoints::join(JointData* jointPhysics, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
+      void EnvireJoints::join(JointData* jointData, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
       {
-        std::shared_ptr<mars::interfaces::JointInterface> jointInterface(mars::sim::PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
+        JointPhysics* jointPhysics(new JointPhysics(control->sim->getPhysics())); // Here maybe we should have used the PhysicsMapper --- I Don't know
+        //JointInterface* jointInterface( new JointInterface(PhysicsMapper::newJointPhysics(control->sim->getPhysics())));
+        std::shared_ptr<JointInterface> jointInterfacePtr(jointPhysics);
+        //jointsPhysics.push_back(JointPhysics(*jointInterfacePtr));
+        //JointInterface* jointInterface( new JointInterface(PhysicsMapper::newJointPhysics( control->sim->getPhysics())));
+        //std::shared_ptr<mars::interfaces::JointInterface>jointInterfacePtr(jointInterface);
+        //jointPhysics* jointPhysics( new PhysicsMapper::newJointPhysics(control->sim->getPhysics()))
         //LOG_DEBUG("[Envire Joints] Joint %d;  %d  ;  %d  ;  %.4f, %.4f, %.4f  ;  %.4f, %.4f, %.4f\n",  jointPhysics->index, jointPhysics->nodeIndex1, jointPhysics->nodeIndex2,  jointPhysics->anchor.x(), jointPhysics->anchor.y(), jointPhysics->anchor.z(), jointPhysics->axis1.x(), jointPhysics->axis1.y(), jointPhysics->axis1.z());
-        //LOG_DEBUG("[Envire Joints] About to create joint " + jointPhysics->name);
-        if(jointInterface->createJoint(jointPhysics, sourceSim.get(), targetSim.get()))
+        LOG_DEBUG("[Envire Joints] About to create joint " + jointData->name);
+        if(jointInterfacePtr->createJoint(jointData, sourceSim.get(), targetSim.get()))
         {
-          if (debug) { LOG_DEBUG("[EnvireJoints::join] Physical joint '" + jointPhysics->name + "' created.");}
+          if (debug) { LOG_DEBUG("[EnvireJoints::join] Physical joint '" + jointData->name + "' created.");}
           control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
-          storeSimJoint(jointInterface, jointPhysics, storageFrame);
+          storeSimJoint(jointInterfacePtr, jointData, storageFrame);
         }
         else
         {

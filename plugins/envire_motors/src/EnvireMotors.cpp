@@ -37,6 +37,7 @@
 #include <mars/interfaces/sim/LoadCenter.h>
 
 #include <configmaps/ConfigData.h>
+#include <base/Logging.hpp>
 
 using namespace mars::plugins::envire_motors;
 using namespace mars::utils;
@@ -90,7 +91,7 @@ void EnvireMotors::itemAdded(const TypedItemAddedEvent<Item<smurf::Motor>>& e)
     // I would have expected this oldId to be the one that is taken from the motorSmurf
     // TODO You must make sure before you instantiate the motor that the joint is already created. We can do a dependency list again.
     unsigned long newId = control->motors->addMotor(motorPtr.get());
-    //if (debug) {LOG_DEBUG("[EnvireMotors::ItemAdded] OldId: %d. NewId: %d", oldId, newId);}
+    if (debug) {LOG_DEBUG("[EnvireMotors::ItemAdded] NewId: %d", newId);}
     if (!newId){
         LOG_ERROR("addMotor returned 0");
     }
@@ -109,7 +110,7 @@ void EnvireMotors::itemAdded(const TypedItemAddedEvent<Item<smurf::Motor>>& e)
 }
 
 void EnvireMotors::update(sReal time_ms) {
-    
+    //control->motors->setMotorValue(1, 0.15);
     // control->motors->setMotorValue(id, value);
 }
 

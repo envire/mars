@@ -60,7 +60,7 @@ namespace mars {
                 control->graph->addFrame(center);
                 NodeData data;
                 data.init("floorData", Vector(0,0,0));
-                data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(2.5, 5, 0.1), 0.1);
+                data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(5, 5, 0.1), 0.1);
                 data.movable = false;
                 mars::sim::PhysicsConfigMapItem::Ptr item(new mars::sim::PhysicsConfigMapItem);
                 data.material.transparency = 0.5;
@@ -78,18 +78,19 @@ namespace mars {
                 envire::core::Transform iniPose;
                 iniPose.transform.orientation = base::Quaterniond::Identity();
                 iniPose.transform.translation << 1.0, 1.0, 0.3;
-                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SPACECLIMBER)%>"); 
+                //iniPose.transform.translation << 1.0, 1.0, 2.3;
+                std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SPACECLIMBER)%>"); 
                 //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>"); 
-                std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_with_motor.smurf"); 
+                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_with_motor.smurf"); 
                 //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_dynamic_joint.smurf"); 
                 //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes.smurf"); 
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 envire::smurf::Robot asguard(iniPose, path);
                 asguard.initGraph(*(control->graph), center);
-                //envire::core::GraphViz viz;
-                //std::string timestamp = base::Time::now().toString();
-                //std::string name = "initGraph" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
+                envire::core::GraphViz viz;
+                std::string timestamp = base::Time::now().toString();
+                std::string name = "initGraph" + timestamp + ".dot";
+                viz.write(*(control->graph), name);
                 asguard.loadLinks(*(control->graph), nextGroupId);
                 //name = "loadLinks" + timestamp + ".dot";
                 //viz.write(*(control->graph), name);
@@ -101,12 +102,14 @@ namespace mars {
                 //name = "loadFixedJoints" + timestamp + ".dot";
                 //viz.write(*(control->graph), name);
                 asguard.loadDynamicJoints(*(control->graph));
-                //name = "loadDynamicJoints" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
+                name = "loadDynamicJoints" + timestamp + ".dot";
+                viz.write(*(control->graph), name);
                 asguard.loadVisuals(*(control->graph));
-                asguard.loadMotors(*(control->graph));
                 //name = "loadVisuals" + timestamp + ".dot";
                 //viz.write(*(control->graph), name);
+                asguard.loadMotors(*(control->graph));
+                name = "loadMotors" + timestamp + ".dot";
+                viz.write(*(control->graph), name);
                 //LOG_DEBUG("Loaded to Mars/Envire graph");
             }
             

@@ -41,6 +41,7 @@
 #include <mars/interfaces/JointData.h>
 #include <mars/interfaces/sim/JointInterface.h>
 #include <mars/sim/SimJoint.h>
+#include <mars/sim/JointPhysics.h>
 
 namespace mars {
   namespace plugins {
@@ -84,8 +85,8 @@ namespace mars {
         unsigned long getSimObjectId(const envire::core::FrameId& frameName);
         bool instantiable(smurf::Transformation* smurfJoint, std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, std::shared_ptr< mars::interfaces::NodeInterface >& targetSim);
         void addDependencies(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, envire::core::FrameId storageFrame);
-        void storeSimJoint(std::shared_ptr< mars::interfaces::JointInterface >& jointInterface, mars::interfaces::JointData* jointPhysics, envire::core::FrameId storageFrame);
-        void join(mars::interfaces::JointData* jointPhysics, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);
+        void storeSimJoint(const std::shared_ptr< mars::interfaces::JointInterface >& jointInterface, mars::interfaces::JointData* jointData, envire::core::FrameId storageFrame);
+        void join(mars::interfaces::JointData* jointData, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);
         void instantiate(smurf::StaticTransformation* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
         void instantiate(smurf::Joint* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
         mars::interfaces::JointType getJointType(smurf::Joint* joint);
@@ -101,7 +102,8 @@ namespace mars {
         std::map<envire::core::FrameId, std::vector<envire::core::FrameId>> dependencies;
         
         
-        bool debug = false;
+        bool debug = true;
+        
       }; // end of class definition EnvireJoints
 
     } // end of namespace envire_joints
