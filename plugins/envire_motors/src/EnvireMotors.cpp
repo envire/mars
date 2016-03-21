@@ -63,6 +63,7 @@ EnvireMotors::~EnvireMotors() {
 
 void EnvireMotors::itemAdded(const TypedItemAddedEvent<Item<smurf::Motor>>& e)
 {
+    // FIXME This method can fail if a motor tries to connect to a joint which has not been instantiated in simulation. We need dependencies as we needed for the joints.
     if (debug) 
     {
         LOG_DEBUG(("[EnvireMotors::ItemAdded] Smurf::Motor Detected in frame ***" + e.frame + "***").c_str());

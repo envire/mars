@@ -21,7 +21,7 @@
 /**
  * \file EnvireMotors.h
  * \author Raul (raul.dominguez@dfki.de)
- * \brief Create
+ * \brief Create and store simulated motors from their definition in the envire representation
  *
  * Version 0.1
  */

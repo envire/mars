@@ -4,9 +4,12 @@ set(PROJECT_DESCRIPTION "Create")
 cmake_minimum_required(VERSION 2.6)
 include(FindPkgConfig)
 
-find_package(mars)
-mars_defaults()
+find_package(lib_manager)
+lib_defaults()
 define_module_info()
+
+#FIXME the defintions have to the same as in mars/sim/CMakeLists.txt
+add_definitions(-DODE11=1 -DdDOUBLE)
 
 
 pkg_check_modules(PKGCONFIG REQUIRED

@@ -30,15 +30,23 @@
 #define MARS_PLUGINS_ENVIRE_SENSORS_H
 
 #ifdef _PRINT_HEADER_
-  #warning "EnvireSensors.h"
+  #warning "EnvireSensors.hpp"
 #endif
 
 // set define if you want to extend the gui
 //#define PLUGIN_WITH_MARS_GUI
 #include <mars/interfaces/sim/MarsPluginTemplate.h>
 #include <mars/interfaces/MARSDefs.h>
-#include <mars/data_broker/ReceiverInterface.h>
-#include <mars/cfg_manager/CFGManagerInterface.h>
+//#include <mars/data_broker/ReceiverInterface.h>
+//#include <mars/cfg_manager/CFGManagerInterface.h>
+
+#include <envire_core/events/GraphEventDispatcher.hpp>
+#include <envire_core/events/GraphItemEventDispatcher.hpp>
+#include <envire_core/graph/TreeView.hpp>
+#include <envire_core/items/Item.hpp>
+
+#include <smurf/Sensor.hpp>
+#include <smurf/Frame.hpp>
 
 #include <string>
 
@@ -48,11 +56,10 @@ namespace mars {
     namespace envire_sensors {
 
       // inherit from MarsPluginTemplateGUI for extending the gui
-      class EnvireSensors: public mars::interfaces::MarsPluginTemplate,
-        public mars::data_broker::ReceiverInterface,
-        // for gui
-        // public mars::main_gui::MenuInterface,
-        public mars::cfg_manager::CFGClient {
+      class EnvireSensors: public mars::interfaces::MarsPluginTemplate, 
+                           public envire::core::GraphEventDispatcher,
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Sensor>>
+      {
 
       public:
         EnvireSensors(lib_manager::LibManager *theManager);
@@ -70,20 +77,12 @@ namespace mars {
         void reset();
         void update(mars::interfaces::sReal time_ms);
 
-        // DataBrokerReceiver methods
-        virtual void receiveData(const data_broker::DataInfo &info,
-                                 const data_broker::DataPackage &package,
-                                 int callbackParam);
-        // CFGClient methods
-        virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
-
-        // MenuInterface methods
-        //void menuAction(int action, bool checked = false);
-
         // EnvireSensors methods
 
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Sensor>>& e);
+        
       private:
-        cfg_manager::cfgPropertyStruct example;
+        bool debug = true;
 
       }; // end of class definition EnvireSensors
 

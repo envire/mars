@@ -217,7 +217,7 @@ namespace mars {
         //std::shared_ptr<mars::interfaces::JointInterface>jointInterfacePtr(jointInterface);
         //jointPhysics* jointPhysics( new PhysicsMapper::newJointPhysics(control->sim->getPhysics()))
         //LOG_DEBUG("[Envire Joints] Joint %d;  %d  ;  %d  ;  %.4f, %.4f, %.4f  ;  %.4f, %.4f, %.4f\n",  jointPhysics->index, jointPhysics->nodeIndex1, jointPhysics->nodeIndex2,  jointPhysics->anchor.x(), jointPhysics->anchor.y(), jointPhysics->anchor.z(), jointPhysics->axis1.x(), jointPhysics->axis1.y(), jointPhysics->axis1.z());
-        LOG_DEBUG("[Envire Joints] About to create joint " + jointData->name);
+        if (debug){LOG_DEBUG("[Envire Joints] About to create joint " + jointData->name);}
         if(jointInterfacePtr->createJoint(jointData, sourceSim.get(), targetSim.get()))
         {
           if (debug) { LOG_DEBUG("[EnvireJoints::join] Physical joint '" + jointData->name + "' created.");}
