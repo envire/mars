@@ -59,6 +59,9 @@
 #include <mars/utils/MutexLocker.h>
 #include <mars/interfaces/Logging.hpp>
 
+#include <envire_core/items/Item.hpp>
+#include <envire_core/graph/EnvireGraph.hpp>
+
 #include <cstdio>
 #include <stdexcept>
 
@@ -306,22 +309,25 @@ namespace mars {
         return 0;
       }
 
-      int id = -1;
-      iMutex.lock();
-      id = next_sensor_id++;
-      iMutex.unlock();
+      //int id = -1; //This id is the one of the node to which the sensor should be attached, but we don't have this id, we can have a pointer to the node or the frame in which the node is
+      //iMutex.lock();
+      //id = next_sensor_id++;
+      //iMutex.unlock();
   
       if(config->name.empty()){
         std::stringstream str;
-        str << "SENSOR-" << id;
+        str << "SENSOR-" << config->id;
         config->name = str.str();
       }
-      config->id = id;
-      BaseSensor *sensor = ((*it).second)(this->control,config);
-      iMutex.lock();
-      simSensors[id] = sensor;
-      iMutex.unlock();
-  
+      //config->id = id;
+      LOG_DEBUG("[SensorManager::createAndAddSensor] ID is %ld", config->id);
+      //BaseSensor *sensor = ((*it).second)(this->control,config); // I guess that ((*it).second) gives the type of the sensor
+      BaseSensor* sensor = new BaseSensor;
+      sensor = ((*it).second)(this->control,config);      
+      using sensorItemPtr = envire::core::Item<std::shared_ptr<BaseSensor>>::Ptr;
+      sensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
+      control->graph->addItemToFrame(config->frame, sensorItem);
+      LOG_DEBUG("[SensorManager::createAndAddSensor] Base sensor instantiated and addedto the graph. Now it will be attached to a node");
       if(!reload) {
         simSensorsReload.push_back(SensorReloadHelper(type_name, config));
       }
@@ -341,7 +347,9 @@ namespace mars {
       }
       //LOG_DEBUG("found sensor: %s", type.c_str());
       BaseConfig *cfg = ((*it).second)(control, config);
+      cfg->frame = (*config)["frame"][0].getString();
       cfg->name = (*config)["name"][0].getString();
+      cfg->id = (*config)["id"]; // We give this one from the plugin
       return createAndAddSensor(type, cfg);
     }
 

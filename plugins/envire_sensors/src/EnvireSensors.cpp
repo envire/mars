@@ -32,6 +32,8 @@
 #include <mars/data_broker/DataPackage.h>
 
 #include <mars/interfaces/sim/SensorManagerInterface.h>
+#include <mars/interfaces/sim/NodeInterface.h>
+#include <configmaps/ConfigData.h>
 
 #include <envire_core/graph/EnvireGraph.hpp>
 
@@ -78,11 +80,17 @@ namespace mars {
         }
         smurf::Sensor sensorSmurf = e.item->getData();
         configmaps::ConfigMap sensorMap = sensorSmurf.getMap();
+        sensorMap["id"] = next_sensor_id++;
+        sensorMap["frame"] = e.frame;
+        if(debug) 
+        {
+            LOG_DEBUG("[EnvireSensors::ItemAdded] Next sensor id: %lu",  next_sensor_id );
+        }
         if ((std::string) sensorMap["type"] == "Joint6DOF") {
           std::string linkname = (std::string) sensorMap["link"];
-          // The name of the joint to which is attached
+          // the name of the joint to which is attached
           // in smurf.cpp:
-          //std::string jointname = model->getLink(linkname)->parent_joint->name;
+          //std::string jointname = model->getlink(linkname)->parent_joint->name;
           std::string jointname = e.frame;
           if (debug)
           {
@@ -99,21 +107,24 @@ namespace mars {
         }
         // More stuff is done in addConfigMap for the sensors, but I think we don't need it in the envire_graph
         BaseSensor* sensor = new BaseSensor;
-        sensor = control->sensors->createAndAddSensor(&sensorMap); //Look into this method
-        // I think that I just need to find the simNode that corresponds and attach the Sensor
-        // Create the Sensor based on what is in CreateAndAddSensor
-        //          Get the type and the BaseConfig // 1st CreateAndAddSensor
-        //          BaseSensor *sensor = ((*it).second)(this->control,config); // 2nd CreateAndAddSensor
-        //          Get the node and attach to it the BaseSensor // See NodeManager::addNodeSensor
-        
-        if (sensor != 0)
-        {
-          LOG_ERROR("[EnvireSensors::ItemAdded] Error in create sensor ");
+        sensor = control->sensors->createAndAddSensor(&sensorMap); //This one saves the sensor in the graph
+        // Now need to find the simNode that corresponds and attach the Sensor
+        using physicsNodeItem = Item<std::shared_ptr<NodeInterface>>;
+        using Iterator = EnvireGraph::ItemIterator<physicsNodeItem>;
+        std::shared_ptr<NodeInterface> simNode;
+        Iterator begin, end;
+        boost::tie(begin, end) = control->graph->getItems<physicsNodeItem>(e.frame);
+        if (begin != end){
+          simNode = begin->getData();
+          if (debug) {
+               LOG_DEBUG("[EnvireSensors] The node interface to attach the sensor is found");
+          }
         }
-        // Save the instantiated sensor in the graph
-        using sensorItemPtr = Item<std::shared_ptr<BaseSensor>>::Ptr;
-        sensorItemPtr sensorItem(new Item<std::shared_ptr<BaseSensor>>(sensor));
-        control->graph->addItemToFrame(e.frame, sensorItem);
+        else
+        {
+          LOG_ERROR("Could not find node interface to which to attach the sensor. ");       
+        }
+        simNode->addSensor(sensor);
       }
     } // end of namespace envire_sensors
   } // end of namespace plugins

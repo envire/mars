@@ -30,11 +30,15 @@
 #include <mars/interfaces/sim/NodeManagerInterface.h>
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/interfaces/sim/LoadCenter.h>
+#include <mars/interfaces/sim/NodeInterface.h>
 
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <mars/utils/MutexLocker.h>
+
+#include <envire_core/graph/EnvireGraph.hpp>
+#include <envire_core/items/Item.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -71,7 +75,10 @@ namespace mars {
       current_pose.setIdentity();
       num_points = 0;
 
-      this->attached_node = config.attached_node;
+      LOG_DEBUG(("[RotatingRaySensor] The frame in which the sensor is is: " + config.frame).c_str());
+      // FIXME Here the node is not to be found
+      //this->attached_node = config.attached_node; 
+      this->attached_node = config.id; 
 
       std::string groupName, dataName;
       drawStruct draw;
@@ -84,15 +91,54 @@ namespace mars {
       for(int i = 0; i < 4; ++i)
         rotationIndices[i] = -1;
 
-      bool erg = control->nodes->getDataBrokerNames(attached_node, &groupName, &dataName);
+      LOG_DEBUG(("[RotatingRaySensor] The frame in which the sensor is is: " + config.frame).c_str());
+
+      // FIXME Here the node is not to be found
+      bool erg = control->nodes->getDataBrokerNames(attached_node, &groupName, &dataName); // Do we need these databrokerNames? How can we implement this?
       if(!erg) { // To remove warning.
         assert(erg);
       }
+      
+      // get the node:... We actually have to get a nodeSim or a nodeData
+      // Then, in GraphPhysics you have to also save the nodeData
+      using physicsNodeItem = envire::core::Item<std::shared_ptr<NodeInterface>>;
+      using Iterator = envire::core::EnvireGraph::ItemIterator<physicsNodeItem>;
+      std::shared_ptr<NodeInterface> simNode;
+      Iterator begin, end;
+      boost::tie(begin, end) = control->graph->getItems<physicsNodeItem>(config.frame);
+      if (begin != end){
+        simNode = begin->getData();
+        LOG_DEBUG("[RotatingRaySensor] The node interface to attach the sensor is found");
+        simNode->
+      }
+      else
+      {
+        LOG_DEBUG("[RotatingRaySensor] The node interface to attach the sensor is NOT found");
+      }
+      
+      
+      // We might have to do here something like this
+        //bool NodeManager::getDataBrokerNames(NodeId id, std::string *groupName,
+        //                                     std::string *dataName) const {
+        //  NodeMap::const_iterator iter = simNodes.find(id);
+        //  //LOG_DEBUG("We have currently %i elements\n",(int)simNodes.size());
+        //  if (iter == simNodes.end())
+        //    return false;
+        //  iter->second->getDataBrokerNames(groupName, dataName);
+        //  return true;
+        //}
+    
+      // I am not sure if this works either...
       if(control->dataBroker->registerTimedReceiver(this, groupName, dataName,"mars_sim/simTimer",updateRate)) {
       }
 
-      position = control->nodes->getPosition(attached_node);
-      orientation = control->nodes->getRotation(attached_node);
+      envire::core::Transform sensorTf = control->graph->getTransform("center", config.frame); //FIXME Standarize the center of the graph name
+      position = sensorTf.transform.translation;
+      orientation = sensorTf.transform.orientation;
+      
+      LOG_DEBUG("[RotatingRaySensor] Position and orientation obtained ");
+      //position = control->nodes->getPosition(attached_node); //These ones we can get from the frame name
+      //orientation = control->nodes->getRotation(attached_node);
       orientation_offset.setIdentity();
       
       // Fills the direction array.
@@ -151,9 +197,6 @@ namespace mars {
           }
         }
       }
-
-      // Add sensor after everything has been initialized.
-      control->nodes->addNodeSensor(this);
 
       // GraphicsManager crashes if default constructor drawStruct is passed.
       if(config.draw_rays) {

@@ -37,6 +37,7 @@
 //#define PLUGIN_WITH_MARS_GUI
 #include <mars/interfaces/sim/MarsPluginTemplate.h>
 #include <mars/interfaces/MARSDefs.h>
+#include <mars/interfaces/sensor_bases.h>
 //#include <mars/data_broker/ReceiverInterface.h>
 //#include <mars/cfg_manager/CFGManagerInterface.h>
 
@@ -79,11 +80,12 @@ namespace mars {
 
         // EnvireSensors methods
 
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Sensor>>& e);
+        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Sensor>>& e);        
         
       private:
         bool debug = true;
-
+        unsigned long next_sensor_id = 0;
+        
       }; // end of class definition EnvireSensors
 
     } // end of namespace envire_sensors

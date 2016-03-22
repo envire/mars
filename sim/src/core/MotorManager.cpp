@@ -96,7 +96,7 @@ namespace mars {
       
       // given the id of the joint get the joint from the graph
       envire::core::FrameId frameName = motorS->name;
-      LOG_DEBUG(("[MotorManager::addMotor]: The frame to look for the joint is "+ frameName).c_str());
+      //LOG_DEBUG(("[MotorManager::addMotor]: The frame to look for the joint is "+ frameName).c_str());
       
       using jointItem = envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>;
       using Iterator = envire::core::EnvireGraph::ItemIterator<jointItem>;
@@ -104,10 +104,11 @@ namespace mars {
       boost::tie(begin, end) = control->graph->getItems<jointItem>(frameName); // TODO: The frame where the joint is stored is not the one stored in the joint name, but the parent of that one
       if (begin != end){
           std::shared_ptr<mars::sim::SimJoint> joint = begin->getData();
-          LOG_DEBUG(("[MotorManager::addMotor]: Found the joint to which the motor should be attaeched in frame "+ frameName).c_str());
+          //LOG_DEBUG(("[MotorManager::addMotor]: Found the joint to which the motor should be attaeched in frame "+ frameName).c_str());
       //    //newMotor->attachJoint(control->joints->getSimJoint(motorS->jointIndex));
           newMotor->attachJoint(joint.get());
-          LOG_DEBUG("[MotorManager::addMotor]: The motor was attached to the joint");
+          //LOG_DEBUG("[MotorManager::addMotor]: The motor was attached to the joint");
+          //LOG_DEBUG("[MotorManager::addMotor]: The motor's axis is: %d", motorS->axis);
       }
       //  using Iterator = EnvireGraph::ItemIterator<physicsNodeItem>;
       //  Iterator begin, end;
