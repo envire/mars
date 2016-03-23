@@ -26,6 +26,7 @@
  */
 
 #include "RotatingRaySensor.h"
+#include <SimNode.h>
 
 #include <mars/interfaces/sim/NodeManagerInterface.h>
 #include <mars/interfaces/sim/SimulatorInterface.h>
@@ -93,27 +94,38 @@ namespace mars {
 
       LOG_DEBUG(("[RotatingRaySensor] The frame in which the sensor is is: " + config.frame).c_str());
 
-      // FIXME Here the node is not to be found
-      bool erg = control->nodes->getDataBrokerNames(attached_node, &groupName, &dataName); // Do we need these databrokerNames? How can we implement this?
-      if(!erg) { // To remove warning.
-        assert(erg);
-      }
+      //// FIXME Here the node is not to be found
+      //bool erg = control->nodes->getDataBrokerNames(attached_node, &groupName, &dataName); // Do we need these databrokerNames? How can we implement this?
+      //if(!erg) { // To remove warning.
+      //  assert(erg);
+      //}
       
       // get the node:... We actually have to get a nodeSim or a nodeData
-      // Then, in GraphPhysics you have to also save the nodeData
-      using physicsNodeItem = envire::core::Item<std::shared_ptr<NodeInterface>>;
-      using Iterator = envire::core::EnvireGraph::ItemIterator<physicsNodeItem>;
-      std::shared_ptr<NodeInterface> simNode;
+      // Then, in GraphPhysics you have to also save the nodeData: done
+      using nodeDataItem = envire::core::Item<std::shared_ptr<NodeData>>;
+      using Iterator = envire::core::EnvireGraph::ItemIterator<nodeDataItem>;
+      std::shared_ptr<NodeData> nodeDataPtr;
       Iterator begin, end;
-      boost::tie(begin, end) = control->graph->getItems<physicsNodeItem>(config.frame);
+      boost::tie(begin, end) = control->graph->getItems<nodeDataItem>(config.frame);
       if (begin != end){
-        simNode = begin->getData();
-        LOG_DEBUG("[RotatingRaySensor] The node interface to attach the sensor is found");
-        simNode->
+        LOG_DEBUG("[RotatingRaySensor] The node data for the data broker to link to the sensor is found");
+        nodeDataPtr = begin->getData(); // This Sim Node was never created this should actually be done in envire_physics or in other plugin I guess
+        mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (*nodeDataPtr));
+        LOG_DEBUG("[RotatingRaySensor] SimNode created");
+        std::shared_ptr<mars::sim::SimNode> simNodePtr(simNode);
+        using simNodeItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>::Ptr;
+        using simNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
+        simNodeItemPtr nodeDataItem( new simNodeItem(simNodePtr));
+        control->graph->addItemToFrame(config.frame, nodeDataItem);
+        LOG_DEBUG("[RotatingRaySensor] The SimNode is created and added to the graph");
+        simNode->getDataBrokerNames(&groupName, &dataName);
+        LOG_DEBUG("[RotatingRaySensor] getDataBrokerNames executed...");
+        LOG_DEBUG(("[RotatingRaySensor] GroupName: " + groupName ).c_str());
+        LOG_DEBUG(("[RotatingRaySensor] DataName: " + dataName).c_str());
       }
       else
       {
-        LOG_DEBUG("[RotatingRaySensor] The node interface to attach the sensor is NOT found");
+        LOG_DEBUG("[RotatingRaySensor] The node data for the data broker to link to the sensor is NOT found");
       }
       
       
@@ -127,7 +139,8 @@ namespace mars {
         //  iter->second->getDataBrokerNames(groupName, dataName);
         //  return true;
         //}
-    
+      
+      
       // I am not sure if this works either...
       if(control->dataBroker->registerTimedReceiver(this, groupName, dataName,"mars_sim/simTimer",updateRate)) {
       }

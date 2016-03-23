@@ -33,9 +33,13 @@
 
 #include <mars/interfaces/sim/SensorManagerInterface.h>
 #include <mars/interfaces/sim/NodeInterface.h>
+#include <mars/sim/RotatingRaySensor.h>
+#include <base/Time.hpp>
 #include <configmaps/ConfigData.h>
 
 #include <envire_core/graph/EnvireGraph.hpp>
+#include <base/samples/Pointcloud.hpp>
+
 
 namespace mars {
   namespace plugins {
@@ -65,6 +69,40 @@ namespace mars {
 
 
       void EnvireSensors::update(sReal time_ms) {
+          
+        using sensorItem = envire::core::Item<std::shared_ptr<BaseSensor>>;
+        using Iterator = envire::core::EnvireGraph::ItemIterator<sensorItem>;
+        std::shared_ptr<BaseSensor> sensorPtr;
+        Iterator begin, end;
+        boost::tie(begin, end) = control->graph->getItems<sensorItem>("box");
+        if (begin != end){
+            sensorPtr = begin->getData();
+            std::string name = sensorPtr->getName();
+            LOG_DEBUG(("[EnvireSensor::update] We found the sensor with name: "+ name).c_str());
+            //double ** data;
+            //int sensor_data = sensorPtr->getSensorData(data);
+            //LOG_DEBUG("[EnvireSensor::update] This is the sensor data: %d"+ sensor_data);
+            mars::sim::RotatingRaySensor * raySensor;
+            raySensor = dynamic_cast<mars::sim::RotatingRaySensor*>(sensorPtr.get());
+            LOG_DEBUG("[EnvireSensor::update] We have the raysensor");
+            
+            base::samples::Pointcloud pointcloud;
+            pointcloud.time = getTime();
+            
+            std::vector<mars::utils::Vector> data;
+            if(mSensor->getPointcloud(data)) {
+                // TODO Min/max is actually already part of the sensor
+                std::vector<mars::utils::Vector>::iterator it = data.begin();
+                for(; it != data.end(); it++) {
+                    int len_ray = it->norm();
+                    if(len_ray >= _min_range.get() && len_ray <= _max_range.get()) {
+                        base::Vector3d vec((*it)[0], (*it)[1], (*it)[2]);
+                        pointcloud.points.push_back(vec);
+                    }
+                }
+                _pointcloud.write(pointcloud);
+            }
+        }
 
       }
 
