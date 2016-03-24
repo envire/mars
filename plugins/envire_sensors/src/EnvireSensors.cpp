@@ -87,21 +87,18 @@ namespace mars {
             LOG_DEBUG("[EnvireSensor::update] We have the raysensor");
             
             base::samples::Pointcloud pointcloud;
-            pointcloud.time = getTime();
+            pointcloud.time = base::Time::now();
             
             std::vector<mars::utils::Vector> data;
-            if(mSensor->getPointcloud(data)) {
+            if(raySensor->getPointcloud(data)) {
                 // TODO Min/max is actually already part of the sensor
                 std::vector<mars::utils::Vector>::iterator it = data.begin();
                 for(; it != data.end(); it++) {
-                    int len_ray = it->norm();
-                    if(len_ray >= _min_range.get() && len_ray <= _max_range.get()) {
-                        base::Vector3d vec((*it)[0], (*it)[1], (*it)[2]);
-                        pointcloud.points.push_back(vec);
-                    }
+                    base::Vector3d vec((*it)[0], (*it)[1], (*it)[2]);
+                    pointcloud.points.push_back(vec);
                 }
-                _pointcloud.write(pointcloud);
             }
+            LOG_DEBUG("[EnvireSensor::update] We have found, %d ", pointcloud.points.size());
         }
 
       }
