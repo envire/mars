@@ -18,12 +18,17 @@
  *
  */
 #include "physics.h"
+
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
+
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/interfaces/Logging.hpp>
+
 #include <mars/sim/ConfigMapItem.h>
 #include <mars/sim/PhysicsMapper.h>
+#include <mars/sim/SimNode.h>
+
 #include <base/TransformWithCovariance.hpp>
 #include <stdlib.h>
 #include <iostream>
@@ -335,6 +340,16 @@ bool GraphPhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const 
     using dataItemPtr = envire::core::Item<shared_ptr<NodeData>>::Ptr;
     dataItemPtr dataItem(new envire::core::Item<shared_ptr<NodeData>>(node));
     control->graph->addItemToFrame(frame, dataItem);
+    // Create and store also a simNode
+    
+    mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (*node));
+    std::shared_ptr<mars::sim::SimNode> simNodePtr(simNode);
+    using SimNodeItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>::Ptr;
+    using SimNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
+    SimNodeItemPtr simNodeItem( new SimNodeItem(simNodePtr));        
+    control->graph->addItemToFrame(frame, simNodeItem);
+    if (debug){ LOG_DEBUG("[EnvirePhysics::InstantiateNode] The SimNode is created and added to the graph");}
+    
   }
   return instantiated;
 }
