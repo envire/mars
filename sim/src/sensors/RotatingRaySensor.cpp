@@ -79,7 +79,7 @@ namespace mars {
       LOG_DEBUG(("[RotatingRaySensor] The frame in which the sensor is is: " + config.frame).c_str());
       // FIXME Here the node is not to be found
       //this->attached_node = config.attached_node; 
-      this->attached_node = config.id; 
+      //this->attached_node = config.id;  // We don't use the id's
 
       std::string groupName, dataName;
       drawStruct draw;
@@ -92,44 +92,31 @@ namespace mars {
       for(int i = 0; i < 4; ++i)
         rotationIndices[i] = -1;
 
-      LOG_DEBUG(("[RotatingRaySensor] The frame in which the sensor is is: " + config.frame).c_str());
-
       //// FIXME Here the node is not to be found
       //bool erg = control->nodes->getDataBrokerNames(attached_node, &groupName, &dataName); // Do we need these databrokerNames? How can we implement this?
       //if(!erg) { // To remove warning.
       //  assert(erg);
       //}
       
-      // get the node:... We actually have to get a nodeSim or a nodeData
-      // Then, in GraphPhysics you have to also save the nodeData: done
-      using nodeDataItem = envire::core::Item<std::shared_ptr<NodeData>>;
-      using Iterator = envire::core::EnvireGraph::ItemIterator<nodeDataItem>;
-      std::shared_ptr<NodeData> nodeDataPtr;
+      using SimNodeItem = envire::core::Item<std::shared_ptr<SimNode>>;
+      using Iterator = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
+      std::shared_ptr<SimNode> simNodePtr;
       Iterator begin, end;
-      boost::tie(begin, end) = control->graph->getItems<nodeDataItem>(config.frame);
+      boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(config.frame);
       if (begin != end){
-        LOG_DEBUG("[RotatingRaySensor] The node data for the data broker to link to the sensor is found");
-        nodeDataPtr = begin->getData(); // This Sim Node was never created this should actually be done in envire_physics or in other plugin I guess
-        mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (*nodeDataPtr));
-        LOG_DEBUG("[RotatingRaySensor] SimNode created");
-        std::shared_ptr<mars::sim::SimNode> simNodePtr(simNode);
-        using simNodeItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>::Ptr;
-        using simNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
-        simNodeItemPtr nodeDataItem( new simNodeItem(simNodePtr));
-        control->graph->addItemToFrame(config.frame, nodeDataItem);
-        LOG_DEBUG("[RotatingRaySensor] The SimNode is created and added to the graph");
-        simNode->getDataBrokerNames(&groupName, &dataName);
-        LOG_DEBUG("[RotatingRaySensor] getDataBrokerNames executed...");
+        LOG_DEBUG("[RotatingRaySensor] The SimNode for the data broker to link to the sensor is found");
+        simNodePtr = begin->getData(); 
+        simNodePtr->getDataBrokerNames(&groupName, &dataName);
         LOG_DEBUG(("[RotatingRaySensor] GroupName: " + groupName ).c_str());
         LOG_DEBUG(("[RotatingRaySensor] DataName: " + dataName).c_str());
       }
       else
       {
-        LOG_DEBUG("[RotatingRaySensor] The node data for the data broker to link to the sensor is NOT found");
+        LOG_DEBUG("[RotatingRaySensor] The SimNode for the data broker to link to the sensor is NOT found");
       }
       
       
-      // We might have to do here something like this
+      // We might have to do here something like this DONE...
         //bool NodeManager::getDataBrokerNames(NodeId id, std::string *groupName,
         //                                     std::string *dataName) const {
         //  NodeMap::const_iterator iter = simNodes.find(id);
@@ -228,9 +215,11 @@ namespace mars {
       mars::utils::MutexLocker lock(&mutex_pointcloud);
       if(full_scan) {
         full_scan = false;
+        LOG_DEBUG("[RotatingRaySensor::getPointcloud] Seems to go well");
         pcloud =  pointcloud_full;
         return true;
       } else {
+          LOG_DEBUG("[RotatingRaySensor::getPointcloud] Full scan is false");
           return false;
       }
     }

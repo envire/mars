@@ -34,6 +34,8 @@
 #include <mars/interfaces/sim/SensorManagerInterface.h>
 #include <mars/interfaces/sim/NodeInterface.h>
 #include <mars/sim/RotatingRaySensor.h>
+#include <mars/sim/NodePositionSensor.h>
+
 #include <base/Time.hpp>
 #include <configmaps/ConfigData.h>
 
@@ -79,9 +81,35 @@ namespace mars {
             sensorPtr = begin->getData();
             std::string name = sensorPtr->getName();
             LOG_DEBUG(("[EnvireSensor::update] We found the sensor with name: "+ name).c_str());
+            
+            mars::sim::NodePositionSensor * posSensor;
+            posSensor = dynamic_cast<mars::sim::NodePositionSensor*>(sensorPtr.get());
+            LOG_DEBUG(("[EnvireSensor::update] We have the position sensor with name: " + posSensor->getName()).c_str());
+            
+            sReal *sens_val;
+            int count_val = posSensor->getSensorData(&sens_val);
+            
+            //char * data;
+            //int dimensions = posSensor-> getAsciiData(data);
+            
+            //sReal **data;
+            //int dimensions = posSensor->getSensorData(data);
+            
+            LOG_DEBUG("[EnvireSensor::update] Dimensions of the sensor data: , %d ", count_val);
+            LOG_DEBUG("[EnvireSensor::update] data 1: , %d", ((double)sens_val[0]));
+            LOG_DEBUG("[EnvireSensor::update] data 2: , %d", ((double)sens_val[1]));
+            LOG_DEBUG("[EnvireSensor::update] data 3: , %d", ((double)sens_val[2]));
+            
+            
+            // TODO For this sensor I m not doing anything with the broadcaster. How is the new data arriving to the object?
+            // TODO SimNode AddSensor method seems not to show traces, is it not executin?
+
+            
+            /*
             //double ** data;
             //int sensor_data = sensorPtr->getSensorData(data);
             //LOG_DEBUG("[EnvireSensor::update] This is the sensor data: %d"+ sensor_data);
+            // TODO Do this for the position sensor
             mars::sim::RotatingRaySensor * raySensor;
             raySensor = dynamic_cast<mars::sim::RotatingRaySensor*>(sensorPtr.get());
             LOG_DEBUG("[EnvireSensor::update] We have the raysensor");
@@ -99,6 +127,7 @@ namespace mars {
                 }
             }
             LOG_DEBUG("[EnvireSensor::update] We have found, %d ", pointcloud.points.size());
+            */
         }
 
       }
@@ -115,12 +144,12 @@ namespace mars {
         }
         smurf::Sensor sensorSmurf = e.item->getData();
         configmaps::ConfigMap sensorMap = sensorSmurf.getMap();
-        sensorMap["id"] = next_sensor_id++;
+        //sensorMap["id"] = next_sensor_id++;
         sensorMap["frame"] = e.frame;
         if(debug) 
         {
             LOG_DEBUG("[EnvireSensors::ItemAdded] Next sensor id: %lu",  next_sensor_id );
-        }
+        }        
         if ((std::string) sensorMap["type"] == "Joint6DOF") {
           std::string linkname = (std::string) sensorMap["link"];
           // the name of the joint to which is attached
@@ -159,6 +188,11 @@ namespace mars {
         {
           LOG_ERROR("Could not find node interface to which to attach the sensor. ");       
         }
+        // Here might be the reason why it does not work: First Look, everything seems to be fine here
+        // Maybe the problem is ...
+        // - Due to data Broker
+        // - Wrong sensor initialization
+        // - ...?
         simNode->addSensor(sensor);
       }
     } // end of namespace envire_sensors
