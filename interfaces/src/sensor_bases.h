@@ -46,6 +46,7 @@ namespace mars {
       BaseConfig() : updateRate(10) {}
       virtual ~BaseConfig() {}
       std::string name;
+      std::string frame;
       unsigned long id;
       unsigned long updateRate;
     }; // end of class BaseConfig
