@@ -78,6 +78,9 @@ namespace mars {
         void reset();
         void update(mars::interfaces::sReal time_ms);
 
+        void display_position_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr );
+        void display_rotatingRay_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr );
+            
         // EnvireSensors methods
 
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Sensor>>& e);        

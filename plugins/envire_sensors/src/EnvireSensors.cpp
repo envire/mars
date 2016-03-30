@@ -33,6 +33,7 @@
 
 #include <mars/interfaces/sim/SensorManagerInterface.h>
 #include <mars/interfaces/sim/NodeInterface.h>
+#include <mars/sim/SimNode.h>
 #include <mars/sim/RotatingRaySensor.h>
 #include <mars/sim/NodePositionSensor.h>
 
@@ -70,8 +71,53 @@ namespace mars {
       }
 
 
+      void EnvireSensors::display_position_data(const std::shared_ptr< BaseSensor >& sensorPtr)
+      {
+        // TODO For this sensor I m not doing anything with the broadcaster. How is the new data arriving to the object?
+        std::string name = sensorPtr->getName();
+        LOG_DEBUG(("[EnvireSensor::display_position_data] We found the sensor with name: "+ name).c_str());
+        
+        mars::sim::NodePositionSensor * posSensor;
+        posSensor = dynamic_cast<mars::sim::NodePositionSensor*>(sensorPtr.get());
+        LOG_DEBUG(("[EnvireSensor::display_position_data] We have the position sensor with name: " + posSensor->getName()).c_str());
+        
+        sReal *sens_val;
+        int count_val = posSensor->getSensorData(&sens_val);
+        
+        //char * data;
+        //int dimensions = posSensor-> getAsciiData(data);
+        
+        //sReal **data;
+        //int dimensions = posSensor->getSensorData(data);
+        
+        LOG_DEBUG("[EnvireSensor::display_position_data] Dimensions of the sensor data: , %d ", count_val);
+        LOG_DEBUG("[EnvireSensor::display_position_data] data 1: , %d", ((double)sens_val[0]));
+        LOG_DEBUG("[EnvireSensor::display_position_data] data 2: , %d", ((double)sens_val[1]));
+        LOG_DEBUG("[EnvireSensor::display_position_data] data 3: , %d", ((double)sens_val[2]));
+      }
+      
+      void EnvireSensors::display_rotatingRay_data(const std::shared_ptr< BaseSensor >& sensorPtr)
+      {
+        mars::sim::RotatingRaySensor * raySensor;
+        raySensor = dynamic_cast<mars::sim::RotatingRaySensor*>(sensorPtr.get());
+        LOG_DEBUG("[EnvireSensor::display_rotatingRay_data] We have the raysensor");
+        
+        base::samples::Pointcloud pointcloud;
+        pointcloud.time = base::Time::now();
+        
+        std::vector<mars::utils::Vector> data;
+        if(raySensor->getPointcloud(data)) {
+          // TODO Min/max is actually already part of the sensor
+          std::vector<mars::utils::Vector>::iterator it = data.begin();
+          for(; it != data.end(); it++) {
+            base::Vector3d vec((*it)[0], (*it)[1], (*it)[2]);
+            pointcloud.points.push_back(vec);
+          }
+        }
+        LOG_DEBUG("[EnvireSensor::display_rotatingRay_data] We have found, %d ", pointcloud.points.size());
+      }
+        
       void EnvireSensors::update(sReal time_ms) {
-          
         using sensorItem = envire::core::Item<std::shared_ptr<BaseSensor>>;
         using Iterator = envire::core::EnvireGraph::ItemIterator<sensorItem>;
         std::shared_ptr<BaseSensor> sensorPtr;
@@ -79,77 +125,23 @@ namespace mars {
         boost::tie(begin, end) = control->graph->getItems<sensorItem>("box");
         if (begin != end){
             sensorPtr = begin->getData();
-            std::string name = sensorPtr->getName();
-            LOG_DEBUG(("[EnvireSensor::update] We found the sensor with name: "+ name).c_str());
-            
-            mars::sim::NodePositionSensor * posSensor;
-            posSensor = dynamic_cast<mars::sim::NodePositionSensor*>(sensorPtr.get());
-            LOG_DEBUG(("[EnvireSensor::update] We have the position sensor with name: " + posSensor->getName()).c_str());
-            
-            sReal *sens_val;
-            int count_val = posSensor->getSensorData(&sens_val);
-            
-            //char * data;
-            //int dimensions = posSensor-> getAsciiData(data);
-            
-            //sReal **data;
-            //int dimensions = posSensor->getSensorData(data);
-            
-            LOG_DEBUG("[EnvireSensor::update] Dimensions of the sensor data: , %d ", count_val);
-            LOG_DEBUG("[EnvireSensor::update] data 1: , %d", ((double)sens_val[0]));
-            LOG_DEBUG("[EnvireSensor::update] data 2: , %d", ((double)sens_val[1]));
-            LOG_DEBUG("[EnvireSensor::update] data 3: , %d", ((double)sens_val[2]));
-            
-            
-            // TODO For this sensor I m not doing anything with the broadcaster. How is the new data arriving to the object?
-            // TODO SimNode AddSensor method seems not to show traces, is it not executin?
-
-            
-            /*
-            //double ** data;
-            //int sensor_data = sensorPtr->getSensorData(data);
-            //LOG_DEBUG("[EnvireSensor::update] This is the sensor data: %d"+ sensor_data);
-            // TODO Do this for the position sensor
-            mars::sim::RotatingRaySensor * raySensor;
-            raySensor = dynamic_cast<mars::sim::RotatingRaySensor*>(sensorPtr.get());
-            LOG_DEBUG("[EnvireSensor::update] We have the raysensor");
-            
-            base::samples::Pointcloud pointcloud;
-            pointcloud.time = base::Time::now();
-            
-            std::vector<mars::utils::Vector> data;
-            if(raySensor->getPointcloud(data)) {
-                // TODO Min/max is actually already part of the sensor
-                std::vector<mars::utils::Vector>::iterator it = data.begin();
-                for(; it != data.end(); it++) {
-                    base::Vector3d vec((*it)[0], (*it)[1], (*it)[2]);
-                    pointcloud.points.push_back(vec);
-                }
-            }
-            LOG_DEBUG("[EnvireSensor::update] We have found, %d ", pointcloud.points.size());
-            */
+            //TODO We don't get any reading, maybe we have to use the receive data before in the sensor, that one needs the information from the data broadcaster
+            //display_position_data(sensorPtr);
+            display_rotatingRay_data(sensorPtr);
         }
-
       }
-
 
       void EnvireSensors::itemAdded(const TypedItemAddedEvent<Item<smurf::Sensor>>& e)
       {
-        // Sensor instantiation based on smurf.cpp - addConfigMap() and 
+        // NOTE Sensor instantiation based on smurf.cpp - addConfigMap() and 
         // FIXME This method fails if a sensor tries to connect to a link which has not been instantiated in simulation. We need dependencies as we needed for the joints.
-        // First will be implemented with this error case not been covered and once sensors can be simulated this will be tackled
         if(debug) 
         {
-            LOG_DEBUG(("[EnvireSensors::ItemAdded] Smurf::Sensor Detected in frame ***" + e.frame + "***").c_str());
+          LOG_DEBUG(("[EnvireSensors::ItemAdded] Smurf::Sensor Detected in frame ***" + e.frame + "***").c_str());
         }
         smurf::Sensor sensorSmurf = e.item->getData();
         configmaps::ConfigMap sensorMap = sensorSmurf.getMap();
-        //sensorMap["id"] = next_sensor_id++;
         sensorMap["frame"] = e.frame;
-        if(debug) 
-        {
-            LOG_DEBUG("[EnvireSensors::ItemAdded] Next sensor id: %lu",  next_sensor_id );
-        }        
         if ((std::string) sensorMap["type"] == "Joint6DOF") {
           std::string linkname = (std::string) sensorMap["link"];
           // the name of the joint to which is attached
@@ -160,40 +152,47 @@ namespace mars {
           {
             LOG_DEBUG(("[EnvireSensors::ItemAdded] linkname "+ linkname).c_str());
             LOG_DEBUG(("[EnvireSensors::ItemAdded] jointname "+ jointname).c_str());
-          //fprintf(stderr, "addConfig: %s\n", jointname.c_str());
-          //fprintf(stderr, "addConfig: %s\n", linkname.c_str());
           }
-
-          // I think we don't need the following things (from smurf.cpp): 
+          //NOTE I think we don't need the following things (from smurf.cpp): 
           //sensorMap["nodeID"] = (ulong) nodeIDMap[linkname];
           //sensorMap["jointID"] = (ulong) jointIDMap[jointname];
           //fprintf(stderr, "creating Joint6DOF..., %lu, %lu\n", (ulong) sensorMap["nodeID"], (ulong) sensorMap["jointID"]);
         }
-        // More stuff is done in addConfigMap for the sensors, but I think we don't need it in the envire_graph
+        //NOTE More stuff is done in addConfigMap for the sensors, but I think we don't need it in the envire_graph, essentially mapping to the nodes or joints, which we have already because we stored in the correspondent frame the sensor
         BaseSensor* sensor = new BaseSensor;
-        sensor = control->sensors->createAndAddSensor(&sensorMap); //This one saves the sensor in the graph
-        // Now need to find the simNode that corresponds and attach the Sensor
-        using physicsNodeItem = Item<std::shared_ptr<NodeInterface>>;
-        using Iterator = EnvireGraph::ItemIterator<physicsNodeItem>;
-        std::shared_ptr<NodeInterface> simNode;
+        sensor = control->sensors->createAndAddSensor(&sensorMap); 
+        
+        // NOTE Store the new sensor in the Envire Graph
+        using SensorItemPtr = envire::core::Item<std::shared_ptr<BaseSensor>>::Ptr;
+        SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
+        control->graph->addItemToFrame(e.frame, sensorItem);
+        LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph. Now it will be attached to a node");
+        
+        // NOTE Attach the sensor to the simNode that corresponds (the one in the same frame by  now)
+        using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
+        using Iterator = EnvireGraph::ItemIterator<SimNodeItem>;
+        std::shared_ptr<mars::sim::SimNode> simNodePtr;
         Iterator begin, end;
-        boost::tie(begin, end) = control->graph->getItems<physicsNodeItem>(e.frame);
+        boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(e.frame);
         if (begin != end){
-          simNode = begin->getData();
+          simNodePtr = begin->getData();
+          simNodePtr->addSensor(sensor);
           if (debug) {
-               LOG_DEBUG("[EnvireSensors] The node interface to attach the sensor is found");
+               LOG_DEBUG("[EnvireSensors::ItemAdded] The SimNode to attach the sensor is found");
           }
         }
         else
         {
-          LOG_ERROR("Could not find node interface to which to attach the sensor. ");       
+          LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor. ");       
         }
+        
         // Here might be the reason why it does not work: First Look, everything seems to be fine here
         // Maybe the problem is ...
         // - Due to data Broker
         // - Wrong sensor initialization
         // - ...?
-        simNode->addSensor(sensor);
+        // TODO SimNode AddSensor method seems not to show traces, is it not executin?
+        //simNode->addSensor(sensor);
       }
     } // end of namespace envire_sensors
   } // end of namespace plugins

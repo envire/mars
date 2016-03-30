@@ -59,9 +59,6 @@
 #include <mars/utils/MutexLocker.h>
 #include <mars/interfaces/Logging.hpp>
 
-#include <envire_core/items/Item.hpp>
-#include <envire_core/graph/EnvireGraph.hpp>
-
 #include <cstdio>
 #include <stdexcept>
 
@@ -309,25 +306,22 @@ namespace mars {
         return 0;
       }
 
-      //int id = -1; //This id is the one of the node to which the sensor should be attached, but we don't have this id, we can have a pointer to the node or the frame in which the node is
-      //iMutex.lock();
-      //id = next_sensor_id++;
-      //iMutex.unlock();
+      int id = -1;
+      iMutex.lock();
+      id = next_sensor_id++;
+      iMutex.unlock();
   
-      //if(config->name.empty()){
-      //  std::stringstream str;
-      //  str << "SENSOR-" << config->id;
-      //  config->name = str.str();
-      //}
-      //config->id = id;
-      //LOG_DEBUG("[SensorManager::createAndAddSensor] ID is %ld", config->id);
-      //BaseSensor *sensor = ((*it).second)(this->control,config); // I guess that ((*it).second) gives the type of the sensor
-      BaseSensor* sensor = new BaseSensor;
-      sensor = ((*it).second)(this->control,config);      
-      using sensorItemPtr = envire::core::Item<std::shared_ptr<BaseSensor>>::Ptr;
-      sensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
-      //control->graph->addItemToFrame(config->frame, sensorItem); //TODO we don't have the frame here
-      LOG_DEBUG("[SensorManager::createAndAddSensor] Base sensor instantiated and addedto the graph. Now it will be attached to a node");
+      if(config->name.empty()){
+        std::stringstream str;
+        str << "SENSOR-" << id;
+        config->name = str.str();
+      }
+      config->id = id;
+      BaseSensor *sensor = ((*it).second)(this->control,config);
+      iMutex.lock();
+      simSensors[id] = sensor;
+      iMutex.unlock();
+  
       if(!reload) {
         simSensorsReload.push_back(SensorReloadHelper(type_name, config));
       }
@@ -345,36 +339,11 @@ namespace mars {
         std::cerr << "Could Find MarsParser for Sensor with name: \"" << type.c_str()<< "\"" << std::endl;
         return 0;
       }
-      LOG_DEBUG("[SensorManager::createAndAddSensor] Found sensor to add: %s", type.c_str());
+      //LOG_DEBUG("found sensor: %s", type.c_str());
       BaseConfig *cfg = ((*it).second)(control, config);
-      LOG_DEBUG("[SensorManager::createAndAddSensor] Instatited cfg ");
+      cfg->frame = (*config)["frame"][0].getString();
       cfg->name = (*config)["name"][0].getString();
-      //cfg->id = (*config)["id"]; // We give this one from the plugin
-      
-      
-      // First line of second method
-      assert(cfg);
-      std::map<const std::string,BaseSensor* (*)(ControlCenter*, BaseConfig*)>::iterator itS = availableSensors.find(type);
-      if(itS == availableSensors.end()){
-        std::cerr << "Could not load unknown Sensor with name: \"" << type.c_str()<< "\"" << std::endl;
-        return 0;
-      }
-
-      //BaseSensor *sensor = ((*it).second)(this->control,config); // I guess that ((*it).second) gives the type of the sensor
-      BaseSensor* sensor = new BaseSensor;
-      sensor = ((*itS).second)(control,cfg);
-      LOG_DEBUG("[SensorManager::createAndAddSensor] Instantited BaseSensor");
-      using SensorItemPtr = envire::core::Item<std::shared_ptr<BaseSensor>>::Ptr;
-      SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
-      LOG_DEBUG("[SensorManager::createAndAddSensor] Instantited sensor Item");
-      control->graph->addItemToFrame((*config)["frame"][0].getString(), sensorItem);
-      LOG_DEBUG("[SensorManager::createAndAddSensor] Base sensor instantiated and addedto the graph. Now it will be attached to a node");
-      if(!reload) {
-        simSensorsReload.push_back(SensorReloadHelper(type, cfg));
-      }
-  
-      return sensor;
-      //return createAndAddSensor(type, cfg);
+      return createAndAddSensor(type, cfg);
     }
 
   } // end of namespace sim
