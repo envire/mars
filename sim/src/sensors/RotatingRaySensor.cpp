@@ -76,11 +76,6 @@ namespace mars {
       current_pose.setIdentity();
       num_points = 0;
 
-      LOG_DEBUG(("[RotatingRaySensor] The frame in which the sensor is is: " + config.frame).c_str());
-      // FIXME Here the node is not to be found
-      //this->attached_node = config.attached_node; 
-      //this->attached_node = config.id;  // We don't use the id's
-
       std::string groupName, dataName;
       drawStruct draw;
       draw_item item;
@@ -104,11 +99,8 @@ namespace mars {
       Iterator begin, end;
       boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(config.frame);
       if (begin != end){
-        LOG_DEBUG("[RotatingRaySensor] The SimNode for the data broker to link to the sensor is found");
         simNodePtr = begin->getData(); 
         simNodePtr->getDataBrokerNames(&groupName, &dataName);
-        LOG_DEBUG(("[RotatingRaySensor] GroupName: " + groupName ).c_str());
-        LOG_DEBUG(("[RotatingRaySensor] DataName: " + dataName).c_str());
       }
       else
       {
@@ -116,19 +108,6 @@ namespace mars {
       }
       
       
-      // We might have to do here something like this DONE...
-        //bool NodeManager::getDataBrokerNames(NodeId id, std::string *groupName,
-        //                                     std::string *dataName) const {
-        //  NodeMap::const_iterator iter = simNodes.find(id);
-        //  //LOG_DEBUG("We have currently %i elements\n",(int)simNodes.size());
-        //  if (iter == simNodes.end())
-        //    return false;
-        //  iter->second->getDataBrokerNames(groupName, dataName);
-        //  return true;
-        //}
-      
-      
-      // I am not sure if this works either...
       if(control->dataBroker->registerTimedReceiver(this, groupName, dataName,"mars_sim/simTimer",updateRate)) {
       }
 
@@ -215,11 +194,9 @@ namespace mars {
       mars::utils::MutexLocker lock(&mutex_pointcloud);
       if(full_scan) {
         full_scan = false;
-        LOG_DEBUG("[RotatingRaySensor::getPointcloud] Seems to go well");
         pcloud =  pointcloud_full;
         return true;
       } else {
-          LOG_DEBUG("[RotatingRaySensor::getPointcloud] Full scan is false");
           return false;
       }
     }
