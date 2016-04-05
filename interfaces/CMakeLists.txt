@@ -16,6 +16,7 @@ pkg_check_modules(PKGCONFIG REQUIRED
         configmaps
         data_broker
         mars_utils
+        envire_core
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})

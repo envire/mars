@@ -67,7 +67,8 @@ namespace mars {
                                     config.opening_height),
         SensorInterface(control), 
         config(config) {
-
+         
+      frame = config.frame;
       updateRate = config.updateRate;
       orientation.setIdentity();
       maxDistance = config.maxDistance;
@@ -97,7 +98,7 @@ namespace mars {
       using Iterator = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
       std::shared_ptr<SimNode> simNodePtr;
       Iterator begin, end;
-      boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(config.frame);
+      boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(frame);
       if (begin != end){
         simNodePtr = begin->getData(); 
         simNodePtr->getDataBrokerNames(&groupName, &dataName);
@@ -111,7 +112,7 @@ namespace mars {
       if(control->dataBroker->registerTimedReceiver(this, groupName, dataName,"mars_sim/simTimer",updateRate)) {
       }
 
-      envire::core::Transform sensorTf = control->graph->getTransform("center", config.frame); //FIXME Standarize the center of the graph name
+      envire::core::Transform sensorTf = control->graph->getTransform("center", frame); //FIXME Standarize the center of the graph name
       position = sensorTf.transform.translation;
       orientation = sensorTf.transform.orientation;
       

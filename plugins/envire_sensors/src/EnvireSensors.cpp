@@ -100,33 +100,36 @@ namespace mars {
       {
         mars::sim::RotatingRaySensor * raySensor;
         raySensor = dynamic_cast<mars::sim::RotatingRaySensor*>(sensorPtr.get());
-        LOG_DEBUG("[EnvireSensor::display_rotatingRay_data] We have the raysensor");
         utils::Quaternion offset = raySensor->turn();
         
         base::samples::Pointcloud pointcloud;
         pointcloud.time = base::Time::now();
         
         std::vector<mars::utils::Vector> data;
-        if(raySensor->getPointcloud(data)) {
-          // TODO Min/max is actually already part of the sensor
+        if(raySensor->getPointcloud(data)) { //NOTE This returns an empty pointcloud unless the sensor has finnished the turn
           std::vector<mars::utils::Vector>::iterator it = data.begin();
           for(; it != data.end(); it++) {
             base::Vector3d vec((*it)[0], (*it)[1], (*it)[2]);
             pointcloud.points.push_back(vec);
           }
         }
-        LOG_DEBUG("[EnvireSensor::display_rotatingRay_data] We have found, %d ", pointcloud.points.size());
+        if (pointcloud.points.size() > 0)
+        {
+          LOG_DEBUG("[EnvireSensor::display_rotatingRay_data] We have a pointcloud with %d points", pointcloud.points.size());
+        }
       }
         
       void EnvireSensors::update(sReal time_ms) {
+        //NOTE Maybe the problem is that we are not calling to the method receiveData, this is the header:
+        // Receive Data is been executed, but somehow the pointcloud is empty, why?
+        
         using sensorItem = envire::core::Item<std::shared_ptr<BaseSensor>>;
         using Iterator = envire::core::EnvireGraph::ItemIterator<sensorItem>;
         std::shared_ptr<BaseSensor> sensorPtr;
         Iterator begin, end;
-        boost::tie(begin, end) = control->graph->getItems<sensorItem>("velodyne_link");
+        boost::tie(begin, end) = control->graph->getItems<sensorItem>("box");
         if (begin != end){
             sensorPtr = begin->getData();
-            //TODO We don't get any reading, maybe we have to use the receive data before in the sensor, that one needs the information from the data broadcaster
             //display_position_data(sensorPtr);
             display_rotatingRay_data(sensorPtr);
         }
