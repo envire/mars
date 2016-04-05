@@ -79,7 +79,7 @@ void GraphPhysics::frameAdded(const FrameAddedEvent& e)
 void GraphPhysics::frameRemoved(const FrameRemovedEvent& e)
 { 
   //FIXME do something intelligent of the origin gets removed
-  assert(e.removedFrame != originId); 
+  assert(e.frame != originId); 
 }
 
 void GraphPhysics::edgeRemoved(const envire::core::EdgeRemovedEvent& e)
@@ -340,9 +340,10 @@ bool GraphPhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const 
     using dataItemPtr = envire::core::Item<shared_ptr<NodeData>>::Ptr;
     dataItemPtr dataItem(new envire::core::Item<shared_ptr<NodeData>>(node));
     control->graph->addItemToFrame(frame, dataItem);
-    // Create and store also a simNode
     
-    mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (*node));
+    //NOTE Create and store also a simNode. The simNode interface is set to the physics node
+    mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (*node)); 
+    simNode->setInterface(physics.get());
     std::shared_ptr<mars::sim::SimNode> simNodePtr(simNode);
     using SimNodeItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>::Ptr;
     using SimNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;

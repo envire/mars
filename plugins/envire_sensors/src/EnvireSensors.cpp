@@ -101,6 +101,7 @@ namespace mars {
         mars::sim::RotatingRaySensor * raySensor;
         raySensor = dynamic_cast<mars::sim::RotatingRaySensor*>(sensorPtr.get());
         LOG_DEBUG("[EnvireSensor::display_rotatingRay_data] We have the raysensor");
+        utils::Quaternion offset = raySensor->turn();
         
         base::samples::Pointcloud pointcloud;
         pointcloud.time = base::Time::now();
@@ -122,7 +123,7 @@ namespace mars {
         using Iterator = envire::core::EnvireGraph::ItemIterator<sensorItem>;
         std::shared_ptr<BaseSensor> sensorPtr;
         Iterator begin, end;
-        boost::tie(begin, end) = control->graph->getItems<sensorItem>("box");
+        boost::tie(begin, end) = control->graph->getItems<sensorItem>("velodyne_link");
         if (begin != end){
             sensorPtr = begin->getData();
             //TODO We don't get any reading, maybe we have to use the receive data before in the sensor, that one needs the information from the data broadcaster
