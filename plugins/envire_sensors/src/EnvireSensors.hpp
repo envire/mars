@@ -80,6 +80,7 @@ namespace mars {
 
         void display_position_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr );
         void display_rotatingRay_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr );
+        void display_COM_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr);
             
         // EnvireSensors methods
 

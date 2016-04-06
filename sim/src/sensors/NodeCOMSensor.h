@@ -19,10 +19,12 @@
  */
 
 /*
- *  NodeGroundContactSensor.h
+ *  NodeCOMSensor.h
  *  QTVersion
  *
  *  Created by Malte Roemmermann
+ * 
+ *  This sensors are used to compute the Center Of Mass of the robot.
  *
  */
 
@@ -47,6 +49,8 @@ namespace mars {
       virtual int getSensorData(interfaces::sReal** data) const;
       static interfaces::BaseSensor* instanciate(interfaces::ControlCenter *control,
                                            interfaces::BaseConfig *config);
+    private:
+      mars::utils::Vector getCenterOfMass() const;
     };
 
   } // end of namespace sim

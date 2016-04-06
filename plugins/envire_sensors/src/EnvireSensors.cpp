@@ -34,8 +34,10 @@
 #include <mars/interfaces/sim/SensorManagerInterface.h>
 #include <mars/interfaces/sim/NodeInterface.h>
 #include <mars/sim/SimNode.h>
+
 #include <mars/sim/RotatingRaySensor.h>
 #include <mars/sim/NodePositionSensor.h>
+#include <mars/sim/NodeCOMSensor.h>
 
 #include <base/Time.hpp>
 #include <configmaps/ConfigData.h>
@@ -118,6 +120,20 @@ namespace mars {
           LOG_DEBUG("[EnvireSensor::display_rotatingRay_data] We have a pointcloud with %d points", pointcloud.points.size());
         }
       }
+      
+      void EnvireSensors::display_COM_data(const std::shared_ptr<BaseSensor>& sensorPtr)
+      {
+        mars::sim::NodeCOMSensor * comSensor;
+        comSensor = dynamic_cast<mars::sim::NodeCOMSensor* >(sensorPtr.get());
+        
+        sReal *sens_val;
+        int count_val = comSensor->getSensorData(&sens_val);
+        
+        LOG_DEBUG("[enviresensor::display_contact_data] dimensions of the sensor data: , %d ", count_val);
+        LOG_DEBUG("[enviresensor::display_contact_data] data 1: , %6.2f", ((double)sens_val[0]));
+        LOG_DEBUG("[enviresensor::display_contact_data] data 2: , %6.2f", ((double)sens_val[1]));
+        LOG_DEBUG("[enviresensor::display_contact_data] data 3: , %6.2f", ((double)sens_val[2]));
+      }
         
       void EnvireSensors::update(sReal time_ms) {
         //NOTE Maybe the problem is that we are not calling to the method receiveData, this is the header:
@@ -131,7 +147,8 @@ namespace mars {
         if (begin != end){
             sensorPtr = begin->getData();
             //display_position_data(sensorPtr);
-            display_rotatingRay_data(sensorPtr);
+            //display_rotatingRay_data(sensorPtr);
+            display_COM_data(sensorPtr);
         }
       }
 
@@ -166,7 +183,8 @@ namespace mars {
         BaseSensor* sensor = new BaseSensor;
         sensor = control->sensors->createAndAddSensor(&sensorMap); 
         
-        // NOTE Store the new sensor in the Envire Graph
+        // NOTE Store the new sensor in the Envire Graph.
+        // TODO Store the sensor with the specific type it is, instead of as a Base Sensor
         using SensorItemPtr = envire::core::Item<std::shared_ptr<BaseSensor>>::Ptr;
         SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
         control->graph->addItemToFrame(e.frame, sensorItem);
