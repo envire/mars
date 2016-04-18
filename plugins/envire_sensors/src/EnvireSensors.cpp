@@ -98,6 +98,13 @@ namespace mars {
         LOG_DEBUG("[EnvireSensor::display_position_data] data 3: , %d", ((double)sens_val[2]));
       }
       
+      void EnvireSensors::rotate_rotatingRay_sensor(const std::shared_ptr<BaseSensor>& sensorPtr)
+      {
+        mars::sim::RotatingRaySensor * raySensor;
+        raySensor = dynamic_cast<mars::sim::RotatingRaySensor*>(sensorPtr.get());
+        utils::Quaternion offset = raySensor->turn();
+      }
+            
       void EnvireSensors::display_rotatingRay_data(const std::shared_ptr< BaseSensor >& sensorPtr)
       {
         mars::sim::RotatingRaySensor * raySensor;
@@ -135,20 +142,32 @@ namespace mars {
         LOG_DEBUG("[enviresensor::display_contact_data] data 3: , %6.2f", ((double)sens_val[2]));
       }
         
+      void EnvireSensors::updateSimNode(){
+        // Update the SimNode
+        using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
+        using SimNodeIterator = EnvireGraph::ItemIterator<SimNodeItem>;
+        std::shared_ptr<mars::sim::SimNode> simNodePtr;
+        SimNodeIterator begin, end;
+        boost::tie(begin, end) = control->graph->getItems<SimNodeItem>("velodyne_link");
+        if (begin != end){
+          simNodePtr = begin->getData();
+          simNodePtr->update(0.0); //NOTE I need to provide a calc_ms. I provide 0.
+        }
+      }
+      
       void EnvireSensors::update(sReal time_ms) {
-        //NOTE Maybe the problem is that we are not calling to the method receiveData, this is the header:
-        // Receive Data is been executed, but somehow the pointcloud is empty, why?
-        
+        updateSimNode();
         using sensorItem = envire::core::Item<std::shared_ptr<BaseSensor>>;
         using Iterator = envire::core::EnvireGraph::ItemIterator<sensorItem>;
         std::shared_ptr<BaseSensor> sensorPtr;
         Iterator begin, end;
-        boost::tie(begin, end) = control->graph->getItems<sensorItem>("box");
+        boost::tie(begin, end) = control->graph->getItems<sensorItem>("velodyne_link");
         if (begin != end){
             sensorPtr = begin->getData();
+            rotate_rotatingRay_sensor(sensorPtr);
             //display_position_data(sensorPtr);
             //display_rotatingRay_data(sensorPtr);
-            display_COM_data(sensorPtr);
+            //display_COM_data(sensorPtr);
         }
       }
 

@@ -121,7 +121,7 @@ namespace mars {
       unsigned long id;
       std::string name; //Todo naming bei mehreren robotern
       unsigned long updateRate;
-      envire::core::Frame frame;
+      envire::core::FrameId frame;
       
     protected:
 

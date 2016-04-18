@@ -78,6 +78,8 @@ namespace mars {
         void reset();
         void update(mars::interfaces::sReal time_ms);
 
+        void updateSimNode();
+        void rotate_rotatingRay_sensor(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr);
         void display_position_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr );
         void display_rotatingRay_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr );
         void display_COM_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr);
