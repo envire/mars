@@ -97,7 +97,7 @@ void EnvireMotors::itemAdded(const TypedItemAddedEvent<Item<smurf::Motor>>& e)
         LOG_ERROR("addMotor returned 0");
     }
     else{
-        // Save the instantiated motor in the graph
+        // NOTE Save the data of the instantiated motor in the graph
         using motorItemPtr = Item<std::shared_ptr<MotorData>>::Ptr;
         motorItemPtr motorItem(new Item<std::shared_ptr<MotorData>>(motorPtr));
         control->graph->addItemToFrame(e.frame, motorItem);

@@ -101,12 +101,19 @@ namespace mars {
       using jointItem = envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>;
       using Iterator = envire::core::EnvireGraph::ItemIterator<jointItem>;
       Iterator begin, end;
-      boost::tie(begin, end) = control->graph->getItems<jointItem>(frameName); // TODO: The frame where the joint is stored is not the one stored in the joint name, but the parent of that one
-      if (begin != end){
+      boost::tie(begin, end) = control->graph->getItems<jointItem>(frameName); 
+      // NOTE There might be more than one simJoint in that frame, we assume that only one is not fixed
+      bool found = false;
+      while ((begin != end) && (! found)){
           std::shared_ptr<mars::sim::SimJoint> joint = begin->getData();
-          //LOG_DEBUG(("[MotorManager::addMotor]: Found the joint to which the motor should be attaeched in frame "+ frameName).c_str());
-      //    //newMotor->attachJoint(control->joints->getSimJoint(motorS->jointIndex));
-          newMotor->attachJoint(joint.get());
+          mars::interfaces::JointType jointType = joint->getJointType();
+          if (!(jointType == JOINT_TYPE_FIXED)){
+            //LOG_DEBUG(("[MotorManager::addMotor]: Found the joint to which the motor should be attaeched in frame "+ frameName).c_str());
+            newMotor->attachJoint(joint.get());
+            found = true;
+          }
+          begin++;
+          //    //newMotor->attachJoint(control->joints->getSimJoint(motorS->jointIndex));          
           //LOG_DEBUG("[MotorManager::addMotor]: The motor was attached to the joint");
           //LOG_DEBUG("[MotorManager::addMotor]: The motor's axis is: %d", motorS->axis);
       }
@@ -114,10 +121,8 @@ namespace mars {
       //  Iterator begin, end;
       //  boost::tie(begin, end) = control->graph->getItems<physicsNodeItem>(frameName);
       //  if (begin != end){
-
       //    //LOG_DEBUG("[Envire Joints]::getSimObject: Found the physical object in frame "+ frameName);
       //  }
-      
       //if(motorS->jointIndex2)
       //  // Here we have to access the joint through the graph
       //  newMotor->attachPlayJoint(control->joints->getSimJoint(motorS->jointIndex2));
