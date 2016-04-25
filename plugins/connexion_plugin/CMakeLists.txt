@@ -93,6 +93,8 @@ if (${USE_QT5})
   qt5_use_modules(${PROJECT_NAME} Widgets)
 endif (${USE_QT5})
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
 target_link_libraries(${PROJECT_NAME}
           ${QT_LIBRARIES}
           ${CARBON}
