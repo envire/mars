@@ -61,8 +61,8 @@ namespace mars {
   
       void EnvireSensors::init() {
         assert(control->graph != nullptr);
-        GraphEventDispatcher::subscribe(control->graph);
-        GraphItemEventDispatcher<Item<smurf::Sensor>>::subscribe(control->graph);
+        GraphEventDispatcher::subscribe(control->graph.get());
+        GraphItemEventDispatcher<Item<smurf::Sensor>>::subscribe(control->graph.get());
         if (debug) { LOG_DEBUG( "[EnvireSensors]::init Init method"); }
       }
 

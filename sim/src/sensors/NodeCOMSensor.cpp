@@ -28,7 +28,7 @@
 
 #include "NodeCOMSensor.h"
 #include <mars/interfaces/sim/NodeManagerInterface.h>
-#include <mars/sim/NodePhysics.h>
+#include "NodePhysics.h"
 #include <mars/sim/SimNode.h>
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/items/Item.hpp>

@@ -40,8 +40,6 @@
 #include <mars/data_broker/ReceiverInterface.h>
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h> 
-
-#include <envire_smurf/Robot.hpp>
 #include <envire_core/graph/GraphTypes.hpp>
 #include <string>
 

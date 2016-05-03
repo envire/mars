@@ -54,14 +54,14 @@ GraphPhysics::GraphPhysics(lib_manager::LibManager *theManager)
 
 void GraphPhysics::init() {
   assert(control->graph != nullptr);
-  GraphEventDispatcher::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<configmaps::ConfigMap>>::subscribe(control->graph);
-  GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem>::subscribe(control->graph);
-  GraphItemEventDispatcher<mars::sim::JointConfigMapItem>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<smurf::Frame>>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<urdf::Collision>>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<smurf::Collidable>>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<smurf::Inertial>>::subscribe(control->graph);
+  GraphEventDispatcher::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<configmaps::ConfigMap>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<mars::sim::JointConfigMapItem>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<smurf::Frame>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<urdf::Collision>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<smurf::Collidable>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<smurf::Inertial>>::subscribe(control->graph.get());
 }
 
 void GraphPhysics::reset() {
@@ -395,8 +395,6 @@ void GraphPhysics::updatePositions( const GraphTraits::vertex_descriptor origin,
   Transform tf = control->graph->getTransform(origin, target);
   if (debugUpdatePos)
   {
-
-    //How can I print the tf also using the LOG_DEBUG?
     LOG_DEBUG("[updatePositions] Tf values before update: " );
     std::cout << tf.transform << std::endl;
   }
@@ -416,7 +414,7 @@ void GraphPhysics::updatePositions( const GraphTraits::vertex_descriptor origin,
       TransformWithCovariance absolutTransform;
       physics->getPosition(&absolutTransform.translation);
       physics->getRotation(&absolutTransform.orientation);
-      tf.setTransform(originToRoot * absolutTransform);
+      tf.setTransform(originToRoot * absolutTransform); 
       if (debugUpdatePos)
       {
         LOG_DEBUG("[Envire Physics] AbsolutTransform, provided by the physical engine: ");
