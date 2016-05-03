@@ -117,3 +117,8 @@ install(FILES ${SOURCES_H} DESTINATION include/mars/scene_loader)
 
 configure_file(${PROJECT_NAME}.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
+
+find_package(Rock)
+set(ROCK_USE_CXX11 TRUE)
+rock_init(mars_scene_loader 0.1)
+rock_standard_layout()

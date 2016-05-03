@@ -117,5 +117,6 @@ install(TARGETS ${PROJECT_NAME} ${_INSTALL_DESTINATIONS})
 # Install headers into mars include directory
 install(FILES ${SOURCES_H} DESTINATION include/mars/smurf_loader)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 configure_file(${PROJECT_NAME}.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)

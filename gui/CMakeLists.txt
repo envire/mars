@@ -315,3 +315,8 @@ ENDIF (WIN32)
 #install(FILES ${CMAKE_BINARY_DIR}/mars_Gui.yaml DESTINATION configuration/mars_default/)
 
 INSTALL(DIRECTORY resources DESTINATION share/mars/gui)
+
+find_package(Rock)
+set(ROCK_USE_CXX11 TRUE)
+rock_init(mars_gui 0.1)
+rock_standard_layout()
