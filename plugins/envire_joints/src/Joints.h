@@ -43,6 +43,11 @@
 #include <mars/sim/SimJoint.h>
 #include <mars/sim/JointPhysics.h>
 
+//NOTE We assume that there is no more than one transformation static or dynamic starting from one link/frame
+// FIXME: When introducing inertial values in the nodes to join, the fixed joint brings them together
+// TODO: instantiate method could be merged with the other 'instantiate' by templating
+// TODO: Have the simulation center as a constant for all the envire plugins
+
 namespace mars {
   namespace plugins {
     namespace envire_joints {
@@ -74,35 +79,67 @@ namespace mars {
          * using the dependencies map.
          */
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<mars::interfaces::NodeInterface>>>& e);
-        //void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::JointConfigMapItem>& e);
+        /*
+         * If all the dependencies to instantiate the joint in the simulator are met, the joints is instantated, otherwise the missing dependencies get tracked into the staticDependencies map
+         */
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Joint>>& e);
 
-      private:
-        
-        // Static Joints
-        bool getSimObject(const envire::core::FrameId& frameName, std::shared_ptr<mars::interfaces::NodeInterface>& objectSim);
-        unsigned long getSimObjectId(const envire::core::FrameId& frameName);
-        bool instantiable(smurf::Transformation* smurfJoint, std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, std::shared_ptr< mars::interfaces::NodeInterface >& targetSim);
-        void addDependencies(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, envire::core::FrameId storageFrame);
-        void storeSimJoint(const std::shared_ptr< mars::interfaces::JointInterface >& jointInterface, mars::interfaces::JointData* jointData, envire::core::FrameId storageFrame);
-        void join(mars::interfaces::JointData* jointData, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);
-        void instantiate(smurf::StaticTransformation* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
-        void instantiate(smurf::Joint* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
-        mars::interfaces::JointType getJointType(smurf::Joint* joint);
-        //template <class jointType>
-        //bool instantiateDependents (jointType joint, const envire::core::FrameId& frame);
+      private:        
+        // TODO Would be nice to have a method getJointData, that receives the smurf joint data and returns a jointData object
+        /*
+         * If the joint can be instantiated then instantiates it, else add the missing dependencies.
+         * 
+         */
         template <class jointType>
         void checkAndInstantiate(jointType smurfJoint, const envire::core::FrameId storageFrame, bool addDeps=true);
-        
-        //void addDependencies(std::vector< std::string > missingObjects, smurf::Joint dependentJoint);
-        //std::shared_ptr<mars::interfaces::NodeInterface> getPhysicsInterface(const std::string& frameName);
-          
-        //bool instantiable(smurf::Joint smurfTf);
+        /*
+         * Returns true if the shared_ptrs of the source and target simulation objects are in the graph.
+         * (Used in checkAndInstantiate)
+         */
+        bool instantiable(smurf::Transformation* smurfJoint, std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, std::shared_ptr< mars::interfaces::NodeInterface >& targetSim);
+        /*
+         * Checks if the there is a physical object created for the given frameName
+         * (Used in instantiable)
+         */
+        bool getSimObject(const envire::core::FrameId& frameName, std::shared_ptr<mars::interfaces::NodeInterface>& objectSim);
+        /*
+         * Prepares the jointData and commands the instantiation of the simulated joint (using the method join)
+         * For the static transformations there is sourceToTaget transformation but no AxisTransformation or ParentToJointOrigin.
+         * The position of the simulated joint (anchor) is given by the position of the target frame, which corresponds to the origin field of the joint in the urdf.
+         */
+        void instantiate(smurf::StaticTransformation* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
+        /*
+         * Axis1 set the frame for the movement of the joint
+
+         */
+        void instantiate(smurf::Joint* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
+        /*
+         * Gets the joint type from the smurf joint it reads it from the urdf object that it contains
+         */
+        mars::interfaces::JointType getJointType(smurf::Joint* joint);
+        /*
+         * Creates the physical simulation of the joint used by instantiate and commands the storage of the created joint
+         */
+        void join(mars::interfaces::JointData* jointData, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);
+        /*
+         * Create the simJoint from the control center and the jointData
+         * Make a shared_pointer directed to the simjoint and store the shared_ptr in the graph
+         * Store also the physicsJoint in the graph
+         */
+        void storeSimJoint(const std::shared_ptr< mars::interfaces::JointInterface >& jointInterface, mars::interfaces::JointData* jointData, envire::core::FrameId storageFrame);
+        /*
+         * @storageFrame is the frame in which the joint is stored to be recovered when the dependencies are met
+         */
+        void addDependencies(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, envire::core::FrameId storageFrame);
+        /*
+         * Attributes
+         * 
+         * TODO: Should the second element not be just an element. I thought we only allow a joint per frame
+         * @Dependencies is used to keep track of the missing physics nodes required to create the joints. The first element of the list is the frame in which the joint having a dependency is and the second element a vector of the frames which are missing.
+         */
         std::map<envire::core::FrameId, std::vector<envire::core::FrameId>> dependencies;
-        
-        
-        bool debug = false;
+        bool debug = true;
         
       }; // end of class definition EnvireJoints
 
