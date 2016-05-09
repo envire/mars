@@ -45,8 +45,8 @@
 
 //NOTE We assume that there is no more than one transformation static or dynamic starting from one link/frame
 // FIXME: When introducing inertial values in the nodes to join, the fixed joint brings them together
-// TODO: We don't need storageFrame because we know the origin frame of the transformation and we want to store there
-
+//TODO: Item Added Node interface We only allow a joint allocated in each frame, therefore we don't need a for loop here 
+          
 namespace mars {
   namespace plugins {
     namespace envire_joints {
@@ -95,7 +95,7 @@ namespace mars {
          * 
          */
         template <class jointType>
-        void checkAndInstantiate(jointType smurfJoint, const envire::core::FrameId storageFrame, bool addDeps=true);
+        void checkAndInstantiate(jointType smurfJoint, bool addDeps=true);
         /*
          * Returns true if the shared_ptrs of the source and target simulation objects are in the graph.
          * (Used in checkAndInstantiate)
@@ -109,9 +109,10 @@ namespace mars {
         /*
          * Prepares the jointData and commands the instantiation of the simulated joint (using the method join)
          * The position of the simulated joint (anchor) is given by the position of the target frame, which corresponds to the origin field of the joint in the urdf.
+         * and commands the storage of the created joint
          */
         template <class jointType>
-        void instantiate(jointType smurfJoint, const std::shared_ptr<mars::interfaces::NodeInterface> & sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);      
+        void instantiate(jointType smurfJoint, const std::shared_ptr<mars::interfaces::NodeInterface> & sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim);      
         /*
          * Gets the joint type (fixed) for static transformations. This method was need to implement intantiate as templated method
          */
@@ -129,9 +130,9 @@ namespace mars {
          */
         void setAxis1(smurf::Joint* smurfJoint, mars::interfaces::JointData* jointData);
         /*
-         * Creates the physical simulation of the joint used by instantiate and commands the storage of the created joint
+         * Creates the physical simulation of the joint used by instantiate 
          */
-        void join(mars::interfaces::JointData* jointData, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);
+        std::shared_ptr<mars::interfaces::JointInterface> join(mars::interfaces::JointData* jointData, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim);
         /*
          * Create the simJoint from the control center and the jointData
          * Make a shared_pointer directed to the simjoint and store the shared_ptr in the graph
@@ -141,7 +142,7 @@ namespace mars {
         /*
          * @storageFrame is the frame in which the joint is stored to be recovered when the dependencies are met
          */
-        void addDependencies(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, envire::core::FrameId storageFrame);
+        void addDependencies(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim);
         /*
          * Attributes
          * 
