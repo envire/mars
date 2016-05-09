@@ -27,9 +27,6 @@
  */
 
 
-//TODO: Have the simulation center frame (in this case "center") as a constant for all the plugins.
-
-
 #include "Joints.h"
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
@@ -70,6 +67,15 @@ namespace mars {
       }
       
       void EnvireJoints::update(sReal time_ms) {
+      }
+      
+      void EnvireJoints::frameAdded(const FrameAddedEvent& e)
+      {
+
+          if(originId.empty())
+          {
+              originId = e.frame;
+          }
       }
       
       void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<NodeInterface>>>& e){
@@ -177,36 +183,22 @@ namespace mars {
         return found;
       }
       
-      void EnvireJoints::instantiate(smurf::StaticTransformation* smurfJoint, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
-      {                                
-        // NOTE this jointData does not incorporate any information from the urdf joint information appart of the type and the position (anchor)
+      template <class jointType>
+      void EnvireJoints::instantiate(jointType smurfJoint, const std::shared_ptr< NodeInterface >& sourceSim, const std::shared_ptr< NodeInterface >& targetSim, FrameId storageFrame)
+      {
         JointData* jointData = new(JointData);
-        jointData->init(smurfJoint->getName(), mars::interfaces::JOINT_TYPE_FIXED);
+        jointData->init(smurfJoint->getName(), getJointType(smurfJoint));
+        setAxis1(smurfJoint, jointData);
         envire::core::FrameId targetFrame = smurfJoint->getTargetFrame().getName();
-        envire::core::Transform jointPos = control->graph->getTransform("center", targetFrame);
+        envire::core::Transform jointPos = control->graph->getTransform(originId, targetFrame); 
+        //NOTE Why should the position of the joint the target and not the source? I think it should work with both
         utils::Vector anchor = jointPos.transform.translation;
         jointData->anchor = anchor;
-        LOG_DEBUG("[Envire Joints::instantiate] Static Transformation. The vector anchor is: %.4f, %.4f, %.4f", anchor.x(), anchor.y(), anchor.z());
-        LOG_DEBUG("[Envire Joints::instantiate] Static Transformation. The storageFrame is: "+ storageFrame);
+        LOG_DEBUG("[EnvireJoints::instantiate] The joint name is: %s", smurfJoint->getName().c_str());
+        LOG_DEBUG("[EnvireJoints::instantiate] The vector anchor is: %.4f, %.4f, %.4f", anchor.x(), anchor.y(), anchor.z());
+        LOG_DEBUG("[EnvireJoints::instantiate] The storageFrame is: "+ storageFrame);
+        LOG_DEBUG("[EnvireJoints::instantiate] The vector axis is: %.4f, %.4f, %.4f", jointData->axis1.x(), jointData->axis1.y(), jointData->axis1.z());
         join(jointData, sourceSim, targetSim, storageFrame);
-      }
-
-      void EnvireJoints::instantiate(smurf::Joint* smurfJoint, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
-      {                                
-        JointData* jointPhysics = new(JointData);
-        jointPhysics->init(smurfJoint->getName(), getJointType(smurfJoint));
-        envire::core::Transform jointPos = control->graph->getTransform("center", storageFrame);  
-        utils::Vector anchor = jointPos.transform.translation;
-        jointPhysics->anchor = anchor;
-        Eigen::Affine3d axisTf = smurfJoint -> getSourceToAxis();
-        jointPhysics->axis1 = axisTf.translation();;
-        if (debug)
-        {
-            LOG_DEBUG("[EnvireJoints::instantiate] The vector anchor is: %.4f, %.4f, %.4f", anchor.x(), anchor.y(), anchor.z());
-            LOG_DEBUG("[EnvireJoints::instantiate] The vector axis is: %.4f, %.4f, %.4f", axis.x(), axis.y(), axis.z());
-            LOG_DEBUG("[EnvireJoints::instantiate] Static Transformation. The storageFrame is: "+ storageFrame);
-        }
-        join(jointPhysics, sourceSim, targetSim, storageFrame);
       }
       
       JointType EnvireJoints::getJointType(smurf::Joint* joint){
@@ -267,6 +259,13 @@ namespace mars {
         return jointType;
       }
 
+      void EnvireJoints::setAxis1(smurf::StaticTransformation* smurfJoint, JointData* jointData){ }
+      
+      void EnvireJoints::setAxis1(smurf::Joint* smurfJoint, JointData* jointData){ 
+            Eigen::Affine3d axisTf = smurfJoint -> getSourceToAxis();
+            jointData->axis1 = axisTf.translation();
+      }      
+      
       void EnvireJoints::join(JointData* jointData, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim, FrameId storageFrame)
       {
         JointPhysics* jointPhysics(new JointPhysics(control->sim->getPhysics())); 

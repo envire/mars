@@ -45,8 +45,7 @@
 
 //NOTE We assume that there is no more than one transformation static or dynamic starting from one link/frame
 // FIXME: When introducing inertial values in the nodes to join, the fixed joint brings them together
-// TODO: instantiate method could be merged with the other 'instantiate' by templating
-// TODO: Have the simulation center as a constant for all the envire plugins
+// TODO: We don't need storageFrame because we know the origin frame of the transformation and we want to store there
 
 namespace mars {
   namespace plugins {
@@ -73,6 +72,10 @@ namespace mars {
         void init();
         void reset();
         void update(mars::interfaces::sReal time_ms);        
+        /*
+         * The first frame that is added is the root (for now)
+         */
+        void frameAdded(const envire::core::FrameAddedEvent& e);
         /*
          * When a new physical object is added it is checked if there is any 
          * joint missing that physical object to be generated. This is checked
@@ -105,19 +108,26 @@ namespace mars {
         bool getSimObject(const envire::core::FrameId& frameName, std::shared_ptr<mars::interfaces::NodeInterface>& objectSim);
         /*
          * Prepares the jointData and commands the instantiation of the simulated joint (using the method join)
-         * For the static transformations there is sourceToTaget transformation but no AxisTransformation or ParentToJointOrigin.
          * The position of the simulated joint (anchor) is given by the position of the target frame, which corresponds to the origin field of the joint in the urdf.
          */
-        void instantiate(smurf::StaticTransformation* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
+        template <class jointType>
+        void instantiate(jointType smurfJoint, const std::shared_ptr<mars::interfaces::NodeInterface> & sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);      
         /*
-         * Axis1 set the frame for the movement of the joint
-
+         * Gets the joint type (fixed) for static transformations. This method was need to implement intantiate as templated method
          */
-        void instantiate(smurf::Joint* smurfJoint, const std::shared_ptr< mars::interfaces::NodeInterface >& sourceSim, const std::shared_ptr< mars::interfaces::NodeInterface >& targetSim, envire::core::FrameId storageFrame);       
+        mars::interfaces::JointType getJointType(smurf::StaticTransformation* joint){return interfaces::JOINT_TYPE_FIXED;}
         /*
          * Gets the joint type from the smurf joint it reads it from the urdf object that it contains
          */
         mars::interfaces::JointType getJointType(smurf::Joint* joint);
+        /*
+         * Sets the axis1 value of the jointData for static transformations. This method was need to implement intantiate as templated method
+         */
+        void setAxis1(smurf::StaticTransformation* smurfJoint, mars::interfaces::JointData* jointData);
+        /*
+         * Sets the axis1 value of the jointData for dynamic transformations, this is read from the smurf::Joint object
+         */
+        void setAxis1(smurf::Joint* smurfJoint, mars::interfaces::JointData* jointData);
         /*
          * Creates the physical simulation of the joint used by instantiate and commands the storage of the created joint
          */
@@ -135,11 +145,12 @@ namespace mars {
         /*
          * Attributes
          * 
-         * TODO: Should the second element not be just an element. I thought we only allow a joint per frame
+         * NOTE: The second element could be just an element. We only allow a joint per frame
          * @Dependencies is used to keep track of the missing physics nodes required to create the joints. The first element of the list is the frame in which the joint having a dependency is and the second element a vector of the frames which are missing.
          */
         std::map<envire::core::FrameId, std::vector<envire::core::FrameId>> dependencies;
         bool debug = true;
+        envire::core::FrameId originId;
         
       }; // end of class definition EnvireJoints
 
