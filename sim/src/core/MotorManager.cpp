@@ -46,6 +46,7 @@
 
 #include <envire_core/items/Item.hpp>
 #include <envire_core/graph/EnvireGraph.hpp>
+#include <smurf/Joint.hpp>
 
 
 namespace mars {
@@ -66,7 +67,6 @@ namespace mars {
       next_motor_id = 1;
     }
 
-
     /**
      * \brief Add a motor to the simulation.
      *
@@ -78,61 +78,73 @@ namespace mars {
      *
      * \return The unique id of the newly added motor.
      */
+
     unsigned long MotorManager::addMotor(MotorData *motorS, bool reload) 
     {  
       iMutex.lock();
       motorS->index = next_motor_id;
       next_motor_id++;
       iMutex.unlock();
-  
       if (!reload) {
         iMutex.lock();
         simMotorsReload.push_back(*motorS);
         iMutex.unlock();
       }
-  
-      SimMotor* newMotor = new SimMotor(control, *motorS);
-      // Here we have to access the joint through the graph
-      
-      // given the id of the joint get the joint from the graph
-      envire::core::FrameId frameName = motorS->name;
-      //LOG_DEBUG(("[MotorManager::addMotor]: The frame to look for the joint is "+ frameName).c_str());
-      
-      using jointItem = envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>;
-      using Iterator = envire::core::EnvireGraph::ItemIterator<jointItem>;
-      Iterator begin, end;
-      boost::tie(begin, end) = control->graph->getItems<jointItem>(frameName); 
-      // NOTE There might be more than one simJoint in that frame, we assume that only one is not fixed
-      bool found = false;
-      while ((begin != end) && (! found)){
-          std::shared_ptr<mars::sim::SimJoint> joint = begin->getData();
-          mars::interfaces::JointType jointType = joint->getJointType();
-          if (!(jointType == JOINT_TYPE_FIXED)){
-            //LOG_DEBUG(("[MotorManager::addMotor]: Found the joint to which the motor should be attaeched in frame "+ frameName).c_str());
-            newMotor->attachJoint(joint.get());
-            found = true;
-          }
-          begin++;
-          //    //newMotor->attachJoint(control->joints->getSimJoint(motorS->jointIndex));          
-          //LOG_DEBUG("[MotorManager::addMotor]: The motor was attached to the joint");
-          //LOG_DEBUG("[MotorManager::addMotor]: The motor's axis is: %d", motorS->axis);
+      SimMotor* simMotor = new SimMotor(control, *motorS);
+      std::shared_ptr<SimMotor> newMotor(simMotor);         
+
+      if (attachAndStoreMotor(newMotor, motorS->jointName))
+      {
+        LOG_DEBUG(("[MotorManager::addMotor]: Found the joint " + motorS->jointName + " to which the motor " + motorS->name + " should be attached").c_str());
       }
-      //  using Iterator = EnvireGraph::ItemIterator<physicsNodeItem>;
-      //  Iterator begin, end;
-      //  boost::tie(begin, end) = control->graph->getItems<physicsNodeItem>(frameName);
-      //  if (begin != end){
-      //    //LOG_DEBUG("[Envire Joints]::getSimObject: Found the physical object in frame "+ frameName);
-      //  }
-      //if(motorS->jointIndex2)
-      //  // Here we have to access the joint through the graph
-      //  newMotor->attachPlayJoint(control->joints->getSimJoint(motorS->jointIndex2));
-  
+      else
+      {
+        LOG_ERROR(("[MotorManager::addMotor]: Not found the joint " + motorS->jointName + " to which the motor " + motorS->name + " should be attached in any frame ").c_str());
+      }
       newMotor->setSMotor(*motorS);
       iMutex.lock();
-      simMotors[newMotor->getIndex()] = newMotor;
+      simMotors[newMotor->getIndex()] = newMotor.get();
       iMutex.unlock();
       control->sim->sceneHasChanged(false);
       return motorS->index;
+    }
+
+    bool MotorManager::attachAndStoreMotor(std::shared_ptr<SimMotor> simMotor, const std::string & jointName)
+    {
+      using VertexIterator = envire::core::EnvireGraph::vertex_iterator;
+      using JointItem = envire::core::Item<smurf::Joint>;
+      using ItemIterator = envire::core::EnvireGraph::ItemIterator<JointItem>;
+      using SimJointItem = envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>;
+      using SimJointIterator = envire::core::EnvireGraph::ItemIterator<SimJointItem>;
+      VertexIterator vi_begin, vi_end;
+      boost::tie(vi_begin, vi_end) = control->graph->getVertices();
+      bool jointFound = false;
+      for (;(vi_begin!=vi_end) && (!jointFound); vi_begin++)
+      {
+        // Check if the frame has items of the searched type
+        if (control->graph->containsItems<JointItem>(*vi_begin))
+        {
+          envire::core::FrameId frameName = control->graph->getFrameId(*vi_begin);
+          // Get the item and check if name corresponds
+          ItemIterator ii_begin, ii_end;
+          boost::tie(ii_begin, ii_end) = control->graph->getItems<JointItem>(frameName); 
+          while ((ii_begin != ii_end) && (! jointFound)){
+            jointFound = (ii_begin->getData().getName() == jointName);
+            if (jointFound)
+            {
+              SimJointIterator sji_begin, sji_end;
+              boost::tie(sji_begin, sji_end) = control->graph->getItems<SimJointItem>(frameName); 
+              std::shared_ptr<mars::sim::SimJoint> simJoint = sji_begin->getData();
+              simMotor->attachJoint(simJoint.get());
+              using simMotorItemPtr = envire::core::Item<std::shared_ptr<SimMotor>>::Ptr;
+              simMotorItemPtr simMotorItem(new envire::core::Item<shared_ptr<SimMotor>>(simMotor));
+              control->graph->addItemToFrame(frameName, simMotorItem);
+            }
+            ii_begin++;
+          }
+        }
+      }
+      return jointFound;
     }
 
     /**
