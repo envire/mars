@@ -116,6 +116,7 @@ namespace mars {
         }
       }
       
+
       void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>>& e){ 
         if (debug) { LOG_DEBUG( "[EnvireJoints::itemAdded] smurf::StaticTransformation received in Frame ***" + e.frame + "***");}
         smurf::StaticTransformation* smurfJoint = &(e.item->getData());
@@ -125,12 +126,24 @@ namespace mars {
       void EnvireJoints::itemAdded(const TypedItemAddedEvent<Item<smurf::Joint>>& e){
         //LOG_DEBUG( "[Envire Joints] itemAdded: envire::core::Item<smurf::Joint>::Ptr>: " + e.frame);
         smurf::Joint* smurfJoint = &(e.item->getData());
+        createJointRecord(smurfJoint, e.frame);
         checkAndInstantiate<smurf::Joint*>(smurfJoint);
       }
       
       
       // Private Methods
       
+
+      void EnvireJoints::createJointRecord(smurf::Joint *smurfJoint, const FrameId &frame)
+      {
+
+        JointRecord* jointInfo(new JointRecord);
+        jointInfo->name = smurfJoint->getName();
+        jointInfo->smurf = std::shared_ptr<smurf::Joint>(smurfJoint);
+        Item<JointRecord>::Ptr jointItemPtr(new Item<JointRecord>(*jointInfo));
+        control->graph->addItemToFrame(frame, jointItemPtr);          
+      }
+
       template <class jointType>
       void EnvireJoints::checkAndInstantiate(jointType smurfJoint, bool addDeps)
       {
@@ -294,7 +307,30 @@ namespace mars {
         SimJointPtrItemPtr simJointPtrItemPtr(new envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>(simJoint));
         control->graph->addItemToFrame(storageFrame, simJointPtrItemPtr);          
         control->graph->addItemToFrame(storageFrame, jointInterfacePtrItemPtr);          
+        addToJointRecord(storageFrame, jointData->name, simJoint, jointInterface.get());
       }
+
+      void EnvireJoints::addToJointRecord(const envire::core::FrameId &frameId, const std::string &jointName, mars::sim::SimJoint *simJoint, mars::interfaces::JointInterface *jointInterface)
+      {
+        using RecordIterator = EnvireGraph::ItemIterator<Item<JointRecord>>;
+        RecordIterator begin, end;
+        // TODO Ask Arne, why to getItems I have to provide the template Item?
+        // won't getItems only look for Items?
+        boost::tie(begin, end) = control->graph->getItems<Item<JointRecord>>(frameId);
+        bool stored=false;
+        while((!stored)&&(begin!=end))
+        {
+          JointRecord* record = &(begin->getData());
+          if (record->name == jointName)
+          {
+            record->sim = std::shared_ptr<mars::sim::SimJoint>(simJoint);
+            record->interface = std::shared_ptr<mars::interfaces::JointInterface>(jointInterface);
+          }
+          begin ++;
+        }
+
+      };
+
 
       void EnvireJoints::addDependencies(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim)
       {

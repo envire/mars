@@ -51,6 +51,15 @@ namespace mars {
   namespace plugins {
     namespace envire_joints {
 
+
+      struct JointRecord
+      {
+          std::string name;
+          std::shared_ptr<smurf::Joint> smurf;
+          std::shared_ptr<mars::interfaces::JointInterface> interface;
+          std::shared_ptr<mars::sim::SimJoint> sim;
+      };
+
       class EnvireJoints: public mars::interfaces::MarsPluginTemplate,
                           public envire::core::GraphEventDispatcher,
                           public envire::core::GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::interfaces::NodeInterface>>>,
@@ -89,7 +98,13 @@ namespace mars {
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Joint>>& e);
 
       private:        
-        // TODO Would be nice to have a method getJointData, that receives the smurf joint data and returns a jointData object
+
+
+        /*
+         * Create and store the struct in which the information about this joint
+         * will be stored
+         */
+        void createJointRecord(smurf::Joint *smurfJoint, const envire::core::FrameId &frame);
         /*
          * If the joint can be instantiated then instantiates it, else add the missing dependencies.
          * 
@@ -139,6 +154,11 @@ namespace mars {
          * Store also the physicsJoint in the graph
          */
         void storeSimJoint(const std::shared_ptr< mars::interfaces::JointInterface >& jointInterface, mars::interfaces::JointData* jointData, envire::core::FrameId storageFrame);
+        /*
+         * Adds to the joint record the simjoint and joint interface pointers
+         *
+         */
+        void addToJointRecord(const envire::core::FrameId &frameId, const std::string &jointName, mars::sim::SimJoint *simJoint, mars::interfaces::JointInterface *jointInterface);
         /*
          * @storageFrame is the frame in which the joint is stored to be recovered when the dependencies are met
          */
