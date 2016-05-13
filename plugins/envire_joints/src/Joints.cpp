@@ -47,9 +47,10 @@ namespace mars {
       using namespace mars::interfaces;
       using namespace envire::core;
       using namespace mars::sim;
-      using physicsNodeItem = Item<std::shared_ptr<NodeInterface>>;
-      using physicsJointItemPtr = Item<std::shared_ptr<mars::interfaces::JointInterface>>::Ptr;
-      using simJointItemPtr = Item<std::shared_ptr<mars::sim::SimJoint>>::Ptr;
+      // TODO Are you sure that you need the shared_ptr in the Item?
+      using NodeInterfacePtrItem = Item<std::shared_ptr<NodeInterface>>;
+      using JointInterfacePtrItemPtr = Item<std::shared_ptr<mars::interfaces::JointInterface>>::Ptr;
+      using SimJointPtrItemPtr = Item<std::shared_ptr<mars::sim::SimJoint>>::Ptr;
 
       // Public Methods
       EnvireJoints::EnvireJoints(lib_manager::LibManager *theManager): MarsPluginTemplate(theManager, "EnvireJoints"), GraphEventDispatcher(){
@@ -169,9 +170,9 @@ namespace mars {
       
       bool EnvireJoints::getSimObject(const FrameId& frameName, std::shared_ptr<NodeInterface>& objectSim){
         bool found = false;
-        using Iterator = EnvireGraph::ItemIterator<physicsNodeItem>;
+        using Iterator = EnvireGraph::ItemIterator<NodeInterfacePtrItem>;
         Iterator begin, end;
-        boost::tie(begin, end) = control->graph->getItems<physicsNodeItem>(frameName);
+        boost::tie(begin, end) = control->graph->getItems<NodeInterfacePtrItem>(frameName);
         if (begin != end){
           objectSim = begin->getData();
           found = true;
@@ -286,13 +287,13 @@ namespace mars {
       }
       
       void EnvireJoints::storeSimJoint (const std::shared_ptr<mars::interfaces::JointInterface>& jointInterface, mars::interfaces::JointData* jointData, FrameId storageFrame){
-        physicsJointItemPtr physicsItem(new envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>(jointInterface));
+        JointInterfacePtrItemPtr jointInterfacePtrItemPtr(new envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>(jointInterface));
         // src/core/SimJoint.cpp:40:    SimJoint::SimJoint(ControlCenter *c, const JointData &sJoint_)
         mars::sim::SimJoint* simJoint(new mars::sim::SimJoint(control, (*jointData)));
         simJoint->setInterface(jointInterface.get());
-        simJointItemPtr simJointItem(new envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>(simJoint));
-        control->graph->addItemToFrame(storageFrame, simJointItem);          
-        control->graph->addItemToFrame(storageFrame, physicsItem);          
+        SimJointPtrItemPtr simJointPtrItemPtr(new envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>(simJoint));
+        control->graph->addItemToFrame(storageFrame, simJointPtrItemPtr);          
+        control->graph->addItemToFrame(storageFrame, jointInterfacePtrItemPtr);          
       }
 
       void EnvireJoints::addDependencies(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim)
