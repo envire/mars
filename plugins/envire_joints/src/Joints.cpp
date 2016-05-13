@@ -139,7 +139,6 @@ namespace mars {
 
         JointRecord* jointInfo(new JointRecord);
         jointInfo->name = smurfJoint->getName();
-        jointInfo->smurf = std::shared_ptr<smurf::Joint>(smurfJoint);
         Item<JointRecord>::Ptr jointItemPtr(new Item<JointRecord>(*jointInfo));
         control->graph->addItemToFrame(frame, jointItemPtr);          
       }

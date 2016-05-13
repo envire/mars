@@ -51,15 +51,6 @@ namespace mars {
   namespace plugins {
     namespace envire_joints {
 
-
-      struct JointRecord
-      {
-          std::string name;
-          std::shared_ptr<smurf::Joint> smurf;
-          std::shared_ptr<mars::interfaces::JointInterface> interface;
-          std::shared_ptr<mars::sim::SimJoint> sim;
-      };
-
       class EnvireJoints: public mars::interfaces::MarsPluginTemplate,
                           public envire::core::GraphEventDispatcher,
                           public envire::core::GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::interfaces::NodeInterface>>>,

@@ -34,6 +34,7 @@
 #include "SimNode.h"
 #include "SimMotor.h"
 #include "SimJoint.h"
+#include "JointRecord.h"
 #include "PhysicsMapper.h"
 #include "MotorManager.h"
 
@@ -111,39 +112,63 @@ namespace mars {
 
     bool MotorManager::attachAndStoreMotor(std::shared_ptr<SimMotor> simMotor, const std::string & jointName)
     {
+      // Find in the Graph the vertex that contains the record with same name as the joint
+      // Get from that record the simjoint
+      // attach the motor to the simjoint
+      // store the motor
       using VertexIterator = envire::core::EnvireGraph::vertex_iterator;
+      using JointRecordItem = envire::core::Item<mars::sim::JointRecord>;
+
       using JointItem = envire::core::Item<smurf::Joint>;
       using ItemIterator = envire::core::EnvireGraph::ItemIterator<JointItem>;
       using SimJointItem = envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>;
       using SimJointIterator = envire::core::EnvireGraph::ItemIterator<SimJointItem>;
+
+      //using JointInterfaceIterator = envire::core::EnvireGraph::ItemIterator<JointInterfaceItem>;
       VertexIterator vi_begin, vi_end;
       boost::tie(vi_begin, vi_end) = control->graph->getVertices();
       bool jointFound = false;
+      /*
       for (;(vi_begin!=vi_end) && (!jointFound); vi_begin++)
       {
         // Check if the frame has items of the searched type
-        if (control->graph->containsItems<JointItem>(*vi_begin))
+        if (control->graph->containsItems<JointInterfaceItem>(*vi_begin))
         {
           envire::core::FrameId frameName = control->graph->getFrameId(*vi_begin);
           // Get the item and check if name corresponds
-          ItemIterator ii_begin, ii_end;
-          boost::tie(ii_begin, ii_end) = control->graph->getItems<JointItem>(frameName); 
-          while ((ii_begin != ii_end) && (! jointFound)){
-            jointFound = (ii_begin->getData().getName() == jointName);
+          JointInterfaceIterator ji_begin, ji_end;
+          boost::tie(ji_begin, ji_end) = control->graph->getItems<JointInterfaceItem>(frameName); 
+          while ((ji_begin != ji_end) && (! jointFound)){
+            std::shared_ptr<mars::interfaces::JointInterface> jointInterface = ji_begin->getData();
+            jointFound = (jointInterface->getName() == jointName);
             if (jointFound)
             {
-              SimJointIterator sji_begin, sji_end;
-              boost::tie(sji_begin, sji_end) = control->graph->getItems<SimJointItem>(frameName); 
-              std::shared_ptr<mars::sim::SimJoint> simJoint = sji_begin->getData();
-              simMotor->attachJoint(simJoint.get());
-              using simMotorItemPtr = envire::core::Item<std::shared_ptr<SimMotor>>::Ptr;
-              simMotorItemPtr simMotorItem(new envire::core::Item<shared_ptr<SimMotor>>(simMotor));
-              control->graph->addItemToFrame(frameName, simMotorItem);
+              //SimJointIterator sji_begin, sji_end;
+              //boost::tie(sji_begin, sji_end) = control->graph->getItems<SimJointItem>(frameName); 
+              //bool attached = false;
+              //while ((sji_begin != sji_end) && (!attached)){
+              //  std::shared_ptr<mars::sim::SimJoint> simJoint = sji_begin->getData();
+              //  if (simJoint->getName() == jointName);
+              //  {
+                  //simMotor->attachJoint(simJoint.get());
+                  simMotor->attachJoint(jointInterface.get()); // I don't know if this is ok
+                  using simMotorItemPtr = envire::core::Item<std::shared_ptr<SimMotor>>::Ptr;
+                  simMotorItemPtr simMotorItem(new envire::core::Item<shared_ptr<SimMotor>>(simMotor));
+                  control->graph->addItemToFrame(frameName, simMotorItem);
+                  //attached = true;
+              //  }
+              //  sji_begin++;
+              //}
+              //if (!attached)
+              //{
+              //  LOG_ERROR(("[MotorManager::addMotor]: Not found the SimJoint to which the motor with joint "+jointName+" should be attached to in frame " + frameName ).c_str());
+              //}
             }
-            ii_begin++;
+            ji_begin++;
           }
         }
       }
+      */
       return jointFound;
     }
 
