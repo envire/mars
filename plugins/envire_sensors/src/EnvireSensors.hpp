@@ -76,19 +76,38 @@ namespace mars {
         // MarsPlugin methods
         void init();
         void reset();
+        /*
+         * Update the sensors that are there. Only implemented for the velodyne
+         * so far
+         */
         void update(mars::interfaces::sReal time_ms);
 
-        void updateSimNode();
-        void rotate_rotatingRay_sensor(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr);
-        void display_position_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr );
-        void display_rotatingRay_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr );
-        void display_COM_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr);
-            
-        // EnvireSensors methods
+        /*
+         * Find the simNode of the velodyne and call update on it
+         */
+        void updateVelodyneSim();
 
+        // EnvireSensors methods
+        /*
+         * When a new smurf sensor is added to the graph, a simulation instance
+         * is created in the correspondent position
+         * 
+         * 1. Create a BaseSensor based on the smurf
+         * 2. Store the BaseSensor in the Envire Graph 
+         * 3. Attach the sensor to the simNode that corresponds (first one found 
+         * in the same frame)
+         *
+         * TODO This method fails if a sensor tries to connect to a frame which 
+         * has not been instantiated in simulation. We need dependencies as we 
+         * needed for the joints.
+         */
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Sensor>>& e);        
         
       private:
+        mars::interfaces::BaseSensor* createSensor(smurf::Sensor &sensorSmurf, const envire::core::FrameId frameId);
+        bool attachSensor(mars::interfaces::BaseSensor* sensor, const envire::core::FrameId frameId);
+
+        envire::core::FrameId velodyneFrame="";
         bool debug = true;
         unsigned long next_sensor_id = 0;
         
@@ -99,3 +118,11 @@ namespace mars {
 } // end of namespace mars
 
 #endif // MARS_PLUGINS_ENVIRE_SENSORS_H
+
+        /*
+        // Just for testing:
+        void rotate_rotatingRay_sensor(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr);
+        void display_position_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr );
+        void display_rotatingRay_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr );
+        void display_COM_data(const std::shared_ptr<mars::interfaces::BaseSensor>& sensorPtr);
+        */

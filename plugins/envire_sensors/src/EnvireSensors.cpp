@@ -63,7 +63,6 @@ namespace mars {
         assert(control->graph != nullptr);
         GraphEventDispatcher::subscribe(control->graph.get());
         GraphItemEventDispatcher<Item<smurf::Sensor>>::subscribe(control->graph.get());
-        if (debug) { LOG_DEBUG( "[EnvireSensors]::init Init method"); }
       }
 
       void EnvireSensors::reset() {
@@ -71,8 +70,106 @@ namespace mars {
 
       EnvireSensors::~EnvireSensors() {
       }
+        
+      void EnvireSensors::updateVelodyneSim(){
+        using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
+        using SimNodeIterator = EnvireGraph::ItemIterator<SimNodeItem>;
+        std::shared_ptr<mars::sim::SimNode> simNodePtr;
+        SimNodeIterator begin, end;
+        boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(velodyneFrame);
+        if (begin != end){
+          simNodePtr = begin->getData();
+          simNodePtr->update(0.0); //NOTE I need to provide a calc_ms. I provide 0.
+        }
+      }
+      
+      void EnvireSensors::update(sReal time_ms) {
+        if (velodyneFrame != "")
+        {
+          updateVelodyneSim();
+        }
+      }
 
+      void EnvireSensors::itemAdded(const TypedItemAddedEvent<Item<smurf::Sensor>>& e)
+      {
+        using SensorItemPtr = envire::core::Item<std::shared_ptr<BaseSensor>>::Ptr;
+        if(debug) {LOG_DEBUG(("[EnvireSensors::ItemAdded] Smurf::Sensor in frame *" + e.frame + "*").c_str());}
+        BaseSensor* sensor = createSensor(e.item->getData(), e.frame);
+        SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
+        control->graph->addItemToFrame(e.frame, sensorItem);
+        if(debug) {LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");}
+        bool attached = attachSensor(sensor, e.frame);
+        if (!attached)
+        {
+          LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor. ");
+        }
+      }
 
+      mars::interfaces::BaseSensor* EnvireSensors::createSensor(smurf::Sensor &sensorSmurf, const envire::core::FrameId frameId)
+      {
+        configmaps::ConfigMap sensorMap = sensorSmurf.getMap();
+        if (sensorSmurf.getName() == "velodyne")
+        {
+          velodyneFrame = frameId;
+        }
+        sensorMap["frame"] = frameId;
+        BaseSensor* sensor = control->sensors->createAndAddSensor(&sensorMap); 
+        return sensor;
+      }
+
+      bool EnvireSensors::attachSensor(mars::interfaces::BaseSensor* sensor, const envire::core::FrameId frameId)
+      {
+        using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
+        using Iterator = EnvireGraph::ItemIterator<SimNodeItem>;
+        bool attached = false;
+        std::shared_ptr<mars::sim::SimNode> simNodePtr;
+        Iterator begin, end;
+        boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(frameId);
+        if (begin != end){
+          simNodePtr = begin->getData();
+          simNodePtr->addSensor(sensor);
+          attached = true;
+          if (debug) { LOG_DEBUG("[EnvireSensors::ItemAdded] The SimNode to attach the sensor is found"); }
+        }
+        return attached;
+      }
+
+    } // end of namespace envire_sensors
+  } // end of namespace plugins
+} // end of namespace mars
+
+DESTROY_LIB(mars::plugins::envire_sensors::EnvireSensors);
+CREATE_LIB(mars::plugins::envire_sensors::EnvireSensors);
+
+      /*
+      // Just for testing:
+      void EnvireSensors::update(sReal time_ms) {
+        if (velodyneFrame != "")
+        {
+          updateVelodyneSim();
+        }
+        using sensorItem = envire::core::Item<std::shared_ptr<BaseSensor>>;
+        using Iterator = envire::core::EnvireGraph::ItemIterator<sensorItem>;
+        std::shared_ptr<BaseSensor> sensorPtr;
+        Iterator begin, end;
+        boost::tie(begin, end) = control->graph->getItems<sensorItem>("velodyne_link");
+        if (begin != end){
+            sensorPtr = begin->getData();
+            rotate_rotatingRay_sensor(sensorPtr);
+            //display_position_data(sensorPtr);
+            //display_rotatingRay_data(sensorPtr);
+            //display_COM_data(sensorPtr);
+        }
+      }
+
+      void EnvireSensors::rotate_rotatingRay_sensor(const std::shared_ptr<BaseSensor>& sensorPtr)
+      {
+        mars::sim::RotatingRaySensor * raySensor;
+        raySensor = dynamic_cast<mars::sim::RotatingRaySensor*>(sensorPtr.get());
+        raySensor->turn();
+        //utils::Quaternion offset = raySensor->turn();
+      }
+            
       void EnvireSensors::display_position_data(const std::shared_ptr< BaseSensor >& sensorPtr)
       {
         // TODO For this sensor I m not doing anything with the broadcaster. How is the new data arriving to the object?
@@ -98,18 +195,13 @@ namespace mars {
         LOG_DEBUG("[EnvireSensor::display_position_data] data 3: , %d", ((double)sens_val[2]));
       }
       
-      void EnvireSensors::rotate_rotatingRay_sensor(const std::shared_ptr<BaseSensor>& sensorPtr)
-      {
-        mars::sim::RotatingRaySensor * raySensor;
-        raySensor = dynamic_cast<mars::sim::RotatingRaySensor*>(sensorPtr.get());
-        utils::Quaternion offset = raySensor->turn();
-      }
-            
+
       void EnvireSensors::display_rotatingRay_data(const std::shared_ptr< BaseSensor >& sensorPtr)
       {
         mars::sim::RotatingRaySensor * raySensor;
         raySensor = dynamic_cast<mars::sim::RotatingRaySensor*>(sensorPtr.get());
-        utils::Quaternion offset = raySensor->turn();
+        raySensor->turn();
+        //utils::Quaternion offset = raySensor->turn();
         
         base::samples::Pointcloud pointcloud;
         pointcloud.time = base::Time::now();
@@ -141,103 +233,7 @@ namespace mars {
         LOG_DEBUG("[enviresensor::display_contact_data] data 2: , %6.2f", ((double)sens_val[1]));
         LOG_DEBUG("[enviresensor::display_contact_data] data 3: , %6.2f", ((double)sens_val[2]));
       }
-        
-      void EnvireSensors::updateSimNode(){
-        // Update the SimNode
-        using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
-        using SimNodeIterator = EnvireGraph::ItemIterator<SimNodeItem>;
-        std::shared_ptr<mars::sim::SimNode> simNodePtr;
-        SimNodeIterator begin, end;
-        boost::tie(begin, end) = control->graph->getItems<SimNodeItem>("velodyne_link");
-        if (begin != end){
-          simNodePtr = begin->getData();
-          simNodePtr->update(0.0); //NOTE I need to provide a calc_ms. I provide 0.
-        }
-      }
-      
-      void EnvireSensors::update(sReal time_ms) {
-        updateSimNode();
-        using sensorItem = envire::core::Item<std::shared_ptr<BaseSensor>>;
-        using Iterator = envire::core::EnvireGraph::ItemIterator<sensorItem>;
-        std::shared_ptr<BaseSensor> sensorPtr;
-        Iterator begin, end;
-        boost::tie(begin, end) = control->graph->getItems<sensorItem>("velodyne_link");
-        if (begin != end){
-            sensorPtr = begin->getData();
-            rotate_rotatingRay_sensor(sensorPtr);
-            //display_position_data(sensorPtr);
-            //display_rotatingRay_data(sensorPtr);
-            //display_COM_data(sensorPtr);
-        }
-      }
+    */
 
-      void EnvireSensors::itemAdded(const TypedItemAddedEvent<Item<smurf::Sensor>>& e)
-      {
-        // NOTE Sensor instantiation based on smurf.cpp - addConfigMap() and 
-        // FIXME This method fails if a sensor tries to connect to a link which has not been instantiated in simulation. We need dependencies as we needed for the joints.
-        if(debug) 
-        {
-          LOG_DEBUG(("[EnvireSensors::ItemAdded] Smurf::Sensor Detected in frame ***" + e.frame + "***").c_str());
-        }
-        smurf::Sensor sensorSmurf = e.item->getData();
-        configmaps::ConfigMap sensorMap = sensorSmurf.getMap();
-        sensorMap["frame"] = e.frame;
-        if ((std::string) sensorMap["type"] == "Joint6DOF") {
-          std::string linkname = (std::string) sensorMap["link"];
-          // the name of the joint to which is attached
-          // in smurf.cpp:
-          //std::string jointname = model->getlink(linkname)->parent_joint->name;
-          std::string jointname = e.frame;
-          if (debug)
-          {
-            LOG_DEBUG(("[EnvireSensors::ItemAdded] linkname "+ linkname).c_str());
-            LOG_DEBUG(("[EnvireSensors::ItemAdded] jointname "+ jointname).c_str());
-          }
-          //NOTE I think we don't need the following things (from smurf.cpp): 
-          //sensorMap["nodeID"] = (ulong) nodeIDMap[linkname];
-          //sensorMap["jointID"] = (ulong) jointIDMap[jointname];
-          //fprintf(stderr, "creating Joint6DOF..., %lu, %lu\n", (ulong) sensorMap["nodeID"], (ulong) sensorMap["jointID"]);
-        }
-        //NOTE More stuff is done in addConfigMap for the sensors, but I think we don't need it in the envire_graph, essentially mapping to the nodes or joints, which we have already because we stored in the correspondent frame the sensor
-        BaseSensor* sensor = new BaseSensor;
-        sensor = control->sensors->createAndAddSensor(&sensorMap); 
-        
-        // NOTE Store the new sensor in the Envire Graph.
-        // TODO Store the sensor with the specific type it is, instead of as a Base Sensor
-        using SensorItemPtr = envire::core::Item<std::shared_ptr<BaseSensor>>::Ptr;
-        SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
-        control->graph->addItemToFrame(e.frame, sensorItem);
-        LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph. Now it will be attached to a node");
-        
-        // NOTE Attach the sensor to the simNode that corresponds (the one in the same frame by  now)
-        using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
-        using Iterator = EnvireGraph::ItemIterator<SimNodeItem>;
-        std::shared_ptr<mars::sim::SimNode> simNodePtr;
-        Iterator begin, end;
-        boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(e.frame);
-        if (begin != end){
-          simNodePtr = begin->getData();
-          simNodePtr->addSensor(sensor);
-          if (debug) {
-               LOG_DEBUG("[EnvireSensors::ItemAdded] The SimNode to attach the sensor is found");
-          }
-        }
-        else
-        {
-          LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor. ");       
-        }
-        
-        // Here might be the reason why it does not work: First Look, everything seems to be fine here
-        // Maybe the problem is ...
-        // - Due to data Broker
-        // - Wrong sensor initialization
-        // - ...?
-        // TODO SimNode AddSensor method seems not to show traces, is it not executin?
-        //simNode->addSensor(sensor);
-      }
-    } // end of namespace envire_sensors
-  } // end of namespace plugins
-} // end of namespace mars
 
-DESTROY_LIB(mars::plugins::envire_sensors::EnvireSensors);
-CREATE_LIB(mars::plugins::envire_sensors::EnvireSensors);
+

@@ -27,12 +27,6 @@ add_subdirectory(src)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
-# Rock Logging (next four lines)
-add_definitions(-DBASE_LOG_NAMESPACE=${PROJECT_NAME})
-pkg_check_modules(BASE REQUIRED "base-lib")
-include_directories(${BASE_INCLUDE_DIRS})
-link_directories(${BASE_LIBRARY_DIRS})
-
 target_link_libraries(${PROJECT_NAME}
                       ${PKGCONFIG_LIBRARIES}
                       ${BASE_LIBRARIES}
