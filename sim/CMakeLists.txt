@@ -85,6 +85,7 @@ set(SOURCES_H
        src/core/SimMotor.h
        src/core/SimNode.h
        src/core/Simulator.h
+       src/core/JointRecord.h
        src/sensors/RotatingRaySensor.h
        
        src/physics/JointPhysics.h

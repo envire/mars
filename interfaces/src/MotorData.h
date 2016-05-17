@@ -55,6 +55,7 @@ namespace mars {
       void getFilesToSave(std::vector<std::string> *fileList);
 
       std::string name;         // name of the motor
+      std::string jointName;    // Name of the joint to which the motor should be attached
       unsigned long index; // index number of the motor
       unsigned long jointIndex, jointIndex2; // index of the joint the motor moves
       int axis; // index of the joints axis the motor moves

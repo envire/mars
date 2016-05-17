@@ -51,6 +51,8 @@
 // Include stddef for basic defs like NULL
 #include <cstddef>
 
+#include <iostream>
+#include <memory>
 
 namespace envire { namespace core {
   class EnvireGraph;
@@ -122,7 +124,7 @@ namespace mars {
        
       LoadCenter *loadCenter;
       
-      envire::core::EnvireGraph* graph;
+      std::shared_ptr<envire::core::EnvireGraph> graph;
 
       static data_broker::DataBrokerInterface *theDataBroker;
     };

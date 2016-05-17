@@ -50,8 +50,8 @@ EnvireMotors::EnvireMotors(lib_manager::LibManager *theManager)
 
 void EnvireMotors::init() {
     assert(control->graph != nullptr);
-    GraphEventDispatcher::subscribe(control->graph);
-    GraphItemEventDispatcher<Item<smurf::Motor>>::subscribe(control->graph);
+    GraphEventDispatcher::subscribe(control->graph.get());
+    GraphItemEventDispatcher<Item<smurf::Motor>>::subscribe(control->graph.get());
     motorIndex = 1;
 }
 

@@ -314,6 +314,29 @@ namespace mars {
                                       std::string *dataName) const;
 
     private:
+      
+      /*
+       * This method attaches the a simMotor to the correspondent simulated joint
+       * and stores it in the frame where the joint is.  
+       *
+       * NOTE Here we are assumming only a dynamic joint per frame.
+       *
+       * Steps: 
+       *
+       * 1. Search for the joint which name corresponds to the joint name in the
+       * motor. 
+       *  - Note that it might not be available a frame with the name of the
+       * joint, because we store them in the source of the transformation. Thus
+       * we have to search in the graph for the joint.  With this approach we
+       * avoid assumming conventions like joint name = target/source link.
+       *
+       * 2. Link the  motor to that joint.  
+       *
+       * 3. Store the new motor in the frame where the joint was found.
+       *
+       */
+      bool attachAndStoreMotor(std::shared_ptr<SimMotor> simMotor, const std::string & jointName);
+
       //! the id of the next motor that is added to the simulation
       unsigned long next_motor_id;
 

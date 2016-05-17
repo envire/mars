@@ -55,11 +55,11 @@ GraphViz::GraphViz(lib_manager::LibManager *theManager)
 void GraphViz::init() 
 {
   assert(control->graph != nullptr);
-  GraphEventDispatcher::subscribe(control->graph);
-  GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>::subscribe(control->graph);
-  GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>::subscribe(control->graph);
-  GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>::subscribe(control->graph);
-  GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph);
+  GraphEventDispatcher::subscribe(control->graph.get());
+  GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph.get());
 }
 
 void GraphViz::reset() {
