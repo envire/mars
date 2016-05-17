@@ -110,65 +110,46 @@ namespace mars {
       return motorS->index;
     }
 
+    /*
+     * - Find in the Graph the vertex that contains the record with same name 
+     * as the joint. 
+     * - Get from that record the simjoint 
+     * - Attach the motor to the simjoint
+     * - Store the motor
+    */
     bool MotorManager::attachAndStoreMotor(std::shared_ptr<SimMotor> simMotor, const std::string & jointName)
     {
-      // Find in the Graph the vertex that contains the record with same name as the joint
-      // Get from that record the simjoint
-      // attach the motor to the simjoint
-      // store the motor
+
       using VertexIterator = envire::core::EnvireGraph::vertex_iterator;
       using JointRecordItem = envire::core::Item<mars::sim::JointRecord>;
-
-      using JointItem = envire::core::Item<smurf::Joint>;
-      using ItemIterator = envire::core::EnvireGraph::ItemIterator<JointItem>;
-      using SimJointItem = envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>;
-      using SimJointIterator = envire::core::EnvireGraph::ItemIterator<SimJointItem>;
-
-      //using JointInterfaceIterator = envire::core::EnvireGraph::ItemIterator<JointInterfaceItem>;
+      using JointRecordItemIterator = envire::core::EnvireGraph::ItemIterator<JointRecordItem>;
+      using simMotorItemPtr = envire::core::Item<std::shared_ptr<SimMotor>>::Ptr;
       VertexIterator vi_begin, vi_end;
       boost::tie(vi_begin, vi_end) = control->graph->getVertices();
       bool jointFound = false;
-      /*
-      for (;(vi_begin!=vi_end) && (!jointFound); vi_begin++)
+      while ((vi_begin!=vi_end) && (!jointFound))
       {
-        // Check if the frame has items of the searched type
-        if (control->graph->containsItems<JointInterfaceItem>(*vi_begin))
+        if (control->graph->containsItems<JointRecordItem>(*vi_begin))
         {
           envire::core::FrameId frameName = control->graph->getFrameId(*vi_begin);
-          // Get the item and check if name corresponds
-          JointInterfaceIterator ji_begin, ji_end;
-          boost::tie(ji_begin, ji_end) = control->graph->getItems<JointInterfaceItem>(frameName); 
-          while ((ji_begin != ji_end) && (! jointFound)){
-            std::shared_ptr<mars::interfaces::JointInterface> jointInterface = ji_begin->getData();
-            jointFound = (jointInterface->getName() == jointName);
-            if (jointFound)
+          JointRecordItemIterator jri_begin, jri_end;
+          boost::tie(jri_begin, jri_end) = control->graph->getItems<JointRecordItem>(frameName); 
+          while ((jri_begin!=jri_end) && (!jointFound))
+          {
+            mars::sim::JointRecord jointRecord = jri_begin->getData();
+            if (jointRecord.name == jointName)
             {
-              //SimJointIterator sji_begin, sji_end;
-              //boost::tie(sji_begin, sji_end) = control->graph->getItems<SimJointItem>(frameName); 
-              //bool attached = false;
-              //while ((sji_begin != sji_end) && (!attached)){
-              //  std::shared_ptr<mars::sim::SimJoint> simJoint = sji_begin->getData();
-              //  if (simJoint->getName() == jointName);
-              //  {
-                  //simMotor->attachJoint(simJoint.get());
-                  simMotor->attachJoint(jointInterface.get()); // I don't know if this is ok
-                  using simMotorItemPtr = envire::core::Item<std::shared_ptr<SimMotor>>::Ptr;
-                  simMotorItemPtr simMotorItem(new envire::core::Item<shared_ptr<SimMotor>>(simMotor));
-                  control->graph->addItemToFrame(frameName, simMotorItem);
-                  //attached = true;
-              //  }
-              //  sji_begin++;
-              //}
-              //if (!attached)
-              //{
-              //  LOG_ERROR(("[MotorManager::addMotor]: Not found the SimJoint to which the motor with joint "+jointName+" should be attached to in frame " + frameName ).c_str());
-              //}
+              jointFound = true;
+              std::shared_ptr<mars::sim::SimJoint> simJoint = jointRecord.sim;
+              simMotor->attachJoint(simJoint.get());
+              simMotorItemPtr simMotorItem(new envire::core::Item<shared_ptr<SimMotor>>(simMotor));
+              control->graph->addItemToFrame(frameName, simMotorItem);
             }
-            ji_begin++;
+            jri_begin ++;
           }
         }
+        vi_begin++;
       }
-      */
       return jointFound;
     }
 
