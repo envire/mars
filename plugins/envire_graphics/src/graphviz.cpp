@@ -177,9 +177,8 @@ void GraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces::Node
 }   
 
 void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
-{ printf("itemAdded ....1...\n");
+{ 
 
-	
   //FIXME replace with specific itemAddedEvent for PhysicsConfigMapItem
   boost::shared_ptr<PhysicsConfigMapItem> pItem;
   if(pItem = boost::dynamic_pointer_cast<PhysicsConfigMapItem>(e.item))
@@ -201,7 +200,7 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
         node.material.emissionFront = mars::utils::Color(1.0, 1.0, 1.0, 1.0);
         node.material.transparency = 0.5;
         setPos(e.frame, node);
-      printf("GraphViz...node.pos = (%f %f %f)\n", node.pos.x(),node.pos.y(),node.pos.z());	       
+   
         uuidToGraphicsId[pItem->getID()] = control->graphics->addDrawObject(node);
       }
     }
@@ -214,14 +213,14 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
 }
 
 void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>>& e)
-{   printf("itemAdded ....2...\n");
+{   
     envire::smurf::Visual vis = e.item->getData();
     addVisual(vis, e.frame, e.item->getID());
     
 }
 
 void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e)
-{			  printf("itemAdded ....3...\n");
+{	
     LOG_DEBUG("Added Collidable");
     smurf::Collidable col = e.item->getData();
     urdf::Collision collision = col.getCollision();
@@ -280,7 +279,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
 }
 
 void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e)
-{   printf("itemAdded ....4...\n");
+{   
     const FrameId source = e.item->getData().getSourceFrame().getName();
     const FrameId target = e.item->getData().getTargetFrame().getName();
     
@@ -303,7 +302,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
 }
 
 void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e)
-{	printf("itemAdded ....5...\n");
+{	
     boost::shared_ptr<urdf::Sphere> sphere( new urdf::Sphere);
     sphere->radius = 0.01;
     //y and z are unused
