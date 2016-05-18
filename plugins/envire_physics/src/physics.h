@@ -22,6 +22,11 @@
 #include <envire_core/graph/TreeView.hpp>
 
 
+#include <envire_collider_mls/MLSCollision.hpp>
+#include <envire/maps/MLSGrid.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>	
+#include <mars/sim/PhysicsMapper.h>
 
 namespace mars {
   
@@ -44,7 +49,8 @@ namespace mars {
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>,
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<urdf::Collision>>,
-                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Inertial>>
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Inertial>>,
+                           public envire::core::GraphItemEventDispatcher<envire::core::Item<mars::interfaces::NodeData>>
       {
       public:
       
@@ -106,6 +112,10 @@ namespace mars {
          */
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<configmaps::ConfigMap>>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem>& e);
+ 
+		void itemAdded(const envire::core::TypedItemAddedEvent<mars::interfaces::NodeData>& e);
+		void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<mars::interfaces::NodeData>>& e);
+ 
         /*
          *  dfs visit the tree and update all positions.
          *  The transforms in the graph are relative to their parent while the
@@ -116,6 +126,7 @@ namespace mars {
         void update(mars::interfaces::sReal time_ms);
 
         void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
+        
         
       private:
         void updateTree();
@@ -154,6 +165,11 @@ namespace mars {
         const bool printGraph = false;
         const bool debugUpdatePos = false;
         
+        dSpaceID current_space;
+		boost::scoped_ptr<envire::Environment> env;   
+		envire::MLSGrid::Ptr mlsgrid_ptr;     
+		boost::shared_ptr<envire::MLSGrid> mls_userdata;             
+        bool addMlsSurface(mars::interfaces::NodeData* node);          
         
       };
       

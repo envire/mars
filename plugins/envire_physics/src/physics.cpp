@@ -59,6 +59,7 @@ void GraphPhysics::init() {
   GraphItemEventDispatcher<Item<urdf::Collision>>::subscribe(control->graph);
   GraphItemEventDispatcher<Item<smurf::Collidable>>::subscribe(control->graph);
   GraphItemEventDispatcher<Item<smurf::Inertial>>::subscribe(control->graph);
+  GraphItemEventDispatcher<Item<NodeData>>::subscribe(control->graph);
 }
 
 void GraphPhysics::reset() {
@@ -103,6 +104,7 @@ void GraphPhysics::edgeModified(const envire::core::EdgeModifiedEvent& e)
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>>& e)
 {
+			  printf("itemAdded ....1...physics\n");
     if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Frame item received in frame *** " + e.frame + "***").c_str());}
     mars::interfaces::NodeData node;
     smurf::Frame link = e.item->getData();
@@ -120,7 +122,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>>& e)
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>>& e)
 {
-	
+			  printf("itemAdded ....2...\n");
   //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
   smurf::Collidable collidable = e.item->getData();
   NodeData collisionNode = getCollidableNode(collidable, e.frame);
@@ -134,6 +136,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>>&
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>>& e)
 {
+			  printf("itemAdded ....3...\n");
   if (debug) { LOG_DEBUG(("[GraphPhysics::itemAdded] smurf::inertial object received in frame ***" + e.frame + "***").c_str());}
   smurf::Inertial inertial = e.item->getData();
   NodeData inertialNode = getInertialNode(inertial, e.frame);
@@ -145,6 +148,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>>& e
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e)
 {
+			  printf("itemAdded ....4...\n");
   if (debug) { LOG_DEBUG(("[GraphPhysics::itemAdded] smurf::Collision object received in frame ***" + e.frame + "***").c_str());}
   urdf::Collision collision = e.item->getData();
   NodeData node;
@@ -160,6 +164,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e
 
 void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<configmaps::ConfigMap>>& e)
 {
+			  printf("itemAdded ....5...\n");
   if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] ConfigMap item received in frame ***" + e.frame + "***").c_str());}
   configmaps::ConfigMap configMap = e.item->getData();
   try
@@ -168,7 +173,6 @@ void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::cor
     NodeData node;
     //FIXME fromConfigMap always returns true? There is no way to check
     //      if the object is actually valid?! WTF
-    //if(node.fromConfigMap(&(item.getData()), ""))
     if(node.fromConfigMap(&(configMap), ""))
     {
 //		    std::cout <<"node.physicMode = " << node.physicMode<< "..node.pos = (" << node.pos.x() <<"," << node.pos.y() <<","<< node.pos.z() <<")"<< std::endl; 	
@@ -180,9 +184,6 @@ void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::cor
         //and items are added to that frame. In that case aksing the graph 
         //for the transformation would cause an exception
         fromOrigin.setTransform(TransformWithCovariance::Identity());
-        
-std::cout <<"physicMode = " << node.physicMode<< "...fromOrigin = (" << fromOrigin.transform.translation.x() << 
-   "," << fromOrigin.transform.translation.y() <<","<< fromOrigin.transform.translation.z() <<")"<< std::endl; 	
         
       }
       else
@@ -207,12 +208,14 @@ std::cout <<"physicMode = " << node.physicMode<< "...fromOrigin = (" << fromOrig
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
 {
+		  printf("itemAdded ....6...physics\n");
   if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] PhysicsConfigMapItem item received in frame ***" + e.frame + "***").c_str());}
   PhysicsConfigMapItem::Ptr pItem = e.item;
   try
   {         
     //try to convert the item into a node Data
     NodeData node;
+    
     //FIXME fromConfigMap always returns true? There is no way to check
     //      if the object is actually valid?! WTF
     if(node.fromConfigMap(&pItem->getData(), ""))
@@ -333,26 +336,77 @@ NodeData GraphPhysics::getInertialNode(const smurf::Inertial& inertial, const en
 
 bool GraphPhysics::instantiateNode(NodeData node, const envire::core::FrameId& frame)
 {
-  if(node.physicMode == NODE_TYPE_TERRAIN) {
-	mars::interfaces::terrainStruct* terrain = new(mars::interfaces::terrainStruct);//mars::interfaces::terrainStruct(*terrain);
-    node.terrain = terrain;
-    int targetWidth, targetHeight, scale;
-    terrain->targetWidth = 14;
-    terrain->targetHeight = 14;
-    terrain->scale = 1;
-  }		
-  //std::cout << "instantiateNode..." << frame << std::endl;  
-  //std::cout << "node.physicMode..." << node.physicMode << std::endl; 		  		  	
   shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-  bool instantiated = (physics->createNode(&node));
+
+  bool instantiated = false;
+  if(node.physicMode == NODE_TYPE_MLS) instantiated = addMlsSurface(&node);
+  else instantiated = (physics->createNode(&node));
+  
   if (instantiated)
   {
     using physicsItemPtr = envire::core::Item<shared_ptr<NodeInterface>>::Ptr;
     physicsItemPtr physicsItem(new envire::core::Item<shared_ptr<NodeInterface>>(physics));
     control->graph->addItemToFrame(frame, physicsItem);
+    
+    printf("itemAdded ....instantiated...physics\n");
   }
-  return instantiated;
 }
+
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
+{
+
+    Item<NodeData>::Ptr pItem = e.item; 
+    NodeData node = pItem->getData();
+
+	geom_data* gd = (geom_data*)node.data;
+	printf(".....physics...(c parameter: %f) \n", gd->c_params.cfm);	
+    
+  if (instantiateNode(node, e.frame))
+  {
+    if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Inertial - Instantiated and Stored the nodeInterface in frame ***" + e.frame +"***").c_str());}
+  } 
+	
+}
+
+struct NullDeleter {template<typename T> void operator()(T*) {}};   
+bool GraphPhysics::addMlsSurface(NodeData* node)
+      {
+
+		std::string env_path("Quali1");
+		std::string mls_map_id("/mls-grid");	
+
+
+		boost::scoped_ptr<envire::Environment> env(envire::Environment::unserialize(env_path));  
+
+		envire::MLSGrid::Ptr ptr(env->getItem<envire::MLSGrid>(mls_map_id));		
+		mlsgrid_ptr = ptr;	
+
+		boost::shared_ptr<envire::MLSGrid> mls(mlsgrid_ptr.get(), NullDeleter());
+
+		mls_userdata = mls;
+ 
+ printf("mls is loaded: x by y (%d %d)\n", mls->getCellSizeX(),mls->getCellSizeY());
+ 
+        envire::collision::MLSCollision* mls_collision = envire::collision::MLSCollision::getInstance();
+        dGeomID geom_mls = mls_collision->createNewCollisionObject(mls_userdata);	
+
+	    WorldPhysics *theWorld = (WorldPhysics*)control->sim->getPhysics();
+	    current_space = theWorld->getSpace();
+        current_space->add (geom_mls);  
+	
+	    geom_data* gd = new geom_data;
+	    (*gd).setZero();
+	    gd->sense_contact_force = 0;
+	    gd->parent_geom = 0;
+	    
+        gd->c_params.cfm = 0.01;
+        gd->c_params.erp = 0.1;
+        gd->c_params.bounce = 0.0;
+         
+	    dGeomSetData(geom_mls, gd);		
+	    
+        return true;
+ } 	
 
 
 void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node)
