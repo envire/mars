@@ -39,7 +39,13 @@
 // To log the graph
 #include <base/Time.hpp>
 #include <envire_core/graph/GraphViz.hpp>
-
+#include <envire_core/graph/EnvireGraph.hpp>
+	
+#include <envire_collider_mls/MLSCollision.hpp>
+#include <envire/maps/MLSGrid.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>	
+#include <mars/sim/PhysicsMapper.h>
 
 namespace mars {
   namespace plugins {
@@ -47,49 +53,68 @@ namespace mars {
 
       using namespace mars::utils;
       using namespace mars::interfaces;
+      using namespace envire::core;
+      using namespace mars::sim;
 
       TestMls::TestMls(lib_manager::LibManager *theManager)
         : MarsPluginTemplate(theManager, "TestMls") {
       }
       
-      envire::core::FrameId TestMls::addTerrain()
+
+      envire::core::FrameId TestMls::createFrame()
       {
 		envire::core::FrameId center = "center";
 		control->graph->addFrame(center);
-		NodeData data;
-		data.init("floorData1", Vector(0,0,0));
-		//data.initPrimitive(interfaces::NODE_TYPE_SPHERE, Vector(3, 3, 3), 0.1);
-		data.physicMode = interfaces::NODE_TYPE_TERRAIN;
-		
-		data.movable = false;
-		mars::sim::PhysicsConfigMapItem::Ptr item(new mars::sim::PhysicsConfigMapItem);
-
-		data.material.transparency = 0.5;
-		//data.material.ambientFront = mars::utils::Color(0.0, 1.0, 0.0, 1.0);
-		// TODO Fix the material data is lost in the conversion from/to configmap
-		data.material.emissionFront = mars::utils::Color(1.0, 1.0, 1.0, 1.0);
-		LOG_DEBUG("Color of the Item in the addTerrain: %f , %f, %f, %f", data.material.emissionFront.a , data.material.emissionFront.b, data.material.emissionFront.g, data.material.emissionFront.r );
-		data.toConfigMap(&(item.get()->getData()));
-		
-		control->graph->addItemToFrame(center, item);
 		return center;
+      }
+    
+      void TestMls::addMLS(envire::core::FrameId center)
+      {		
+		  
+		NodeData* data(new NodeData);
+		data->init("mls_1", Vector(0,0,0));
+		data->physicMode = interfaces::NODE_TYPE_MLS;
+		
+		std::string env_path("Quali1");
+		std::string mls_map_id("/mls-grid");
+		//std::string env_path("mls_data");
+		//std::string mls_map_id("/mls-grid");
+		data->env_path = env_path;
+		data->mls_map_id = mls_map_id;	
+		
+		Vector pos(1,1,1);
+		data->pos = pos;
+	
+		if(data->env_path != env_path) printf("....false..TestMls \n");	
+		
+	    geom_data* gd = new geom_data;
+	    (*gd).setZero();
+	    gd->sense_contact_force = 0;
+	    gd->parent_geom = 0;
+	    
+        gd->c_params.cfm = 0.01;
+        gd->c_params.erp = 0.1;
+        gd->c_params.bounce = 0.0;
+        
+        data->data = gd;
+  
+  		data->movable = false;	
+  		 	
+        Item<NodeData>::Ptr itemPtr(new Item<NodeData>(*data));
+        control->graph->addItemToFrame(center, itemPtr);        
 		
       }
 
       void TestMls::addSphere(envire::core::FrameId center)
       {
-		//envire::core::FrameId center = "center";
-		//control->graph->addFrame(center);
-
-
 		NodeData data;
-		data.init("floorData", Vector(0,0,0));
-		data.initPrimitive(interfaces::NODE_TYPE_SPHERE, Vector(3, 3, 3), 0.1);
+		data.init("sphere_1", Vector(0,0,3));
+		data.initPrimitive(interfaces::NODE_TYPE_SPHERE, Vector(0.1, 0, 10), 0.1);
 		data.movable = true;
-		data.density = 0;
+		data.density = 0.1;
 		data.mass = 1;
 		
-		Vector pos(1,1,30);
+		Vector pos(3,0,3);
 		
 		data.pos = pos;
 		mars::sim::PhysicsConfigMapItem::Ptr item(new mars::sim::PhysicsConfigMapItem);
@@ -106,8 +131,10 @@ namespace mars {
       
       
       void TestMls::init() {
-                envire::core::FrameId center = addTerrain();
+                envire::core::FrameId center = createFrame();
+                addMLS(center);                
                 addSphere(center);
+             
       }
 
       void TestMls::reset() {

@@ -40,6 +40,7 @@
 #include <mars/data_broker/ReceiverInterface.h>
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h> 
+#include <mars/interfaces/NodeData.h>
 
 #include <envire_smurf/Robot.hpp>
 #include <string>
@@ -83,12 +84,15 @@ namespace mars {
         //void menuAction(int action, bool checked = false);
 
         // TestMls methods
-
+        
       private:
         cfg_manager::cfgPropertyStruct example;
-        //envire::core::vertex_descriptor addSphere();
-        envire::core::FrameId addTerrain();    
-        void addSphere(envire::core::FrameId center);            
+
+        envire::core::FrameId createFrame();    
+        void addMLS(envire::core::FrameId center);            
+        void addSphere(envire::core::FrameId center);  
+
+
 
       }; // end of class definition TestMls
 
