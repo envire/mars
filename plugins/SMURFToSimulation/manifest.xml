@@ -11,5 +11,7 @@
     <depend package="simulation/mars/entity_generation/entity_factory" />
     <depend package="envire/envire_smurf" />
     <depend package="tools/lib_config" />
+    <depend package="envire/envire_collider_mls" />    
+    <depend package="slam/maps" />  
     <tags>needs_opt</tags>
 </package>

@@ -20,6 +20,7 @@ pkg_check_modules(PKGCONFIG REQUIRED
           envire_smurf
           lib_config
           base-lib
+         envire_collider_mls
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
@@ -78,4 +79,5 @@ rock_standard_layout()
 find_package(Boost REQUIRED filesystem system thread)
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
+
 
