@@ -36,10 +36,11 @@
 // set define if you want to extend the gui
 //#define PLUGIN_WITH_MARS_GUI
 #include <mars/interfaces/sim/MarsPluginTemplate.h>
+#include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
 #include <mars/interfaces/MARSDefs.h>
 #include <mars/data_broker/ReceiverInterface.h>
 #include <mars/cfg_manager/CFGManagerInterface.h>
-
+#include <envire_core/EnvireVisualizerWindow.hpp>
 #include <string>
 
 namespace mars {
@@ -50,8 +51,7 @@ namespace mars {
       // inherit from MarsPluginTemplateGUI for extending the gui
       class Visualizer: public mars::interfaces::MarsPluginTemplate,
         public mars::data_broker::ReceiverInterface,
-        // for gui
-        // public mars::main_gui::MenuInterface,
+        public mars::interfaces::GraphicsUpdateInterface,
         public mars::cfg_manager::CFGClient {
 
       public:
@@ -69,6 +69,8 @@ namespace mars {
         void init();
         void reset();
         void update(mars::interfaces::sReal time_ms);
+        
+        virtual void preGraphicsUpdate(void);
 
         // DataBrokerReceiver methods
         virtual void receiveData(const data_broker::DataInfo &info,
@@ -83,7 +85,9 @@ namespace mars {
         // Visualizer methods
 
       private:
+        envire::viz::EnvireVisualizerWindow window;
         cfg_manager::cfgPropertyStruct example;
+        bool visualizerInitialized;
 
       }; // end of class definition Visualizer
 

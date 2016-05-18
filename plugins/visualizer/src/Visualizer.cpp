@@ -30,7 +30,8 @@
 #include "Visualizer.h"
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
-#include <envire_core/EnvireVisualizerWindow.hpp>
+#include <mars/interfaces/graphics/GraphicsManagerInterface.h>
+
 
 namespace mars {
   namespace plugins {
@@ -40,48 +41,35 @@ namespace mars {
       using namespace mars::interfaces;
 
       Visualizer::Visualizer(lib_manager::LibManager *theManager)
-        : MarsPluginTemplate(theManager, "Visualizer") {
+        : MarsPluginTemplate(theManager, "Visualizer"), visualizerInitialized(false){
       }
   
       void Visualizer::init() {
-        // Load a scene file:
-        // control->sim->loadScene("some_file.scn");
-
-        // Register for node information:
-        /*
-          std::string groupName, dataName;
-          control->nodes->getDataBrokerNames(id, &groupName, &dataName);
-          control->dataBroker->registerTimedReceiver(this, groupName, dataName, "mars_sim/simTimer", 10, 0);
-        */
-
-        /* get or create cfg_param
-           example = control->cfg->getOrCreateProperty("plugin", "example",
-           0.0, this);
-        */
-
-        // Create a nonphysical box:
-
-        // Create a camera fixed on the box:
-
-        // Create a HUD texture element:
-
-        //gui->addGenericMenuAction("../Visualizer/entry", 1, this);
-
-        envire::viz::EnvireVisualizerWindow window;
-        window.displayGraph(control->graph, "center");
-        window.show();
+        if (control->graphics) {
+          control->graphics->addGraphicsUpdateInterface(this);
+        }
       }
-
-      void Visualizer::reset() {
+      
+      void Visualizer::reset() { 
       }
 
       Visualizer::~Visualizer() {
       }
 
+      void Visualizer::preGraphicsUpdate(void)
+      {
+        if(!visualizerInitialized)
+        {
+          window.displayGraph(control->graph, "center");
+          window.show();
+          visualizerInitialized = true;
+        }
+      }
 
+      
       void Visualizer::update(sReal time_ms) {
-
         // control->motors->setMotorValue(id, value);
+
       }
 
       void Visualizer::receiveData(const data_broker::DataInfo& info,
