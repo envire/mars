@@ -8,5 +8,7 @@
     <depend package="simulation/lib_manager" />
     <depend package="simulation/mars/common/data_broker" />
     <depend package="simulation/mars/interfaces" />
+    <depend package="envire/envire_collider_mls" />    
+    <depend package="slam/maps" />            
     <tags>needs_opt</tags>
 </package>
