@@ -663,17 +663,13 @@ namespace mars {
 
       for (i=1;i<maxNumContacts;i++){
         contact[i] = contact[0];
-  printf("geom_data1 print-----(type cfm erp bounce bounce_vel) = (%d %f %f %f %f)\n",o1->type, geom_data2->c_params.cfm
-					, geom_data1->c_params.erp, geom_data1->c_params.bounce,geom_data1->c_params.bounce_vel);
- printf("geom_data2 print-----(type cfm erp bounce bounce_vel) = (%d %f %f %f %f)\n",o2->type, geom_data2->c_params.cfm
-					, geom_data2->c_params.erp, geom_data2->c_params.bounce,geom_data2->c_params.bounce_vel);       
+     
       }
 
       numc=dCollide(o1,o2, maxNumContacts, &contact[0].geom,sizeof(dContact));
       if(numc){ 
 		  
-		  printf("collided...\n");
-		  
+	  
         dJointFeedback *fb;
         draw_item item;
         Vector contact_point;
@@ -719,29 +715,8 @@ namespace mars {
         
             if(contact[0].geom.depth < 0.0) contact[0].geom.depth = 0.0;
             dJointID c=dJointCreateContact(world,contactgroup,contact+i);
-    printf("WorldPhysics....dJointAttach..numc = %d.\n", numc);  
-    		const dReal* body_pos1 = dBodyGetPosition(b1);   
-    //		const dReal* body_pos2 = dBodyGetPosition(b2);      		
-     printf("WorldPhysics....body pos1 (x,y,z) (%f %f %f)..\n", body_pos1[0],body_pos1[1],body_pos1[2]);    
-    //  printf("WorldPhysics....body pos2 (x,y,z) (%f %f %f)..\n", body_pos2[0],body_pos2[1],body_pos2[2]);       		     
-         //   dJointAttach(c,b1,b2);
-      dJointAttach (c,
-		    dGeomGetBody(contact[i].geom.g1),
-		    dGeomGetBody(contact[i].geom.g2));
-       for (int i = 0; i != 1; ++i )
-    {
 
-        	printf("WorldPhysics..%d .test++collided++, (x, y, z: %f, %f, %f)\n", 
-        	i, contact[0].geom.pos[0],contact[0].geom.pos[1],contact[0].geom.pos[2]);
-        	
-        	const dReal *fb1 = dBodyGetForce(b1);
-        //	const dReal *fb2 = dBodyGetForce(b2);        	
-
-       // 	printf("WorldPhysics..%d .b1 force++collided++, (fx, fy, fz: %f, %f, %f)\n",i, fb1[0], fb1[1], fb1[2]);
-
-    }         
-       
-
+            dJointAttach(c,b1,b2);
 
             geom_data1->num_ground_collisions += numc;
             geom_data2->num_ground_collisions += numc;
@@ -759,8 +734,7 @@ namespace mars {
             if(geom_data2->sense_contact_force) {
               fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
               dJointSetFeedback(c, fb);
-           printf("WorldPhysics..jointFeedback, b1(fx, fy, fz: %f, %f, %f)\n", fb->f1[0], fb->f1[1], fb->f1[2]); 
-           printf("WorldPhysics..jointFeedback, b2(fx, fy, fz: %f, %f, %f)\n", fb->f2[0], fb->f2[1], fb->f2[2]);           
+           
               contact_feedback_list.push_back(fb);
               geom_data2->ground_feedbacks.push_back(fb);
               geom_data2->node1 = false;
@@ -770,8 +744,7 @@ namespace mars {
               if(!fb) {
                 fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
                 dJointSetFeedback(c, fb);
-           printf("WorldPhysics..jointFeedback, b1(fx, fy, fz: %f, %f, %f)\n", fb->f1[0], fb->f1[1], fb->f1[2]); 
-           printf("WorldPhysics..jointFeedback, b2(fx, fy, fz: %f, %f, %f)\n", fb->f2[0], fb->f2[1], fb->f2[2]);                    
+                  
                 contact_feedback_list.push_back(fb);
               }
               geom_data1->ground_feedbacks.push_back(fb);
