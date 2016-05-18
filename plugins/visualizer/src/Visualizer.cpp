@@ -68,7 +68,7 @@ namespace mars {
         //gui->addGenericMenuAction("../Visualizer/entry", 1, this);
 
         envire::viz::EnvireVisualizerWindow window;
-        window.displayGraph("envire_graph_test_file");
+        window.displayGraph(control->graph, "center");
         window.show();
       }
 

@@ -54,6 +54,8 @@ set(_INSTALL_DESTINATIONS
 )
 
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
 # Install the library into the lib folder
 install(TARGETS ${PROJECT_NAME} ${_INSTALL_DESTINATIONS})
 
