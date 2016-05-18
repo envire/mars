@@ -33,26 +33,12 @@ include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
 add_definitions(${PKGCONFIG_CLFAGS_OTHER})  #flags excluding the ones with -I
 
-
-find_package(Qt5Widgets)
-if (${Qt5Widgets_FOUND})
-  set(USE_QT5 1)
-  find_package(Qt5Widgets REQUIRED)
-  include_directories(${Qt5Widgets_INCLUDES})
-  add_definitions(-DUSE_QT5)
-  add_definitions(${Qt5Widgets_DEFINITIONS})
-  set(CMAKE_CXX_FLAGS "${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
-IF (UNIX)
-set(PUBLIC_DEPENDENCIES Qt5Widgets)
-ENDIF (UNIX)
-else (${Qt5Widgets_FOUND})
-  find_package(Qt4 REQUIRED)
-  include(${QT_USE_FILE})
-  include_directories(${QT_INCLUDE_DIR})
+find_package(Qt4 REQUIRED)
+include(${QT_USE_FILE})
+include_directories(${QT_INCLUDE_DIR})
 IF (UNIX)
   set(PUBLIC_DEPENDENCIES QtCore)
 ENDIF (UNIX)
-endif (${Qt5Widgets_FOUND})
 
 set(SOURCES
     src/GraphicsTimer.cpp

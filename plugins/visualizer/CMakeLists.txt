@@ -11,11 +11,13 @@ define_module_info()
 add_definitions(-DODE11=1 -DdDOUBLE)
 
 pkg_check_modules(PKGCONFIG REQUIRED
-                            envire_visualizer
-			    lib_manager
-			    data_broker
-			    mars_interfaces
-)
+                  envire_visualizer
+                  lib_manager
+                  data_broker
+                  mars_interfaces)
+                  
+
+                  
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
 add_definitions(${PKGCONFIG_CFLAGS_OTHER})  #flags excluding the ones with -I
@@ -36,9 +38,11 @@ set(HEADERS
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
+set(PKGCONFIG_LIBRARIES envire_visualizer envire_core boost_serialization plugin_manager glog boost_filesystem class_loader tinyxml lib_manager data_broker mars_interfaces mars_utils base)
+
 target_link_libraries(${PROJECT_NAME}
-                      ${PKGCONFIG_LIBRARIES}
-)
+                      ${PKGCONFIG_LIBRARIES} ${QT_LIBRARIES})
+
 
 if(WIN32)
   set(LIB_INSTALL_DIR bin) # .dll are in PATH, like executables
