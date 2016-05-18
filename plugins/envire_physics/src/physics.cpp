@@ -25,6 +25,8 @@
 #include <mars/interfaces/Logging.hpp>
 #include <mars/sim/ConfigMapItem.h>
 #include <mars/sim/PhysicsMapper.h>
+#include <mars/sim/SimNode.h>
+
 #include <base/TransformWithCovariance.hpp>
 #include <stdlib.h>
 #include <iostream>
@@ -34,7 +36,6 @@
 
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/graph/GraphViz.hpp>
-#include <stdio.h>
 
 
 using namespace mars::plugins::envire_physics;
@@ -51,15 +52,15 @@ GraphPhysics::GraphPhysics(lib_manager::LibManager *theManager)
 
 void GraphPhysics::init() {
   assert(control->graph != nullptr);
-  GraphEventDispatcher::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<configmaps::ConfigMap>>::subscribe(control->graph);
-  GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem>::subscribe(control->graph);
-  GraphItemEventDispatcher<mars::sim::JointConfigMapItem>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<smurf::Frame>>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<urdf::Collision>>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<smurf::Collidable>>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<smurf::Inertial>>::subscribe(control->graph);
-  GraphItemEventDispatcher<Item<NodeData>>::subscribe(control->graph);
+  GraphEventDispatcher::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<configmaps::ConfigMap>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<mars::sim::JointConfigMapItem>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<smurf::Frame>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<urdf::Collision>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<smurf::Collidable>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<smurf::Inertial>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<NodeData>>::subscribe(control->graph.get());
 }
 
 void GraphPhysics::reset() {
@@ -77,7 +78,7 @@ void GraphPhysics::frameAdded(const FrameAddedEvent& e)
 void GraphPhysics::frameRemoved(const FrameRemovedEvent& e)
 { 
   //FIXME do something intelligent of the origin gets removed
-  assert(e.removedFrame != originId); 
+  assert(e.frame != originId); 
 }
 
 void GraphPhysics::edgeRemoved(const envire::core::EdgeRemovedEvent& e)
@@ -105,15 +106,16 @@ void GraphPhysics::edgeModified(const envire::core::EdgeModifiedEvent& e)
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>>& e)
 {
     if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Frame item received in frame *** " + e.frame + "***").c_str());}
-    mars::interfaces::NodeData node;
+    mars::interfaces::NodeData* node = new mars::interfaces::NodeData;
+    std::shared_ptr<NodeData> nodeDataPtr(node);
     smurf::Frame link = e.item->getData();
-    node.init(link.getName());
-    node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.5, 0.5, 0.5), 0.1);
-    node.c_params.coll_bitmask = 0;
-    node.movable = true;
-    node.groupID = link.getGroupId();
-    setPos(e.frame, node);
-    if (instantiateNode(node, e.frame))
+    nodeDataPtr->init(link.getName());
+    nodeDataPtr->initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.5, 0.5, 0.5), 0.1);
+    nodeDataPtr->c_params.coll_bitmask = 0;
+    nodeDataPtr->movable = true;
+    nodeDataPtr->groupID = link.getGroupId();
+    setPos(e.frame, nodeDataPtr);
+    if (instantiateNode(nodeDataPtr, e.frame))
     {
         if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Frame - Instantiated the nodeInterface in frame ***" + e.frame + "***").c_str());}
     }
@@ -123,8 +125,8 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>>&
 {
   //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
   smurf::Collidable collidable = e.item->getData();
-  NodeData collisionNode = getCollidableNode(collidable, e.frame);
-  if (instantiateNode(collisionNode, e.frame))
+  std::shared_ptr<NodeData> collisionNodePtr = getCollidableNode(collidable, e.frame);
+  if (instantiateNode(collisionNodePtr, e.frame))
   {
     if (debug) {
       LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Collidable - Instantiated and stored the nodeInterface correspondent to the collidable in frame ***" + e.frame +"***").c_str());
@@ -136,8 +138,8 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>>& e
 {
   if (debug) { LOG_DEBUG(("[GraphPhysics::itemAdded] smurf::inertial object received in frame ***" + e.frame + "***").c_str());}
   smurf::Inertial inertial = e.item->getData();
-  NodeData inertialNode = getInertialNode(inertial, e.frame);
-  if (instantiateNode(inertialNode, e.frame))
+  std::shared_ptr<NodeData> inertialNodePtr = getInertialNode(inertial, e.frame);
+  if (instantiateNode(inertialNodePtr, e.frame))
   {
     if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Inertial - Instantiated and Stored the nodeInterface in frame ***" + e.frame +"***").c_str());}
   } 
@@ -147,12 +149,13 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e
 {
   if (debug) { LOG_DEBUG(("[GraphPhysics::itemAdded] smurf::Collision object received in frame ***" + e.frame + "***").c_str());}
   urdf::Collision collision = e.item->getData();
-  NodeData node;
-  node.init(collision.name);
-  node.fromGeometry(collision.geometry);
-  setPos(e.frame, (node));
-  node.movable = true;
-  if (instantiateNode(node, e.frame))
+  NodeData * node = new NodeData;
+  node->init(collision.name);
+  node->fromGeometry(collision.geometry);
+  std::shared_ptr<NodeData> nodePtr(node);
+  setPos(e.frame, nodePtr);
+  node->movable = true;
+  if (instantiateNode(nodePtr, e.frame))
   {
     LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Collision - Instantiated and stored the nodeInterface in frame ***" + e.frame +"***").c_str());
   }
@@ -165,13 +168,10 @@ void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::cor
   try
   {         
     //try to convert the item into a node Data
-    NodeData node;
-    //FIXME fromConfigMap always returns true? There is no way to check
-    //      if the object is actually valid?! WTF
-    if(node.fromConfigMap(&(configMap), ""))
+    NodeData* node = new NodeData;
+    std::shared_ptr<NodeData> nodePtr(node);
+    if(node->fromConfigMap(&(configMap), ""))
     {
-//		    std::cout <<"node.physicMode = " << node.physicMode<< "..node.pos = (" << node.pos.x() <<"," << node.pos.y() <<","<< node.pos.z() <<")"<< std::endl; 	
-
       Transform fromOrigin;
       if(originId.compare(e.frame) == 0)
       {
@@ -179,16 +179,14 @@ void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::cor
         //and items are added to that frame. In that case aksing the graph 
         //for the transformation would cause an exception
         fromOrigin.setTransform(TransformWithCovariance::Identity());
-        
       }
       else
       {
         fromOrigin = control->graph->getTransform(originId, e.frame); 
       }
-     // node.pos = fromOrigin.transform.translation;
-      node.rot = fromOrigin.transform.orientation;
-      
-      if (instantiateNode(node, e.frame))
+      node->pos = fromOrigin.transform.translation;
+      node->rot = fromOrigin.transform.orientation;
+      if (instantiateNode(nodePtr, e.frame))
       {
         if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] PhysicsConfigMapItem - Instantiated and stored the nodeInterface in frame ***" + e.frame + "***").c_str());}
       }
@@ -207,11 +205,9 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
   try
   {         
     //try to convert the item into a node Data
-    NodeData node;
-    
-    //FIXME fromConfigMap always returns true? There is no way to check
-    //      if the object is actually valid?! WTF
-    if(node.fromConfigMap(&pItem->getData(), ""))
+    NodeData * node = new NodeData;
+    std::shared_ptr<NodeData> nodePtr(node);
+    if(node->fromConfigMap(&pItem->getData(), ""))
     {
       Transform fromOrigin;
       if(originId.compare(e.frame) == 0)
@@ -225,9 +221,9 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
       {
         fromOrigin = control->graph->getTransform(originId, e.frame); 
       }
-      node.pos = fromOrigin.transform.translation;
-      node.rot = fromOrigin.transform.orientation;
-      if (instantiateNode(node, e.frame))
+      node->pos = fromOrigin.transform.translation;
+      node->rot = fromOrigin.transform.orientation;
+      if (instantiateNode(nodePtr, e.frame))
       {
         if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] PhysicsConfigMapItem - Instantiated and stored the nodeInterface in frame ***" + e.frame + "***").c_str());}
       }
@@ -279,8 +275,8 @@ void GraphPhysics::updateTree()
   treeView = control->graph->getTree(originId);
   if(treeView.crossEdges.size() > 0)
   {
-    const GraphTraits::vertex_descriptor source = control->graph->source(treeView.crossEdges[0]);
-    const GraphTraits::vertex_descriptor target = control->graph->target(treeView.crossEdges[0]);
+    const GraphTraits::vertex_descriptor source = control->graph->source(treeView.crossEdges[0].edge);
+    const GraphTraits::vertex_descriptor target = control->graph->target(treeView.crossEdges[0].edge);
     const FrameId sourceId = control->graph->getFrameId(source);
     const FrameId targetId = control->graph->getFrameId(target);
     const string msg = "Loop in tree detected: " + sourceId + " --> " + targetId +
@@ -289,63 +285,79 @@ void GraphPhysics::updateTree()
   }
 }
 
-NodeData GraphPhysics::getCollidableNode(const smurf::Collidable& collidable, const envire::core::FrameId& frame) {
-  NodeData node;
+std::shared_ptr<NodeData> GraphPhysics::getCollidableNode(const smurf::Collidable& collidable, const envire::core::FrameId& frame) {
+  NodeData * node = new NodeData;
+  std::shared_ptr<NodeData> nodePtr(node);
   urdf::Collision collision = collidable.getCollision();
-  node.init(collision.name);
-  node.fromGeometry(collision.geometry);
-  setPos(frame, (node));
-  node.movable = true;
-  node.c_params = collidable.getContactParams();
-  node.groupID = collidable.getGroupId();
-  return node;
+  node->init(collision.name);
+  node->fromGeometry(collision.geometry);
+  setPos(frame, nodePtr);
+  node->movable = true;
+  node->c_params = collidable.getContactParams();
+  node->groupID = collidable.getGroupId();
+  return nodePtr;
 }
 
 
-NodeData GraphPhysics::getInertialNode(const smurf::Inertial& inertial, const envire::core::FrameId& frame)
+std::shared_ptr<NodeData> GraphPhysics::getInertialNode(const smurf::Inertial& inertial, const envire::core::FrameId& frame)
 {
-  NodeData result;
+  NodeData * result = new NodeData;
+  std::shared_ptr<NodeData> resultPtr(result);
   urdf::Inertial inertialUrdf = inertial.getUrdfInertial();
-  result.init(inertial.getName());
-  result.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, mars::utils::Vector(0.1, 0.1, 0.1), inertialUrdf.mass);
-  result.groupID = inertial.getGroupId();
-  result.movable = true;
-  result.inertia[0][0] = inertialUrdf.ixx;
-  result.inertia[0][1] = inertialUrdf.ixy;
-  result.inertia[0][2] = inertialUrdf.ixz;
-  result.inertia[1][0] = inertialUrdf.ixy;
-  result.inertia[1][1] = inertialUrdf.iyy;
-  result.inertia[1][2] = inertialUrdf.iyz;
-  result.inertia[2][0] = inertialUrdf.ixz;
-  result.inertia[2][1] = inertialUrdf.iyz;
-  result.inertia[2][2] = inertialUrdf.izz;
-  result.inertia_set = true;
-  result.c_params.coll_bitmask = 0;
-  if (debug) { LOG_DEBUG("[GraphPhysics::getInertialNode] Inertial object's mass: %f", result.mass);}
-  result.density = 0.0;
-  setPos(frame, result);
-  return result;
+  result->init(inertial.getName());
+  result->initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, mars::utils::Vector(0.1, 0.1, 0.1), inertialUrdf.mass);
+  result->groupID = inertial.getGroupId();
+  result->movable = true;
+  result->inertia[0][0] = inertialUrdf.ixx;
+  result->inertia[0][1] = inertialUrdf.ixy;
+  result->inertia[0][2] = inertialUrdf.ixz;
+  result->inertia[1][0] = inertialUrdf.ixy;
+  result->inertia[1][1] = inertialUrdf.iyy;
+  result->inertia[1][2] = inertialUrdf.iyz;
+  result->inertia[2][0] = inertialUrdf.ixz;
+  result->inertia[2][1] = inertialUrdf.iyz;
+  result->inertia[2][2] = inertialUrdf.izz;
+  result->inertia_set = true;
+  result->c_params.coll_bitmask = 0;
+  if (debug) { LOG_DEBUG("[GraphPhysics::getInertialNode] Inertial object's mass: %f", result->mass);}
+  result->density = 0.0;
+  setPos(frame, resultPtr);
+  return resultPtr;
 }
 
-bool GraphPhysics::instantiateNode(NodeData node, const envire::core::FrameId& frame)
+bool GraphPhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const envire::core::FrameId& frame)
 {
   shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-
   bool instantiated = false;
-  if(node.physicMode == NODE_TYPE_MLS) instantiated = addMlsSurface(&node);
-  else instantiated = (physics->createNode(&node));
-  
+  if(node.physicMode == NODE_TYPE_MLS) instantiated = addMlsSurface(node.get());
+  else instantiated = (physics->createNode(node.get()));
   if (instantiated)
   {
+    // Store the physics NodeInterface
     using physicsItemPtr = envire::core::Item<shared_ptr<NodeInterface>>::Ptr;
     physicsItemPtr physicsItem(new envire::core::Item<shared_ptr<NodeInterface>>(physics));
     control->graph->addItemToFrame(frame, physicsItem);
+    // Store the Nodedata
+    using dataItemPtr = envire::core::Item<shared_ptr<NodeData>>::Ptr;
+    dataItemPtr dataItem(new envire::core::Item<shared_ptr<NodeData>>(node));
+    control->graph->addItemToFrame(frame, dataItem);
+    
+    //NOTE Create and store also a simNode. The simNode interface is set to the physics node
+    mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (*node)); 
+    simNode->setInterface(physics.get());
+    std::shared_ptr<mars::sim::SimNode> simNodePtr(simNode);
+    using SimNodeItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>::Ptr;
+    using SimNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
+    SimNodeItemPtr simNodeItem( new SimNodeItem(simNodePtr));        
+    control->graph->addItemToFrame(frame, simNodeItem);
+    if (debug){ LOG_DEBUG("[EnvirePhysics::InstantiateNode] The SimNode is created and added to the graph");}
+    
   }
+  return instantiated;
 }
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
 {
-
     Item<NodeData>::Ptr pItem = e.item; 
     NodeData node = pItem->getData();
 
@@ -374,8 +386,7 @@ bool GraphPhysics::addMlsSurface(NodeData* node)
 		boost::shared_ptr<envire::MLSGrid> mls(mlsgrid_ptr.get(), NullDeleter());
 
 		mls_userdata = mls;
- 
- printf("mls is loaded: x by y (%d %d)\n", mls->getCellSizeX(),mls->getCellSizeY());
+		if (debug) {LOG_DEBUG(("mls is loaded: x by y (%d %d)\n", mls->getCellSizeX(),mls->getCellSizeY()).c_str());
  
         envire::collision::MLSCollision* mls_collision = envire::collision::MLSCollision::getInstance();
         dGeomID geom_mls = mls_collision->createNewCollisionObject(mls_userdata);	
@@ -399,7 +410,7 @@ bool GraphPhysics::addMlsSurface(NodeData* node)
  } 	
 
 
-void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node)
+void GraphPhysics::setPos(const envire::core::FrameId& frame, const std::shared_ptr<mars::interfaces::NodeData>& node)
 {
   Transform fromOrigin;
   if(originId.compare(frame) == 0)
@@ -413,8 +424,8 @@ void GraphPhysics::setPos(const envire::core::FrameId& frame, mars::interfaces::
   {
     fromOrigin = control->graph->getTransform(originId, frame); 
   }
-  node.pos = fromOrigin.transform.translation;
-  node.rot = fromOrigin.transform.orientation;
+  node->pos = fromOrigin.transform.translation;
+  node->rot = fromOrigin.transform.orientation;
 }   
 
 void GraphPhysics::updateChildPositions(const GraphTraits::vertex_descriptor vertex,
@@ -438,8 +449,6 @@ void GraphPhysics::updatePositions( const GraphTraits::vertex_descriptor origin,
   Transform tf = control->graph->getTransform(origin, target);
   if (debugUpdatePos)
   {
-
-    //How can I print the tf also using the LOG_DEBUG?
     LOG_DEBUG("[updatePositions] Tf values before update: " );
     std::cout << tf.transform << std::endl;
   }
@@ -459,7 +468,7 @@ void GraphPhysics::updatePositions( const GraphTraits::vertex_descriptor origin,
       TransformWithCovariance absolutTransform;
       physics->getPosition(&absolutTransform.translation);
       physics->getRotation(&absolutTransform.orientation);
-      tf.setTransform(originToRoot * absolutTransform);
+      tf.setTransform(originToRoot * absolutTransform); 
       if (debugUpdatePos)
       {
         LOG_DEBUG("[Envire Physics] AbsolutTransform, provided by the physical engine: ");

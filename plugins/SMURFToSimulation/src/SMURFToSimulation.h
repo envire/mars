@@ -40,21 +40,8 @@
 #include <mars/data_broker/ReceiverInterface.h>
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h> 
-
-#include <envire_smurf/Robot.hpp>
 #include <envire_core/graph/GraphTypes.hpp>
 #include <string>
-
-#include <mars/interfaces/sim/NodeManagerInterface.h>
-
-//#include <ode/collision.h>
-//#include <envire_collision/collision_kernel.h>
-
-#include <envire_collider_mls/MLSCollision.hpp>
-#include <envire/maps/MLSGrid.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/intrusive_ptr.hpp>	
-#include <mars/sim/PhysicsMapper.h>
 
 namespace mars {
 
@@ -85,8 +72,6 @@ namespace mars {
         void reset();
         void update(mars::interfaces::sReal time_ms);
 
-
-
         // DataBrokerReceiver methods
         virtual void receiveData(const data_broker::DataInfo &info,
                                  const data_broker::DataPackage &package,
@@ -94,22 +79,16 @@ namespace mars {
         // CFGClient methods
         virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
 
+        // MenuInterface methods
+        //void menuAction(int action, bool checked = false);
 
         // SMURFToSimulation methods
-        
-        unsigned long obj_id[10];
-     dSpaceID current_space;
-		boost::scoped_ptr<envire::Environment> env;   
-		envire::MLSGrid::Ptr mlsgrid_ptr;     
-		boost::shared_ptr<envire::MLSGrid> mls_userdata;
-		
+
       private:
         cfg_manager::cfgPropertyStruct example;
         envire::core::GraphTraits::vertex_descriptor addFloor();
         void addRobot(envire::core::GraphTraits::vertex_descriptor center);
         int nextGroupId;
-        bool createMLSfield();           
-
 
       }; // end of class definition SMURFToSimulation
 

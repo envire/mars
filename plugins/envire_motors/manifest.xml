@@ -1,0 +1,15 @@
+<package>
+    <description brief="envire_motors">
+      Create
+   </description>
+    <maintainer>Raul/raul.dominguez@dfki.de</maintainer>
+    <author>Raul/raul.dominguez@dfki.de</author>
+    <depend package="simulation/mars/scripts/cmake" />
+    <depend package="simulation/lib_manager" />
+    <depend package="simulation/mars/common/data_broker" />
+    <depend package="simulation/mars/interfaces" />
+    <depend package="envire/envire_core" />
+    <depend package="simulation/mars/sim" />
+    <depend package="tools/smurf" />
+    <tags>needs_opt</tags>
+</package>

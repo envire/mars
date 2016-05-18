@@ -89,6 +89,7 @@ namespace mars {
       d = 0;
       maxValue = M_PI;
       minValue = -M_PI;
+      this->jointName = "";
     }
 
     bool MotorData::fromConfigMap(ConfigMap *config,
@@ -133,6 +134,7 @@ namespace mars {
       GET_VALUE("value", value, Double);
       GET_VALUE("maxValue", maxValue, Double);
       GET_VALUE("minValue", minValue, Double);
+      GET_VALUE("joint", jointName, String);
 
       return 1;
     }
@@ -157,6 +159,7 @@ namespace mars {
       SET_VALUE("value", value);
       SET_VALUE("maxValue", maxValue);
       SET_VALUE("minValue", minValue);
+      SET_VALUE("joint", jointName);
     }
 
     void MotorData::getFilesToSave(std::vector<std::string> *fileList) {

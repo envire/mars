@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 2.6)
 
 #set(CMAKE_BUILD_TYPE Debug)
 
+
 MACRO(CMAKE_USE_FULL_RPATH install_rpath)
     SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
     SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -109,6 +110,8 @@ set(_INSTALL_DESTINATIONS
         ARCHIVE DESTINATION lib
 )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
 # Install the library
 install(TARGETS ${PROJECT_NAME} ${_INSTALL_DESTINATIONS})
 
@@ -117,3 +120,8 @@ install(FILES ${SOURCES_H} DESTINATION include/mars/scene_loader)
 
 configure_file(${PROJECT_NAME}.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
+
+find_package(Rock)
+set(ROCK_USE_CXX11 TRUE)
+rock_init(mars_scene_loader 0.1)
+rock_standard_layout()

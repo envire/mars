@@ -128,3 +128,5 @@ set(ADDITIONAL_LIBS "" CACHE INTERNAL "")
 configure_file(mars_viz.pc.in ${CMAKE_BINARY_DIR}/mars_viz.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/mars_viz.pc DESTINATION lib/pkgconfig/)
 install(FILES ${CMAKE_SOURCE_DIR}/src/Viz.h ${CMAKE_SOURCE_DIR}/src/GraphicsTimer.h ${CMAKE_SOURCE_DIR}/src/MyApp.h DESTINATION include/mars/viz/)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")

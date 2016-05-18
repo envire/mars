@@ -34,6 +34,8 @@
 #include <vector>
 #include <limits>
 
+#include <envire_core/items/Frame.hpp>
+
 
 namespace mars {
 
@@ -48,6 +50,7 @@ namespace mars {
       std::string name;
       unsigned long id;
       unsigned long updateRate;
+      envire::core::FrameId frame;
     }; // end of class BaseConfig
 
     class BaseSensor {
@@ -74,6 +77,16 @@ namespace mars {
         return name;
       }
 
+      void setFrame(const envire::core::FrameId& frameName)
+      {
+        this->frame = frameName;
+      }
+      
+      envire::core::FrameId getFrame()
+      {
+        return this->frame;
+      }
+      
       virtual int getSensorData(double **data) const{
         return 0;
       };
@@ -108,7 +121,8 @@ namespace mars {
       unsigned long id;
       std::string name; //Todo naming bei mehreren robotern
       unsigned long updateRate;
-
+      envire::core::FrameId frame;
+      
     protected:
 
     }; // end of class BaseSensor

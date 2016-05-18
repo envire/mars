@@ -16,6 +16,7 @@ pkg_check_modules(PKGCONFIG REQUIRED
         configmaps
         data_broker
         mars_utils
+        envire_core
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
@@ -95,6 +96,7 @@ install(FILES ${files} DESTINATION include/mars/interfaces/sim)
 FILE(GLOB files "src/gui/*.h")
 install(FILES ${files} DESTINATION include/mars/interfaces/gui)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 # Prepare and install necessary files to support finding of the library 
 # using pkg-config
 configure_file(${PROJECT_NAME}.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)

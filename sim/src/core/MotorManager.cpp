@@ -33,6 +33,8 @@
 
 #include "SimNode.h"
 #include "SimMotor.h"
+#include "SimJoint.h"
+#include "JointRecord.h"
 #include "PhysicsMapper.h"
 #include "MotorManager.h"
 
@@ -41,6 +43,12 @@
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/interfaces/sim/JointManagerInterface.h>
 #include <mars/utils/MutexLocker.h>
+#include <mars/interfaces/Logging.hpp>
+
+#include <envire_core/items/Item.hpp>
+#include <envire_core/graph/EnvireGraph.hpp>
+#include <smurf/Joint.hpp>
+
 
 namespace mars {
   namespace sim {
@@ -60,7 +68,6 @@ namespace mars {
       next_motor_id = 1;
     }
 
-
     /**
      * \brief Add a motor to the simulation.
      *
@@ -72,33 +79,79 @@ namespace mars {
      *
      * \return The unique id of the newly added motor.
      */
+
     unsigned long MotorManager::addMotor(MotorData *motorS, bool reload) 
     {  
       iMutex.lock();
       motorS->index = next_motor_id;
       next_motor_id++;
       iMutex.unlock();
-  
       if (!reload) {
         iMutex.lock();
         simMotorsReload.push_back(*motorS);
         iMutex.unlock();
       }
-  
-      SimMotor* newMotor = new SimMotor(control, *motorS);
-      newMotor->attachJoint(control->joints->getSimJoint(motorS->jointIndex));
-  
-      if(motorS->jointIndex2)
-        newMotor->attachPlayJoint(control->joints->getSimJoint(motorS->jointIndex2));
-  
+      SimMotor* simMotor = new SimMotor(control, *motorS);
+      std::shared_ptr<SimMotor> newMotor(simMotor);         
+
+      if (attachAndStoreMotor(newMotor, motorS->jointName))
+      {
+        LOG_DEBUG(("[MotorManager::addMotor]: Found the joint " + motorS->jointName + " to which the motor " + motorS->name + " should be attached").c_str());
+      }
+      else
+      {
+        LOG_ERROR(("[MotorManager::addMotor]: Not found the joint " + motorS->jointName + " to which the motor " + motorS->name + " should be attached in any frame ").c_str());
+      }
       newMotor->setSMotor(*motorS);
       iMutex.lock();
-      simMotors[newMotor->getIndex()] = newMotor;
+      simMotors[newMotor->getIndex()] = newMotor.get();
       iMutex.unlock();
       control->sim->sceneHasChanged(false);
       return motorS->index;
     }
 
+    /*
+     * - Find in the Graph the vertex that contains the record with same name 
+     * as the joint. 
+     * - Get from that record the simjoint 
+     * - Attach the motor to the simjoint
+     * - Store the motor
+    */
+    bool MotorManager::attachAndStoreMotor(std::shared_ptr<SimMotor> simMotor, const std::string & jointName)
+    {
+
+      using VertexIterator = envire::core::EnvireGraph::vertex_iterator;
+      using JointRecordItem = envire::core::Item<mars::sim::JointRecord>;
+      using JointRecordItemIterator = envire::core::EnvireGraph::ItemIterator<JointRecordItem>;
+      using simMotorItemPtr = envire::core::Item<std::shared_ptr<SimMotor>>::Ptr;
+      VertexIterator vi_begin, vi_end;
+      boost::tie(vi_begin, vi_end) = control->graph->getVertices();
+      bool jointFound = false;
+      while ((vi_begin!=vi_end) && (!jointFound))
+      {
+        if (control->graph->containsItems<JointRecordItem>(*vi_begin))
+        {
+          envire::core::FrameId frameName = control->graph->getFrameId(*vi_begin);
+          JointRecordItemIterator jri_begin, jri_end;
+          boost::tie(jri_begin, jri_end) = control->graph->getItems<JointRecordItem>(frameName); 
+          while ((jri_begin!=jri_end) && (!jointFound))
+          {
+            mars::sim::JointRecord jointRecord = jri_begin->getData();
+            if (jointRecord.name == jointName)
+            {
+              jointFound = true;
+              std::shared_ptr<mars::sim::SimJoint> simJoint = jointRecord.sim;
+              simMotor->attachJoint(simJoint.get());
+              simMotorItemPtr simMotorItem(new envire::core::Item<shared_ptr<SimMotor>>(simMotor));
+              control->graph->addItemToFrame(frameName, simMotorItem);
+            }
+            jri_begin ++;
+          }
+        }
+        vi_begin++;
+      }
+      return jointFound;
+    }
 
     /**
      *\brief Returns the number of motors that are currently present in the simulation.

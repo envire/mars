@@ -145,6 +145,10 @@ namespace mars {
         envire::core::FrameId originId; /**<id of the current origin */
         envire::core::VertexRelationMap tree; /**<map from parent to children */
         
+        bool viewCollidables = false;
+        bool viewJoints = false;
+        bool viewFrames = false;
+        
 
       }; // end of class definition TestTreeMars
 

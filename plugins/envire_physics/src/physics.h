@@ -53,7 +53,6 @@ namespace mars {
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<mars::interfaces::NodeData>>
       {
       public:
-      
         GraphPhysics(lib_manager::LibManager *theManager);
         
         // LibInterface methods
@@ -112,8 +111,6 @@ namespace mars {
          */
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<configmaps::ConfigMap>>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem>& e);
- 
-		void itemAdded(const envire::core::TypedItemAddedEvent<mars::interfaces::NodeData>& e);
 		void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<mars::interfaces::NodeData>>& e);
  
         /*
@@ -127,27 +124,25 @@ namespace mars {
 
         void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
         
-        
       private:
         void updateTree();
         /**
          * Returns a Nodedata with the configuration provided by the smurf collidable and positioned according to the frame
          */
-        mars::interfaces::NodeData getCollidableNode(const smurf::Collidable& collidable, const envire::core::FrameId& frame);
+        std::shared_ptr<mars::interfaces::NodeData> getCollidableNode(const smurf::Collidable& collidable, const envire::core::FrameId& frame);
         /**
          * Returns a NodeData configured with the data provided by the smurf::Inertial object and positioned according to the frame
          */
-        mars::interfaces::NodeData getInertialNode(const smurf::Inertial& inertial,const envire::core::FrameId& frame);        
+        std::shared_ptr<mars::interfaces::NodeData> getInertialNode(const smurf::Inertial& inertial,const envire::core::FrameId& frame);        
         /*
          * Create the physical objects and save them in the Graph
          * We add the shared_ptr of the physical node interface to access to the physical simulation of the object
          */
-        bool instantiateNode(mars::interfaces::NodeData node, const envire::core::FrameId& frame);
-		
+        bool instantiateNode(const std::shared_ptr<mars::interfaces::NodeData>& node, const envire::core::FrameId& frame);
         /*
          * Sets to the nodeData the position that corresponds to the given frame id
          */
-        void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
+        void setPos(const envire::core::FrameId& frame, const std::shared_ptr<mars::interfaces::NodeData>& node);
 
         /*
          *  Perform updatePositions for each of your childs

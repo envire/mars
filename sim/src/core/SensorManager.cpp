@@ -341,6 +341,7 @@ namespace mars {
       }
       //LOG_DEBUG("found sensor: %s", type.c_str());
       BaseConfig *cfg = ((*it).second)(control, config);
+      cfg->frame = (*config)["frame"][0].getString();
       cfg->name = (*config)["name"][0].getString();
       return createAndAddSensor(type, cfg);
     }
