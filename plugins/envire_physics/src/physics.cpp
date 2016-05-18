@@ -104,7 +104,6 @@ void GraphPhysics::edgeModified(const envire::core::EdgeModifiedEvent& e)
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>>& e)
 {
-			  printf("itemAdded ....1...physics\n");
     if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Frame item received in frame *** " + e.frame + "***").c_str());}
     mars::interfaces::NodeData node;
     smurf::Frame link = e.item->getData();
@@ -122,7 +121,6 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>>& e)
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>>& e)
 {
-			  printf("itemAdded ....2...\n");
   //LOG_DEBUG("[Envire Physics] ItemAdded event-triggered method: About to create a new node data");
   smurf::Collidable collidable = e.item->getData();
   NodeData collisionNode = getCollidableNode(collidable, e.frame);
@@ -136,7 +134,6 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Collidable>>&
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>>& e)
 {
-			  printf("itemAdded ....3...\n");
   if (debug) { LOG_DEBUG(("[GraphPhysics::itemAdded] smurf::inertial object received in frame ***" + e.frame + "***").c_str());}
   smurf::Inertial inertial = e.item->getData();
   NodeData inertialNode = getInertialNode(inertial, e.frame);
@@ -148,7 +145,6 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>>& e
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e)
 {
-			  printf("itemAdded ....4...\n");
   if (debug) { LOG_DEBUG(("[GraphPhysics::itemAdded] smurf::Collision object received in frame ***" + e.frame + "***").c_str());}
   urdf::Collision collision = e.item->getData();
   NodeData node;
@@ -164,7 +160,6 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e
 
 void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<configmaps::ConfigMap>>& e)
 {
-			  printf("itemAdded ....5...\n");
   if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] ConfigMap item received in frame ***" + e.frame + "***").c_str());}
   configmaps::ConfigMap configMap = e.item->getData();
   try
@@ -201,14 +196,12 @@ void GraphPhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::cor
   }
   catch(const UnknownTransformException& ex)
   {
-	  printf("unknown...\n");
     cerr << ex.what() << endl;
   }
 }   
 
 void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
 {
-		  printf("itemAdded ....6...physics\n");
   if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] PhysicsConfigMapItem item received in frame ***" + e.frame + "***").c_str());}
   PhysicsConfigMapItem::Ptr pItem = e.item;
   try
@@ -347,8 +340,6 @@ bool GraphPhysics::instantiateNode(NodeData node, const envire::core::FrameId& f
     using physicsItemPtr = envire::core::Item<shared_ptr<NodeInterface>>::Ptr;
     physicsItemPtr physicsItem(new envire::core::Item<shared_ptr<NodeInterface>>(physics));
     control->graph->addItemToFrame(frame, physicsItem);
-    
-    printf("itemAdded ....instantiated...physics\n");
   }
 }
 
@@ -359,7 +350,6 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
     NodeData node = pItem->getData();
 
 	geom_data* gd = (geom_data*)node.data;
-	printf(".....physics...(c parameter: %f) \n", gd->c_params.cfm);	
     
   if (instantiateNode(node, e.frame))
   {
