@@ -42,6 +42,7 @@
 #include <mars/interfaces/sim/JointInterface.h>
 #include <mars/sim/SimJoint.h>
 #include <mars/sim/JointPhysics.h>
+#include <mars/sim/JointRecord.h>
 
 //NOTE We assume that there is no more than one transformation static or dynamic starting from one link/frame
 // FIXME: When introducing inertial values in the nodes to join, the fixed joint brings them together
