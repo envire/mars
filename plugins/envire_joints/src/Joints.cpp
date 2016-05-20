@@ -272,7 +272,7 @@ namespace mars {
       void EnvireJoints::setAxis1(smurf::Joint* smurfJoint, JointData* jointData){ 
         envire::core::FrameId targetFrame = smurfJoint->getTargetFrame().getName();
         envire::core::Transform targetPos = control->graph->getTransform(originId, targetFrame); 
-        Eigen::Affine3d axisTf = targetPos.transform.orientation * smurfJoint -> getSourceToAxis();
+        Eigen::Affine3d axisTf = targetPos.transform.orientation * smurfJoint -> getSourceToAxis().inverse();
         jointData->axis1 = axisTf.translation();
         LOG_DEBUG("[EnvireJoints::instantiate] The vector axis is: %.4f, %.4f, %.4f", jointData->axis1.x(), jointData->axis1.y(), jointData->axis1.z());
       }      
