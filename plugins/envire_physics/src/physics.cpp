@@ -37,6 +37,7 @@
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/graph/GraphViz.hpp>
 
+#include <envire_collider_mls/MLSCollision.hpp>
 
 using namespace mars::plugins::envire_physics;
 using namespace mars::utils;
@@ -61,6 +62,7 @@ void GraphPhysics::init() {
   GraphItemEventDispatcher<Item<smurf::Collidable>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<Item<smurf::Inertial>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<Item<NodeData>>::subscribe(control->graph.get());
+  if (debug) {LOG_DEBUG("[GraphPhysics::init] ");}
 }
 
 void GraphPhysics::reset() {

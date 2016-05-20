@@ -1,6 +1,6 @@
 project(envire_physics)
 set(PROJECT_VERSION 1.0)
-set(PROJECT_DESCRIPTION "Plugin")
+set(PROJECT_DESCRIPTION "Envire physics Mars plugin")
 cmake_minimum_required(VERSION 2.6)
 include(FindPkgConfig)
 
@@ -8,7 +8,6 @@ find_package(mars)
 mars_defaults()
 define_module_info()
 
-#FIXME the defintions have to the same as in mars/sim/CMakeLists.txt
 add_definitions(-DODE11=1 -DdDOUBLE)
 
 pkg_check_modules(PKGCONFIG REQUIRED
@@ -19,6 +18,7 @@ pkg_check_modules(PKGCONFIG REQUIRED
                 mars_sim
                 smurf
                 urdfdom
+                envire_collider_mls
                 )
                 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})

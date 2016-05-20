@@ -22,7 +22,6 @@
 #include <envire_core/graph/TreeView.hpp>
 
 
-#include <envire_collider_mls/MLSCollision.hpp>
 #include <envire/maps/MLSGrid.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/intrusive_ptr.hpp>	
