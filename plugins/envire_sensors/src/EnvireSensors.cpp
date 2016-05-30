@@ -94,14 +94,17 @@ namespace mars {
       {
         using SensorItemPtr = envire::core::Item<std::shared_ptr<BaseSensor>>::Ptr;
         if(debug) {LOG_DEBUG(("[EnvireSensors::ItemAdded] Smurf::Sensor in frame *" + e.frame + "*").c_str());}
-        BaseSensor* sensor = createSensor(e.item->getData(), e.frame);
-        SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
-        control->graph->addItemToFrame(e.frame, sensorItem);
-        if(debug) {LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");}
-        bool attached = attachSensor(sensor, e.frame);
-        if (!attached)
+        if (e.frame == velodyneFrame)
         {
-          LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor. ");
+          BaseSensor* sensor = createSensor(e.item->getData(), e.frame);
+          SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
+          control->graph->addItemToFrame(e.frame, sensorItem);
+          if(debug) {LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");}
+          bool attached = attachSensor(sensor, e.frame);
+          if (!attached)
+          {
+            LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor. ");
+          }
         }
       }
 
