@@ -113,6 +113,7 @@ install(TARGETS ${PROJECT_NAME} ${_INSTALL_DESTINATIONS})
 # Install headers into mars include directory
 install(FILES ${HEADERS} DESTINATION include/mars/entity_generation/smurf)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 # Prepare and install necessary files to support finding of the library
 # using pkg-config
 configure_file(${PROJECT_NAME}.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
