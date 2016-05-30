@@ -133,7 +133,10 @@ namespace mars {
       GET_VALUE("p", p, Double);
       GET_VALUE("i", i, Double);
       GET_VALUE("d", d, Double);
-      GET_VALUE("joint", jointName, String);
+      //To avoid "ambiguous overload for ‘operator=’" error.
+      if((it = config->find("joint")) != config->end()) {                         
+        jointName = (std::string)((*config)["joint"]);                                   
+      }
       GET_VALUE("position", value, Double);
       GET_VALUE("maxPosition", maxValue, Double);
       GET_VALUE("minPosition", minValue, Double);
