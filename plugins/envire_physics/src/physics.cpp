@@ -18,13 +18,11 @@
  *
  */
 #include "physics.h"
-
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
-
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
+#include <mars/interfaces/terrainStruct.h>
 #include <mars/interfaces/Logging.hpp>
-
 #include <mars/sim/ConfigMapItem.h>
 #include <mars/sim/PhysicsMapper.h>
 #include <mars/sim/SimNode.h>
@@ -39,6 +37,7 @@
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/graph/GraphViz.hpp>
 
+#include <envire_collider_mls/MLSCollision.hpp>
 
 using namespace mars::plugins::envire_physics;
 using namespace mars::utils;
@@ -62,6 +61,8 @@ void GraphPhysics::init() {
   GraphItemEventDispatcher<Item<urdf::Collision>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<Item<smurf::Collidable>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<Item<smurf::Inertial>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<Item<NodeData>>::subscribe(control->graph.get());
+  if (debug) {LOG_DEBUG("[GraphPhysics::init] ");}
 }
 
 void GraphPhysics::reset() {
@@ -329,7 +330,9 @@ std::shared_ptr<NodeData> GraphPhysics::getInertialNode(const smurf::Inertial& i
 bool GraphPhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const envire::core::FrameId& frame)
 {
   shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-  bool instantiated = (physics->createNode(node.get()));
+  bool instantiated = false;
+  if(node->physicMode == NODE_TYPE_MLS) instantiated = addMlsSurface(node.get());
+  else instantiated = (physics->createNode(node.get()));
   if (instantiated)
   {
     // Store the physics NodeInterface
@@ -354,6 +357,53 @@ bool GraphPhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const 
   }
   return instantiated;
 }
+
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
+{
+  Item<NodeData>::Ptr pItem = e.item; 
+  NodeData node = pItem->getData();
+
+  //geom_data* gd = (geom_data*)node.data;
+
+  std::shared_ptr<NodeData> nodePtr(&node);
+  if (instantiateNode(nodePtr, e.frame))
+  {
+    if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Inertial - Instantiated and Stored the nodeInterface in frame ***" + e.frame +"***").c_str());}
+  } 
+
+}
+
+struct NullDeleter {template<typename T> void operator()(T*) {}};   
+bool GraphPhysics::addMlsSurface(NodeData* node)
+{
+  std::string env_path("Quali1");
+  std::string mls_map_id("/mls-grid");	
+  boost::scoped_ptr<envire::Environment> env(envire::Environment::unserialize(env_path));  
+  envire::MLSGrid::Ptr ptr(env->getItem<envire::MLSGrid>(mls_map_id));		
+  mlsgrid_ptr = ptr;	
+  boost::shared_ptr<envire::MLSGrid> mls(mlsgrid_ptr.get(), NullDeleter());
+  mls_userdata = mls;
+  if (debug) 
+  {
+    //LOG_DEBUG(("[GraphPhysics::addMlsSurface] mls is loaded: x by y (%d %d)\n", mls->getCellSizeX(), mls->getCellSizeY()));
+    //LOG_DEBUG(("[GraphPhysics::addMlsSurface] mls is loaded: x by y (%f %f)",  mls->getCellSizeX(), mls->getCellSizeY()));
+    LOG_DEBUG("[GraphPhysics::addMlsSurface] mls is loaded: x by y %d %d",  mls->getCellSizeX(), mls->getCellSizeY());
+  }
+  envire::collision::MLSCollision* mls_collision = envire::collision::MLSCollision::getInstance();
+  dGeomID geom_mls = mls_collision->createNewCollisionObject(mls_userdata);	
+  WorldPhysics *theWorld = (WorldPhysics*)control->sim->getPhysics();
+  current_space = theWorld->getSpace();
+  current_space->add (geom_mls);  
+  geom_data* gd = new geom_data;
+  (*gd).setZero();
+  gd->sense_contact_force = 0;
+  gd->parent_geom = 0;
+  gd->c_params.cfm = 0.01;
+  gd->c_params.erp = 0.1;
+  gd->c_params.bounce = 0.0;
+  dGeomSetData(geom_mls, gd);		
+  return true;
+} 	
 
 
 void GraphPhysics::setPos(const envire::core::FrameId& frame, const std::shared_ptr<mars::interfaces::NodeData>& node)

@@ -28,7 +28,7 @@ namespace mars {
 
     using namespace configmaps;
     using namespace mars::utils;
-    
+    int MaterialData::anonymCount = 1;
     bool MaterialData::operator==(const MaterialData& other) const {
       return (exists == other.exists) &&
         (ambientFront == other.ambientFront) &&
@@ -48,59 +48,59 @@ namespace mars {
                                      std::string filenamePrefix) {
       ConfigMap::iterator it;
 
-      if((it = config->find("exists")) != config->end())
-        exists = it->second[0].getBool();
+      exists = config->get("exists", exists);
 
       if((it = config->find("ambientFront")) != config->end())
-        ambientFront.fromConfigItem(&it->second[0]);
-      if((it = config->find("ambientColor")) != config->end())
-        ambientFront.fromConfigItem(&it->second[0]);
+        ambientFront.fromConfigItem(it->second);
+      if((it = config->find("ambientColor")) != config->end()) // new SMURF naming
+        ambientFront.fromConfigItem(it->second);
       if((it = config->find("ambientBack")) != config->end())
-        ambientBack.fromConfigItem(&it->second[0]);
+        ambientBack.fromConfigItem(it->second);
 
       if((it = config->find("diffuseFront")) != config->end())
-        diffuseFront.fromConfigItem(&it->second[0]);
-      if((it = config->find("diffuseColor")) != config->end())
-        diffuseFront.fromConfigItem(&it->second[0]);
+        diffuseFront.fromConfigItem(it->second);
+      if((it = config->find("diffuseColor")) != config->end()) // new SMURF naming
+        diffuseFront.fromConfigItem(it->second);
       if((it = config->find("diffuseBack")) != config->end())
-        diffuseBack.fromConfigItem(&it->second[0]);
+        diffuseBack.fromConfigItem(it->second);
 
 
       if((it = config->find("specularFront")) != config->end())
-        specularFront.fromConfigItem(&it->second[0]);
-      if((it = config->find("specularColor")) != config->end())
-        specularFront.fromConfigItem(&it->second[0]);
+        specularFront.fromConfigItem(it->second);
+      if((it = config->find("specularColor")) != config->end()) // new SMURF naming
+        specularFront.fromConfigItem(it->second);
       if((it = config->find("specularBack")) != config->end())
-        specularBack.fromConfigItem(&it->second[0]);
+        specularBack.fromConfigItem(it->second);
 
       if((it = config->find("emissionFront")) != config->end())
-        emissionFront.fromConfigItem(&it->second[0]);
-      if((it = config->find("emissionColor")) != config->end())
-        emissionFront.fromConfigItem(&it->second[0]);
+        emissionFront.fromConfigItem(it->second);
+      if((it = config->find("emissionColor")) != config->end()) // new SMURF naming
+        emissionFront.fromConfigItem(it->second);
       if((it = config->find("emissionBack")) != config->end())
-        emissionBack.fromConfigItem(&it->second[0]);
+        emissionBack.fromConfigItem(it->second);
 
-      if((it = config->find("transparency")) != config->end())
-        transparency = it->second[0].getDouble();
-      if((it = config->find("shininess")) != config->end())
-        shininess = it->second[0].getDouble();
-      if((it = config->find("texturename")) != config->end())
-        texturename = trim(it->second[0].getString());
-      if((it = config->find("displacementmap")) != config->end())
-        bumpmap = trim(it->second[0].getString());
-      if((it = config->find("bumpmap")) != config->end())
-        normalmap = trim(it->second[0].getString());
-      if((it = config->find("tex_scale")) != config->end())
-        tex_scale = it->second[0].getDouble();
-      if((it = config->find("reflect")) != config->end())
-        reflect = it->second[0].getDouble();
-      if((it = config->find("brightness")) != config->end())
-        brightness = it->second[0].getDouble();
-      if((it = config->find("getLight")) != config->end())
-        getLight = it->second[0].getBool();
-      if((it = config->find("cullMask")) != config->end())
-        cullMask = it->second[0].getInt();
+      transparency = config->get("transparency", transparency);
+      shininess = config->get("shininess", shininess);
+      texturename = trim(config->get("texturename", texturename));
+      texturename = trim(config->get("diffuseTexture", texturename)); // new SMURF naming
+      bumpmap = trim(config->get("displacementmap", bumpmap));
+      bumpmap = config->get("displacementTexture", bumpmap); // new SMURF naming
+      normalmap = config->get("bumpmap", normalmap);
+      normalmap = config->get("normalTexture", normalmap); // new SMURF naming
+      tex_scale = config->get("tex_scale", tex_scale);
+      reflect = config->get("reflect", reflect);
+      brightness = config->get("brightness", brightness);
+      getLight = config->get("getLight", getLight);
+      cullMask = config->get("cullMask", cullMask);
+      bumpNorFac = config->get("bumpNorFac", bumpNorFac);
 
+      if((it = config->find("name")) != config->end())
+        name = (std::string)it->second;
+      else {
+        std::stringstream s;
+        s << "material" << anonymCount++ << std::endl;
+        name = s.str();
+      }
 
       if(!filenamePrefix.empty()) {
         handleFilenamePrefix(&texturename, filenamePrefix);
@@ -111,7 +111,8 @@ namespace mars {
       return true;
     }
 
-    void MaterialData::toConfigMap(ConfigMap *config, bool skipFilenamePrefix) {
+    void MaterialData::toConfigMap(ConfigMap *config, bool skipFilenamePrefix,
+                                   bool exportDefault) {
       MaterialData defaultMaterial;
       std::string texturename_ = texturename;
       std::string bumpmap_ = bumpmap;
@@ -123,66 +124,63 @@ namespace mars {
         removeFilenamePrefix(&normalmap_);
       }
 
-      if(exists != defaultMaterial.exists)
-        (*config)["exists"][0] = ConfigItem(exists);
+      (*config)["name"] = name;
 
-      if(ambientFront != defaultMaterial.ambientFront) {
-        (*config)["ambientFront"][0] = ConfigItem(std::string());
-        ambientFront.toConfigItem(&(*config)["ambientFront"][0]);
+      if(exportDefault || ambientFront != defaultMaterial.ambientFront) {
+        ambientFront.toConfigItem((*config)["ambientColor"]);
       }
       if(ambientBack != defaultMaterial.ambientBack) {
-        (*config)["ambientBack"][0] = ConfigItem(std::string());
-        ambientBack.toConfigItem(&(*config)["ambientBack"][0]);
+        ambientBack.toConfigItem((*config)["ambientBack"]);
       }
 
-      if(diffuseFront != defaultMaterial.diffuseFront) {
-        (*config)["diffuseFront"][0] = ConfigItem(std::string());
-        diffuseFront.toConfigItem(&(*config)["diffuseFront"][0]);
+      if(exportDefault || diffuseFront != defaultMaterial.diffuseFront) {
+        diffuseFront.toConfigItem((*config)["diffuseColor"]);
       }
       if(diffuseBack != defaultMaterial.diffuseBack) {
-        (*config)["diffuseBack"][0] = ConfigItem(std::string());
-        diffuseBack.toConfigItem(&(*config)["diffuseBack"][0]);
+        diffuseBack.toConfigItem((*config)["diffuseBack"]);
       }
 
-      if(specularFront != defaultMaterial.specularFront) {
-        (*config)["specularFront"][0] = ConfigItem(std::string());
-        specularFront.toConfigItem(&(*config)["specularFront"][0]);
+      if(exportDefault || specularFront != defaultMaterial.specularFront) {
+        specularFront.toConfigItem((*config)["specularColor"]);
       }
       if(specularBack != defaultMaterial.specularBack) {
-        (*config)["specularBack"][0] = ConfigItem(std::string());
-        specularBack.toConfigItem(&(*config)["specularBack"][0]);
+        specularBack.toConfigItem((*config)["specularBack"]);
       }
 
-      if(emissionFront != defaultMaterial.emissionFront) {
-        (*config)["emissionFront"][0] = ConfigItem(std::string());
-        emissionFront.toConfigItem(&(*config)["emissionFront"][0]);
+      if(exportDefault || emissionFront != defaultMaterial.emissionFront) {
+        emissionFront.toConfigItem((*config)["emissionColor"]);
       }
       if(emissionBack != defaultMaterial.emissionBack) {
-        (*config)["emissionBack"][0] = ConfigItem(std::string());
-        emissionBack.toConfigItem(&(*config)["emissionBack"][0]);
+        emissionBack.toConfigItem((*config)["emissionBack"]);
       }
 
-      if(transparency != defaultMaterial.transparency)
-        (*config)["transparency"][0] = ConfigItem(transparency);
-      if(shininess != defaultMaterial.shininess)
-        (*config)["shininess"][0] = ConfigItem(shininess);
-      if(texturename_ != defaultMaterial.texturename)
-        (*config)["texturename"][0] = ConfigItem(texturename_);
-      if(bumpmap_ != defaultMaterial.bumpmap)
-        (*config)["displacementmap"][0] = ConfigItem(bumpmap_);
-      if(normalmap_ != defaultMaterial.normalmap)
-        (*config)["bumpmap"][0] = ConfigItem(normalmap_);
-      if(tex_scale != defaultMaterial.tex_scale)
-        (*config)["tex_scale"][0] = ConfigItem(tex_scale);
+      if(exportDefault || shininess != defaultMaterial.shininess)
+        (*config)["shininess"] = shininess;
+      if(exportDefault || transparency != defaultMaterial.transparency)
+        (*config)["transparency"] = transparency;
+      if(exportDefault || texturename_ != defaultMaterial.texturename)
+        (*config)["diffuseTexture"] = texturename_;
+      if(exportDefault || normalmap_ != defaultMaterial.normalmap)
+        (*config)["normalTexture"] = normalmap_;
+      // no default export because testing is needed
+      if( bumpmap_ != defaultMaterial.bumpmap)
+        (*config)["displacementTexture"] = bumpmap_;
+      if(exportDefault || tex_scale != defaultMaterial.tex_scale)
+        (*config)["tex_scale"] = tex_scale;
+      // feature is currently not working (no default export)
       if(reflect != defaultMaterial.reflect)
-        (*config)["reflect"][0] = ConfigItem(reflect);
-      if(brightness != defaultMaterial.brightness)
-        (*config)["brightness"][0] = ConfigItem(brightness);
-      if(getLight != defaultMaterial.getLight)
-        (*config)["getLigth"][0] = ConfigItem(getLight);
-      if(cullMask != defaultMaterial.cullMask)
-        (*config)["cullMask"][0] = ConfigItem(cullMask);
-
+        (*config)["reflect"] = reflect;
+      if(exportDefault || brightness != defaultMaterial.brightness)
+        (*config)["brightness"] = brightness;
+      if(exportDefault || getLight != defaultMaterial.getLight)
+        (*config)["getLigth"] = getLight;
+      if(exportDefault || cullMask != defaultMaterial.cullMask)
+        (*config)["cullMask"] = cullMask;
+      if(exportDefault || bumpNorFac != defaultMaterial.bumpNorFac)
+        (*config)["bumpNorFac"] = bumpNorFac;
+      // can not be changed online currently
+      if(exists != defaultMaterial.exists)
+        (*config)["exists"] = exists;
     }
 
     void MaterialData::getFilesToSave(std::vector<std::string> *fileList) {

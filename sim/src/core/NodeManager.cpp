@@ -37,8 +37,11 @@
 #include <mars/interfaces/terrainStruct.h>
 #include <mars/interfaces/Logging.hpp>
 
+#include <lib_manager/LibManager.hpp>
+
 #include <mars/interfaces/utils.h>
 #include <mars/utils/mathUtils.h>
+#include <mars/utils/misc.h>
 
 #include <stdexcept>
 
@@ -59,11 +62,14 @@ namespace mars {
      * post:
      *     - next_node_id should be initialized to one
      */
-    NodeManager::NodeManager(ControlCenter *c) : next_node_id(1),
+    NodeManager::NodeManager(ControlCenter *c,
+                             lib_manager::LibManager *theManager) :
+                                                 next_node_id(1),
                                                  update_all_nodes(false),
                                                  visual_rep(1),
                                                  maxGroupID(0),
-                                                control(c)
+                                                 control(c),
+                                                 libManager(theManager)
     {
       if(control->graphics) {
         GraphicsUpdateInterface *gui = static_cast<GraphicsUpdateInterface*>(this);
@@ -144,18 +150,45 @@ namespace mars {
 
       // convert obj to ode mesh
       if((nodeS->physicMode == NODE_TYPE_MESH) && (nodeS->terrain == 0) ) {
-        if(!control->loadCenter || !control->loadCenter->loadMesh) {
+        if(!control->loadCenter) {
           LOG_ERROR("NodeManager:: loadCenter is missing, can not create Node");
           return INVALID_ID;
         }
-        control->loadCenter->loadMesh->getPhysicsFromOBJ(nodeS);
+        if(!control->loadCenter->loadMesh) {
+          GraphicsManagerInterface *g = libManager->getLibraryAs<GraphicsManagerInterface>("mars_graphics");
+          if(!g) {
+            libManager->loadLibrary("mars_graphics", NULL, false, true);
+            g = libManager->getLibraryAs<GraphicsManagerInterface>("mars_graphics");
+          }
+          if(g) {
+            control->loadCenter->loadMesh = g->getLoadMeshInterface();
+          }
+          else {
+            LOG_ERROR("NodeManager:: loadMesh is missing, can not create Node");
+          }
+        }
+        control->loadCenter->loadMesh->getPhysicsFromMesh(nodeS);
       }
       if((nodeS->physicMode == NODE_TYPE_TERRAIN) && nodeS->terrain ) {
-        if(!control->loadCenter || !control->loadCenter->loadHeightmap) {
-          LOG_ERROR("NodeManager:: loadCenter is missing, can not create Node");
-          return INVALID_ID;
-        }
         if(!nodeS->terrain->pixelData) {
+          if(!control->loadCenter) {
+            LOG_ERROR("NodeManager:: loadCenter is missing, can not create Node");
+            return INVALID_ID;
+          }
+          if(!control->loadCenter->loadHeightmap) {
+            GraphicsManagerInterface *g = libManager->getLibraryAs<GraphicsManagerInterface>("mars_graphics");
+            if(!g) {
+              libManager->loadLibrary("mars_graphics", NULL, false, true);
+              g = libManager->getLibraryAs<GraphicsManagerInterface>("mars_graphics");
+            }
+            if(g) {
+              control->loadCenter->loadHeightmap = g->getLoadHeightmapInterface();
+            }
+            else {
+              LOG_ERROR("NodeManager:: loadHeightmap is missing, can not create Node");
+              return INVALID_ID;
+            }
+          }
           control->loadCenter->loadHeightmap->readPixelData(nodeS->terrain);
           if(!nodeS->terrain->pixelData) {
             LOG_ERROR("NodeManager::addNode: could not load image for terrain");
@@ -219,8 +252,9 @@ namespace mars {
           physicalRep.material.transparency = 0.3;
           physicalRep.visual_offset_pos = Vector(0.0, 0.0, 0.0);
           physicalRep.visual_offset_rot = Quaternion::Identity();
-          physicalRep.visual_size = physicalRep.ext;
-
+          physicalRep.visual_size = Vector(0.0, 0.0, 0.0);
+          physicalRep.map["sharedDrawID"] = 0lu;
+          physicalRep.map["visualType"] = NodeData::toString(nodeS->physicMode);
           if(nodeS->physicMode != NODE_TYPE_TERRAIN) {
             if(nodeS->physicMode != NODE_TYPE_MESH) {
               physicalRep.filename = "PRIMITIVE";
@@ -474,6 +508,11 @@ namespace mars {
           Vector scale;
           if(sNode.filename == "PRIMITIVE") {
             scale = nodeS->ext;
+            if(sNode.physicMode == NODE_TYPE_SPHERE) {
+              scale.x() *= 2;
+              scale.y() = scale.z() = scale.x();
+            }
+            // todo: set scale for cylinder and capsule
           } else {
             scale = sNode.visual_size-sNode.ext;
             scale += nodeS->ext;
@@ -880,8 +919,8 @@ namespace mars {
           for (jter = joints->begin(); jter != joints->end();) {
             if ((*jter)->getSJoint().nodeIndex1 == iter->first ||
                 (*jter)->getSJoint().nodeIndex2 == iter->first) {
-              if(rotate) (*jter)->rotateAxis1(*rotate);
-              (*jter)->reattacheJoint();
+              if(rotate) (*jter)->rotateAxis(*rotate);
+              (*jter)->reattachJoint();
               jter2 = jter;
               if(jter != joints->begin()) jter--;
               else jter = joints->begin();
@@ -927,47 +966,47 @@ namespace mars {
       }
 
       for (iter = joints->begin(); iter != joints->end(); iter++) {
-        if ((*iter)->getAttachedNode1() &&
-            (*iter)->getAttachedNode1()->getID() == id) {
+        if ((*iter)->getAttachedNode() &&
+            (*iter)->getAttachedNode()->getID() == id) {
           for (jter = gids->begin(); jter != gids->end(); jter++) {
-            if ((*iter)->getAttachedNode2() &&
-                (*jter) == (*iter)->getAttachedNode2()->getGroupID()) {
+            if ((*iter)->getAttachedNode(2) &&
+                (*jter) == (*iter)->getAttachedNode(2)->getGroupID()) {
               found = true;
               break;
             }
           }
-          if ((*iter)->getAttachedNode2() &&
-              nodes->find((*iter)->getAttachedNode2()->getID()) != nodes->end()) {
-            id2 = (*iter)->getAttachedNode2()->getID();
+          if ((*iter)->getAttachedNode(2) &&
+              nodes->find((*iter)->getAttachedNode(2)->getID()) != nodes->end()) {
+            id2 = (*iter)->getAttachedNode(2)->getID();
             if (!found) {
-              if ((*iter)->getAttachedNode2()->getGroupID())
-                gids->push_back((*iter)->getAttachedNode2()->getGroupID());
-              applyFunc((*iter)->getAttachedNode2(), params);
+              if ((*iter)->getAttachedNode(2)->getGroupID())
+                gids->push_back((*iter)->getAttachedNode(2)->getGroupID());
+              applyFunc((*iter)->getAttachedNode(2), params);
             }
-            nodes->erase(nodes->find((*iter)->getAttachedNode2()->getID()));
+            nodes->erase(nodes->find((*iter)->getAttachedNode(2)->getID()));
             joints->erase(iter);
             recursiveHelper(id, params, joints, gids, nodes, applyFunc);
             recursiveHelper(id2, params, joints, gids, nodes, applyFunc);
             return;
           }
           else found = false;
-        } else if ((*iter)->getAttachedNode2() &&
-                   (*iter)->getAttachedNode2()->getID() == id) {
+        } else if ((*iter)->getAttachedNode(2) &&
+                   (*iter)->getAttachedNode(2)->getID() == id) {
           for (jter = gids->begin(); jter != gids->end(); jter++) {
-            if ((*iter)->getAttachedNode1() &&
-                (*jter) == (*iter)->getAttachedNode1()->getGroupID()) {
+            if ((*iter)->getAttachedNode() &&
+                (*jter) == (*iter)->getAttachedNode()->getGroupID()) {
               found = true;
               break;
             }
           }
-          if(nodes->find((*iter)->getAttachedNode1()->getID()) != nodes->end()) {
-            id2 = (*iter)->getAttachedNode1()->getID();
+          if(nodes->find((*iter)->getAttachedNode()->getID()) != nodes->end()) {
+            id2 = (*iter)->getAttachedNode()->getID();
             if (!found) {
-              if ((*iter)->getAttachedNode1()->getGroupID())
-                gids->push_back((*iter)->getAttachedNode1()->getGroupID());
-              applyFunc((*iter)->getAttachedNode1(), params);
+              if ((*iter)->getAttachedNode()->getGroupID())
+                gids->push_back((*iter)->getAttachedNode()->getGroupID());
+              applyFunc((*iter)->getAttachedNode(), params);
             }
-            nodes->erase(nodes->find((*iter)->getAttachedNode1()->getID()));
+            nodes->erase(nodes->find((*iter)->getAttachedNode()->getID()));
             joints->erase(iter);
             recursiveHelper(id, params, joints, gids, nodes, applyFunc);
             recursiveHelper(id2, params, joints, gids, nodes, applyFunc);
@@ -1509,10 +1548,10 @@ namespace mars {
             connected.push_back(iter->first);
 
       for (size_t i = 0; i < simJoints.size(); i++) {
-        if (simJoints[i]->getAttachedNode1() &&
-            simJoints[i]->getAttachedNode1()->getID() == id &&
-            simJoints[i]->getAttachedNode2()) {
-          connected.push_back(simJoints[i]->getAttachedNode2()->getID());
+        if (simJoints[i]->getAttachedNode() &&
+            simJoints[i]->getAttachedNode()->getID() == id &&
+            simJoints[i]->getAttachedNode(2)) {
+          connected.push_back(simJoints[i]->getAttachedNode(2)->getID());
           /*    current = simNodes.find(connected.back())->second;
                 if (current->getGroupID() != 0)
                 for (iter = simNodes.begin(); iter != simNodes.end(); iter++)
@@ -1520,10 +1559,10 @@ namespace mars {
                 connected.push_back(iter->first);*/
         }
 
-        if (simJoints[i]->getAttachedNode2() &&
-            simJoints[i]->getAttachedNode2()->getID() == id &&
-            simJoints[i]->getAttachedNode1()) {
-          connected.push_back(simJoints[i]->getAttachedNode1()->getID());
+        if (simJoints[i]->getAttachedNode(2) &&
+            simJoints[i]->getAttachedNode(2)->getID() == id &&
+            simJoints[i]->getAttachedNode()) {
+          connected.push_back(simJoints[i]->getAttachedNode()->getID());
           /*      current = simNodes.find(connected.back())->second;
                   if (current->getGroupID() != 0)
                   for (iter = simNodes.begin(); iter != simNodes.end(); iter++)
@@ -1614,6 +1653,88 @@ namespace mars {
           rotateRelativeNodes(*nextNode, nodes, pivot, rot);
           break;
         }
+      }
+    }
+
+    void NodeManager::printNodeMasses(bool onlysum) {
+      NodeMap::iterator it;
+      double masssum = 0;
+      for(it=simNodes.begin(); it!=simNodes.end(); ++it) {
+        if (!onlysum)
+          fprintf(stderr, "%s: %f\n", it->second->getName().c_str(), it->second->getMass());
+        masssum+=it->second->getMass();
+      }
+      fprintf(stderr, "Sum of masses of imported model: %f\n", masssum);
+    }
+
+    void NodeManager::edit(NodeId id, const std::string &key,
+                           const std::string &value) {
+      NodeData nd = getFullNode(id);
+      if(matchPattern("*/position/*", key)) {
+        double v = atof(value.c_str());
+        if(key[key.size()-1] == 'x') nd.pos.x() = v;
+        else if(key[key.size()-1] == 'y') nd.pos.y() = v;
+        else if(key[key.size()-1] == 'z') nd.pos.z() = v;
+        control->nodes->editNode(&nd, (EDIT_NODE_POS | EDIT_NODE_MOVE_ALL));
+      }
+      else if(matchPattern("*/extend/*", key)) {
+        double v = atof(value.c_str());
+        if(key[key.size()-1] == 'x') nd.ext.x() = v;
+        else if(key[key.size()-1] == 'y') nd.ext.y() = v;
+        else if(key[key.size()-1] == 'z') nd.ext.z() = v;
+        control->nodes->editNode(&nd, EDIT_NODE_SIZE);
+      }
+      else if(matchPattern("*/material", key)) {
+        if(control->graphics) {
+          std::vector<interfaces::MaterialData> mList;
+          std::vector<interfaces::MaterialData>::iterator it;
+          mList = control->graphics->getMaterialList();
+          for(it=mList.begin(); it!=mList.end(); ++it) {
+            if(it->name == value) {
+              unsigned long drawID = getDrawID(id);
+              control->graphics->setDrawObjectMaterial(drawID, *it);
+              break;
+            }
+          }
+        }
+      }
+      else if(matchPattern("*/c*", key)) {
+        MutexLocker locker(&iMutex);
+        NodeMap::iterator iter;
+        // todo: cfdir1 is a vector
+        iter = simNodes.find(id);
+        if(iter == simNodes.end()) return;
+        contact_params c = iter->second->getContactParams();
+        if(matchPattern("*/cmax_num_contacts", key)) {
+          c.max_num_contacts = atoi(value.c_str());;
+        }
+        else if(matchPattern("*/cerp", key)) c.erp = atof(value.c_str());
+        else if(matchPattern("*/ccfm", key)) c.cfm = atof(value.c_str());
+        else if(matchPattern("*/cfriction1", key)) c.friction1 = atof(value.c_str());
+        else if(matchPattern("*/cfriction2", key)) c.friction2 = atof(value.c_str());
+        else if(matchPattern("*/cmotion1", key)) c.motion1 = atof(value.c_str());
+        else if(matchPattern("*/cmotion2", key)) c.motion2 = atof(value.c_str());
+        else if(matchPattern("*/cfds1", key)) c.fds1 = atof(value.c_str());
+        else if(matchPattern("*/cfds2", key)) c.fds2 = atof(value.c_str());
+        else if(matchPattern("*/cbounce", key)) c.bounce = atof(value.c_str());
+        else if(matchPattern("*/cbounce_vel", key)) c.bounce_vel = atof(value.c_str());
+        else if(matchPattern("*/capprox", key)) {
+          if(value == "true" || value == "True") c.approx_pyramid = true;
+          else c.approx_pyramid = false;
+        }
+        else if(matchPattern("*/coll_bitmask", key)) c.coll_bitmask = atoi(value.c_str());
+        else if(matchPattern("*/cfdir1*", key)) {
+          double v = atof(value.c_str());
+          if(!c.friction_direction1) c.friction_direction1 = new Vector(0,0,0);
+          if(key[key.size()-1] == 'x') c.friction_direction1->x() = v;
+          else if(key[key.size()-1] == 'y') c.friction_direction1->y() = v;
+          else if(key[key.size()-1] == 'z') c.friction_direction1->z() = v;
+          if(c.friction_direction1->norm() < 0.00000001) {
+            delete c.friction_direction1;
+            c.friction_direction1 = 0;
+          }
+        }
+        iter->second->setContactParams(c);
       }
     }
 

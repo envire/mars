@@ -128,6 +128,9 @@ namespace mars {
          * Gets the joint type from the smurf joint it reads it from the urdf object that it contains
          */
         mars::interfaces::JointType getJointType(smurf::Joint* joint);
+
+        template <class jointType>
+        void setAnchor(jointType* smurfJoint, mars::interfaces::JointData* jointData);
         /*
          * Sets the axis1 value of the jointData for static transformations. This method was need to implement intantiate as templated method
          */

@@ -27,6 +27,7 @@ pkg_check_modules(PKGCONFIG REQUIRED
 			    cfg_manager
 			    mars_interfaces
 			    opencv
+          configmaps
 )
 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
@@ -107,6 +108,7 @@ set(HEADERS
         src/dialogs/CaptureWindow/ImageProcess.h
         
         src/menus/MenuFile.h
+        src/menus/MenuAdd.h
         src/menus/MenuHelp.h
         src/menus/MenuSimulation.h
         src/menus/MenuWindow.h
@@ -156,6 +158,7 @@ set(QT_MOC_HEADER
 
         src/menus/MenuSimulation.h
         src/menus/MenuWindow.h
+        src/menus/MenuAdd.h
 )
  
 if (${USE_QT5})
@@ -211,6 +214,7 @@ set(TARGET_SRC
             src/dialogs/CaptureWindow/ImageProcess.cpp
 
             src/menus/MenuFile.cpp
+            src/menus/MenuAdd.cpp
             src/menus/MenuHelp.cpp
             src/menus/MenuWindow.cpp
             src/menus/MenuSimulation.cpp

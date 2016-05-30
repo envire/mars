@@ -52,7 +52,8 @@ namespace mars {
     class NodeManager : public interfaces::NodeManagerInterface,
                         public interfaces::GraphicsUpdateInterface {
     public:
-      NodeManager(interfaces::ControlCenter *c);
+      NodeManager(interfaces::ControlCenter *c,
+                  lib_manager::LibManager *theManager);
       virtual ~NodeManager(){}
 
       virtual interfaces::NodeId createPrimitiveNode(const std::string &name,
@@ -155,6 +156,8 @@ namespace mars {
       virtual void positionNode(interfaces::NodeId id, utils::Vector pos,
                                 unsigned long excludeJointId);
       virtual unsigned long getMaxGroupID() { return maxGroupID; }
+      virtual void edit(interfaces::NodeId id, const std::string &key,
+                        const std::string &value);
 
     private:
       interfaces::NodeId next_node_id;
@@ -165,7 +168,7 @@ namespace mars {
       NodeMap nodesToUpdate;
       std::list<interfaces::NodeData> simNodesReload;
       unsigned long maxGroupID;
-
+      lib_manager::LibManager *libManager;
       mutable utils::Mutex iMutex;
 
       interfaces::ControlCenter *control;
@@ -212,6 +215,8 @@ namespace mars {
       void removeNode(interfaces::NodeId id, bool lock,
                       bool clearGraphics=true);
       void pushToUpdate(SimNode* node);
+
+      void printNodeMasses(bool onlysum);
 
       // for passing parameters to the recursiveHelper.
       struct Params

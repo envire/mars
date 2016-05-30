@@ -37,12 +37,6 @@ if(USE_VERTEX_BUFFER)
     ADD_DEFINITIONS(-DUSE_VERTEX_BUFFER)
 endif()
 
-set(USE_MARS_VBO 0)
-if(USE_MARS_VBO)
-    ADD_DEFINITIONS(-DUSE_MARS_VBO)
-endif()
-
-
 find_package(OpenSceneGraph REQUIRED osgManipulator osgViewer osgFX osgShadow osgParticle osgTerrain osgDB osgGA osgWidget osgText osgUtil)
 include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 link_directories(${OPENSCENEGRAPH_LIBRARY_DIRS})
@@ -68,6 +62,7 @@ pkg_check_modules(PKGCONFIG REQUIRED
 			    mars_interfaces
 			    cfg_manager
 			    configmaps
+			    mars_utils
 )
 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
@@ -83,25 +78,8 @@ set(HEADERS
            src/HUD.h
            src/PostDrawCallback.h
            src/QtOsgMixGraphicsWidget.h
+           src/MarsMaterial.h
            
-           src/3d_objects/AxisPrimitive.h
-           src/3d_objects/CapsuleDrawObject.h
-           src/3d_objects/Clouds.h
-           src/3d_objects/CoordsPrimitive.h
-           src/3d_objects/CubeDrawObject.h
-           src/3d_objects/CylinderDrawObject.h
-           src/3d_objects/DrawObject.h
-           src/3d_objects/GridPrimitive.h
-           src/3d_objects/LoadDrawObject.h
-           src/3d_objects/OceanDrawObject.h
-           src/3d_objects/PlaneDrawObject.h
-           src/3d_objects/SphereDrawObject.h
-           src/3d_objects/TerrainDrawObject.h
-           src/3d_objects/VertexBufferTerrain.h
-           src/3d_objects/MarsVBOGeom.h
-
-           src/3d_objects/MultiResHeightMapRenderer.h
-
            src/shader/bumpmapping.h
            src/shader/pixellight.h
            src/shader/shader-generator.h
@@ -121,6 +99,24 @@ set(HEADERS_2D
            src/2d_objects/HUDTexture.h
            src/2d_objects/HUDOSGNode.h
            
+)
+
+set(HEADERS_3D
+           src/3d_objects/AxisPrimitive.h
+           src/3d_objects/CapsuleDrawObject.h
+           src/3d_objects/CoordsPrimitive.h
+           src/3d_objects/CubeDrawObject.h
+           src/3d_objects/CylinderDrawObject.h
+           src/3d_objects/EmptyDrawObject.h
+           src/3d_objects/DrawObject.h
+           src/3d_objects/GridPrimitive.h
+           src/3d_objects/LoadDrawObject.h
+           src/3d_objects/OceanDrawObject.h
+           src/3d_objects/PlaneDrawObject.h
+           src/3d_objects/SphereDrawObject.h
+           src/3d_objects/TerrainDrawObject.h
+           src/3d_objects/VertexBufferTerrain.h
+           src/3d_objects/MultiResHeightMapRenderer.h
 )
 
 set(HEADERS_WRAPPER
@@ -144,6 +140,7 @@ set(SOURCES
            src/HUD.cpp
            src/QtOsgMixGraphicsWidget.cpp
            src/PostDrawCallback.cpp
+           src/MarsMaterial.cpp
            
            src/wrapper/OSGDrawItem.cpp
            src/wrapper/OSGHudElementStruct.cpp
@@ -154,7 +151,6 @@ set(SOURCES
            src/3d_objects/AxisPrimitive.cpp
            src/3d_objects/CapsuleDrawObject.cpp
            src/3d_objects/CoordsPrimitive.cpp
-           src/3d_objects/Clouds.cpp
            src/3d_objects/CubeDrawObject.cpp
            src/3d_objects/CylinderDrawObject.cpp
            src/3d_objects/DrawObject.cpp
@@ -165,7 +161,6 @@ set(SOURCES
            src/3d_objects/SphereDrawObject.cpp
            src/3d_objects/TerrainDrawObject.cpp
            src/3d_objects/VertexBufferTerrain.cpp
-           src/3d_objects/MarsVBOGeom.cpp
            src/3d_objects/MultiResHeightMapRenderer.cpp
            src/2d_objects/HUDNode.cpp
            src/2d_objects/HUDLabel.cpp
@@ -241,6 +236,7 @@ install(TARGETS ${PROJECT_NAME} ${_INSTALL_DESTINATIONS})
 # Install headers into mars include directory
 install(FILES ${HEADERS} DESTINATION include/mars/graphics)
 install(FILES ${HEADERS_2D} DESTINATION include/mars/graphics/2d_objects)
+install(FILES ${HEADERS_3D} DESTINATION include/mars/graphics/3d_objects)
 install(FILES ${HEADERS_WRAPPER} DESTINATION include/mars/graphics/wrapper)
 
 # Prepare and install necessary files to support finding of the library 

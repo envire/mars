@@ -14,5 +14,7 @@
     <depend package="simulation/mars/plugins/envire_joints" />
     <!--<depend package="simulation/mars/plugins/envire_motors" />-->
     <depend package="tools/lib_config" />
+    <depend package="envire/envire_collider_mls" />    
+    <depend package="slam/maps" />  
     <tags>needs_opt</tags>
 </package>

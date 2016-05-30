@@ -13,7 +13,6 @@ define_module_info()
 
 pkg_check_modules(PKGCONFIG REQUIRED
         eigen3
-        yaml-cpp
         configmaps
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})

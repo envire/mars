@@ -1,0 +1,14 @@
+<package>
+    <description brief="test_mls">
+      test
+   </description>
+    <maintainer>Yong-Ho/yong-ho.yoo@dfki.de</maintainer>
+    <author>Yong-Ho/yong-ho.yoo@dfki.de</author>
+    <depend package="simulation/mars/scripts/cmake" />
+    <depend package="simulation/lib_manager" />
+    <depend package="simulation/mars/common/data_broker" />
+    <depend package="simulation/mars/interfaces" />
+    <depend package="envire/envire_collider_mls" />    
+    <depend package="slam/maps" />            
+    <tags>needs_opt</tags>
+</package>

@@ -51,10 +51,11 @@ namespace osg_text {
          double paddingR=0., double paddingB=0.,         
          Color backgroundColor=Color(),
          Color borderColor=Color(),
-         double borderWidth = 0.0);
+         double borderWidth = 0.0, std::string fontPath="");
 
     ~Text();
     void setText(const std::string &s);
+    void setFontSize(const double fontSize);
     void setBackgroundColor(const Color &c);
     void setBorderColor(const Color &c);
     void setBorderWidth(double w);
@@ -63,6 +64,13 @@ namespace osg_text {
     void setFixedWidth(double w);
     void setFixedHeight(double h);
     void setPosition(double x, double y);
+    void getRectangle(double *left, double *right,
+                      double *top, double *bottom) {
+      *left = posX+posXB-pl;
+      *right = posX+posXB+w-pl;
+      *top = posY+pt;
+      *bottom = posY-h+pt;
+    }
 
   private:
     osg::ref_ptr<osg::PositionAttitudeTransform> transform;

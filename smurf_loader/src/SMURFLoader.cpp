@@ -112,52 +112,6 @@ namespace mars {
             }
           }
 
-          void SMURFLoader::getGenericConfig(configmaps::ConfigMap *config,
-              const QDomElement &elementNode) {
-
-            QDomNodeList xmlnodepartlist = elementNode.childNodes();
-            QDomNamedNodeMap attributes = elementNode.attributes();
-
-            std::string tagName, value;
-            QDomElement child;
-            QDomNode child2;
-
-            for (int i = 0; i < attributes.size(); i++) {
-              child2 = attributes.item(i);
-              tagName = child2.nodeName().toStdString();
-              value = child2.nodeValue().toStdString();
-              if (!tagName.empty()) {
-                (*config)[tagName].push_back(configmaps::ConfigItem(value));
-    #ifdef DEBUG_PARSE_SENSOR
-                LOG_DEBUG("attrib [%s : %s]", tagName.c_str(), value.c_str());
-    #endif
-              }
-            }
-
-            for (int i = 0; i < xmlnodepartlist.size(); i++) {
-              child = xmlnodepartlist.at(i).toElement();
-
-              tagName = child.tagName().toStdString();
-              value = child.text().toStdString();
-              if (!tagName.empty()) {
-                (*config)[tagName].push_back(configmaps::ConfigItem(value));
-    #ifdef DEBUG_PARSE_SENSOR
-                LOG_DEBUG("element [%s : %s]", tagName.c_str(), value.c_str());
-    #endif
-                getGenericConfig(&((*config)[tagName].back().children), child);
-              }
-            }
-
-            // we can or should also iterate over the attributes
-          }
-
-          void SMURFLoader::getGenericConfig(std::vector<configmaps::ConfigMap> *configList,
-              const QDomElement &elementNode) {
-            configmaps::ConfigMap config;
-            getGenericConfig(&config, elementNode);
-            configList->push_back(config);
-          }
-
           unsigned int SMURFLoader::parseSVG(std::vector<configmaps::ConfigMap> *configList,
               std::string sceneFilename) {
             checkEncodings();
@@ -393,12 +347,12 @@ namespace mars {
           utils::removeFilenamePrefix(&uri);
           (*it)["file"] = uri;
           // the following allows adding an old MARS scene file in a smurf scene
-          if (((std::string)(*it)["type"] == "scn") || ((std::string)(*it)["type"] == "scene")) {
+          if (((std::string)(*it)["type"] == "scn") || ((std::string)(*it)["type"] == "scene") || ((std::string)(*it)["type"] == "yml")) {
             control->loadCenter->loadScene[uri_extension]->loadFile(fulluri,
                 path, (std::string)(*it)["name"]);
           }
           else {
-            entitylist.push_back((*it).children);
+            entitylist.push_back(*it);
           }
         }
         for (it = map["entities"].begin(); it != map["entities"].end(); ++it) { // new tag
@@ -425,9 +379,22 @@ namespace mars {
                 path, (std::string)(*it)["name"]);
           }
           else {
-            entitylist.push_back((*it).children);
+            entitylist.push_back(*it);
           }
         }
+        // parse physics
+        if (map.hasKey("physics")) {
+          configmaps::ConfigMap physicsmap = map["physics"];
+          if (physicsmap.hasKey("gravity")) {
+            utils::Vector gravvec;
+            //configmaps::ConfigMap gravmap = physicsmap["gravity"];
+            //gravvec.x() = gravmap["x"];
+            gravvec.x() = physicsmap["gravity"]["x"];
+            gravvec.y() = physicsmap["gravity"]["y"];
+            gravvec.z() = physicsmap["gravity"]["z"];
+            control->sim->setGravity(gravvec);
+            }
+          }
       } else if(file_extension == ".smurf") {
         // if we have only one smurf, only one with rudimentary data is added to the smurf list
           //map["URI"] = _filename;
@@ -454,7 +421,7 @@ namespace mars {
             it!=svg_entities.end(); ++it) {
           map = *it;
           map.append(ConfigMap::fromYamlFile((std::string)map["file"], true)); //FIXME: path?
-          fprintf(stderr, "Loading config for svg entity: %s", ((std::string)map["file"]).c_str());
+          fprintf(stderr, "Loading config for svg entity: %s\n", ((std::string)map["file"]).c_str());
           entitylist.push_back(map);
         }
       }

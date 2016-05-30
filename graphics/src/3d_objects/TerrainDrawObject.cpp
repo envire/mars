@@ -30,6 +30,8 @@
 #endif
 
 #include "TerrainDrawObject.h"
+#include "MarsMaterial.h"
+
 #include <osg/ComputeBoundsVisitor>
 #include <osg/CullFace>
 #include <osg/Geometry>
@@ -49,8 +51,9 @@ namespace mars {
 
     int TerrainDrawObject::countSubTiles = 0;
 
-    TerrainDrawObject::TerrainDrawObject(const mars::interfaces::terrainStruct *ts)
-      : DrawObject(), info(*ts) {
+    TerrainDrawObject::TerrainDrawObject(GraphicsManager *g,
+                                         const mars::interfaces::terrainStruct *ts)
+      : DrawObject(g), info(*ts) {
       info.name = ts->name;
       info.srcname = ts->srcname;
       info.texScaleX = ts->texScaleX;
@@ -374,7 +377,10 @@ namespace mars {
     }
 
     void TerrainDrawObject::collideSphere(Vector pos, sReal radius) {
-      pos += pivot_ - position_;
+      pos -= position_;
+      pos = quaternion_*pos;
+      pos += pivot_;
+
 #ifdef USE_VERTEX_BUFFER
       vbt->collideSphere(pos.x(), pos.y(), pos.z(), radius);
       return;

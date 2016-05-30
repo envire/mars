@@ -67,30 +67,26 @@ namespace mars {
 
       void ConnexionPlugin::init() {
         if(!control->graphics || isInit) return;
-        isInit = true;
-
         // add options to the menu
         if(gui) {
           std::string tmp = resourcesPath + "/mars/plugins/connexion_plugin/connexion.png";
-          gui->addGenericMenuAction("../Windows/Parameter", 1,
+          gui->addGenericMenuAction("../Plugins/Connexion", 1,
                                     this, 0,
                                     tmp, true);    
         }
-
-        is_init = false;
 
         camReset();
         if (initConnexionHID(0)) {
           LOG_INFO("%s: Device registered",name.c_str());
           LOG_INFO("%s: running ...",name.c_str());
-          is_init = true;
+          isInit = true;
         } else {
           LOG_ERROR("%s: not able to register Device.",name.c_str());
           run_thread = false;
         }
 
         LOG_INFO("%s: loaded",name.c_str());
-        if (is_init) {
+        if (isInit) {
           run_thread = true;
           LOG_INFO("%s: starting ...",name.c_str());
           this->start();
@@ -112,11 +108,11 @@ namespace mars {
         fprintf(stderr, "Delete ConnexionPlugin\n");
         run_thread = false;
 
-        while (!thread_closed) {
+        while (!thread_closed && isInit) {
           msleep(10);
         }
 
-        closeConnexionHID();
+        if(isInit) closeConnexionHID();
         delete newValues;
       }
 

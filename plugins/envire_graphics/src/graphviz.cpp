@@ -182,6 +182,11 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
   boost::shared_ptr<PhysicsConfigMapItem> pItem;
   if(pItem = boost::dynamic_pointer_cast<PhysicsConfigMapItem>(e.item))
   {
+	NodeData node1;
+    node1.fromConfigMap(&pItem->getData(), "");
+
+  if(node1.physicMode != NODE_TYPE_MLS) //TODO: implement a visualization for mls
+  {    
     //assert that this item has not been added before
     assert(uuidToGraphicsId.find(pItem->getID()) == uuidToGraphicsId.end());
     try
@@ -200,6 +205,7 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
     {
       LOG_ERROR(ex.what());
     }
+  }
   }
 }
 

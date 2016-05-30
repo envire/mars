@@ -76,6 +76,10 @@ namespace mars {
       full_scan = false;
       current_pose.setIdentity();
       num_points = 0;
+      toCloud = &pointcloud1;
+      convertPointCloud = false;
+      nextCloud = 2;
+      this->attached_node = config.attached_node;
 
       std::string groupName, dataName;
       drawStruct draw;
@@ -184,18 +188,22 @@ namespace mars {
           control->graphics->addDrawItems(&draw);
         }
       }
+      closeThread = false;
+      this->start();
     }
 
     RotatingRaySensor::~RotatingRaySensor(void) {
       control->graphics->removeDrawItems((DrawInterface*)this);
       control->dataBroker->unregisterTimedReceiver(this, "*", "*", "mars_sim/simTimer");
+      closeThread = true;
+      this->wait();
     }
 
     bool RotatingRaySensor::getPointcloud(std::vector<utils::Vector>& pcloud) {
       mars::utils::MutexLocker lock(&mutex_pointcloud);
       if(full_scan) {
         full_scan = false;
-        pcloud =  pointcloud_full;
+        pcloud.swap(pointcloud_full);
         return true;
       } else {
           return false;
@@ -213,7 +221,7 @@ namespace mars {
           (*data_)[array_pos+2] = (pointcloud_full[i])[2];
         }
       }
-      return pointcloud.size();
+      return pointcloud_full.size();
     }
 
     void RotatingRaySensor::receiveData(const data_broker::DataInfo &info,
@@ -247,9 +255,11 @@ namespace mars {
       package.get(rotationIndices[2], &orientation.z());
       package.get(rotationIndices[3], &orientation.w());
 
+      poseMutex.lock();
       current_pose.setIdentity();
       current_pose.rotate(orientation);
       current_pose.translation() = position;
+      poseMutex.unlock();
 
       // data[] contains all the measured distances according to the define directions.
       assert((int)data.size() == config.bands * config.lasers);
@@ -271,7 +281,7 @@ namespace mars {
             // Gathers pointcloud in the world frame to prevent/reduce movement distortion.
             // This necessitates a back-transformation (world2node) in getPointcloud().
             tmpvec = current_pose * local_ray;
-            pointcloud.push_back(tmpvec); // Scale normalized vector.
+            toCloud->push_back(tmpvec); // Scale normalized vector.
           }
         }
       }
@@ -308,25 +318,18 @@ namespace mars {
       mutex_pointcloud.lock();
       turning_offset += turning_step;
       if(turning_offset >= turning_end_fullscan) {
-        // Copies current full pointcloud to pointcloud_full.
-        std::list<utils::Vector>::iterator it = pointcloud.begin();
-        pointcloud_full.resize(pointcloud.size());
-        base::Vector3d vec_local;
-
-        for(int i=0; it != pointcloud.end(); it++, i++) {
-          // Transforms the pointcloud back from world to current node (see receiveDate()).
-          // In addition 'transf_sensor_rot_to_sensor' is applied which describes
-          // the orientation of the sensor in the unturned sensor frame.
-          Eigen::Affine3d rot;
-          rot.setIdentity();
-          rot.rotate(config.transf_sensor_rot_to_sensor);
-          vec_local = rot * current_pose.inverse() * (*it);
-          pointcloud_full[i]= vec_local;
+        while(convertPointCloud) msleep(1);
+        fromCloud = toCloud;
+        if(nextCloud == 2) {
+          toCloud = &pointcloud2;
+          nextCloud = 1;
         }
-
-        pointcloud.clear();
+        else {
+          toCloud = &pointcloud1;
+          nextCloud = 2;
+        }
+        convertPointCloud = true;
         turning_offset = 0;
-        full_scan = true;
       }
       orientation_offset = utils::angleAxisToQuaternion(turning_offset, utils::Vector(0.0, 0.0, 1.0));
       mutex_pointcloud.unlock();
@@ -338,11 +341,42 @@ namespace mars {
       return config.bands * config.lasers;
     }
 
+    void RotatingRaySensor::run() {
+      while(!closeThread) {
+        if(convertPointCloud) {
+          poseMutex.lock();
+          Eigen::Affine3d current_pose2 = current_pose;
+          Eigen::Affine3d rot;
+          rot.setIdentity();
+          rot.rotate(config.transf_sensor_rot_to_sensor);
+          poseMutex.unlock();
+
+          // Copies current full pointcloud to pointcloud_full.
+          std::list<utils::Vector>::iterator it = fromCloud->begin();
+          pointcloud_full.clear();
+          pointcloud_full.reserve(fromCloud->size());
+          base::Vector3d vec_local;
+
+          for(int i=0; it != fromCloud->end(); it++, i++) {
+            // Transforms the pointcloud back from world to current node (see receiveDate()).
+            // In addition 'transf_sensor_rot_to_sensor' is applied which describes
+            // the orientation of the sensor in the unturned sensor frame.
+            vec_local = rot * current_pose2.inverse() * (*it);
+            pointcloud_full.push_back(vec_local);
+          }
+          fromCloud->clear();
+          convertPointCloud = false;
+          full_scan = true;
+        }
+        else msleep(2);
+      }
+    }
+
     BaseConfig* RotatingRaySensor::parseConfig(ControlCenter *control,
                                        ConfigMap *config) {
       RotatingRayConfig *cfg = new RotatingRayConfig;
-      unsigned int mapIndex = (*config)["mapIndex"][0].getUInt();
-      unsigned long attachedNodeID = (*config)["attached_node"][0].getULong();
+      unsigned int mapIndex = (*config)["mapIndex"];
+      unsigned long attachedNodeID = (*config)["attached_node"];
       if(mapIndex) {
         attachedNodeID = control->loadCenter->getMappedID(attachedNodeID,
                                                           interfaces::MAP_TYPE_NODE,
@@ -351,45 +385,44 @@ namespace mars {
 
       ConfigMap::iterator it;
       if((it = config->find("bands")) != config->end())
-        cfg->bands = it->second[0].getInt();
+        cfg->bands = it->second;
       if((it = config->find("lasers")) != config->end())
-        cfg->lasers = it->second[0].getInt();
+        cfg->lasers = it->second;
       if((it = config->find("opening_width")) != config->end())
-        cfg->opening_width = it->second[0].getDouble();
+        cfg->opening_width = it->second;
       if((it = config->find("opening_height")) != config->end())
-        cfg->opening_height = it->second[0].getDouble();
+        cfg->opening_height = it->second;
       if((it = config->find("max_distance")) != config->end())
-        cfg->maxDistance = it->second[0].getDouble();
+        cfg->maxDistance = it->second;
       if((it = config->find("min_distance")) != config->end())
-        cfg->minDistance = it->second[0].getDouble();
+        cfg->minDistance = it->second;
       if((it = config->find("draw_rays")) != config->end())
-        cfg->draw_rays = it->second[0].getBool();
+        cfg->draw_rays = it->second;
       if((it = config->find("horizontal_offset")) != config->end())
-        cfg->horizontal_offset = it->second[0].getDouble();
+        cfg->horizontal_offset = it->second;
       if((it = config->find("vertical_offset")) != config->end())
-        cfg->vertical_offset = it->second[0].getDouble();
+        cfg->vertical_offset = it->second;
       if((it = config->find("rate")) != config->end())
-        cfg->updateRate = it->second[0].getULong();
+        cfg->updateRate = it->second;
       if((it = config->find("horizontal_resolution")) != config->end())
-        cfg->horizontal_resolution = it->second[0].getDouble();
+        cfg->horizontal_resolution = it->second;
       cfg->attached_node = attachedNodeID;
       
       ConfigMap::iterator it2;
       if((it = config->find("rotation_offset")) != config->end()) {
-        if((it2 = it->second[0].children.find("yaw")) !=
-           it->second[0].children.end()) {
+        if(it->second.hasKey("yaw")) {
           Vector euler;
-          euler.x() = it->second[0].children["roll"][0].getDouble();
-          euler.y() = it->second[0].children["pitch"][0].getDouble();
-          euler.z() = it->second[0].children["yaw"][0].getDouble();
+          euler.x() = it->second["roll"];
+          euler.y() = it->second["pitch"];
+          euler.z() = it->second["yaw"];
           cfg->transf_sensor_rot_to_sensor = eulerToQuaternion(euler);
         }
         else {
           Quaternion q;
-          q.x() = it->second[0].children["x"][0].getDouble();
-          q.y() = it->second[0].children["y"][0].getDouble();
-          q.z() = it->second[0].children["z"][0].getDouble();
-          q.w() = it->second[0].children["w"][0].getDouble();
+          q.x() = it->second["x"];
+          q.y() = it->second["y"];
+          q.z() = it->second["z"];
+          q.w() = it->second["w"];
           cfg->transf_sensor_rot_to_sensor = q;
         }
       }
@@ -399,27 +432,27 @@ namespace mars {
 
     ConfigMap RotatingRaySensor::createConfig() const {
       ConfigMap cfg;
-      cfg["name"][0] = ConfigItem(config.name);
-      cfg["id"][0] = ConfigItem(config.id);
-      cfg["type"][0] = ConfigItem("RaySensor");
-      cfg["attached_node"][0] = ConfigItem(config.attached_node);
-      cfg["bands"][0] = ConfigItem(config.bands);
-      cfg["lasers"][0] = ConfigItem(config.lasers);
-      cfg["opening_width"][0] = ConfigItem(config.opening_width);
-      cfg["opening_height"][0] = ConfigItem(config.opening_height);
-      cfg["max_distance"][0] = ConfigItem(config.maxDistance);
-      cfg["min_distance"][0] = ConfigItem(config.minDistance);
-      cfg["draw_rays"][0] = ConfigItem(config.draw_rays);
-      cfg["vertical_offset"][0] = ConfigItem(config.vertical_offset);
-      cfg["horizontal_offset"][0] = ConfigItem(config.horizontal_offset);
-      cfg["rate"][0] = ConfigItem(config.updateRate);
-      cfg["horizontal_resolution"][0] = ConfigItem(config.horizontal_resolution);
-      //cfg["rotation_offset"][0] = ConfigItem(config.transf_sensor_rot_to_sensor);
+      cfg["name"] = config.name;
+      cfg["id"] = config.id;
+      cfg["type"] = "RaySensor";
+      cfg["attached_node"] = config.attached_node;
+      cfg["bands"] = config.bands;
+      cfg["lasers"] = config.lasers;
+      cfg["opening_width"] = config.opening_width;
+      cfg["opening_height"] = config.opening_height;
+      cfg["max_distance"] = config.maxDistance;
+      cfg["min_distance"] = config.minDistance;
+      cfg["draw_rays"] = config.draw_rays;
+      cfg["vertical_offset"] = config.vertical_offset;
+      cfg["horizontal_offset"] = config.horizontal_offset;
+      cfg["rate"] = config.updateRate;
+      cfg["horizontal_resolution"] = config.horizontal_resolution;
+      //cfg["rotation_offset"] = config.transf_sensor_rot_to_sensor;
       /*
-        cfg["stepX"][0] = ConfigItem(config.stepX);
-        cfg["stepY"][0] = ConfigItem(config.stepY);
-        cfg["cols"][0] = ConfigItem(config.cols);
-        cfg["rows"][0] = ConfigItem(config.rows);
+        cfg["stepX"] = config.stepX;
+        cfg["stepY"] = config.stepY;
+        cfg["cols"] = config.cols;
+        cfg["rows"] = config.rows;
       */
       return cfg;
     }

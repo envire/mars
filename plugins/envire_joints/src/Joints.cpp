@@ -27,6 +27,8 @@
  */
 
 
+
+
 #include "Joints.h"
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
@@ -85,7 +87,6 @@ namespace mars {
         if (iterDeps != dependencies.end())
         {
           if (debug) { LOG_DEBUG( "[EnvireJoints::itemAdded] Item added in frame '"+ e.frame + "' is matching at least a dependency"); }
-
           std::vector<FrameId> dependentFrames = dependencies[e.frame];
           for(FrameId frame : dependentFrames)
           {
@@ -116,7 +117,6 @@ namespace mars {
         }
       }
       
-
       void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>>& e){ 
         if (debug) { LOG_DEBUG( "[EnvireJoints::itemAdded] smurf::StaticTransformation received in Frame ***" + e.frame + "***");}
         smurf::StaticTransformation* smurfJoint = &(e.item->getData());
@@ -199,20 +199,14 @@ namespace mars {
       template <class jointType>
       void EnvireJoints::instantiate(jointType smurfJoint, const std::shared_ptr< NodeInterface >& sourceSim, const std::shared_ptr< NodeInterface >& targetSim)
       {
+        LOG_DEBUG("[EnvireJoints::instantiate] The joint name is: %s", smurfJoint->getName().c_str());
         JointData* jointData = new(JointData);
         jointData->init(smurfJoint->getName(), getJointType(smurfJoint));
         setAxis1(smurfJoint, jointData);
-        envire::core::FrameId targetFrame = smurfJoint->getTargetFrame().getName();
-        envire::core::Transform jointPos = control->graph->getTransform(originId, targetFrame); 
-        //NOTE Why should the position of the joint the target and not the source? I think it should work with both
-        utils::Vector anchor = jointPos.transform.translation;
-        jointData->anchor = anchor;
-        LOG_DEBUG("[EnvireJoints::instantiate] The joint name is: %s", smurfJoint->getName().c_str());
-        LOG_DEBUG("[EnvireJoints::instantiate] The vector anchor is: %.4f, %.4f, %.4f", anchor.x(), anchor.y(), anchor.z());
-        LOG_DEBUG("[EnvireJoints::instantiate] The storageFrame is: %s", smurfJoint->getTargetFrame().getName().c_str());
-        LOG_DEBUG("[EnvireJoints::instantiate] The vector axis is: %.4f, %.4f, %.4f", jointData->axis1.x(), jointData->axis1.y(), jointData->axis1.z());
+        setAnchor(smurfJoint, jointData);
         std::shared_ptr<JointInterface> jointInterfacePtr = join(jointData, sourceSim, targetSim);
-        storeSimJoint(jointInterfacePtr, jointData, smurfJoint->getSourceFrame().getName()); // NOTE The joints are stored in the source frame
+        LOG_DEBUG("[EnvireJoints::instantiate] The storageFrame is: %s", smurfJoint->getTargetFrame().getName().c_str());
+        storeSimJoint(jointInterfacePtr, jointData, smurfJoint->getSourceFrame().getName());
       }
       
       JointType EnvireJoints::getJointType(smurf::Joint* joint){
@@ -276,9 +270,21 @@ namespace mars {
       void EnvireJoints::setAxis1(smurf::StaticTransformation* smurfJoint, JointData* jointData){ }
       
       void EnvireJoints::setAxis1(smurf::Joint* smurfJoint, JointData* jointData){ 
-            Eigen::Affine3d axisTf = smurfJoint -> getSourceToAxis();
-            jointData->axis1 = axisTf.translation();
+        envire::core::FrameId targetFrame = smurfJoint->getTargetFrame().getName();
+        envire::core::Transform targetPos = control->graph->getTransform(originId, targetFrame); 
+        Eigen::Affine3d axisTf = targetPos.transform.orientation * smurfJoint -> getSourceToAxis().inverse();
+        jointData->axis1 = axisTf.translation();
+        LOG_DEBUG("[EnvireJoints::instantiate] The vector axis is: %.4f, %.4f, %.4f", jointData->axis1.x(), jointData->axis1.y(), jointData->axis1.z());
       }      
+    
+      template <class jointType>
+      void EnvireJoints::setAnchor(jointType* smurfJoint, JointData* jointData){
+        envire::core::FrameId targetFrame = smurfJoint->getTargetFrame().getName();
+        envire::core::Transform targetPos = control->graph->getTransform(originId, targetFrame); 
+        utils::Vector anchor = targetPos.transform.translation;
+        jointData->anchor = anchor;
+        LOG_DEBUG("[EnvireJoints::instantiate] The vector anchor is: %.4f, %.4f, %.4f", jointData->anchor.x(), jointData->anchor.y(), jointData->anchor.z());
+      }
       
       std::shared_ptr<JointInterface> EnvireJoints::join(JointData* jointData, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim)
       {

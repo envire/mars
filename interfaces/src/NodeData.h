@@ -126,7 +126,6 @@ namespace mars {
         physicMode = type;
         ext = extents;
         this->mass = mass;
-        visual_size = extents;
         filename = "PRIMITIVE";
 
         origName = toString(type);
@@ -135,7 +134,8 @@ namespace mars {
       bool fromConfigMap(configmaps::ConfigMap *config, std::string filenamePrefix,
                          LoadCenter *loadCenter = 0);
       void toConfigMap(configmaps::ConfigMap *config,
-                       bool skipFilenamePrefix = false);
+                       bool skipFilenamePrefix = false,
+                       bool exportDefault = false);
       void getFilesToSave(std::vector<std::string> *fileList);
       
       void fromGeometry(const boost::shared_ptr< urdf::Geometry >& geometry);
@@ -298,6 +298,18 @@ namespace mars {
        * \verbatim Default value: 0 \endverbatim \sa terrainStruct
        */
       terrainStruct *terrain;
+      
+      /**
+       * The env_path mls_map_id are necessary to use serialization and load mls data.   
+       */
+	  std::string env_path;
+	  std::string mls_map_id;
+	  
+      ///**
+       //* The env_path mls_map_id are necessary to use serialization and load mls data.   
+       //*/
+	  //geom_data* gd;  
+	  void *data;           // to define geom_data for mls loading
 
       /**
        * The visual representation of a node can have a different position as the

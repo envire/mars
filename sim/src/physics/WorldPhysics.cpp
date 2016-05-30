@@ -46,6 +46,12 @@
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/interfaces/Logging.hpp>
 
+
+#include <envire/maps/MLSGrid.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>	
+#include <envire_collider_mls/MLSCollision.hpp>
+
 namespace mars {
   namespace sim {
 
@@ -229,7 +235,6 @@ namespace mars {
       std::vector<dJointFeedback*>::iterator iter;
       geom_data* data;
       int i;
-
       // if world_init = false or step_size <= 0 debug something
        if(world_init && step_size > 0) {
         if(old_gravity != world_gravity) {
@@ -247,7 +252,7 @@ namespace mars {
           old_erp = world_erp;
           dWorldSetERP(world, (dReal)world_erp);
         }
-
+	//	printf("now WorldPhysics.cpp..stepTheWorld(void)....1 : dSpaceGetNumGeoms: %d\n",dSpaceGetNumGeoms(space)); 
         /// first clear the collision counters of all geoms
         for(i=0; i<dSpaceGetNumGeoms(space); i++) {
           data = (geom_data*)dGeomGetData(dSpaceGetGeom(space, i));
@@ -255,11 +260,15 @@ namespace mars {
           data->contact_ids.clear();
           data->contact_points.clear();
           data->ground_feedbacks.clear();
+        
         }
+        
+
         for(iter = contact_feedback_list.begin();
             iter != contact_feedback_list.end(); iter++) {
           free((*iter));
         }
+ 
         contact_feedback_list.clear();
         draw_intern.clear();
         /// then we have to clear the contacts
@@ -267,8 +276,8 @@ namespace mars {
         /// first check for collisions
         num_contacts = log_contacts = 0;
         create_contacts = 1;
-        dSpaceCollide(space,this, &WorldPhysics::callbackForward);
         
+        dSpaceCollide(space,this, &WorldPhysics::callbackForward);
         drawLock.lock();
         draw_extern.swap(draw_intern);
         drawLock.unlock();
@@ -446,7 +455,6 @@ namespace mars {
         dSpaceCollide2(o1,o2,this,& WorldPhysics::callbackForward);
         return;
       }
-  
       /// exit without doing anything if the two bodies are connected by a joint 
       dBodyID b1=dGeomGetBody(o1);
       dBodyID b2=dGeomGetBody(o2);
@@ -454,6 +462,8 @@ namespace mars {
       geom_data* geom_data1 = (geom_data*)dGeomGetData(o1);
       geom_data* geom_data2 = (geom_data*)dGeomGetData(o2);
 
+
+  
             // test if we have a ray sensor:
       if(geom_data1->ray_sensor) {
         dContact contact;
@@ -653,10 +663,13 @@ namespace mars {
 
       for (i=1;i<maxNumContacts;i++){
         contact[i] = contact[0];
+     
       }
 
       numc=dCollide(o1,o2, maxNumContacts, &contact[0].geom,sizeof(dContact));
       if(numc){ 
+		  
+	  
         dJointFeedback *fb;
         draw_item item;
         Vector contact_point;
@@ -702,6 +715,7 @@ namespace mars {
         
             if(contact[0].geom.depth < 0.0) contact[0].geom.depth = 0.0;
             dJointID c=dJointCreateContact(world,contactgroup,contact+i);
+
             dJointAttach(c,b1,b2);
 
             geom_data1->num_ground_collisions += numc;
@@ -720,6 +734,7 @@ namespace mars {
             if(geom_data2->sense_contact_force) {
               fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
               dJointSetFeedback(c, fb);
+           
               contact_feedback_list.push_back(fb);
               geom_data2->ground_feedbacks.push_back(fb);
               geom_data2->node1 = false;
@@ -729,13 +744,14 @@ namespace mars {
               if(!fb) {
                 fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
                 dJointSetFeedback(c, fb);
+                  
                 contact_feedback_list.push_back(fb);
               }
               geom_data1->ground_feedbacks.push_back(fb);
               geom_data1->node1 = true;
             }
           }
-        }
+        }  
       }
       delete[] contact;
     }

@@ -103,6 +103,7 @@ set(SOURCES_H
        src/sensors/JointTorqueSensor.h
        src/sensors/JointVelocitySensor.h
        src/sensors/MotorCurrentSensor.h
+       src/sensors/HapticFieldSensor.h
 #       src/sensors/MotorPositionSensor.h
        src/sensors/NodeAngularVelocitySensor.h
        src/sensors/NodeArraySensor.h
@@ -119,6 +120,7 @@ set(SOURCES_H
        src/sensors/ScanningSonar.h
        
        src/interfaces/sensors/GridSensorInterface.h
+
     )
 
 set(TARGET_SRC
@@ -151,6 +153,7 @@ set(TARGET_SRC
        src/sensors/JointTorqueSensor.cpp
        src/sensors/JointVelocitySensor.cpp
        src/sensors/MotorCurrentSensor.cpp
+       src/sensors/HapticFieldSensor.cpp
 #       src/sensors/MotorPositionSensor.cpp
        src/sensors/NodeAngularVelocitySensor.cpp
        src/sensors/NodeArraySensor.cpp
@@ -164,6 +167,7 @@ set(TARGET_SRC
        src/sensors/RaySensor.cpp
 
        src/sensors/ScanningSonar.cpp
+
 )
 
 #cmake variables

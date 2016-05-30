@@ -36,10 +36,6 @@
  #include <opencv/highgui.h>
 #endif
 
-#ifdef USE_MARS_VBO
-#include "3d_objects/MarsVBOGeom.h"
-#endif
-
 #include <mars/utils/mathUtils.h>
 
 namespace mars {
@@ -235,17 +231,27 @@ namespace mars {
       return ex;
     }
 
-    void GuiHelper::getPhysicsFromOBJ(mars::interfaces::NodeData* node) {
-      osg::ref_ptr<osg::Node> completeNode;
+    void GuiHelper::getPhysicsFromMesh(mars::interfaces::NodeData* node) {
+      if(node->filename.substr(node->filename.size()-5, 5) == ".bobj") {
+        getPhysicsFromNode(node, GuiHelper::readBobjFromFile(node->filename));
+      }
+      else {
+        getPhysicsFromNode(node, GuiHelper::readNodeFromFile(node->filename));
+      }
+    }
+
+    void GuiHelper::getPhysicsFromNode(mars::interfaces::NodeData* node,
+                                       osg::ref_ptr<osg::Node> completeNode) {
       osg::ref_ptr<osg::Group> myCreatedGroup;
       osg::ref_ptr<osg::Group> myGroupFromRead;
       osg::ref_ptr<osg::Geode> myGeodeFromRead;
       nodemanager tempnode;
       bool found = false;
-
-      completeNode  = GuiHelper::readNodeFromFile(node->filename);
-
       // check whether it is a osg::Group (.obj file)
+      if(!completeNode.valid()){
+          throw std::runtime_error("cannot read node from file");
+      }
+
       if((myGroupFromRead = completeNode->asGroup()) != 0){
         //go through the read node group and combine the parts of the actually
         //handled node
@@ -289,11 +295,19 @@ namespace mars {
       (fabs(bb.zMax()) > fabs(bb.zMin())) ? ex.z() = fabs(bb.zMax() - bb.zMin())
         : ex.z() = fabs(bb.zMin() - bb.zMax());
 
+      if (node->map.find("loadSizeFromMesh") != node->map.end()) {
+        if (node->map["loadSizeFromMesh"]) {
+          Vector physicalScale;
+          utils::vectorFromConfigItem(&(node->map["physicalScale"][0]), &physicalScale);
+          node->ext=Vector(ex.x()*physicalScale.x(), ex.y()*physicalScale.y(), ex.z()*physicalScale.z());
+        }
+      }
+
       //compute scale factor
       double scaleX = 1, scaleY = 1, scaleZ = 1;
-      if (ex.x() != 0) scaleX = node->visual_size.x() / ex.x();
-      if (ex.y() != 0) scaleY = node->visual_size.y() / ex.y();
-      if (ex.z() != 0) scaleZ = node->visual_size.z() / ex.z();
+      if (ex.x() != 0) scaleX = node->ext.x() / ex.x();
+      if (ex.y() != 0) scaleY = node->ext.y() / ex.y();
+      if (ex.z() != 0) scaleZ = node->ext.z() / ex.z();
 
       // create transform and group Node for the actual node
       osg::ref_ptr<osg::PositionAttitudeTransform> transform;
@@ -454,13 +468,6 @@ namespace mars {
         if(r==256) memcpy(buffer, buffer+o, foo);
       }
 
-#ifdef USE_MARS_VBO
-      MarsVBOGeom *geometry = new MarsVBOGeom();
-      geometry->setVertexArray(vertices2);
-      geometry->setNormalArray(normals2);
-      if(osgTexcoords->size() > 0)
-        geometry->setTexCoordArray(texcoords2);
-#else
       osg::Geometry* geometry = new osg::Geometry;
       geometry->setVertexArray(osgVertices.get());
       geometry->setNormalArray(osgNormals.get());
@@ -470,7 +477,7 @@ namespace mars {
 
       osg::DrawArrays* drawArrays = new osg::DrawArrays(osg::PrimitiveSet::TRIANGLES,0,osgVertices->size());
       geometry->addPrimitiveSet(drawArrays);
-#endif
+
       geode->addDrawable(geometry);
       geode->setName("bobj");
 
@@ -581,6 +588,7 @@ namespace mars {
       newTextureFile.texture->setDataVariance(osg::Object::DYNAMIC);
       newTextureFile.texture->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
       newTextureFile.texture->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
+      newTextureFile.texture->setWrap(osg::Texture::WRAP_R, osg::Texture::REPEAT);
 
       osg::Image* textureImage = loadImage(filename);
       newTextureFile.texture->setImage(textureImage);
