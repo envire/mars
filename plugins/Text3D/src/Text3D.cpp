@@ -30,7 +30,7 @@
 #include "Text3D.h"
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
-
+#include <configmaps/ConfigData.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 
 namespace mars {
@@ -48,13 +48,14 @@ namespace mars {
       void Text3D::init() {
 
         // load the mask id form file
-        FILE *f = fopen("./id.txt", "r");
-        if(f) {
-          fscanf(f, "%d", &maskId);
-          fclose(f);
-          maskId = 1 << (maskId - 1);
-        }
-
+	
+	if(control->cfg) {
+	  example = control->cfg->getOrCreateProperty("CAVE", "CAVEID",
+						      0, this);
+	  if(example.iValue) {
+	    maskId = 1 << (example.iValue -1);
+	  }
+	}
         // Register for node information:
         /*
           std::string groupName, dataName;
@@ -66,7 +67,7 @@ namespace mars {
            example = control->cfg->getOrCreateProperty("plugin", "example",
            0.0, this);
         */
-        textFactory = libManager->getLibraryAs<osg_text::TextFactoryInterface>("osg_text_factory");
+        textFactory = libManager->getLibraryAs<osg_text::TextFactoryInterface>("osg_text_factory", true);
         if(textFactory) {
           ConfigMap map;
           map = ConfigMap::fromYamlFile("Text3DConfig.yml", true);
@@ -161,7 +162,7 @@ namespace mars {
 
               td->hudID = control->graphics->addHUDOSGNode(td->text->getOSGNode());
               td->vis = mask & maskId;
-              if(!td->vis) {
+              if(!td->vis && maskId) {
                 control->graphics->switchHUDElementVis(td->hudID);
               }
 
@@ -209,7 +210,7 @@ namespace mars {
             it->second->posY = _property.dValue;
             it->second->text->setPosition(it->second->posX, it->second->posY);
           }
-          else if(it->second->maskId == _property.paramId) {
+          else if(it->second->maskId == _property.paramId && maskId) {
             int vis = maskId & _property.iValue;
             if(vis && !it->second->vis) {
               it->second->vis = true;

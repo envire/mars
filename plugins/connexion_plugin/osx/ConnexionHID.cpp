@@ -105,6 +105,7 @@ namespace mars {
         char target_product[255] = "SpaceNavigator";
         char target_product2[255] = "Space Navigator";
         //char target_product[255] = "Apple Optical USB Mouse";
+        bool found_device = false;
         for ( idx = 0; idx < cnt; idx++ ) {
           myIOHIDDeviceRef = (IOHIDDeviceRef)CFArrayGetValueAtIndex(myDeviceCFArrayRef, idx);
     
@@ -120,12 +121,15 @@ namespace mars {
                                              CFSTR(kIOHIDProductIDKey), &result);
 
           if(!strcmp(target_product, product)) {
+            found_device = true;
             break;
           }
           if(!strcmp(target_product2, product)) {
+            found_device = true;
             break;
           }
         }
+        if(!found_device) return 0;
         myElementCFArrayRef = IOHIDDeviceCopyMatchingElements(myIOHIDDeviceRef, 
                                                               NULL, 0);
         if(myElementCFArrayRef) {
@@ -170,9 +174,9 @@ namespace mars {
         rawValues->button1 = (int)values[6];
         rawValues->button2 = (int)values[7];
 
-        coordinates[0] = rawValues->tx * fabs(rawValues->tx * 0.001);
-        coordinates[2] = -rawValues->ty * fabs(rawValues->ty * 0.001);
-        coordinates[1] = -rawValues->tz * fabs(rawValues->tz * 0.001);
+        coordinates[0] = rawValues->tx * fabs(rawValues->tx * 0.01);
+        coordinates[2] = -rawValues->ty * fabs(rawValues->ty * 0.01);
+        coordinates[1] = -rawValues->tz * fabs(rawValues->tz * 0.01);
         coordinates[3] = rawValues->rx * fabs(rawValues->rx * 0.01);
         coordinates[5] = -rawValues->ry * fabs(rawValues->ry * 0.01);
         coordinates[4] = -rawValues->rz * fabs(rawValues->rz * 0.01);

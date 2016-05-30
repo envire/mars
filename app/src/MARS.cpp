@@ -67,15 +67,10 @@ namespace mars {
       MARS::quit = true;
       if (signal) {
         fprintf(stderr, "\nI think we exit with an error! Signal: %d\n", signal);
-        MARS::control->sim->exitMars();
-        exit(-1);
+        //MARS::control->sim->exitMars();
+        //exit(-1);
         //MARS::control->sim->exitMars();
         //Convention: print the signal type
-      } else {
-        MARS::control->sim->exitMars();
-        fprintf(stderr, "\n################################\n");
-        fprintf(stderr, "## everything closed fine ^-^ ##\n");
-        fprintf(stderr, "################################\n\n");
       }
     }
 
@@ -90,6 +85,7 @@ namespace mars {
       needQApp = true;
       noGUI = false;
       graphicsTimer = NULL;
+      initialized = false;
 #ifdef WIN32
       // request a scheduler of 1ms
       timeBeginPeriod(1);
@@ -103,6 +99,7 @@ namespace mars {
       needQApp = true;
       noGUI = false;
       graphicsTimer = NULL;
+      initialized = false;
 #ifdef WIN32
       // request a scheduler of 1ms
       timeBeginPeriod(1);
@@ -111,7 +108,8 @@ namespace mars {
 
     MARS::~MARS() {
       //! close simulation
-      exit_main(0);
+      MARS::control->sim->exitMars();
+
 
       if(graphicsTimer) delete graphicsTimer;
 
@@ -127,12 +125,9 @@ namespace mars {
       // end scheduler of 1ms
       timeEndPeriod(1);
 #endif //WIN32
-
     }
 
-    void MARS::start(int argc, char **argv, bool startThread,
-                     bool handleLibraryLoading) {
-
+    void MARS::init() {
       // then check locals
 #ifndef WIN32
       setenv("LC_ALL","C", 1);
@@ -158,20 +153,30 @@ namespace mars {
           fclose(testFile);
         }
       }
+
       // we always need the cfg_manager to setup configurations correctly
       libManager->loadLibrary("cfg_manager");
       mars::cfg_manager::CFGManagerInterface *cfg;
       cfg = libManager->getLibraryAs<mars::cfg_manager::CFGManagerInterface>("cfg_manager");
       if(cfg) {
-        cfg_manager::cfgPropertyStruct configPath;
+        cfg_manager::cfgPropertyStruct configPath, prefPath;
         configPath = cfg->getOrCreateProperty("Config", "config_path",
                                               configDir);
-        cfg->getOrCreateProperty("Preferences", "resources_path",
-                                 std::string(MARS_PREFERENCES_DEFAULT_RESOURCES_PATH));
+        prefPath = cfg->getOrCreateProperty("Preferences", "resources_path",
+                                            std::string(MARS_PREFERENCES_DEFAULT_RESOURCES_PATH));
+        prefPath.sValue = std::string(MARS_PREFERENCES_DEFAULT_RESOURCES_PATH);
+        cfg->setProperty(prefPath);
         // load preferences
         std::string loadFile = configDir + "/mars_Preferences.yaml";
         cfg->loadConfig(loadFile.c_str());
       }
+      initialized = true;
+    }
+
+    void MARS::start(int argc, char **argv, bool startThread,
+                     bool handleLibraryLoading) {
+
+      if(!initialized) init();
 
       FILE *plugin_config;
       if(handleLibraryLoading) {
@@ -250,6 +255,8 @@ namespace mars {
             libManager->loadLibrary("data_broker_gui", NULL, true);
             libManager->loadLibrary("cfg_manager_gui", NULL, true);
             libManager->loadLibrary("lib_manager_gui", NULL, true);
+            libManager->loadLibrary("entity_view", NULL, true);
+            libManager->loadLibrary("SkyDomePlugin", NULL, true);
           }
         }
       }

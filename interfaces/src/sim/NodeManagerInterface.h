@@ -780,6 +780,17 @@ namespace mars {
        */
       virtual void positionNode(NodeId id, utils::Vector pos, unsigned long excludeJointId) = 0;
       virtual unsigned long getMaxGroupID() = 0;
+
+      virtual void printNodeMasses(bool onlysum) = 0;
+
+      /** Edit a node property by giving a key and value.
+       * \param id The \c id of the node to be edit.
+       * \param key Defines the key in the ConfigMap. Could also include
+                      the path, in the end pattern matching is used.
+       * \param value String containing the value.
+       */
+      virtual void edit(NodeId id, const std::string &key,
+                        const std::string &value) = 0;
     };
 
   } // end of namespace interfaces

@@ -50,7 +50,8 @@ namespace mars {
     /**
      * \brief MenuWindow creates the menus and menu items in the Window menu of the simulation.
      */
-    class MenuWindow :  public QObject, public main_gui::MenuInterface {
+    class MenuWindow :  public QObject, public main_gui::MenuInterface,
+                        public cfg_manager::CFGClient {
 
       Q_OBJECT
 
@@ -67,7 +68,10 @@ namespace mars {
        * \param checked Indicates if the menu/menu item is checked or not. 
        */
       virtual void menuAction(int action, bool checked = false);
-  
+
+      // CFGClient methods
+      virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
+
     private:
       void menu_addWindow();
       void menu_dock(bool checked);
@@ -79,6 +83,9 @@ namespace mars {
 
       BlenderExportGUI *blender;
       ControllerConfigGUI *cc;
+      cfg_manager::cfgPropertyStruct cfgVisRep, cfgShowCoords, cfgShowGrid;
+      cfg_manager::cfgPropertyStruct cfgShowContacts, cfgShowSelection;
+      bool updateProp;
 
     private slots:
       void closeWidget(void* widget);

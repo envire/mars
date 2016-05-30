@@ -103,7 +103,8 @@ namespace mars {
       sync_time = 40;
       sync_count = 0;
       load_option = OPEN_INITIAL;
-      reloadGraphics = reloadSim = false;
+      reloadGraphics = true;
+      reloadSim = false;
       arg_run    = 0;
       arg_grid   = 0;
       arg_ortho  = 0;
@@ -213,14 +214,6 @@ namespace mars {
       }
     }
 
-    /*
-      void Simulator::produceData(const data_broker::DataInfo &info,
-      data_broker::DataPackage *dbPackage,
-      int callbackParam) {
-      (*dbPackage)[0].d += calc_ms;
-      }
-    */
-
     void Simulator::runSimulation(bool startThread) {
 
       if(control->cfg) {
@@ -246,7 +239,7 @@ namespace mars {
         initCfgParams();
       }
 
-      control->nodes = new NodeManager(control);
+      control->nodes = new NodeManager(control, libManager);
       control->joints = new JointManager(control);
       control->motors = new MotorManager(control);
       control->sensors = new SensorManager(control);
@@ -358,8 +351,6 @@ namespace mars {
       }
       simulationStatus = STOPPED;
       // here everything of the physical simulation can be closed
-
-      //hard_exit(0);
     }
 
     void Simulator::step(bool setState) {
@@ -478,34 +469,21 @@ namespace mars {
       case RUNNING:
         // Allow update process to finish -> transition from 2 -> 0 in main loop
         simulationStatus = STOPPING;
-        //fprintf(stderr, "Simulator will be stopped\t");
-        //fflush(stderr);
         stepping_wc.wakeAll();
         break;
       case STOPPING:
-        //fprintf(stderr, "WARNING: Simulator is stopping. Start/Stop Trigger ignored.\t");
-        //fflush(stderr);
         break;
       case STOPPED:
         simulationStatus = RUNNING;
-        //fprintf(stderr, "Simulator has been started\t");
-        //fflush(stderr);
         break;
       case STEPPING:
          simulationStatus = RUNNING;
          stepping_wc.wakeAll();
       default: // UNKNOWN
-        //fprintf(stderr, "Simulator has unknown status\n");
         throw std::exception();
       }
 
       stepping_mutex.unlock();
-      // Waiting for transition, i.e. main loop to set STOPPED
-      //while(simulationStatus == STOPPING)
-      //msleep(10);
-
-      //fprintf(stderr, " [OK]\n");
-
       if(simulationStatus == STOPPED)
         return false;
       else
@@ -659,7 +637,6 @@ namespace mars {
         startStopTrigger();//if the simulation has been stopped for loading, now it continues
       }
       sceneHasChanged(false);
-      //load_actual = 0;
       return 1;
     }
 
@@ -678,8 +655,13 @@ namespace mars {
 
     void Simulator::addLight(LightData light) {
       sceneHasChanged(false);
-      if (control->graphics && control->controllers->isLoadingAllowed())
+      if (control->graphics && control->controllers->isLoadingAllowed()) {
+        unsigned long id = control->nodes->getID(light.node);
+        if(id) {
+          light.drawID = control->nodes->getDrawID(id);
+        }
         control->graphics->addLight(light);
+      }
     }
 
 
@@ -700,15 +682,10 @@ namespace mars {
         reloadSim = false;
         control->controllers->setLoadingAllowed(false);
 
-        /*
-          while (isSimRunning()) {
-          msleep(100);
-          }
-        */
         newWorld();
         reloadWorld();
         control->controllers->resetControllerData();
-
+        control->entities->resetPose();
         for (unsigned int i=0; i<allPlugins.size(); i++)
           allPlugins[i].p_interface->reset();
         control->controllers->setLoadingAllowed(true);
@@ -719,23 +696,6 @@ namespace mars {
       }
       allow_draw = 0;
       sync_count = 1;
-
-      /** NO idea what the following commented section should be good for
-          the erased_active is pretty much useless
-          and the need for 'first' is not described
-
-          if(first == 0) {
-          first--;
-          // open Plugin file
-          pluginLocker.lockForRead();
-          for(unsigned int i = 0; i < activePlugins.size();) {
-          erased_active = false;
-          activePlugins[i].p_interface->init();
-          if(!erased_active) i++;
-          }
-          pluginLocker.unlock();
-          }
-      */
 
       // Add plugins that have been added via Simulator::addPlugin
       pluginLocker.lockForWrite();
@@ -770,8 +730,7 @@ namespace mars {
         }
       }
       pluginLocker.unlock();
-      // process ice events
-      //while(comServer.eventList->processEvent(control)) {}
+
       control->dataBroker->trigger("mars_sim/finishedDrawTrigger");
     }
 
@@ -812,7 +771,6 @@ namespace mars {
       if(control->graphics)
         this->allowDraw();
 
-      //stepping_wc.wakeAll();
       stepping_mutex.unlock();
     }
 
@@ -940,13 +898,11 @@ namespace mars {
     }
 
     void Simulator::connectNodes(unsigned long id1, unsigned long id2) {
-      //NEW_JOINT_STRUCT(connect_joint);
       JointData connect_joint;
       connect_joint.nodeIndex1 = id1;
       connect_joint.nodeIndex2 = id2;
       connect_joint.type = JOINT_TYPE_FIXED;
-      control->joints->addJoint(&connect_joint);
-      LOG_INFO("Simulator: connect node %lu and %lu", id1, id2);
+      control->joints->addJoint(&connect_joint, true);
     }
 
     void Simulator::disconnectNodes(unsigned long id1, unsigned long id2) {
@@ -956,8 +912,7 @@ namespace mars {
     void Simulator::rescaleEnvironment(sReal x, sReal y, sReal z)
     {
       // rescale all nodes
-      // reset the ancores positions
-      //
+      // reset the anchor's positions
       control->nodes->scaleReloadNodes(x, y, z);
       control->joints->scaleReloadJoints(x, y ,z);
       resetSim();
@@ -1201,12 +1156,6 @@ namespace mars {
         control->graphics->exportScene(filename);
       }
     }
-
-    /* will be removed soon
-       void* Simulator::getWinId() const {
-       return 0;//(void*)mainGUI->mainWindow_p()->winId();
-       }
-    */
 
     void Simulator::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
                            printf("cfgUpdateProperty...\n");      

@@ -28,6 +28,7 @@
 #include <osg/Geometry>
 
 #include "CylinderDrawObject.h"
+#include "MarsMaterial.h"
 
 namespace mars {
   namespace graphics {
@@ -35,8 +36,9 @@ namespace mars {
     using mars::utils::Vector;
     using mars::interfaces::sReal;
 
-    CylinderDrawObject::CylinderDrawObject(sReal radius, sReal height)
-      : DrawObject(), radius_(radius), height_(height) {
+    CylinderDrawObject::CylinderDrawObject(GraphicsManager *g,
+                                           sReal radius, sReal height)
+      : DrawObject(g), radius_(radius), height_(height) {
       geometrySize_.y() = geometrySize_.x() = radius_*2;
       geometrySize_.z() = height_;
     }
@@ -163,9 +165,9 @@ namespace mars {
     }
 
     void CylinderDrawObject::setScaledSize(const Vector &scaledSize) {
-      setScale(Vector(2*scaledSize.x() / geometrySize_.x(),
-                      2*scaledSize.x() / geometrySize_.y(),
-                      scaledSize.y() / geometrySize_.z()));
+      setScale(Vector(scaledSize.x() / geometrySize_.x(),
+                      scaledSize.y() / geometrySize_.y(),
+                      scaledSize.z() / geometrySize_.z()));
     }
 
   } // end of namespace graphics

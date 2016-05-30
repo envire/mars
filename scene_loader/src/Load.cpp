@@ -41,7 +41,7 @@
 #include <mars/utils/misc.h>
 #include <mars/interfaces/Logging.hpp>
 
-//#define DEBUG_PARSE_SENSOR 1
+//#define DEBUG_PARSE 1
 
 namespace mars {
   namespace scene_loader {
@@ -95,7 +95,14 @@ namespace mars {
         control->loadCenter->setMappedSceneName(mFileName);
         mapIndex = control->loadCenter->getMappedSceneByName(mFileName);
       }
-      sceneFilename = tmpPath + filename + ".scene";
+      if(mFileSuffix == ".yml") {
+        useYAML = true;
+        sceneFilename = tmpPath + filename + ".yml";
+      }
+      else {
+        useYAML = false;
+        sceneFilename = tmpPath + filename + ".scene";
+      }
       return 1;
     }
 
@@ -112,6 +119,8 @@ namespace mars {
     }
 
     unsigned int Load::parseScene() {
+      if(useYAML) return parseYamlScene();
+
       checkEncodings();
       //  HandleFileNames h_filenames;
       vector<string> v_filesToLoad;
@@ -217,6 +226,49 @@ namespace mars {
       return 1;
     }
 
+    unsigned int Load::parseYamlScene() {
+      LOG_INFO("Load: loading scene: %s", sceneFilename.c_str());
+      configmaps::ConfigMap map;
+      configmaps::ConfigVector::iterator it;
+      map = configmaps::ConfigMap::fromYamlFile(sceneFilename, true);
+
+      for(it=map["nodelist"].begin(); it!=map["nodelist"].end(); ++it) {
+        nodeList.push_back(*it);
+      }
+
+      for(it=map["materiallist"].begin(); it!=map["materiallist"].end(); ++it) {
+        materialList.push_back(*it);
+      }
+
+      for(it=map["jointlist"].begin(); it!=map["jointlist"].end(); ++it) {
+        jointList.push_back(*it);
+      }
+
+      for(it=map["motorlist"].begin(); it!=map["motorlist"].end(); ++it) {
+        motorList.push_back(*it);
+      }
+
+      for(it=map["lightlist"].begin(); it!=map["lightlist"].end(); ++it) {
+        lightList.push_back(*it);
+      }
+
+      for(it=map["sensorlist"].begin(); it!=map["sensorlist"].end(); ++it) {
+        sensorList.push_back(*it);
+      }
+
+      for(it=map["controllerlist"].begin(); it!=map["controllerlist"].end();
+          ++it) {
+        controllerList.push_back(*it);
+      }
+
+      for(it=map["graphicOptions"].begin(); it!=map["graphicOptions"].end();
+          ++it) {
+        graphicList.push_back(*it);
+      }
+
+      return 1;
+    }
+
     unsigned int Load::loadScene() {
       for(unsigned int i=0; i<materialList.size(); ++i) if(!loadMaterial(materialList[i])) return 0;
       for(unsigned int i=0; i<nodeList.size(); ++i) if(!loadNode(nodeList[i])) return 0;
@@ -235,7 +287,7 @@ namespace mars {
       unsigned long id;
 
       int valid = material.fromConfigMap(&config, tmpPath);
-      if((id = config["id"][0].getULong())) {
+      if((id = config["id"])) {
         materials[id] = material;
       }
 
@@ -244,14 +296,14 @@ namespace mars {
 
     unsigned int Load::loadNode(configmaps::ConfigMap config) {
       NodeData node;
-      config["mapIndex"].push_back(configmaps::ConfigItem(mapIndex));
+      config["mapIndex"] = mapIndex;
       int valid = node.fromConfigMap(&config, tmpPath, control->loadCenter);
       if(!valid) return 0;
 
       // handle material
       configmaps::ConfigMap::iterator it;
       if((it = config.find("material_id")) != config.end()) {
-        unsigned long id = it->second[0].getULong();
+        unsigned long id = it->second;
         if(id) {
           std::map<unsigned long, MaterialData>::iterator it = materials.find(id);
           if(it != materials.end())
@@ -279,7 +331,7 @@ namespace mars {
 
     unsigned int Load::loadJoint(configmaps::ConfigMap config) {
       JointData joint;
-      config["mapIndex"].push_back(configmaps::ConfigItem(mapIndex));
+      config["mapIndex"] = mapIndex;
       int valid = joint.fromConfigMap(&config, tmpPath,
                                       control->loadCenter);
       if(!valid) {
@@ -304,7 +356,7 @@ namespace mars {
 
     unsigned int Load::loadMotor(configmaps::ConfigMap config) {
       MotorData motor;
-      config["mapIndex"].push_back(configmaps::ConfigItem(mapIndex));
+      config["mapIndex"] = mapIndex;
 
       int valid = motor.fromConfigMap(&config, tmpPath, control->loadCenter);
       if(!valid) {
@@ -328,8 +380,8 @@ namespace mars {
     }
 
     BaseSensor* Load::loadSensor(configmaps::ConfigMap config) {
-      config["mapIndex"].push_back(configmaps::ConfigItem(mapIndex));
-      unsigned long sceneID = config["index"][0].getULong();
+      config["mapIndex"] = mapIndex;
+      unsigned long sceneID = config["index"];
       BaseSensor *sensor = control->sensors->createAndAddSensor(&config);
       if (sensor != 0) {
         control->loadCenter->setMappedID(sceneID, sensor->getID(),
@@ -342,7 +394,7 @@ namespace mars {
 
     unsigned int Load::loadController(configmaps::ConfigMap config) {
       ControllerData controller;
-      config["mapIndex"].push_back(configmaps::ConfigItem(mapIndex));
+      config["mapIndex"] = mapIndex;
 
       int valid = controller.fromConfigMap(&config, tmpPath,
                                            control->loadCenter);
@@ -368,7 +420,7 @@ namespace mars {
 
     unsigned int Load::loadGraphic(configmaps::ConfigMap config) {
       GraphicData graphic;
-      config["mapIndex"].push_back(configmaps::ConfigItem(mapIndex));
+      config["mapIndex"] = mapIndex;
       int valid = graphic.fromConfigMap(&config, tmpPath,
                                         control->loadCenter);
       if(!valid) {
@@ -384,7 +436,7 @@ namespace mars {
 
     unsigned int Load::loadLight(configmaps::ConfigMap config) {
       LightData light;
-      config["mapIndex"].push_back(configmaps::ConfigItem(mapIndex));
+      config["mapIndex"] = mapIndex;
       int valid = light.fromConfigMap(&config, tmpPath,
                                       control->loadCenter);
       if(!valid) {
@@ -419,7 +471,7 @@ namespace mars {
         tagName = child2.nodeName().toStdString();
         value = child2.nodeValue().toStdString();
         if(!tagName.empty()) {
-          (*config)[tagName].push_back(configmaps::ConfigItem(value));
+          (*config)[tagName] = value;
 #ifdef DEBUG_PARSE_SENSOR
           LOG_DEBUG("attrib [%s : %s]", tagName.c_str(), value.c_str());
 #endif
@@ -432,11 +484,23 @@ namespace mars {
         tagName = child.tagName().toStdString();
         value = child.text().toStdString();
         if(!tagName.empty()) {
-          (*config)[tagName].push_back(configmaps::ConfigItem(value));
-#ifdef DEBUG_PARSE_SENSOR
-          LOG_DEBUG("element [%s : %s]", tagName.c_str(), value.c_str());
+          if(child.childNodes().size() + child.attributes().size() > 1) {
+            getGenericConfig((*config)[tagName], child);
+#ifdef DEBUG_PARSE
+            LOG_DEBUG("elementList [%s : %s]", tagName.c_str(), value.c_str());
 #endif
-          getGenericConfig(&((*config)[tagName].back().children), child);
+          }
+          else {
+            if(config->hasKey(tagName)) {
+              (*config)[tagName] += value;
+            }
+            else {
+              (*config)[tagName] = value;
+            }
+#ifdef DEBUG_PARSE
+            LOG_DEBUG("element [%s : %s]", tagName.c_str(), value.c_str());
+#endif
+          }
         }
       }
 

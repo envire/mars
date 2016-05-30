@@ -24,14 +24,14 @@
 
 #define GET_VALUE(str, val, type)                                        \
   if((it = config->find(str)) != config->end()) {                         \
-    val = it->second[0].get##type();                                      \
+    val = it->second;                                   \
   } else if ((it = config->find(legacynames[str])) != config->end()) {   \
-    val = it->second[0].get##type();                                      \
+    val = it->second;                                                   \
   }
 
 #define SET_VALUE(str, val)                              \
   if(val != defaultMotor.val)                             \
-    (*config)[str][0] = ConfigItem(val)
+    (*config)[str] = val
 
 namespace mars {
   namespace interfaces {
@@ -76,14 +76,15 @@ namespace mars {
 
     void MotorData::init(const std::string& name, MotorType type) {
       this->name = name;
+      this->type = type;
       index = 0;
       jointIndex = 0;
       jointIndex2 = 0;
-      axis = 0;
+      axis = 1;
       value = 0;
       maxSpeed = 0;
       maxEffort = 0;
-      this->type = type;
+      maxAcceleration = 0;
       p = 0;
       i = 0;
       d = 0;
@@ -101,7 +102,7 @@ namespace mars {
       unsigned int mapIndex;
       GET_VALUE("mapIndex", mapIndex, UInt);
 
-      GET_VALUE("name", name, String);
+      name = config->get("name", name);
       GET_VALUE("index", index, ULong);
       GET_VALUE("jointIndex", jointIndex, ULong);
       GET_VALUE("jointIndex2", jointIndex2, ULong);
@@ -119,9 +120,10 @@ namespace mars {
       GET_VALUE("axis", axis, Int);
       GET_VALUE("maxSpeed", maxSpeed, Double);
       GET_VALUE("maxEffort", maxEffort, Double);
+      GET_VALUE("maxAcceleration", maxAcceleration, Double);
 
       std::string tmpmotortype;
-      GET_VALUE("type", tmpmotortype, String);
+      tmpmotortype = config->get("type", tmpmotortype);
       if (tmpmotortype=="1" || tmpmotortype=="PID") {
         type = (MotorType)1ul;
       } else if (tmpmotortype=="2" || tmpmotortype=="DC") {
@@ -131,10 +133,13 @@ namespace mars {
       GET_VALUE("p", p, Double);
       GET_VALUE("i", i, Double);
       GET_VALUE("d", d, Double);
-      GET_VALUE("value", value, Double);
-      GET_VALUE("maxValue", maxValue, Double);
-      GET_VALUE("minValue", minValue, Double);
       GET_VALUE("joint", jointName, String);
+      GET_VALUE("position", value, Double);
+      GET_VALUE("maxPosition", maxValue, Double);
+      GET_VALUE("minPosition", minValue, Double);
+
+      this->config = *config;
+
 
       return 1;
     }
@@ -151,15 +156,17 @@ namespace mars {
       SET_VALUE("maxSpeed", maxSpeed);
       SET_VALUE("maxEffort", maxEffort);
 
-      (*config)["type"][0] = ConfigItem((int)type);
+      (*config)["type"] = (int)type;
 
       SET_VALUE("p", p);
       SET_VALUE("i", i);
       SET_VALUE("d", d);
-      SET_VALUE("value", value);
-      SET_VALUE("maxValue", maxValue);
-      SET_VALUE("minValue", minValue);
+
+      SET_VALUE("position", value);
       SET_VALUE("joint", jointName);
+      SET_VALUE("maxPosition", maxValue);
+      SET_VALUE("minPosition", minValue);
+
     }
 
     void MotorData::getFilesToSave(std::vector<std::string> *fileList) {

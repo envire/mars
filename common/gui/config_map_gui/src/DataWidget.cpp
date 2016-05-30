@@ -20,8 +20,9 @@
 
 #include "DataWidget.h"
 
-#include <QVBoxLayout>
+#include <mars/utils/misc.h>
 
+#include <QVBoxLayout>
 #include <cassert>
 
 namespace mars {
@@ -32,7 +33,7 @@ namespace mars {
 
 
     DataWidget::DataWidget(cfg_manager::CFGManagerInterface *cfg,
-                           QWidget *parent) :
+                           QWidget *parent, bool onlyCompactView) :
       main_gui::BaseWidget(parent, cfg, "ConfigMapWidget"),
       pDialog(new main_gui::PropertyDialog(parent)),
       ignore_change(0) {
@@ -42,8 +43,12 @@ namespace mars {
       QVBoxLayout *vLayout = new QVBoxLayout();
       vLayout->addWidget(pDialog);
       setLayout(vLayout);
-      
+
       addProperty = 0;
+      if(onlyCompactView) {
+        pDialog->setViewButtonVisibility(false);
+        pDialog->setViewMode(main_gui::TreeViewMode);
+      }
       pDialog->setButtonBoxVisibility(true);
       pDialog->clearButtonBox();
       pDialog->addGenericButton("add key", this, SLOT(addKey()));
@@ -55,164 +60,246 @@ namespace mars {
 
     void DataWidget::setConfigMap(const std::string &name,
                                   const ConfigMap &map) {
+      std::vector<std::string> pattern;
+      setConfigMap(name, map, pattern);
+    }
+
+    void DataWidget::setConfigMap(const std::string &name,
+                                  const ConfigMap &map,
+                                  const std::vector<std::string> &pattern) {
+      editPattern = pattern;
       ignore_change = 1;
       clearGUI();
       if(&config != &map) {
         config = map;
         cname = name;
       }
-      config.toYamlFile("foo.yml");
-      addConfigMap(name, config);
+      std::string n = name;
+      for(size_t i=0; i<n.size(); ++i) {
+        if(n[i] == '/') {
+          n.insert(n.begin()+i, '/');
+          ++i;
+        }
+      }
+      // config.toYamlFile("foo.yml");
+      std::string path = "../";
+      path += n;
+      addConfigMap(path, config);
       ignore_change = 0;
     }
 
     void DataWidget::addConfigMap(const std::string &name,
                                ConfigMap &map) {
-      QtVariantProperty *guiElem;
       ConfigMap::iterator it = map.begin();
+      QtVariantProperty *tmp =
+        pDialog->addGenericProperty(name,
+                                    QtVariantPropertyManager::groupTypeId(),
+                                    0);
       for(;it!=map.end(); ++it) {
-        for(size_t i=0; i<it->second.size(); ++i) {
-          char iText[64];
-          iText[0] = '\0';
-          if(it->second.size() > 1) {
-            sprintf(iText, "/%d", (int)i);
+        std::string n = it->first;
+        for(size_t i=0; i<n.size(); ++i) {
+          if(n[i] == '/') {
+            n.insert(n.begin()+i, '/');
+            ++i;
           }
-          if(it->second[i].children.size() > 0) {
-            addConfigMap(name+"/"+it->first+iText, it->second[i].children);
-          }
-          else {
-            std::map<QString, QVariant> attr;
-            attr["singleStep"] = 0.01;
-            attr["decimals"] = 7;
-            ConfigItem *item = &(it->second[i]);
-            ConfigItem::ItemType type = item->getType();
-            std::string propName = name+"/"+it->first+iText;
+        }
 
-            if(propMap.find(propName) == propMap.end()) {
-              if(type == ConfigItem::UNDEFINED_TYPE) {
-                guiElem = pDialog->addGenericProperty(propName,
-                                                      QVariant::String,
-                                                      QString::fromStdString(item->getUnparsedString()),
-                                                      &attr);
-              }
-              else if(type == ConfigItem::STRING_TYPE) {
-                guiElem = pDialog->addGenericProperty(propName,
-                                                      QVariant::String,
-                                                      QString::fromStdString(item->getString()),
-                                                      &attr);
-              }
-              else if(type == ConfigItem::INT_TYPE) {
-                guiElem = pDialog->addGenericProperty(propName,
-                                                      QVariant::Int,
-                                                      item->getInt(),
-                                                      &attr);
-              }
-              else if(type == ConfigItem::UINT_TYPE) {
-                guiElem = pDialog->addGenericProperty(propName,
-                                                      QVariant::Int,
-                                                      (int)item->getUInt(),
-                                                      &attr);
-              }
-              else if(type == ConfigItem::DOUBLE_TYPE) {
-              guiElem = pDialog->addGenericProperty(propName,
-                                                    QVariant::Double,
-                                                    item->getDouble(),
-                                                    &attr);
-              }
-              else if(type == ConfigItem::ULONG_TYPE) {
-                guiElem = pDialog->addGenericProperty(propName,
-                                                      QVariant::Int,
-                                                      (int)item->getULong(),
-                                                      &attr);
-              }
-              else if(type == ConfigItem::BOOL_TYPE) {
-                guiElem = pDialog->addGenericProperty(propName,
-                                                      QVariant::Bool,
-                                                      item->getBool(),
-                                                      &attr);
-              }
-              dataMap[guiElem] = item;
-              propMap[propName] = guiElem;
-            }
-          }
-          
+        if(it->second.isVector()) {
+          addConfigVector(name+"/"+n, it->second);
+        }
+        else if(it->second.isMap()) {
+          addConfigMap(name+"/"+n, it->second);
+        }
+        else if(it->second.isAtom()) {
+          addConfigAtom(name+"/"+n, it->second);
         }
       }
+      QtVariantProperty *guiElem;
       guiElem = pDialog->addGenericProperty(name+"/add key",
                                             QVariant::String,
                                             "");
       addMap[guiElem] = &map;
+      pDialog->expandTree(tmp);
+    }
+
+    void DataWidget::addConfigVector(const std::string &name,
+                                     ConfigVector &v) {
+      for(size_t i=0; i<v.size(); ++i) {
+        char iText[64];
+        iText[0] = '\0';
+        sprintf(iText, "/%d", (int)i);
+        if(v[i].isAtom()) addConfigAtom(name + iText, v[i]);
+        else if(v[i].isVector()) addConfigVector(name + iText, v[i]);
+        else if(v[i].isMap()) addConfigMap(name + iText, v[i]);
+      }
+    }
+
+    void DataWidget::addConfigAtom(const std::string &name,
+                                   ConfigAtom &v) {
+      QtVariantProperty *guiElem;
+      std::map<QString, QVariant> attr;
+      attr["singleStep"] = 0.01;
+      attr["decimals"] = 7;
+      ConfigAtom::ItemType type = v.getType();
+      if(propMap.find(name) == propMap.end()) {
+        bool editable = true;
+        if(editPattern.size() > 0) {
+          editable = false;
+          for(size_t i=0; i<editPattern.size(); ++i) {
+            if(utils::matchPattern(editPattern[i], name)) {
+              editable = true;
+              break;
+            }
+          }
+        }
+        if(type == ConfigAtom::UNDEFINED_TYPE) {
+          guiElem = pDialog->addGenericProperty(name,
+                                                QVariant::String,
+                                                QString::fromStdString(v.getUnparsedString()),
+                                                &attr);
+        }
+        else if(type == ConfigAtom::STRING_TYPE) {
+          guiElem = pDialog->addGenericProperty(name,
+                                                QVariant::String,
+                                                QString::fromStdString(v.getString()),
+                                                &attr);
+              }
+        else if(type == ConfigAtom::INT_TYPE) {
+          guiElem = pDialog->addGenericProperty(name,
+                                                QVariant::Int,
+                                                v.getInt(),
+                                                &attr);
+        }
+        else if(type == ConfigAtom::UINT_TYPE) {
+          guiElem = pDialog->addGenericProperty(name,
+                                                QVariant::Int,
+                                                (int)v.getUInt(),
+                                                &attr);
+        }
+        else if(type == ConfigAtom::DOUBLE_TYPE) {
+          guiElem = pDialog->addGenericProperty(name,
+                                                QVariant::Double,
+                                                v.getDouble(),
+                                                &attr);
+        }
+        else if(type == ConfigAtom::ULONG_TYPE) {
+          guiElem = pDialog->addGenericProperty(name,
+                                                QVariant::Int,
+                                                (int)v.getULong(),
+                                                &attr);
+        }
+        else if(type == ConfigAtom::BOOL_TYPE) {
+          guiElem = pDialog->addGenericProperty(name,
+                                                QVariant::Bool,
+                                                v.getBool(),
+                                                &attr);
+        }
+        guiElem->setEnabled(editable);
+        dataMap[guiElem] = &v;
+        propMap[name] = guiElem;
+        nameMap[guiElem] = name;
+      }
     }
 
     void DataWidget::updateConfigMap(const std::string &name,
                                      const ConfigMap &map) {
       ignore_change = 1;
-      updateConfigMapI(name, map);
+      ConfigMap tmpMap = map;
+      updateConfigMapI(name, tmpMap);
       ignore_change = 0;
     }
 
     void DataWidget::updateConfigMapI(const std::string &name,
-                                      const ConfigMap &map) {
+                                      ConfigMap &map) {
       ConfigMap::const_iterator it = map.begin();
+      std::string n = name;
+      for(size_t i=0; i<n.size(); ++i) {
+        if(n[i] == '/') {
+          n.insert(n.begin()+i, '/');
+          ++i;
+        }
+      }
       for(;it!=map.end(); ++it) {
-        for(size_t i=0; i<it->second.size(); ++i) {
-          char iText[64];
-          iText[0] = '\0';
-          if(it->second.size() > 1) {
-            sprintf(iText, "/%d", (int)i);
+        n = it->first;
+        for(size_t i=0; i<n.size(); ++i) {
+          if(n[i] == '/') {
+            n.insert(n.begin()+i, '/');
+            ++i;
           }
-          if(it->second[i].children.size() > 0) {
-            updateConfigMapI(name+"/"+it->first+iText, it->second[i].children);
-          }
-          else {
-            std::map<QString, QVariant> attr;
-            attr["singleStep"] = 0.01;
-            attr["decimals"] = 7;
-            QtVariantProperty *guiElem;
-            ConfigItem *item = &(it->second[i]);
-            ConfigItem::ItemType type = item->getType();
-            std::string propName = name+"/"+it->first+iText;
+        }
 
-            if(propMap.find(propName) != propMap.end()) {
-              guiElem = propMap[propName];
-              *(dataMap[guiElem]) = *item;
-              if(type == ConfigItem::UNDEFINED_TYPE) {
-                guiElem->setValue(QVariant(QString::fromStdString(item->getUnparsedString())));
-              }
-              else if(type == ConfigItem::STRING_TYPE) {
-                guiElem->setValue(QVariant(QString::fromStdString(item->getString())));
-              }
-              else if(type == ConfigItem::INT_TYPE) {
-                guiElem->setValue(QVariant(item->getInt()));
-              }
-              else if(type == ConfigItem::UINT_TYPE) {
-                guiElem->setValue(QVariant(item->getUInt()));
-              }
-              else if(type == ConfigItem::DOUBLE_TYPE) {
-                guiElem->setValue(QVariant(item->getDouble()));
-              }
-              else if(type == ConfigItem::ULONG_TYPE) {
-                guiElem->setValue(QVariant((int)item->getULong()));
-              }
-              else if(type == ConfigItem::BOOL_TYPE) {
-                guiElem->setValue(QVariant(item->getBool()));
-              }              
-            }
-          }
+        if(it->second.isAtom()) {
+          updateConfigAtomI(name + "/" + n, it->second);
+        }
+        else if(it->second.isVector()) {
+          updateConfigVectorI(name + "/" + n, it->second);
+        }
+        else if(it->second.isMap()) {
+          updateConfigMapI(name + "/" + n, it->second);
+        }
+      }
+    }
+
+    void DataWidget::updateConfigVectorI(const std::string &name,
+                                         ConfigVector &v) {
+
+      for(size_t i=0; i<v.size(); ++i) {
+        char iText[64];
+        iText[0] = '\0';
+        sprintf(iText, "/%d", (int)i);
+        if(v[i].isAtom()) updateConfigAtomI(name + iText, v[i]);
+        else if(v[i].isVector()) updateConfigVectorI(name + iText, v[i]);
+        else if(v[i].isMap()) updateConfigMapI(name + iText, v[i]);
+      }
+    }
+
+    void DataWidget::updateConfigAtomI(const std::string &name,
+                                       ConfigAtom &v) {
+
+      QtVariantProperty *guiElem;
+      std::map<QString, QVariant> attr;
+      attr["singleStep"] = 0.01;
+      attr["decimals"] = 7;
+      ConfigAtom atom = v;
+      ConfigAtom::ItemType type = atom.getType();
+      if(propMap.find(name) != propMap.end()) {
+        guiElem = propMap[name];
+        *(dataMap[guiElem]) = v;
+        if(type == ConfigAtom::UNDEFINED_TYPE) {
+          guiElem->setValue(QVariant(QString::fromStdString(atom.getUnparsedString())));
+        }
+        else if(type == ConfigAtom::STRING_TYPE) {
+          guiElem->setValue(QVariant(QString::fromStdString(atom.getString())));
+        }
+        else if(type == ConfigAtom::INT_TYPE) {
+          guiElem->setValue(QVariant(atom.getInt()));
+        }
+        else if(type == ConfigAtom::UINT_TYPE) {
+          guiElem->setValue(QVariant(atom.getUInt()));
+        }
+        else if(type == ConfigAtom::DOUBLE_TYPE) {
+          guiElem->setValue(QVariant(atom.getDouble()));
+        }
+        else if(type == ConfigAtom::ULONG_TYPE) {
+          guiElem->setValue(QVariant((int)atom.getULong()));
+        }
+        else if(type == ConfigAtom::BOOL_TYPE) {
+          guiElem->setValue(QVariant(atom.getBool()));
         }
       }
     }
 
     void DataWidget::clearGUI() {
-      map<QtVariantProperty*, ConfigItem*>::iterator it;
+      map<QtVariantProperty*, ConfigAtom*>::iterator it;
       map<QtVariantProperty*, ConfigMap*>::iterator it2;
       for(it=dataMap.begin(); it!=dataMap.end(); ++it) {
         pDialog->removeGenericProperty(it->first);
       }
       for(it2=addMap.begin(); it2!=addMap.end(); ++it2) {
-        pDialog->removeGenericProperty(it2->first);        
+        pDialog->removeGenericProperty(it2->first);
       }
       dataMap.clear();
+      nameMap.clear();
       propMap.clear();
       addMap.clear();
       addProperty = 0;
@@ -230,32 +317,33 @@ namespace mars {
       if(ignore_change) return;
 
       {
-        map<QtVariantProperty*, ConfigItem*>::iterator it;
+        map<QtVariantProperty*, ConfigAtom*>::iterator it;
         it = dataMap.find((QtVariantProperty*)property);
         if(it != dataMap.end()) {
-          ConfigItem::ItemType type = it->second->getType();
-          if(type == ConfigItem::UNDEFINED_TYPE) {
+          ConfigAtom::ItemType type = it->second->getType();
+          if(type == ConfigAtom::UNDEFINED_TYPE) {
             it->second->setUnparsedString(value.toString().toStdString());
           }
-          else if(type == ConfigItem::STRING_TYPE) {
+          else if(type == ConfigAtom::STRING_TYPE) {
             it->second->setString(value.toString().toStdString());
           }
-          else if(type == ConfigItem::INT_TYPE) {
+          else if(type == ConfigAtom::INT_TYPE) {
             it->second->setInt(value.toInt());
           }
-          else if(type == ConfigItem::UINT_TYPE) {
+          else if(type == ConfigAtom::UINT_TYPE) {
             it->second->setUInt(value.toUInt());
           }
-          else if(type == ConfigItem::DOUBLE_TYPE) {
+          else if(type == ConfigAtom::DOUBLE_TYPE) {
             it->second->setDouble(value.toDouble());
           }
-          else if(type == ConfigItem::ULONG_TYPE) {
+          else if(type == ConfigAtom::ULONG_TYPE) {
             it->second->setULong(value.toULongLong());
           }
-          else if(type == ConfigItem::BOOL_TYPE) {
+          else if(type == ConfigAtom::BOOL_TYPE) {
             it->second->setBool(value.toBool());
           }
         }
+        emit valueChanged(nameMap[(QtVariantProperty*)property], it->second->toString());
       }
       {
         map<QtVariantProperty*, ConfigMap*>::iterator it;

@@ -48,7 +48,7 @@
 #include <envire_core/items/Item.hpp>
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <smurf/Joint.hpp>
-
+#include <mars/utils/mathUtils.h>
 
 namespace mars {
   namespace sim {
@@ -107,6 +107,38 @@ namespace mars {
       simMotors[newMotor->getIndex()] = newMotor.get();
       iMutex.unlock();
       control->sim->sceneHasChanged(false);
+
+      configmaps::ConfigMap &config = motorS->config;
+
+      // set motor mimics
+      if (config.find("mimic_motor") != config.end()) {
+        mimicmotors[motorS->index] = (std::string)config["mimic_motor"];
+        newMotor->setMimic(
+          (sReal)config["mimic_multiplier"], (sReal)config["mimic_offset"]);
+      }
+
+      // set approximation functions
+      if (config.find("maxeffort_approximation") != config.end()) {
+        std::vector<sReal>* maxeffort_coefficients = new std::vector<sReal>;
+        ConfigVector::iterator vIt = config["maxeffort_coefficients"].begin();
+        for (; vIt != config["maxeffort_coefficients"].end(); ++vIt) {
+          maxeffort_coefficients->push_back((double)(*vIt));
+          newMotor->setMaxEffortApproximation(
+            utils::getApproximationFunctionFromString((std::string)config["maxeffort_approximation"]),
+            maxeffort_coefficients);
+        }
+      }
+      if (config.find("maxspeed_approximation") != config.end()) {
+        std::vector<sReal>* maxspeed_coefficients = new std::vector<sReal>;
+        ConfigVector::iterator vIt = config["maxspeed_coefficients"].begin();
+        for (; vIt != config["maxspeed_coefficients"].end(); ++vIt) {
+          maxspeed_coefficients->push_back((double)(*vIt));
+          newMotor->setMaxSpeedApproximation(
+            utils::getApproximationFunctionFromString((std::string)config["maxspeed_approximation"]),
+            maxspeed_coefficients);
+        }
+      }
+
       return motorS->index;
     }
 
@@ -304,7 +336,7 @@ namespace mars {
       MutexLocker locker(&iMutex);
       map<unsigned long, SimMotor*>::iterator iter = simMotors.find(id);
       if (iter != simMotors.end())
-        iter->second->setValue(value);
+        iter->second->setControlValue(value);
     }
 
 
@@ -312,7 +344,7 @@ namespace mars {
       MutexLocker locker(&iMutex);
       map<unsigned long, SimMotor*>::iterator iter = simMotors.find(id);
       if (iter != simMotors.end())
-        iter->second->setValueDesiredVelocity(velocity);
+        iter->second->setVelocity(velocity);
     }
 
 
@@ -421,7 +453,7 @@ namespace mars {
       MutexLocker locker(&iMutex);
       map<unsigned long, SimMotor*>::iterator iter = simMotors.find(index);
       if (iter != simMotors.end())
-        iter->second->setValue(value);
+        iter->second->setControlValue(value);
     }
 
 
@@ -437,9 +469,10 @@ namespace mars {
     void MotorManager::clearAllMotors(bool clear_all) {
       MutexLocker locker(&iMutex);
       map<unsigned long, SimMotor*>::iterator iter;
-      for(iter = simMotors.begin(); iter != simMotors.end(); iter++) 
+      for(iter = simMotors.begin(); iter != simMotors.end(); iter++)
         delete iter->second;
       simMotors.clear();
+      mimicmotors.clear();
       if(clear_all) simMotorsReload.clear();
       next_motor_id = 1;
     }
@@ -460,6 +493,7 @@ namespace mars {
         iMutex.lock();
       }
       iMutex.unlock();
+      connectMimics();
     }
 
     /**
@@ -483,7 +517,7 @@ namespace mars {
       map<unsigned long, SimMotor*>::const_iterator iter;
       iter = simMotors.find(motorId);
       if (iter != simMotors.end())
-        return iter->second->getActualPosition();
+        return iter->second->getPosition();
       return 0.;
     }
 
@@ -492,7 +526,7 @@ namespace mars {
       map<unsigned long, SimMotor*>::const_iterator iter;
       iter = simMotors.find(motorId);
       if (iter != simMotors.end())
-        return iter->second->getTorque();
+        return iter->second->getEffort();
       return 0.;
     }
 
@@ -501,7 +535,7 @@ namespace mars {
       map<unsigned long, SimMotor*>::const_iterator iter;
       iter = simMotors.find(id);
       if (iter != simMotors.end())
-        iter->second->setMotorMaxForce(maxTorque);
+        iter->second->setMaxEffort(maxTorque);
     }
 
     void MotorManager::setMaxSpeed(unsigned long id, sReal maxSpeed) {
@@ -538,6 +572,15 @@ namespace mars {
       map<unsigned long, SimMotor*>::const_iterator iter = simMotors.find(jointId);
       if(iter != simMotors.end())
         iter->second->getDataBrokerNames(groupName, dataName);
+    }
+
+    void MotorManager::connectMimics() {
+      std::map<unsigned long, std::string>::iterator it;
+      for (it = mimicmotors.begin(); it!=mimicmotors.end(); ++it) {
+        SimMotor* parentmotor = getSimMotorByName(it->second);
+        if (parentmotor != NULL)
+          parentmotor->addMimic(simMotors[it->first]);
+      }
     }
 
   } // end of namespace sim

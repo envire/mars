@@ -19,23 +19,43 @@
  */
 
 #include "SimEntity.h"
+#include "SimJoint.h"
 #include <configmaps/ConfigData.h>
 #include <iostream>
-
+#include <mars/utils/mathUtils.h>
+#include <mars/interfaces/NodeData.h>
+#include <mars/interfaces/sim/ControlCenter.h>
+#include <mars/interfaces/sim/SimulatorInterface.h>
+#include <mars/interfaces/sim/NodeManagerInterface.h>
+#include <mars/interfaces/sim/JointManagerInterface.h>
+#include <mars/interfaces/sim/MotorManagerInterface.h>
+#include <mars/interfaces/sim/EntityManagerInterface.h>
 #include <iterator> // ostream_iterator
 
 namespace mars {
+  using namespace interfaces;
   namespace sim {
 
-    SimEntity::SimEntity(const std::string &name) {
-      this->name = name;
-      selected = false;
+    SimEntity::SimEntity(const std::string &name) : name(name), control(NULL),
+                                                    selected(false) {
     }
 
-    SimEntity::SimEntity(const configmaps::ConfigMap& parameters) {
+    SimEntity::SimEntity(const configmaps::ConfigMap& parameters) : control(NULL),
+                                                                    selected(false) {
       config = parameters;
       this->name = (std::string) config["name"];
-      this->selected = false;
+    }
+
+    SimEntity::SimEntity(ControlCenter *c,
+                         const std::string &name) : name(name), control(c),
+                                                    selected(false) {
+    }
+
+    SimEntity::SimEntity(ControlCenter *c,
+                         const configmaps::ConfigMap& parameters) : control(c),
+                                                                    selected(false) {
+      config = parameters;
+      this->name = (std::string) config["name"];
     }
 
     void SimEntity::appendConfig(const configmaps::ConfigMap& parameters) {
@@ -152,6 +172,111 @@ namespace mars {
       std::cout << "Controllers of Robot " << name << ":\n";
       for (size_t i = 0; i < controllerIds.size(); i++) {
         std::cout << controllerIds.at(i) << std::endl;
+      }
+    }
+
+    void SimEntity::setInitialPose(bool reset) {
+
+      if(control && (config.find("rootNode") != config.end())) {
+        NodeId id = getNode((std::string)config["rootNode"]);
+        NodeData rootNode = control->nodes->getFullNode(id);
+        utils::Quaternion tmpQ(1, 0, 0, 0);
+        utils::Vector tmpV;
+        if(config.find("position") != config.end()) {
+          rootNode.pos.x() = config["position"][0];
+          rootNode.pos.y() = config["position"][1];
+          rootNode.pos.z() = config["position"][2];
+          control->nodes->editNode(&rootNode, EDIT_NODE_POS | EDIT_NODE_MOVE_ALL);
+        }
+        if(config.find("rotation") != config.end()) {
+          // check if euler angles or quaternion is provided; rotate around z
+          // if only one angle is provided
+          switch (config["rotation"].size()) {
+          case 1: tmpV[0] = 0;
+            tmpV[1] = 0;
+            tmpV[2] = config["rotation"][0];
+            tmpQ = utils::eulerToQuaternion(tmpV);
+            break;
+          case 3: tmpV[0] = config["rotation"][0];
+            tmpV[1] = config["rotation"][1];
+            tmpV[2] = config["rotation"][2];
+            tmpQ = utils::eulerToQuaternion(tmpV);
+            break;
+          case 4: tmpQ.x() = (sReal)config["rotation"][1];
+            tmpQ.y() = (sReal)config["rotation"][2];
+            tmpQ.z() = (sReal)config["rotation"][3];
+            tmpQ.w() = (sReal)config["rotation"][0];
+            break;
+          }
+          rootNode.rot = tmpQ;
+          control->nodes->editNode(&rootNode, EDIT_NODE_ROT | EDIT_NODE_MOVE_ALL);
+        }
+        // check if there is an anchor / parent (anchor is deprecated...)
+        if(config.find("anchor") != config.end() || config.find("parent") != config.end()) {
+          if (reset) {
+            fprintf(stderr, "Resetting initial entity pose.\n");
+            std::map<unsigned long, std::string>::iterator it;
+            JointId anchorJointId = 0;
+            for (it=jointIds.begin(); it!=jointIds.end(); ++it) {
+              if (it->second == "anchor_"+name) {
+                anchorJointId = it->first;
+                break;
+              }
+            }
+            SimJoint* anchorjoint = control->joints->getSimJoint(anchorJointId);
+            if (anchorjoint != NULL) {
+              anchorjoint->reattachJoint();
+            }
+            else fprintf(stderr, "Could not reset anchor of entity %s.\n", name.c_str());
+          }
+          else {
+            std::string parentname;
+            if (config.find("parent") != config.end())
+              parentname = (std::string)config["parent"];
+            if (config.find("anchor") != config.end())  // backwards compatibility
+              parentname = (std::string)config["anchor"];
+            unsigned long parentid;
+            if (parentname == "world") {
+              parentid = 0;
+            } else {  // if entity gets attached to other entity
+              std::string entityname, linkname;
+              unsigned int splitsignpos = parentname.find("::");
+              if (splitsignpos >= 0) {
+                entityname = parentname.substr(0, splitsignpos);
+                linkname = parentname.substr(splitsignpos+2);
+                SimEntity* parententity = control->entities->getEntity(entityname);
+                if (parententity != 0) {
+                  unsigned long linkid = parententity->getNode(linkname);
+                  if (linkid > 0) {
+                    parentid = linkid;
+                  } else
+                      fprintf(stderr, "No valid link id in parent entity.\n");
+                } else
+                   fprintf(stderr, "No valid entity in scene.\n");
+              }
+            }
+            JointData anchorjoint;
+            anchorjoint.nodeIndex1 = id;
+            anchorjoint.nodeIndex2 = parentid;
+            anchorjoint.type = JOINT_TYPE_FIXED;
+            anchorjoint.name = "anchor_"+name;
+            JointId anchorJointId = control->joints->addJoint(&anchorjoint);
+            addJoint(anchorJointId, anchorjoint.name);
+          }
+        }
+        // set Joints
+        configmaps::ConfigVector::iterator it;
+        configmaps::ConfigMap::iterator joint_it;
+        for (it = config["poses"].begin(); it!= config["poses"].end(); ++it) {
+          if ((std::string)(*it)["name"] == (std::string)config["pose"]) {
+            for (joint_it = (*it)["joints"].beginMap();
+                 joint_it!= (*it)["joints"].endMap(); ++joint_it) {
+              //fprintf(stderr, "setMotorValue: joint: %s, id: %lu, value: %f\n", ((std::string)joint_it->first).c_str(), motorIDMap[joint_it->first], (double)joint_it->second);
+              control->motors->setMotorValue(getMotor(joint_it->first),
+                                             joint_it->second);
+            }
+          }
+        }
       }
     }
 

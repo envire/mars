@@ -89,6 +89,7 @@ namespace mars {
                                       const mars::utils::Vector &ext) = 0;
       virtual void setDrawObjectMaterial(unsigned long id, 
                                          const MaterialData &material) = 0;
+      virtual void addMaterial(const MaterialData &material) = 0;
       virtual void setDrawObjectNodeMask(unsigned long id, unsigned int bits) = 0;
 
       virtual void closeAxis() = 0; ///< Closes existing joint axis.
@@ -223,7 +224,20 @@ namespace mars {
       virtual void removeOSGNode(void* node) = 0;
       virtual unsigned long addHUDOSGNode(void* node) = 0;
       virtual bool isInitialized() const = 0;
-
+      virtual std::vector<interfaces::MaterialData> getMaterialList() const = 0;
+      virtual void editMaterial(std::string materialName, std::string key,
+                                std::string value) = 0;
+      /**
+       * Applies the predefined default views on the 'active' view.
+       * view:
+       *       1: top
+       *       2: front
+       *       3: right
+       *       4: back
+       *       5: left
+       *       6: down
+       */
+      virtual void setCameraDefaultView(int view) = 0;
     }; // end of class GraphicsManagerInterface
 
   } // end of namespace interfaces

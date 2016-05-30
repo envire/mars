@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011, 2012, DFKI GmbH Robotics Innovation Center
+ *  Copyright 2013, DFKI GmbH Robotics Innovation Center
  *
  *  This file is part of the MARS simulation framework.
  *
@@ -18,31 +18,32 @@
  *
  */
 
-/*
- * Clouds.h
+/**
+ * \file __classname__.h
+ * \author __author__ (__email__)
+ * \brief __description__
  *
- *  Created on: 19.04.2011
- *      Author: daniel
+ * Version 0.1
  */
 
-#ifndef MARS_GRAPHICS_CLOUDS_H
-#define MARS_GRAPHICS_CLOUDS_H
+#ifndef __headerDef__MW
+#define __headerDef__MW
 
-#include <string>
-#include <osg/Group>
-#include <osg/TexMat>
+#include <QWidget>
+#include <QGridLayout>
+#include <QLabel>
+#include <QPushButton>
 
-namespace mars {
-  namespace graphics {
+class __classname___MainWin : public QWidget
+{
+private:
+  QLabel *msg;
+  QPushButton *btn;
+  QGridLayout *lyt;
+  
+public:
+  __classname___MainWin ();
+  virtual ~__classname___MainWin ();
+};
 
-    class Clouds : public osg::Group {
-    public:
-      Clouds(const std::string &texture_path);
-    protected:
-      osg::ref_ptr<osg::TexMat> texmat;
-    }; // end of class Clouds
-
-  } // end of namespace graphics
-} // end of namespace mars
-
-#endif /* MARS_GRAPHICS_CLOUDS_H */
+#endif

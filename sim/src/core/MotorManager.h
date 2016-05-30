@@ -313,6 +313,8 @@ namespace mars {
                                       std::string *groupName, 
                                       std::string *dataName) const;
 
+      virtual void connectMimics();
+
     private:
       
       /*
@@ -352,6 +354,8 @@ namespace mars {
       //! a mutex for the motor containters
       mutable utils::Mutex iMutex;
 
+      // map of mimicmotors
+      std::map<unsigned long, std::string> mimicmotors;
     }; // class MotorManager
 
   } // end of namespace sim

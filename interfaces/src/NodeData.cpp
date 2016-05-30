@@ -33,21 +33,19 @@
 
 #define GET_VALUE(str, val, type)                    \
   if((it = config->find(str)) != config->end())      \
-    val = it->second[0].get##type()
+    val = it->second;
 
 #define GET_OBJECT(str, val, type)              \
   if((it = config->find(str)) != config->end()) \
-    type##FromConfigItem(&it->second[0], &val);
+    type##FromConfigItem(it->second, &val);
 
-#define SET_VALUE(str, val)                              \
-  if(val != defaultNode.val)                             \
-    (*config)[str][0] = ConfigItem(val)
+#define SET_VALUE(str, val, b)                             \
+  if(b || val != defaultNode.val)                             \
+    (*config)[str] = val
 
-//FIXME:HACK??! default value
-#define SET_OBJECT(str, val, type)                                      \
-  if(1 || val.squaredNorm() - defaultNode.val.squaredNorm() < 0.0000001) {  \
-    (*config)[str][0] = ConfigItem(std::string());                      \
-    type##ToConfigItem(&(*config)[str][0], &val);                       \
+#define SET_OBJECT(str, val, type, b)                                     \
+  if(b || val.squaredNorm() - defaultNode.val.squaredNorm() < 0.0000001) { \
+    type##ToConfigItem((*config)[str], &val);                          \
   }
 
 namespace mars {
@@ -67,7 +65,8 @@ namespace mars {
         "cylinder",
         "plane",
         "terrain",
-        "reference"
+        "reference",
+        "empty"
       };
 
     const char* NodeData::toString(const NodeType &type) {
@@ -104,16 +103,17 @@ namespace mars {
       bool check = false, massDensity = false;
       bool needMass = true;
 
-      GET_VALUE("name", name, String);
+      name = trim(config->get("name", name));
+
       { // handle node mass
         if((it = config->find("mass")) != config->end()) {
-          mass = it->second[0].getDouble();
+          mass = it->second;
           // use some epsilon here
           if(fabs(mass) > 0.000000001) check = true;
         }
 
         if((it = config->find("density")) != config->end()) {
-          density = it->second[0].getDouble();
+          density = it->second;
           // use some epsilon here
           if(fabs(density) > 0.000000001) {
             if(check) massDensity = true;
@@ -122,12 +122,12 @@ namespace mars {
         }
 
         if((it = config->find("noPhysical")) != config->end()) {
-          noPhysical = it->second[0].getBool();
+          noPhysical = it->second;
           if(noPhysical) needMass = false;
         }
 
         if((it = config->find("movable")) != config->end()) {
-          movable = it->second[0].getBool();
+          movable = it->second;
           if(!movable) needMass = false;
         }
 
@@ -148,7 +148,7 @@ namespace mars {
 
       { // handle node type
         if((it = config->find("physicmode")) != config->end()) {
-          std::string typeName =it->second[0].getString();
+          std::string typeName = (std::string)it->second;
           try {
             physicMode = typeFromString(trim(typeName));
           } catch(...) {
@@ -157,11 +157,8 @@ namespace mars {
           }
         }
 
-        GET_VALUE("origname", origName, String);
-        GET_VALUE("filename", filename, String);
-        
-        origName = trim(origName);
-        filename = trim(filename);
+        origName = trim(config->get("origname", origName));
+        filename = trim(config->get("filename", filename));
 
         if(filename == "PRIMITIVE") {
           if(origName.empty()) {
@@ -200,7 +197,7 @@ namespace mars {
       // handle terrain info
       if((it = config->find("t_srcname")) != config->end()) {
         terrain = new(terrainStruct);
-        terrain->srcname = trim(it->second[0].getString());
+        terrain->srcname = trim((std::string)it->second);
 
         GET_VALUE("t_width", terrain->targetWidth, Double);
         GET_VALUE("t_height", terrain->targetHeight, Double);
@@ -218,14 +215,11 @@ namespace mars {
       GET_OBJECT("visualrotation", visual_offset_rot, quaternion);
 
       if((it = config->find("visualsize")) != config->end()) {
-        vectorFromConfigItem(&it->second[0], &visual_size);
-      }
-      else {
-        visual_size = ext;
+        vectorFromConfigItem(it->second, &visual_size);
       }
 
       if((it = config->find("visualscale")) != config->end()) {
-        vectorFromConfigItem(&it->second[0], &visual_scale);
+        vectorFromConfigItem(it->second, &visual_scale);
       }
       else {
         visual_scale = Vector(1.0, 1.0, 1.0);
@@ -250,7 +244,7 @@ namespace mars {
           if(!c_params.friction_direction1) {
             c_params.friction_direction1 = new Vector();
           }
-          vectorFromConfigItem(&it->second[0], c_params.friction_direction1);
+          vectorFromConfigItem(it->second, c_params.friction_direction1);
         }
       }
 
@@ -282,10 +276,14 @@ namespace mars {
       }
 
       map = *config;
+      if(!filenamePrefix.empty()) {
+        map["filePrefix"] = filenamePrefix;
+      }
       return true;
     }
 
-    void NodeData::toConfigMap(ConfigMap *config, bool skipFilenamePrefix) {
+    void NodeData::toConfigMap(ConfigMap *config, bool skipFilenamePrefix,
+                               bool writeDefaults) {
       NodeData defaultNode;
       std::string filename_ = filename;
       std::string srcname_;
@@ -299,78 +297,79 @@ namespace mars {
           removeFilenamePrefix(&srcname_);
       }
 
-      SET_VALUE("name", name);
-      SET_VALUE("mass", mass);
-      SET_VALUE("density", density);
-      SET_VALUE("noPhysical", noPhysical);
-      SET_VALUE("movable", movable);
+      SET_VALUE("name", name, writeDefaults);
+      SET_VALUE("mass", mass, writeDefaults);
+      SET_VALUE("density", density, writeDefaults);
+      SET_VALUE("noPhysical", noPhysical, writeDefaults);
+      SET_VALUE("movable", movable, writeDefaults);
 
-      if(physicMode != defaultNode.physicMode) {
+      if(writeDefaults || physicMode != defaultNode.physicMode) {
         std::string tmp = toString(physicMode);
-        (*config)["physicmode"][0] = ConfigItem(tmp);
+        (*config)["physicmode"] = tmp;
       }
 
-      SET_VALUE("origname", origName);
-      (*config)["filename"][0] = ConfigItem(filename_);
-      SET_VALUE("groupid", groupID);
-      SET_VALUE("index", index);
-      SET_OBJECT("position", pos, vector);
-      SET_OBJECT("pivot", pivot, vector);
-      SET_OBJECT("rotation", rot, quaternion);
-      SET_OBJECT("extend", ext, vector);
-      SET_VALUE("relativeid", relative_id);
+      SET_VALUE("origname", origName, false);
+      (*config)["filename"] = filename_;
+      SET_VALUE("groupid", groupID, writeDefaults);
+      SET_VALUE("index", index, false);
+      // todo: if a relative id is set, export the relative pos and rot!
+      SET_OBJECT("position", pos, vector, true);
+      SET_OBJECT("pivot", pivot, vector, true);
+      SET_OBJECT("rotation", rot, quaternion, true);
+      SET_OBJECT("extend", ext, vector, true);
+      SET_VALUE("relativeid", relative_id, writeDefaults);
 
       if(terrain) {
-        (*config)["t_srcname"][0] = ConfigItem(srcname_);
-        (*config)["t_width"][0] = ConfigItem(terrain->targetWidth);
-        (*config)["t_height"][0] = ConfigItem(terrain->targetHeight);
-        (*config)["t_scale"][0] = ConfigItem(terrain->scale);
-        (*config)["t_tex_scale_x"][0] = ConfigItem(terrain->texScaleX);
-        (*config)["t_tex_scale_y"][0] = ConfigItem(terrain->texScaleY);
+        (*config)["t_srcname"] = srcname_;
+        (*config)["t_width"] = terrain->targetWidth;
+        (*config)["t_height"] = terrain->targetHeight;
+        (*config)["t_scale"] = terrain->scale;
+        (*config)["t_tex_scale_x"] = terrain->texScaleX;
+        (*config)["t_tex_scale_y"] = terrain->texScaleY;
       }
 
-      SET_OBJECT("visualposition", visual_offset_pos, vector);
-      SET_OBJECT("visualrotation", visual_offset_rot, quaternion);
-      SET_OBJECT("visualsize", visual_size, vector);
-      SET_OBJECT("visualscale", visual_scale, vector);
+      SET_OBJECT("visualposition", visual_offset_pos, vector, true);
+      SET_OBJECT("visualrotation", visual_offset_rot, quaternion, true);
+      SET_OBJECT("visualsize", visual_size, vector, true);
+      SET_OBJECT("visualscale", visual_scale, vector, true);
 
-      SET_VALUE("cmax_num_contacts", c_params.max_num_contacts);
-      SET_VALUE("cerp", c_params.erp);
-      SET_VALUE("ccfm", c_params.cfm);
-      SET_VALUE("cfriction1", c_params.friction1);
-      SET_VALUE("cfriction2", c_params.friction2);
-      SET_VALUE("cmotion1", c_params.motion1);
-      SET_VALUE("cmotion2", c_params.motion2);
-      SET_VALUE("cfds1", c_params.fds1);
-      SET_VALUE("cfds2", c_params.fds2);
-      SET_VALUE("cbounce", c_params.bounce);
-      SET_VALUE("cbounce_vel", c_params.bounce_vel);
-      SET_VALUE("capprox", c_params.approx_pyramid);
-      SET_VALUE("coll_bitmask", c_params.coll_bitmask);
+      SET_VALUE("cmax_num_contacts", c_params.max_num_contacts, writeDefaults);
+      SET_VALUE("cerp", c_params.erp, writeDefaults);
+      SET_VALUE("ccfm", c_params.cfm, writeDefaults);
+      SET_VALUE("cfriction1", c_params.friction1, writeDefaults);
+      SET_VALUE("cfriction2", c_params.friction2, writeDefaults);
+      SET_VALUE("cmotion1", c_params.motion1, writeDefaults);
+      SET_VALUE("cmotion2", c_params.motion2, writeDefaults);
+      SET_VALUE("cfds1", c_params.fds1, writeDefaults);
+      SET_VALUE("cfds2", c_params.fds2, writeDefaults);
+      SET_VALUE("cbounce", c_params.bounce, writeDefaults);
+      SET_VALUE("cbounce_vel", c_params.bounce_vel, writeDefaults);
+      SET_VALUE("capprox", c_params.approx_pyramid, writeDefaults);
+      SET_VALUE("coll_bitmask", c_params.coll_bitmask, writeDefaults);
       if(c_params.friction_direction1) {
-        (*config)["cfdir1"][0] = ConfigItem(std::string());
-        vectorToConfigItem(&(*config)["cfdir1"][0],
+        vectorToConfigItem((*config)["cfdir1"],
                            c_params.friction_direction1);
       }
 
-      SET_VALUE("inertia", inertia_set);
-      SET_VALUE("i00", inertia[0][0]);
-      SET_VALUE("i01", inertia[0][1]);
-      SET_VALUE("i02", inertia[0][2]);
-      SET_VALUE("i10", inertia[1][0]);
-      SET_VALUE("i11", inertia[1][1]);
-      SET_VALUE("i12", inertia[1][2]);
-      SET_VALUE("i20", inertia[2][0]);
-      SET_VALUE("i21", inertia[2][1]);
-      SET_VALUE("i22", inertia[2][2]);
+      SET_VALUE("inertia", inertia_set, false);
+      SET_VALUE("i00", inertia[0][0], false);
+      SET_VALUE("i01", inertia[0][1], false);
+      SET_VALUE("i02", inertia[0][2], false);
+      SET_VALUE("i10", inertia[1][0], false);
+      SET_VALUE("i11", inertia[1][1], false);
+      SET_VALUE("i12", inertia[1][2], false);
+      SET_VALUE("i20", inertia[2][0], false);
+      SET_VALUE("i21", inertia[2][1], false);
+      SET_VALUE("i22", inertia[2][2], false);
 
-      SET_VALUE("linear_damping", linear_damping);
-      SET_VALUE("angular_damping", angular_damping);
-      SET_VALUE("angular_low", angular_low);
+      SET_VALUE("linear_damping", linear_damping, writeDefaults);
+      SET_VALUE("angular_damping", angular_damping, writeDefaults);
+      SET_VALUE("angular_low", angular_low, writeDefaults);
 
-      SET_VALUE("shadow_id", shadow_id);
-      SET_VALUE("shadowcaster", isShadowCaster);
-      SET_VALUE("shadowreceiver", isShadowReceiver);
+      SET_VALUE("shadow_id", shadow_id, writeDefaults);
+      SET_VALUE("shadowcaster", isShadowCaster, writeDefaults);
+      SET_VALUE("shadowreceiver", isShadowReceiver, writeDefaults);
+      SET_VALUE("material", material.name, writeDefaults);
 
     }
 

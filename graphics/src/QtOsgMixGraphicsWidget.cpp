@@ -33,6 +33,9 @@
 #include <QKeyEvent>
 
 #include "QtOsgMixGraphicsWidget.h"
+#ifdef __APPLE__
+  #include <QMacCocoaViewContainer>
+#endif
 #include "HUD.h"
 #include "GraphicsManager.h"
 
@@ -53,20 +56,7 @@ namespace mars {
     QtOsgMixGraphicsWidget* QtOsgMixGraphicsWidget::createInstance(
                                                                    void *parent, osg::Group *scene, unsigned long id, bool rtt_widget,
                                                                    Qt::WindowFlags f, GraphicsManager *gm) {
-
-      if(parent) {
-        return new QtOsgMixGraphicsWidget(parent, scene, id, rtt_widget, f, gm);
-      }
-
-      //#ifdef USE_COCOA
-      QWidget *newWidget = new QWidget();
-      //newWidget->setGeometry(0, 0, 500, 500);
-      //newWidget->show();
-      return new QtOsgMixGraphicsWidget(newWidget, scene, id, rtt_widget, f, gm);
-      //#else
       return new QtOsgMixGraphicsWidget(parent, scene, id, rtt_widget, f, gm);
-      //#endif
-
     }
 
 
@@ -86,13 +76,9 @@ namespace mars {
       traits->windowDecoration = false;
 
 #if defined(__APPLE__)
-#if defined(USE_COCOA)
       wdata =  new WindowData(WindowData::CreateOnlyView);
       traits->inheritedWindowData = wdata;
       haveNSView = false;
-#else
-      traits->inheritedWindowData = new WindowData(HIViewGetWindow((HIViewRef)winId()));
-#endif
 #elif defined(WIN32) && !defined(__CYGWIN__)
       traits->inheritedWindowData = new WindowData((HWND)winId());
 #else // all others
@@ -159,11 +145,7 @@ namespace mars {
     }
 
     void* QtOsgMixGraphicsWidget::getWidget() {
-      //#ifdef USE_COCOA
-      return parent();
-      //#else
-      //return (void*)((QWidget*)this);
-      //#endif
+      return (void*)((QWidget*)this);
     }
 
     void QtOsgMixGraphicsWidget::showWidget() {
@@ -171,17 +153,16 @@ namespace mars {
     }
 
     void QtOsgMixGraphicsWidget::updateView() {
-#if defined(__APPLE__) && defined(USE_COCOA)
+#if defined(__APPLE__)
       if(!haveNSView && !isRTTWidget) {
-        //NSView* thisWindow = (NSView*)winId();
         NSView* osgWindow = wdata->getCreatedNSView();
         if(osgWindow) {
-          setCocoaView(osgWindow);
+          this->hide();
+          QMacCocoaViewContainer *c = new QMacCocoaViewContainer(0, this);
+          c->setCocoaView(osgWindow);
+          c->setGeometry(0, 0, QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+          this->show();
           haveNSView = true;
-          setGeometry(0, 0, 0, 0);
-
-          setGeometry(0, 0, parentWidget()->width(),
-                      parentWidget()->height());
         }
       }
 #endif
@@ -214,6 +195,10 @@ namespace mars {
       }
     }
 
+    void QtOsgMixGraphicsWidget::focusInEvent( QFocusEvent *event) {
+      gm->setActiveWindow(this);
+    }
+
     static int qtToOsgKey(QKeyEvent* e) {
       switch(e->key()) {
       case Qt::Key_Shift:
@@ -232,6 +217,8 @@ namespace mars {
         return osgGA::GUIEventAdapter::KEY_Left;
       case Qt::Key_Right:
         return osgGA::GUIEventAdapter::KEY_Right;
+      case Qt::Key_Delete:
+        return osgGA::GUIEventAdapter::KEY_Delete;
       default:
         return (osgGA::GUIEventAdapter::KeySymbol)*e->text().toLatin1().data();
       }
@@ -254,9 +241,6 @@ namespace mars {
     }
 
     void QtOsgMixGraphicsWidget::showEvent(QShowEvent * event) {
-#ifdef USE_COCOA
-      haveNSView = false;
-#endif
     }
 
     void QtOsgMixGraphicsWidget::closeEvent( QCloseEvent * event ) {
@@ -321,7 +305,7 @@ namespace mars {
     {
       if(event->delta()>0){
         view->getEventQueue()->mouseScroll(osgGA::GUIEventAdapter::SCROLL_UP);
-      } 
+      }
       else{
         view->getEventQueue()->mouseScroll(osgGA::GUIEventAdapter::SCROLL_DOWN);
       }
