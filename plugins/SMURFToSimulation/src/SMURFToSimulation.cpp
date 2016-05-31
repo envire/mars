@@ -100,11 +100,11 @@ namespace mars {
                 viz.write(*(control->graph), name);
                 */
                 graphLoader.loadRobot(nextGroupId, center, iniPose, *robot);
+                /*
                 envire::core::GraphViz viz;
                 std::string timestamp = base::Time::now().toString();
                 std::string name = "loadRobot" + timestamp + ".dot";
                 viz.write(*(control->graph), name);
-                /*
                 graphLoader.initGraph(*(control->graph), center);
                 //envire::core::GraphViz viz;
                 //std::string timestamp = base::Time::now().toString();
