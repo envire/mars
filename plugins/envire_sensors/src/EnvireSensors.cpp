@@ -94,9 +94,11 @@ namespace mars {
       {
         using SensorItemPtr = envire::core::Item<std::shared_ptr<BaseSensor>>::Ptr;
         if(debug) {LOG_DEBUG(("[EnvireSensors::ItemAdded] Smurf::Sensor in frame *" + e.frame + "*").c_str());}
-        if (e.frame == velodyneFrame)
+        smurf::Sensor smurfSensor = e.item->getData();
+        if (smurfSensor.getType() == "RotatingRaySensor")
         {
-          BaseSensor* sensor = createSensor(e.item->getData(), e.frame);
+          velodyneFrame = e.frame; 
+          BaseSensor* sensor = createSensor(smurfSensor, e.frame);
           SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
           control->graph->addItemToFrame(e.frame, sensorItem);
           if(debug) {LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");}
@@ -106,15 +108,14 @@ namespace mars {
             LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor. ");
           }
         }
+        else{
+          if(debug) {LOG_DEBUG(("[EnvireSensors::ItemAdded] Sensor type " + smurfSensor.getType() + " not supported.").c_str());}
+        }
       }
 
       mars::interfaces::BaseSensor* EnvireSensors::createSensor(smurf::Sensor &sensorSmurf, const envire::core::FrameId frameId)
       {
         configmaps::ConfigMap sensorMap = sensorSmurf.getMap();
-        if (sensorSmurf.getName() == "velodyne")
-        {
-          velodyneFrame = frameId;
-        }
         sensorMap["frame"] = frameId;
         BaseSensor* sensor = control->sensors->createAndAddSensor(&sensorMap); 
         return sensor;
