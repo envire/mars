@@ -7,6 +7,7 @@ include(FindPkgConfig)
 find_package(lib_manager)
 lib_defaults()
 define_module_info()
+set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "${CMAKE_PREFIX_PATH}/include")
 
 find_package(Qt5Widgets)
 if (${Qt5Widgets_FOUND})
@@ -32,7 +33,6 @@ pkg_check_modules(PKGCONFIG REQUIRED
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
 add_definitions(${PKGCONFIG_CLFAGS_OTHER})  #flags excluding the ones with -I
-
 
 include_directories(
   src

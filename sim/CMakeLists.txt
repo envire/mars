@@ -6,8 +6,14 @@ cmake_minimum_required(VERSION 2.6)
 find_package(Rock)
 
 include(FindPkgConfig)
+set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "${CMAKE_PREFIX_PATH}/include")
+
+#set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "/home/dfki.uni-bremen.de/rdominguez/Entern/marsSimBug/install/include" )
+set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "${CMAKE_PREFIX_PATH}/include/base/backward")
+set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "/usr/include/eigen3")
 
 find_package(lib_manager)
+
 lib_defaults()
 define_module_info()
 
