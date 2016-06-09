@@ -1,8 +1,7 @@
 #include <string>
 #include <memory>
 #include <mars/interfaces/sim/JointInterface.h>
-#include <mars/sim/SimJoint.h>
-#include <smurf/Joint.hpp>
+#include "SimJoint.h"
 
 namespace mars{
   namespace sim{
