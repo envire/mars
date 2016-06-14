@@ -36,7 +36,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <smurf/Robot.hpp>
-#include <envire_smurf/Robot.hpp>
+#include <envire_smurf/Visual.hpp>
 
 #include <envire_core/items/Item.hpp>
 #include <envire_core/events/GraphEventDispatcher.hpp>
