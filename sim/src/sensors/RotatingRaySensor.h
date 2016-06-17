@@ -42,6 +42,7 @@
 #include <mars/interfaces/graphics/draw_structs.h>
 
 #include <base/Pose.hpp>
+#include <base/samples/DepthMap.hpp>
 
 namespace mars {
   namespace sim {
@@ -190,12 +191,13 @@ namespace mars {
       utils::Quaternion orientation_offset; // Used to turn the sensor during each simulation step.
       long positionIndices[3];
       long rotationIndices[4];
-      double turning_step;
+      double turning_step; // NOTE Not used AFAIK
       int nsamples;
       mutable mars::utils::Mutex mutex_pointcloud, poseMutex;
       Eigen::Affine3d current_pose;
       bool closeThread;
       unsigned int num_points;
+      base::samples::DepthMap depthMap;
     };
 
   } // end of namespace sim

@@ -264,9 +264,18 @@ namespace mars {
       // data[] contains all the measured distances according to the define directions.
       assert((int)data.size() == config.bands * config.lasers);
 
+
       int i = 0; // data_counter
       utils::Vector local_ray, tmpvec;
       for(int b=0; b<config.bands; ++b) {
+        // TODO store each band in the correspondent column of the DepthMap with its timestamp
+        //
+        // You have to know how many columns you have. That is given by the resolution
+        base::samples::DepthMap depthMap;
+        float num_columns = M_PI / config.horizontal_resolution;
+        LOG_DEBUG("The number of columns for the Depthmap is %f ", num_columns);
+        //depthMap.timestamps
+
         base::Orientation base_orientation;
         base_orientation.x() = orientation_offset.x();
         base_orientation.y() = orientation_offset.y();
