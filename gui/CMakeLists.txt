@@ -11,6 +11,8 @@ define_module_info()
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} "${PROJECT_SOURCE_DIR}/cmake")
 
+
+
 MACRO(CMAKE_USE_FULL_RPATH install_rpath)
     SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
     SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
@@ -312,6 +314,7 @@ ELSE (WIN32)
   ENDIF (APPLE)
 ENDIF (WIN32)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 #CONFIGURE_FILE(configuration/dialog_config.in ${CMAKE_BINARY_DIR}/dialog_config.txt @ONLY)
 #INSTALL(FILES ${CMAKE_BINARY_DIR}/dialog_config.txt DESTINATION configuration/mars-default/)
@@ -319,8 +322,3 @@ ENDIF (WIN32)
 #install(FILES ${CMAKE_BINARY_DIR}/mars_Gui.yaml DESTINATION configuration/mars_default/)
 
 INSTALL(DIRECTORY resources DESTINATION share/mars/gui)
-
-find_package(Rock)
-set(ROCK_USE_CXX11 TRUE)
-rock_init(mars_gui 0.1)
-rock_standard_layout()
