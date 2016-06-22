@@ -38,6 +38,8 @@
 #include <envire_core/graph/GraphViz.hpp>
 
 #include <envire_collider_mls/MLSCollision.hpp>
+#include <fstream>
+#include <boost/archive/polymorphic_binary_iarchive.hpp>
 
 using namespace mars::plugins::envire_physics;
 using namespace mars::utils;
@@ -376,18 +378,18 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
 struct NullDeleter {template<typename T> void operator()(T*) {}};   
 bool GraphPhysics::addMlsSurface(NodeData* node)
 {
-  std::string env_path("Quali1");
-  std::string mls_map_id("/mls-grid");	
-  boost::scoped_ptr<envire::Environment> env(envire::Environment::unserialize(env_path));  
-  envire::MLSGrid::Ptr ptr(env->getItem<envire::MLSGrid>(mls_map_id));		
-  mlsgrid_ptr = ptr;	
-  boost::shared_ptr<envire::MLSGrid> mls(mlsgrid_ptr.get(), NullDeleter());
+		std::ifstream input(node->env_path,  std::ios::binary);
+		boost::archive::polymorphic_binary_iarchive  ia(input);
+	
+		maps::grid::MLSMapKalman mls_kalman;
+		ia >> mls_kalman;
+	
+	    boost::shared_ptr<maps::grid::MLSMapKalman> mls(&mls_kalman);     
+  
   mls_userdata = mls;
   if (debug) 
   {
-    //LOG_DEBUG(("[GraphPhysics::addMlsSurface] mls is loaded: x by y (%d %d)\n", mls->getCellSizeX(), mls->getCellSizeY()));
-    //LOG_DEBUG(("[GraphPhysics::addMlsSurface] mls is loaded: x by y (%f %f)",  mls->getCellSizeX(), mls->getCellSizeY()));
-    LOG_DEBUG("[GraphPhysics::addMlsSurface] mls is loaded: x by y %d %d",  mls->getCellSizeX(), mls->getCellSizeY());
+    LOG_DEBUG("[GraphPhysics::addMlsSurface] mls is loaded: x by y %d %d",  mls->getNumCells().x(), mls->getNumCells().y());
   }
   envire::collision::MLSCollision* mls_collision = envire::collision::MLSCollision::getInstance();
   dGeomID geom_mls = mls_collision->createNewCollisionObject(mls_userdata);	
@@ -401,7 +403,8 @@ bool GraphPhysics::addMlsSurface(NodeData* node)
   gd->c_params.cfm = 0.01;
   gd->c_params.erp = 0.1;
   gd->c_params.bounce = 0.0;
-  dGeomSetData(geom_mls, gd);		
+  dGeomSetData(geom_mls, gd);	
+  
   return true;
 } 	
 
