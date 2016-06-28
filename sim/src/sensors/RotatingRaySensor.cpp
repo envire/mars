@@ -59,138 +59,138 @@ namespace mars {
     }
 
     RotatingRaySensor::RotatingRaySensor(ControlCenter *control, RotatingRayConfig config):
-        BasePolarIntersectionSensor(config.id, 
-                                    config.name, 
-                                    config.bands*config.lasers,
-                                    1, 
-                                    config.opening_width,
-                                    config.opening_height),
-        SensorInterface(control), 
-        config(config) {
-         
-      frame = config.frame;
-      updateRate = config.updateRate;
+    BasePolarIntersectionSensor(config.id, config.name,
+                                config.bands*config.lasers,
+                                1, 
+                                config.opening_width,
+                                config.opening_height),
+    SensorInterface(control),
+    config(config){
+      setFixedParameters();
+      validateConfigVals(config);
+      setConfigBasedParameters(config);
+      dataBrokerSetup();
+      setSensorPos();
+      computeRaysDirectionsAndDraw(config);
+      closeThread = false;
+      this->start();
+    }
+
+    // Auxiliar methods for the constructor
+    void RotatingRaySensor::setFixedParameters(){
       orientation.setIdentity();
-      maxDistance = config.maxDistance;
-      turning_offset = 0.0;
       full_scan = false;
       current_pose.setIdentity();
       num_points = 0;
       toCloud = &pointcloud1;
       convertPointCloud = false;
       nextCloud = 2;
-      this->attached_node = config.attached_node;
-
-      std::string groupName, dataName;
-      drawStruct draw;
-      draw_item item;
-      Vector tmp;
       update_available = false;
-
       for(int i = 0; i < 3; ++i)
         positionIndices[i] = -1;
       for(int i = 0; i < 4; ++i)
         rotationIndices[i] = -1;
+    }
 
-      //// FIXME Here the node is not to be found
-      //bool erg = control->nodes->getDataBrokerNames(attached_node, &groupName, &dataName); // Do we need these databrokerNames? How can we implement this?
-      //if(!erg) { // To remove warning.
-      //  assert(erg);
-      //}
-      
-      using SimNodeItem = envire::core::Item<std::shared_ptr<SimNode>>;
-      using Iterator = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
-      std::shared_ptr<SimNode> simNodePtr;
-      Iterator begin, end;
-      boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(frame);
-      if (begin != end){
-        simNodePtr = begin->getData(); 
-        simNodePtr->getDataBrokerNames(&groupName, &dataName);
-      }
-      else
-      {
-        LOG_DEBUG("[RotatingRaySensor] The SimNode for the data broker to link to the sensor is NOT found");
-      }
-      
-      
-      if(control->dataBroker->registerTimedReceiver(this, groupName, dataName,"mars_sim/simTimer",updateRate)) {
-      }
-
-      envire::core::Transform sensorTf = control->graph->getTransform("center", frame); //FIXME Standarize the center of the graph name
-      position = sensorTf.transform.translation;
-      orientation = sensorTf.transform.orientation;
-      
-      LOG_DEBUG("[RotatingRaySensor] Position and orientation obtained ");
-      //position = control->nodes->getPosition(attached_node); //These ones we can get from the frame name
-      //orientation = control->nodes->getRotation(attached_node);
-      orientation_offset.setIdentity();
-      
-      // Fills the direction array.
-      if(config.bands < 1) {
-        std::cerr << "Number of bands too low("<< config.bands <<"),will be set to 1" << std::endl;
-        config.bands = 1;
-      }
-      if(config.lasers < 1) {
-        std::cerr << "Number of lasers too low("<< config.lasers <<"),will be set to 1" << std::endl;
-        config.lasers = 1;
-      }
-      
+    void RotatingRaySensor::setConfigBasedParameters(const RotatingRayConfig &config){
+      frame = config.frame;
+      updateRate = config.updateRate;
+      maxDistance = config.maxDistance;
+      this->attached_node = config.attached_node;
       // All bands will be turned from 'turning_offset' to 'turning_end_fullscan' in 'turning_step steps'.
       turning_offset = 0;
       turning_end_fullscan = config.opening_width / config.bands;
       turning_step = config.horizontal_resolution; 
-      
-      double vAngle = config.lasers <= 1 ? config.opening_height/2.0 : config.opening_height/(config.lasers-1);
-      double hAngle = config.bands <= 1 ? 0 : config.opening_width/config.bands;
       vertical_resolution = config.lasers <= 1 ? 0 : config.opening_height/(config.lasers-1);
-
-      double h_angle_cur = 0.0;
-      double v_angle_cur = 0.0;
-
-      for(int b=0; b<config.bands; ++b) {
-        h_angle_cur = b*hAngle - config.opening_width / 2.0 + config.horizontal_offset;
-
-        for(int l=0; l<config.lasers; ++l) {
-          v_angle_cur = l*vAngle - config.opening_height / 2.0 + config.vertical_offset;
-
-          tmp = Eigen::AngleAxisd(h_angle_cur, Eigen::Vector3d::UnitZ()) *
-              Eigen::AngleAxisd(v_angle_cur, Eigen::Vector3d::UnitY()) *
-              Vector(1,0,0);
-              
-          directions.push_back(tmp);
-        
-          // Add a drawing item for each ray regarding the initial sensor orientation.
-          if(config.draw_rays) {
-            draw.ptr_draw = (DrawInterface*)this;
-            item.id = 0;
-            item.type = DRAW_LINE;
-            item.draw_state = DRAW_STATE_CREATE;
-            item.point_size = 1;
-            item.myColor.r = 1;
-            item.myColor.g = 0;
-            item.myColor.b = 0;
-            item.myColor.a = 1;
-            item.texture = "";
-            item.t_width = item.t_height = 0;
-            item.get_light = 0.0;
-            
-            // Initial vector length is set to 1.0
-            item.start = position;
-            item.end = orientation * tmp;
-            draw.drawItems.push_back(item);
-          }
-        }
-      }
-
-      // GraphicsManager crashes if default constructor drawStruct is passed.
-      if(config.draw_rays) {
-        if(control->graphics) {
-          control->graphics->addDrawItems(&draw);
-        }
-      }
-      closeThread = false;
-      this->start();
     }
+
+   void RotatingRaySensor::setSensorPos(){
+     envire::core::Transform sensorTf = control->graph->getTransform("center", frame); //FIXME Standarize the center of the graph name
+     position = sensorTf.transform.translation;
+     orientation = sensorTf.transform.orientation;
+     LOG_DEBUG("[RotatingRaySensor] Position and orientation obtained ");
+     orientation_offset.setIdentity();
+   }
+
+   void RotatingRaySensor::dataBrokerSetup(){
+     std::string groupName, dataName;
+     using SimNodeItem = envire::core::Item<std::shared_ptr<SimNode>>;
+     using Iterator = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
+     std::shared_ptr<SimNode> simNodePtr;
+     Iterator begin, end;
+     boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(frame);
+     if (begin != end){
+       simNodePtr = begin->getData(); 
+       simNodePtr->getDataBrokerNames(&groupName, &dataName);
+     }
+     else
+     {
+       LOG_DEBUG("[RotatingRaySensor] The SimNode for the data broker to link to the sensor is NOT found");
+     }
+     if(control->dataBroker->registerTimedReceiver(this, groupName, dataName,"mars_sim/simTimer",updateRate)) {
+     }
+   }
+
+   void RotatingRaySensor::validateConfigVals(RotatingRayConfig &config){
+        // Fills the direction array.
+        if(config.bands < 1) {
+          std::cerr << "Number of bands too low("<< config.bands <<"),will be set to 1" << std::endl;
+          config.bands = 1;
+        }
+        if(config.lasers < 1) {
+          std::cerr << "Number of lasers too low("<< config.lasers <<"),will be set to 1" << std::endl;
+          config.lasers = 1;
+        }
+   }
+
+   void RotatingRaySensor::computeRaysDirectionsAndDraw(const RotatingRayConfig &config){
+     double vAngle = config.lasers <= 1 ? config.opening_height/2.0 : config.opening_height/(config.lasers-1);
+     double hAngle = config.bands <= 1 ? 0 : config.opening_width/config.bands;
+     double h_angle_cur = 0.0;
+     double v_angle_cur = 0.0;
+     utils::Vector tmp;
+     drawStruct draw;
+     for(int b=0; b<config.bands; ++b) {
+       h_angle_cur = b*hAngle - config.opening_width / 2.0 + config.horizontal_offset;
+       for(int l=0; l<config.lasers; ++l) {
+         v_angle_cur = l*vAngle - config.opening_height / 2.0 + config.vertical_offset;
+         tmp = Eigen::AngleAxisd(h_angle_cur, Eigen::Vector3d::UnitZ()) *
+           Eigen::AngleAxisd(v_angle_cur, Eigen::Vector3d::UnitY()) *
+           Vector(1,0,0);
+         directions.push_back(tmp);
+         // Add a drawing item for each ray regarding the initial sensor orientation.
+         if(config.draw_rays) {
+           pushDrawRayItem(tmp, draw);
+         }
+       }
+     }
+     // GraphicsManager crashes if default constructor drawStruct is passed.
+     if(config.draw_rays) {
+       if(control->graphics) {
+         control->graphics->addDrawItems(&draw);
+       }
+     }
+   }
+   
+   void RotatingRaySensor::pushDrawRayItem(const Vector &tmp, drawStruct &draw){
+     draw_item item;
+     draw.ptr_draw = (DrawInterface*)this;
+     item.id = 0;
+     item.type = DRAW_LINE;
+     item.draw_state = DRAW_STATE_CREATE;
+     item.point_size = 1;
+     item.myColor.r = 1;
+     item.myColor.g = 0;
+     item.myColor.b = 0;
+     item.myColor.a = 1;
+     item.texture = "";
+     item.t_width = item.t_height = 0;
+     item.get_light = 0.0;
+     // Initial vector length is set to 1.0
+     item.start = position;
+     item.end = orientation * tmp;
+     draw.drawItems.push_back(item);
+   }
 
     RotatingRaySensor::~RotatingRaySensor(void) {
       control->graphics->removeDrawItems((DrawInterface*)this);
@@ -273,7 +273,7 @@ namespace mars {
         // You have to know how many columns you have. That is given by the resolution
         base::samples::DepthMap depthMap;
         float num_columns = M_PI / config.horizontal_resolution;
-        LOG_DEBUG("The number of columns for the Depthmap is %f ", num_columns);
+        //LOG_DEBUG("The number of columns for the Depthmap is %f ", num_columns);
         //depthMap.timestamps
 
         base::Orientation base_orientation;

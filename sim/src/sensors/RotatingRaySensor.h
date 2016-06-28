@@ -170,6 +170,13 @@ namespace mars {
 
     protected:
       void run();
+      void setFixedParameters();
+      void setConfigBasedParameters(const RotatingRayConfig &config);
+      void dataBrokerSetup();
+      void setSensorPos();
+      void validateConfigVals(RotatingRayConfig &config);
+      void computeRaysDirectionsAndDraw(const RotatingRayConfig &config);
+      void pushDrawRayItem(const utils::Vector &tmp, mars::interfaces::drawStruct &draw);
 
     private:
       /** Contains the normalized scan directions. */ 
