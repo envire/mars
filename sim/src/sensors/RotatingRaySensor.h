@@ -117,6 +117,11 @@ namespace mars {
       int getSensorData(double**) const; 
       
       /**
+       * The position and rotation indices are used to access the package data
+       */
+      void getCurrentPose(const data_broker::DataPackage &package);
+
+      /**
        * Receives the measured distances, calculates the vectors in the local
        * sensor frame and transfers them into the world to compensate the
        * movement during pointcloud gathering.
@@ -175,8 +180,9 @@ namespace mars {
       void dataBrokerSetup();
       void setSensorPos();
       void validateConfigVals(RotatingRayConfig &config);
-      void computeRaysDirectionsAndDraw(const RotatingRayConfig &config);
+      void computeRaysDirectionsAndPrepareDraw(const RotatingRayConfig &config);
       void pushDrawRayItem(const utils::Vector &tmp, mars::interfaces::drawStruct &draw);
+      void prepareFinalPointcloud();
 
     private:
       /** Contains the normalized scan directions. */ 

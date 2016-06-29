@@ -71,7 +71,7 @@ namespace mars {
       setConfigBasedParameters(config);
       dataBrokerSetup();
       setSensorPos();
-      computeRaysDirectionsAndDraw(config);
+      computeRaysDirectionsAndPrepareDraw(config);
       closeThread = false;
       this->start();
     }
@@ -143,7 +143,7 @@ namespace mars {
         }
    }
 
-   void RotatingRaySensor::computeRaysDirectionsAndDraw(const RotatingRayConfig &config){
+   void RotatingRaySensor::computeRaysDirectionsAndPrepareDraw(const RotatingRayConfig &config){
      double vAngle = config.lasers <= 1 ? config.opening_height/2.0 : config.opening_height/(config.lasers-1);
      double hAngle = config.bands <= 1 ? 0 : config.opening_width/config.bands;
      double h_angle_cur = 0.0;
@@ -199,6 +199,8 @@ namespace mars {
       this->wait();
     }
 
+    // This is the method that is used in the orogen task.
+    // We may implement a similar one, or extend it to return also a DepthMap
     bool RotatingRaySensor::getPointcloud(std::vector<utils::Vector>& pcloud) {
       mars::utils::MutexLocker lock(&mutex_pointcloud);
       if(full_scan) {
@@ -209,7 +211,10 @@ namespace mars {
           return false;
       }
     }
-
+    
+    // Copies into data the full pointcloud. 
+    // I guess here what has to be copied now is the DepthMap
+    // Where is this method called? Neither here, nor in the orogen task...
     int RotatingRaySensor::getSensorData(double** data_) const {
       mars::utils::MutexLocker lock(&mutex_pointcloud);
       *data_ = (double*)malloc(pointcloud_full.size()*3*sizeof(double));
@@ -223,15 +228,8 @@ namespace mars {
       }
       return pointcloud_full.size();
     }
-
-    void RotatingRaySensor::receiveData(const data_broker::DataInfo &info,
-                                const data_broker::DataPackage &package,
-                                int callbackParam) {
-      CPP_UNUSED(info);
-      CPP_UNUSED(callbackParam);
-      long id;
-      package.get(0, &id);
-
+      
+    void RotatingRaySensor::getCurrentPose(const data_broker::DataPackage &package){
       if(positionIndices[0] == -1) {
         positionIndices[0] = package.getIndexByName("position/x");
         positionIndices[1] = package.getIndexByName("position/y");
@@ -241,12 +239,6 @@ namespace mars {
         rotationIndices[2] = package.getIndexByName("rotation/z");
         rotationIndices[3] = package.getIndexByName("rotation/w");
       }
-      for(int i = 0; i < 3; ++i)
-      {
-        package.get(positionIndices[i], &position[i]);
-      }
-      
-      Eigen::Vector3d position;
       package.get(positionIndices[0], &position.x());
       package.get(positionIndices[1], &position.y());
       package.get(positionIndices[2], &position.z());
@@ -254,36 +246,31 @@ namespace mars {
       package.get(rotationIndices[1], &orientation.y());
       package.get(rotationIndices[2], &orientation.z());
       package.get(rotationIndices[3], &orientation.w());
-
       poseMutex.lock();
       current_pose.setIdentity();
       current_pose.rotate(orientation);
       current_pose.translation() = position;
       poseMutex.unlock();
+    }
 
+    // Receives the measured distances in package. Method is called by the
+    // DataBroker as soon as the registered event occurs.
+    void RotatingRaySensor::receiveData(const data_broker::DataInfo &info,
+                                const data_broker::DataPackage &package,
+                                int callbackParam) {
+      CPP_UNUSED(info);
+      CPP_UNUSED(callbackParam);
+      long id;
+      package.get(0, &id);
+      getCurrentPose(package);
       // data[] contains all the measured distances according to the define directions.
       assert((int)data.size() == config.bands * config.lasers);
-
-
+      // NOTE Maybe data now should have the size of the DepthMap? Now it has the size equal to the number of points... But this is also the size of the number of distances, right?
       int i = 0; // data_counter
       utils::Vector local_ray, tmpvec;
       for(int b=0; b<config.bands; ++b) {
-        // TODO store each band in the correspondent column of the DepthMap with its timestamp
-        //
-        // You have to know how many columns you have. That is given by the resolution
-        base::samples::DepthMap depthMap;
-        float num_columns = M_PI / config.horizontal_resolution;
-        //LOG_DEBUG("The number of columns for the Depthmap is %f ", num_columns);
-        //depthMap.timestamps
-
-        base::Orientation base_orientation;
-        base_orientation.x() = orientation_offset.x();
-        base_orientation.y() = orientation_offset.y();
-        base_orientation.z() = orientation_offset.z();
-        base_orientation.w() = orientation_offset.w();
-
-        // If min/max are exceeded distance will be ignored.
         for(int l=0; l<config.lasers; ++l, ++i){
+          // If min/max are exceeded distance will be ignored.
           if (data[i] >= config.minDistance && data[i] <= config.maxDistance) {
             // Calculates the ray/vector within the sensor frame.
             local_ray = orientation_offset * directions[i] * data[i];
@@ -291,11 +278,16 @@ namespace mars {
             // This necessitates a back-transformation (world2node) in getPointcloud().
             tmpvec = current_pose * local_ray;
             toCloud->push_back(tmpvec); // Scale normalized vector.
+            /*
+            double local_dist = data[i];
+            depthMapLine[b].dist[l] = local_dist;
+            */
           }
         }
+        //depthMaps[b].distances->pushback(dephtMapLine)
+        //depthMaps[b].timestamps->pushback(timestamp);
       }
       num_points += data.size();
-
       update_available = true;
     }
 
@@ -350,30 +342,32 @@ namespace mars {
       return config.bands * config.lasers;
     }
 
+    void RotatingRaySensor::prepareFinalPointcloud(){
+      // Copies current full pointcloud to pointcloud_full.
+      poseMutex.lock();
+      Eigen::Affine3d current_pose2 = current_pose;
+      Eigen::Affine3d rot;
+      rot.setIdentity();
+      rot.rotate(config.transf_sensor_rot_to_sensor);
+      poseMutex.unlock();
+      std::list<utils::Vector>::iterator it = fromCloud->begin();
+      pointcloud_full.clear();
+      pointcloud_full.reserve(fromCloud->size());
+      base::Vector3d vec_local;
+      for(int i=0; it != fromCloud->end(); it++, i++) {
+        // Transforms the pointcloud back from world to current node (see receiveDate()).
+        // In addition 'transf_sensor_rot_to_sensor' is applied which describes
+        // the orientation of the sensor in the unturned sensor frame.
+        vec_local = rot * current_pose2.inverse() * (*it);
+        pointcloud_full.push_back(vec_local);
+      }
+      fromCloud->clear();
+    }
+
     void RotatingRaySensor::run() {
       while(!closeThread) {
-        if(convertPointCloud) {
-          poseMutex.lock();
-          Eigen::Affine3d current_pose2 = current_pose;
-          Eigen::Affine3d rot;
-          rot.setIdentity();
-          rot.rotate(config.transf_sensor_rot_to_sensor);
-          poseMutex.unlock();
-
-          // Copies current full pointcloud to pointcloud_full.
-          std::list<utils::Vector>::iterator it = fromCloud->begin();
-          pointcloud_full.clear();
-          pointcloud_full.reserve(fromCloud->size());
-          base::Vector3d vec_local;
-
-          for(int i=0; it != fromCloud->end(); it++, i++) {
-            // Transforms the pointcloud back from world to current node (see receiveDate()).
-            // In addition 'transf_sensor_rot_to_sensor' is applied which describes
-            // the orientation of the sensor in the unturned sensor frame.
-            vec_local = rot * current_pose2.inverse() * (*it);
-            pointcloud_full.push_back(vec_local);
-          }
-          fromCloud->clear();
+        if(convertPointCloud) { //Initially this is false. I guess it set to true when a pointcloud is ready to be delivered
+          prepareFinalPointcloud();
           convertPointCloud = false;
           full_scan = true;
         }
@@ -472,3 +466,18 @@ namespace mars {
 
   } // end of namespace sim
 } // end of namespace mars
+
+        /*
+        // You have to know how many columns you have. That is given by the resolution
+        base::samples::DepthMap depthMap;
+        float num_columns = M_PI / config.horizontal_resolution;
+        //LOG_DEBUG("The number of columns for the Depthmap is %f ", num_columns);
+        //depthMap.timestamps
+        */
+        /* The next lines where completely useles
+        base::Orientation base_orientation;
+        base_orientation.x() = orientation_offset.x();
+        base_orientation.y() = orientation_offset.y();
+        base_orientation.z() = orientation_offset.z();
+        base_orientation.w() = orientation_offset.w();
+        */
