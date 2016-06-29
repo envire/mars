@@ -102,6 +102,17 @@ namespace mars {
       turning_end_fullscan = config.opening_width / config.bands;
       turning_step = config.horizontal_resolution; 
       vertical_resolution = config.lasers <= 1 ? 0 : config.opening_height/(config.lasers-1);
+      // Initialize DepthMap 
+      partialDepthMaps = std::vector<base::samples::DepthMap>(config.bands);
+      finalDepthMap = base::samples::DepthMap();
+      double vAngle = config.lasers <= 1 ? config.opening_height/2.0 : config.opening_height/(config.lasers-1);
+      double limitVAngle = config.lasers <= 1 ? 0.0 : - vAngle*((config.lasers-1)/2.0);
+      finalDepthMap.vertical_interval.push_back(-limitVAngle);
+      finalDepthMap.vertical_interval.push_back(limitVAngle);
+      finalDepthMap.horizontal_interval.push_back(-M_PI);
+      finalDepthMap.horizontal_interval.push_back(M_PI);
+      finalDepthMap.vertical_size = config.lasers;
+      finalDepthMap.horizontal_size = config.bands;
     }
 
    void RotatingRaySensor::setSensorPos(){
@@ -268,6 +279,9 @@ namespace mars {
       // NOTE Maybe data now should have the size of the DepthMap? Now it has the size equal to the number of points... But this is also the size of the number of distances, right?
       int i = 0; // data_counter
       utils::Vector local_ray, tmpvec;
+      double local_dist;
+      base::Time timestamp = base::Time::Time::now(); 
+      //LOG_DEBUG(("Example of a timestamp " + timestamp.toString()).c_str());
       for(int b=0; b<config.bands; ++b) {
         for(int l=0; l<config.lasers; ++l, ++i){
           // If min/max are exceeded distance will be ignored.
@@ -278,14 +292,10 @@ namespace mars {
             // This necessitates a back-transformation (world2node) in getPointcloud().
             tmpvec = current_pose * local_ray;
             toCloud->push_back(tmpvec); // Scale normalized vector.
-            /*
-            double local_dist = data[i];
-            depthMapLine[b].dist[l] = local_dist;
-            */
+            partialDepthMaps[b].distances.push_back(data[i]);
           }
+        partialDepthMaps[b].timestamps.push_back(timestamp);
         }
-        //depthMaps[b].distances->pushback(dephtMapLine)
-        //depthMaps[b].timestamps->pushback(timestamp);
       }
       num_points += data.size();
       update_available = true;
@@ -364,10 +374,24 @@ namespace mars {
       fromCloud->clear();
     }
 
+    void RotatingRaySensor::prepareFinalDepthMap(){
+      for(int b=0; b<config.bands; b++){
+        for(int sample=0; sample < partialDepthMaps[b].timestamps.size(); sample++){
+          finalDepthMap.timestamps.push_back(partialDepthMaps[b].timestamps[sample]);
+          for(int l=0; l<config.lasers; l++){
+            finalDepthMap.distances.push_back(partialDepthMaps[b].distances[l*sample]);
+            partialDepthMaps[b].distances.clear();
+            partialDepthMaps[b].timestamps.clear();
+          }
+        }
+      }
+    }
+
     void RotatingRaySensor::run() {
       while(!closeThread) {
         if(convertPointCloud) { //Initially this is false. I guess it set to true when a pointcloud is ready to be delivered
           prepareFinalPointcloud();
+          prepareFinalDepthMap();
           convertPointCloud = false;
           full_scan = true;
         }

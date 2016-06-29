@@ -183,6 +183,7 @@ namespace mars {
       void computeRaysDirectionsAndPrepareDraw(const RotatingRayConfig &config);
       void pushDrawRayItem(const utils::Vector &tmp, mars::interfaces::drawStruct &draw);
       void prepareFinalPointcloud();
+      void prepareFinalDepthMap();
 
     private:
       /** Contains the normalized scan directions. */ 
@@ -210,7 +211,8 @@ namespace mars {
       Eigen::Affine3d current_pose;
       bool closeThread;
       unsigned int num_points;
-      base::samples::DepthMap depthMap;
+      base::samples::DepthMap finalDepthMap;
+      std::vector<base::samples::DepthMap> partialDepthMaps; // Stores the full scan.
     };
 
   } // end of namespace sim
