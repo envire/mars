@@ -23,7 +23,7 @@
 
 
 #include <maps/grid/MLSMap.hpp>
-#include <boost/shared_ptr.hpp>
+//#include <boost/shared_ptr.hpp>
 #include <mars/sim/PhysicsMapper.h>
 
 namespace mars {
@@ -160,7 +160,7 @@ namespace mars {
         
         dSpaceID current_space;
  
-		boost::shared_ptr<maps::grid::MLSMapKalman> mls_userdata;            
+	//	boost::shared_ptr<maps::grid::MLSMapKalman> mls;            
         bool addMlsSurface(mars::interfaces::NodeData* node);          
         
       };
