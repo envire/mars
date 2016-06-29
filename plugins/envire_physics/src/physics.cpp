@@ -375,36 +375,36 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
 
 }
 
-struct NullDeleter {template<typename T> void operator()(T*) {}};   
+//struct NullDeleter {template<typename T> void operator()(T*) {}};   
 bool GraphPhysics::addMlsSurface(NodeData* node)
 {
-		std::ifstream input(node->env_path,  std::ios::binary);
-		boost::archive::polymorphic_binary_iarchive  ia(input);
-	
-		maps::grid::MLSMapKalman mls_kalman;
-		ia >> mls_kalman;
-	
-	    boost::shared_ptr<maps::grid::MLSMapKalman> mls(&mls_kalman);     
   
-  mls_userdata = mls;
-  if (debug) 
-  {
-    LOG_DEBUG("[GraphPhysics::addMlsSurface] mls is loaded: x by y %d %d",  mls->getNumCells().x(), mls->getNumCells().y());
-  }
-  envire::collision::MLSCollision* mls_collision = envire::collision::MLSCollision::getInstance();
-  dGeomID geom_mls = mls_collision->createNewCollisionObject(mls_userdata);	
+  	dVector3 pos;
+	pos[ 0 ] = 0;
+	pos[ 1 ] = 0;
+	pos[ 2 ] = 0;
+
+	// Rotate so Z is up, not Y (which is the default orientation)
+	dMatrix3 R;
+	dRSetIdentity( R );
+	//dRFromAxisAndAngle( R, 1, 0, 0, (3.141592/180) * 90 );  //DEGTORAD
+
+	// Place it.
+	dGeomSetRotation( (dGeomID)node->g_mls, R );
+	dGeomSetPosition( (dGeomID)node->g_mls, pos[0], pos[1], pos[2] );
+  
   WorldPhysics *theWorld = (WorldPhysics*)control->sim->getPhysics();
   current_space = theWorld->getSpace();
-  current_space->add (geom_mls);  
+  current_space->add ((dGeomID)node->g_mls);  
   geom_data* gd = new geom_data;
   (*gd).setZero();
   gd->sense_contact_force = 0;
   gd->parent_geom = 0;
-  gd->c_params.cfm = 0.01;
-  gd->c_params.erp = 0.1;
+  gd->c_params.cfm = 0.001;
+  gd->c_params.erp = 0.001;
   gd->c_params.bounce = 0.0;
-  dGeomSetData(geom_mls, gd);	
-  
+  dGeomSetData((dGeomID)node->g_mls, gd);	
+ 
   return true;
 } 	
 
