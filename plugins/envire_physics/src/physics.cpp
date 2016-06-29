@@ -378,32 +378,10 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
 //struct NullDeleter {template<typename T> void operator()(T*) {}};   
 bool GraphPhysics::addMlsSurface(NodeData* node)
 {
-  
-  	dVector3 pos;
-	pos[ 0 ] = 0;
-	pos[ 1 ] = 0;
-	pos[ 2 ] = 0;
-
-	// Rotate so Z is up, not Y (which is the default orientation)
-	dMatrix3 R;
-	dRSetIdentity( R );
-	//dRFromAxisAndAngle( R, 1, 0, 0, (3.141592/180) * 90 );  //DEGTORAD
-
-	// Place it.
-	dGeomSetRotation( (dGeomID)node->g_mls, R );
-	dGeomSetPosition( (dGeomID)node->g_mls, pos[0], pos[1], pos[2] );
-  
+   
   WorldPhysics *theWorld = (WorldPhysics*)control->sim->getPhysics();
   current_space = theWorld->getSpace();
   current_space->add ((dGeomID)node->g_mls);  
-  geom_data* gd = new geom_data;
-  (*gd).setZero();
-  gd->sense_contact_force = 0;
-  gd->parent_geom = 0;
-  gd->c_params.cfm = 0.001;
-  gd->c_params.erp = 0.001;
-  gd->c_params.bounce = 0.0;
-  dGeomSetData((dGeomID)node->g_mls, gd);	
  
   return true;
 } 	
