@@ -110,6 +110,12 @@ namespace mars {
       bool getPointcloud(std::vector<utils::Vector>& pointcloud);
 
       /**
+       * Returns a complete scan covering the complete defined horizontal range.
+       * The Depthmap contains a timestamp for each column in the depth image
+       */
+      bool getDepthMap(base::samples::DepthMap &depthMap);
+
+      /**
        * Copies the current full pointcloud to a double array with (x,y,z).
        * \warning Memory has to be freed manually!
        * Inherited from BaseSensor, implemented from BasePolarIntersectionSensor.
@@ -176,11 +182,11 @@ namespace mars {
     protected:
       void run();
       void setFixedParameters();
-      void setConfigBasedParameters(const RotatingRayConfig &config);
+      void setConfigBasedParameters();
       void dataBrokerSetup();
       void setSensorPos();
-      void validateConfigVals(RotatingRayConfig &config);
-      void computeRaysDirectionsAndPrepareDraw(const RotatingRayConfig &config);
+      void validateConfigVals();
+      void computeRaysDirectionsAndPrepareDraw();
       void pushDrawRayItem(const utils::Vector &tmp, mars::interfaces::drawStruct &draw);
       void prepareFinalPointcloud();
       void prepareFinalDepthMap();

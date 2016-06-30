@@ -67,11 +67,11 @@ namespace mars {
     SensorInterface(control),
     config(config){
       setFixedParameters();
-      validateConfigVals(config);
-      setConfigBasedParameters(config);
+      validateConfigVals();
+      setConfigBasedParameters();
       dataBrokerSetup();
       setSensorPos();
-      computeRaysDirectionsAndPrepareDraw(config);
+      computeRaysDirectionsAndPrepareDraw();
       closeThread = false;
       this->start();
     }
@@ -92,7 +92,7 @@ namespace mars {
         rotationIndices[i] = -1;
     }
 
-    void RotatingRaySensor::setConfigBasedParameters(const RotatingRayConfig &config){
+    void RotatingRaySensor::setConfigBasedParameters(){
       frame = config.frame;
       updateRate = config.updateRate;
       maxDistance = config.maxDistance;
@@ -107,12 +107,15 @@ namespace mars {
       finalDepthMap = base::samples::DepthMap();
       double vAngle = config.lasers <= 1 ? config.opening_height/2.0 : config.opening_height/(config.lasers-1);
       double limitVAngle = config.lasers <= 1 ? 0.0 : - vAngle*((config.lasers-1)/2.0);
-      finalDepthMap.vertical_interval.push_back(-limitVAngle);
-      finalDepthMap.vertical_interval.push_back(limitVAngle);
-      finalDepthMap.horizontal_interval.push_back(-M_PI);
-      finalDepthMap.horizontal_interval.push_back(M_PI);
+      std::vector<double> vertical_interval = {-limitVAngle, limitVAngle};
+      finalDepthMap.vertical_interval = vertical_interval;
+      std::vector<double> horizontal_interval = {-M_PI, M_PI};
+      finalDepthMap.horizontal_interval = horizontal_interval;
       finalDepthMap.vertical_size = config.lasers;
-      finalDepthMap.horizontal_size = config.bands;
+      //finalDepthMap.horizontal_size = config.bands;
+      finalDepthMap.horizontal_size = (2.0*M_PI)/config.horizontal_resolution;
+      LOG_DEBUG("Horizontal size from config is: %d", finalDepthMap.horizontal_size );
+      LOG_DEBUG("Horizontal by vertical size: %d", finalDepthMap.horizontal_size*finalDepthMap.vertical_size );
     }
 
    void RotatingRaySensor::setSensorPos(){
@@ -142,7 +145,7 @@ namespace mars {
      }
    }
 
-   void RotatingRaySensor::validateConfigVals(RotatingRayConfig &config){
+   void RotatingRaySensor::validateConfigVals(){
         // Fills the direction array.
         if(config.bands < 1) {
           std::cerr << "Number of bands too low("<< config.bands <<"),will be set to 1" << std::endl;
@@ -154,7 +157,7 @@ namespace mars {
         }
    }
 
-   void RotatingRaySensor::computeRaysDirectionsAndPrepareDraw(const RotatingRayConfig &config){
+   void RotatingRaySensor::computeRaysDirectionsAndPrepareDraw(){
      double vAngle = config.lasers <= 1 ? config.opening_height/2.0 : config.opening_height/(config.lasers-1);
      double hAngle = config.bands <= 1 ? 0 : config.opening_width/config.bands;
      double h_angle_cur = 0.0;
@@ -222,6 +225,45 @@ namespace mars {
           return false;
       }
     }
+
+
+    bool RotatingRaySensor::getDepthMap(base::samples::DepthMap &depthMap) {
+      mars::utils::MutexLocker lock(&mutex_pointcloud);
+      if(full_scan) {
+        full_scan = false;
+        bool valid = true;
+        unsigned int i = 0;
+        int count_invalids = 0;
+        //while (i<finalDepthMap.distances.size() && valid){
+        while (i<finalDepthMap.distances.size()){
+          valid = finalDepthMap.isMeasurementValid(finalDepthMap.distances[i]);        
+          if (!valid){
+            //LOG_DEBUG("The measurement %f is not valid", finalDepthMap.distances[i]);
+            //LOG_DEBUG("The measurement state is %d", finalDepthMap.getMeasurementState(finalDepthMap.distances[i]));
+            double value = (finalDepthMap.distances[i] < config.minDistance) ? 0.0 : base::infinity<double>();
+            count_invalids ++;
+            //LOG_DEBUG("The measurement is replaced by %f", finalDepthMap.distances[i]);
+
+          }
+          i++;
+        }
+        LOG_DEBUG("Found  %d invalid measurements in the final DepthMap", count_invalids);
+        depthMap.time = finalDepthMap.time;
+        depthMap.vertical_projection = finalDepthMap.vertical_projection;
+        depthMap.horizontal_projection = finalDepthMap.horizontal_projection;
+        depthMap.horizontal_interval= finalDepthMap.horizontal_interval;
+        depthMap.vertical_interval = finalDepthMap.vertical_interval;
+        depthMap.vertical_size = finalDepthMap.vertical_size;
+        depthMap.horizontal_size = finalDepthMap.horizontal_size;
+        depthMap.timestamps.swap(finalDepthMap.timestamps);
+        depthMap.distances.swap(finalDepthMap.distances);
+        finalDepthMap.distances.clear();
+        finalDepthMap.timestamps.clear();
+        return true;
+      } else {
+          return false;
+      }
+    }
     
     // Copies into data the full pointcloud. 
     // I guess here what has to be copied now is the DepthMap
@@ -281,11 +323,10 @@ namespace mars {
       utils::Vector local_ray, tmpvec;
       double local_dist;
       base::Time timestamp = base::Time::Time::now(); 
-      //LOG_DEBUG(("Example of a timestamp " + timestamp.toString()).c_str());
       for(int b=0; b<config.bands; ++b) {
         for(int l=0; l<config.lasers; ++l, ++i){
           // If min/max are exceeded distance will be ignored.
-          if (data[i] >= config.minDistance && data[i] <= config.maxDistance) {
+          if ((data[i] >= config.minDistance) && (data[i] <= config.maxDistance)) {
             // Calculates the ray/vector within the sensor frame.
             local_ray = orientation_offset * directions[i] * data[i];
             // Gathers pointcloud in the world frame to prevent/reduce movement distortion.
@@ -293,6 +334,14 @@ namespace mars {
             tmpvec = current_pose * local_ray;
             toCloud->push_back(tmpvec); // Scale normalized vector.
             partialDepthMaps[b].distances.push_back(data[i]);
+          }
+          // FIXME Nothing enters in this else, seems like data[i] comparing as expected
+          else{
+            LOG_DEBUG("It is detected that the data with index %d is not valid", i);
+            double value = (data[i] < config.minDistance) ? 0.0 : base::infinity<double>();
+            LOG_DEBUG("The distance %f is not valid", data[i]);
+            LOG_DEBUG("The value %f will replace it", value);
+            partialDepthMaps[b].distances.push_back(value);
           }
         partialDepthMaps[b].timestamps.push_back(timestamp);
         }
@@ -376,15 +425,23 @@ namespace mars {
 
     void RotatingRaySensor::prepareFinalDepthMap(){
       for(int b=0; b<config.bands; b++){
-        for(int sample=0; sample < partialDepthMaps[b].timestamps.size(); sample++){
+        LOG_DEBUG("The partial depthMap timestamps of band: %d", b);
+        LOG_DEBUG("Has size: %d", partialDepthMaps[b].timestamps.size());
+        for(unsigned int sample=0; sample < partialDepthMaps[b].timestamps.size(); sample++){
           finalDepthMap.timestamps.push_back(partialDepthMaps[b].timestamps[sample]);
           for(int l=0; l<config.lasers; l++){
             finalDepthMap.distances.push_back(partialDepthMaps[b].distances[l*sample]);
-            partialDepthMaps[b].distances.clear();
-            partialDepthMaps[b].timestamps.clear();
           }
         }
+        partialDepthMaps[b].distances.clear();
+        partialDepthMaps[b].timestamps.clear();
       }
+      LOG_DEBUG("The final depthMap has a distances size of: %d", finalDepthMap.distances.size());
+      LOG_DEBUG("The final depthMap has %d timestamps", finalDepthMap.timestamps.size());
+      LOG_DEBUG("The final depthMap has %d vertical size", finalDepthMap.vertical_size);
+      LOG_DEBUG("The final depthMap timestamps multiplied by the number laser should be equal to the number of distances: %d", finalDepthMap.timestamps.size()*finalDepthMap.vertical_size);
+      finalDepthMap.time = base::Time::Time::now();
+      finalDepthMap.horizontal_size = finalDepthMap.timestamps.size();
     }
 
     void RotatingRaySensor::run() {
