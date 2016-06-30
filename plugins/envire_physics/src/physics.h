@@ -23,7 +23,6 @@
 
 
 #include <maps/grid/MLSMap.hpp>
-//#include <boost/shared_ptr.hpp>
 #include <mars/sim/PhysicsMapper.h>
 
 namespace mars {
