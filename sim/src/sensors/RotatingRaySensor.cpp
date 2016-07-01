@@ -25,6 +25,13 @@
  *
  */
 
+// TODO Ask Malte what this method is for:
+// int RotatingRaySensor::getSensorData(double** data_) const
+//
+// TODO Why are the measures already set to maxDistance? When they are fetched from data[i]
+//
+// TODO Where is data coming from
+
 #include "RotatingRaySensor.h"
 #include <SimNode.h>
 
@@ -235,19 +242,20 @@ namespace mars {
         unsigned int i = 0;
         int count_invalids = 0;
         //while (i<finalDepthMap.distances.size() && valid){
-        while (i<finalDepthMap.distances.size()){
-          valid = finalDepthMap.isMeasurementValid(finalDepthMap.distances[i]);        
-          if (!valid){
-            //LOG_DEBUG("The measurement %f is not valid", finalDepthMap.distances[i]);
-            //LOG_DEBUG("The measurement state is %d", finalDepthMap.getMeasurementState(finalDepthMap.distances[i]));
-            double value = (finalDepthMap.distances[i] < config.minDistance) ? 0.0 : base::infinity<double>();
-            count_invalids ++;
-            //LOG_DEBUG("The measurement is replaced by %f", finalDepthMap.distances[i]);
-
-          }
-          i++;
-        }
-        LOG_DEBUG("Found  %d invalid measurements in the final DepthMap", count_invalids);
+        /* I think this is executing before receive data some how*/
+        //while (i<finalDepthMap.distances.size()){
+        //  valid = finalDepthMap.isMeasurementValid(finalDepthMap.distances[i]);        
+        //  if (!valid){
+        //    //LOG_DEBUG("The measurement %f is not valid", finalDepthMap.distances[i]);
+        //    //LOG_DEBUG("The measurement state is %d", finalDepthMap.getMeasurementState(finalDepthMap.distances[i]));
+        //    double value = (finalDepthMap.distances[i] < config.minDistance) ? 0.0 : base::infinity<double>();
+        //    count_invalids ++;
+        //    //LOG_DEBUG("The measurement is replaced by %f", finalDepthMap.distances[i]);
+        //    finalDepthMap.distances[i] = value;
+        //  }
+        //  i++;
+        //}
+        //LOG_DEBUG("Found  %d invalid measurements in the final DepthMap", count_invalids);
         depthMap.time = finalDepthMap.time;
         depthMap.vertical_projection = finalDepthMap.vertical_projection;
         depthMap.horizontal_projection = finalDepthMap.horizontal_projection;
@@ -257,8 +265,10 @@ namespace mars {
         depthMap.horizontal_size = finalDepthMap.horizontal_size;
         depthMap.timestamps.swap(finalDepthMap.timestamps);
         depthMap.distances.swap(finalDepthMap.distances);
+        depthMap.remissions.swap(finalDepthMap.remissions);
         finalDepthMap.distances.clear();
         finalDepthMap.timestamps.clear();
+        finalDepthMap.remissions.clear();
         return true;
       } else {
           return false;
@@ -267,18 +277,20 @@ namespace mars {
     
     // Copies into data the full pointcloud. 
     // I guess here what has to be copied now is the DepthMap
-    // Where is this method called? Neither here, nor in the orogen task...
+    // TODO Ask Malte what this method is for
+    // Seems not to be executed in our usecase. The trace is never shown
     int RotatingRaySensor::getSensorData(double** data_) const {
+      LOG_DEBUG("Executing getSensorData");       
       mars::utils::MutexLocker lock(&mutex_pointcloud);
       *data_ = (double*)malloc(pointcloud_full.size()*3*sizeof(double));
-      for(unsigned int i=0; i<pointcloud_full.size(); i++) {
-        if((pointcloud_full[i]).norm() <= config.maxDistance) {
-          int array_pos = i*3;
-          (*data_)[array_pos] = (pointcloud_full[i])[0];
-          (*data_)[array_pos+1] = (pointcloud_full[i])[1];
-          (*data_)[array_pos+2] = (pointcloud_full[i])[2];
-        }
-      }
+      //for(unsigned int i=0; i<pointcloud_full.size(); i++) {
+      //  if((pointcloud_full[i]).norm() <= config.maxDistance) {
+      //    int array_pos = i*3;
+      //    (*data_)[array_pos] = (pointcloud_full[i])[0];
+      //    (*data_)[array_pos+1] = (pointcloud_full[i])[1];
+      //    (*data_)[array_pos+2] = (pointcloud_full[i])[2];
+      //  }
+      //}
       return pointcloud_full.size();
     }
       
@@ -324,8 +336,26 @@ namespace mars {
       double local_dist;
       base::Time timestamp = base::Time::Time::now(); 
       for(int b=0; b<config.bands; ++b) {
+        partialDepthMaps[b].timestamps.push_back(timestamp);
         for(int l=0; l<config.lasers; ++l, ++i){
+          // Calculates the ray/vector within the sensor frame.
+          local_ray = orientation_offset * directions[i] * data[i];
+          // Gathers pointcloud in the world frame to prevent/reduce movement distortion.
+          // This necessitates a back-transformation (world2node) in getPointcloud().
+          tmpvec = current_pose * local_ray;
+          toCloud->push_back(tmpvec); // Scale normalized vector.
+          partialDepthMaps[b].distances.push_back(data[i]);
+          /*
           // If min/max are exceeded distance will be ignored.
+          //if ((i%10 == 0) && (b == 2)){
+          //  // Why are here the measurements already in the valid range??
+          //  LOG_DEBUG("i: %d", i); // 99
+          //  LOG_DEBUG("data[i]: %f", data[i]);
+          //  //LOG_DEBUG(("At timestamp" + timestamp.toString()).c_str());
+          //  //LOG_DEBUG("partialDepthMaps[b].distances.size: %d", partialDepthMaps[b].distances.size()); // 4
+          //  //LOG_DEBUG("Stored in partial depthmap: %f", data[i]);
+          //  //LOG_DEBUG("With config.maxDistance: %f", config.maxDistance);
+          //}
           if ((data[i] >= config.minDistance) && (data[i] <= config.maxDistance)) {
             // Calculates the ray/vector within the sensor frame.
             local_ray = orientation_offset * directions[i] * data[i];
@@ -335,16 +365,20 @@ namespace mars {
             toCloud->push_back(tmpvec); // Scale normalized vector.
             partialDepthMaps[b].distances.push_back(data[i]);
           }
-          // FIXME Nothing enters in this else, seems like data[i] comparing as expected
           else{
-            LOG_DEBUG("It is detected that the data with index %d is not valid", i);
-            double value = (data[i] < config.minDistance) ? 0.0 : base::infinity<double>();
-            LOG_DEBUG("The distance %f is not valid", data[i]);
-            LOG_DEBUG("The value %f will replace it", value);
-            partialDepthMaps[b].distances.push_back(value);
+            // FIXME Nothing enters in this else:
+            // Either all measurements in dara are correct
+            // OR the comparison is not fine
+            // OR 
+            LOG_DEBUG("It is detected in receiveData a not valid measure");
+            //double value = (data[i] < config.minDistance) ? 0.0 : base::infinity<double>();
+            //LOG_DEBUG("The distance %f is not valid", data[i]);
+            //LOG_DEBUG("The value %f will replace it", value);
+            //partialDepthMaps[b].distances.push_back(value);
           }
-        partialDepthMaps[b].timestamps.push_back(timestamp);
+          */
         }
+
       }
       num_points += data.size();
       update_available = true;
@@ -425,12 +459,19 @@ namespace mars {
 
     void RotatingRaySensor::prepareFinalDepthMap(){
       for(int b=0; b<config.bands; b++){
-        LOG_DEBUG("The partial depthMap timestamps of band: %d", b);
-        LOG_DEBUG("Has size: %d", partialDepthMaps[b].timestamps.size());
+        int i = 0;
+        //LOG_DEBUG("The partial depthMap timestamps of band: %d", b);
+        //LOG_DEBUG("Has size: %d", partialDepthMaps[b].timestamps.size());
         for(unsigned int sample=0; sample < partialDepthMaps[b].timestamps.size(); sample++){
           finalDepthMap.timestamps.push_back(partialDepthMaps[b].timestamps[sample]);
           for(int l=0; l<config.lasers; l++){
-            finalDepthMap.distances.push_back(partialDepthMaps[b].distances[l*sample]);
+            finalDepthMap.distances.push_back(partialDepthMaps[b].distances[l + sample*config.lasers]);
+            finalDepthMap.remissions.push_back(1.0);
+            //if ((l==3) && (b==3) && (sample==0)){
+            //  LOG_DEBUG(("At timestamp" + partialDepthMaps[b].timestamps[sample].toString()).c_str());
+            //  LOG_DEBUG("Final DepthMap index: %d", l + sample*config.lasers);
+            //  LOG_DEBUG("Stored in final depthmap from band 3, laser 3, index : %f", partialDepthMaps[b].distances[l + sample*config.lasers]);
+            //}
           }
         }
         partialDepthMaps[b].distances.clear();
