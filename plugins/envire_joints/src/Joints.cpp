@@ -307,12 +307,12 @@ namespace mars {
       void EnvireJoints::storeSimJoint (const std::shared_ptr<mars::interfaces::JointInterface>& jointInterface, mars::interfaces::JointData* jointData, FrameId storageFrame){
         JointInterfacePtrItemPtr jointInterfacePtrItemPtr(new envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>(jointInterface));
         // src/core/SimJoint.cpp:40:    SimJoint::SimJoint(ControlCenter *c, const JointData &sJoint_)
-        mars::sim::SimJoint* simJoint(new mars::sim::SimJoint(control, (*jointData)));
+        std::shared_ptr<mars::sim::SimJoint> simJoint(new mars::sim::SimJoint(control, (*jointData)));
         simJoint->setInterface(jointInterface.get());
         SimJointPtrItemPtr simJointPtrItemPtr(new envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>(simJoint));
         control->graph->addItemToFrame(storageFrame, simJointPtrItemPtr);          
         control->graph->addItemToFrame(storageFrame, jointInterfacePtrItemPtr);          
-        addToJointRecord(storageFrame, jointData->name, simJoint, jointInterface.get());
+        addToJointRecord(storageFrame, jointData->name, simJoint.get(), jointInterface.get());
       }
 
       void EnvireJoints::addToJointRecord(const envire::core::FrameId &frameId, const std::string &jointName, mars::sim::SimJoint *simJoint, mars::interfaces::JointInterface *jointInterface)
