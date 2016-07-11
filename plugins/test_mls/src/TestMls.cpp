@@ -74,7 +74,7 @@ namespace mars {
 		node->init("mls_1", Vector(0,0,0));
 		node->physicMode = interfaces::NODE_TYPE_MLS;
 		
-		std::string env_path("MLSMapKalman_waves.bin");
+		std::string env_path("./mlsdata/MLSMapKalman_waves.bin");
 		node->env_path = env_path;
 		
 		std::ifstream input(node->env_path,  std::ios::binary);

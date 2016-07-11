@@ -82,3 +82,5 @@ find_package(Boost REQUIRED filesystem system thread)
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
 
+add_subdirectory(mlsdata)
+file(COPY mlsdata DESTINATION ./)
