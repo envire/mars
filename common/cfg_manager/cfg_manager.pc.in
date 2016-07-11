@@ -6,6 +6,6 @@ includedir=${prefix}/include
 Name: @PROJECT_NAME@
 Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
-Requires.private: lib_manager yaml-cpp03
+Requires.private: lib_manager yaml-cpp
 Libs: -L${libdir} -l@PROJECT_NAME@
 Cflags: -I${includedir}

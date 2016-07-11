@@ -1338,7 +1338,6 @@ namespace mars {
      *     - the physical elements for the sensor had to be created
      */
     void NodePhysics::addSensor(BaseSensor* sensor) {
-        LOG_DEBUG ("[NodePhysics::addSensor] Many things happening here! Take a look");
         
       MutexLocker locker(&(theWorld->iMutex));
       int i;

@@ -98,11 +98,11 @@ namespace mars {
         if (smurfSensor.getType() == "RotatingRaySensor")
         {
           velodyneFrame = e.frame; 
-          BaseSensor* sensor = createSensor(smurfSensor, e.frame);
+          std::shared_ptr<BaseSensor> sensor(createSensor(smurfSensor, e.frame));
           SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
           control->graph->addItemToFrame(e.frame, sensorItem);
           if(debug) {LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");}
-          bool attached = attachSensor(sensor, e.frame);
+          bool attached = attachSensor(sensor.get(), e.frame);
           if (!attached)
           {
             LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor. ");
