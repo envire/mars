@@ -47,6 +47,7 @@ namespace mars {
       }
       virtual void cfgParamCreated(cfgParamId _id) { (void) _id; }
       virtual void cfgParamRemoved(cfgParamId _id) { (void) _id; }
+      virtual ~CFGClient(){};
 
     }; // end class CFGClient
 
