@@ -278,7 +278,7 @@ namespace mars {
     // Copies into data the full pointcloud. 
     // I guess here what has to be copied now is the DepthMap
     // TODO Ask Malte what this method is for
-    // Seems not to be executed in our usecase. The trace is never shown
+    // Seems not to be executed in our use case. The trace is never shown
     int RotatingRaySensor::getSensorData(double** data_) const {
       LOG_DEBUG("Executing getSensorData");       
       mars::utils::MutexLocker lock(&mutex_pointcloud);
@@ -330,55 +330,22 @@ namespace mars {
       getCurrentPose(package);
       // data[] contains all the measured distances according to the define directions.
       assert((int)data.size() == config.bands * config.lasers);
-      // NOTE Maybe data now should have the size of the DepthMap? Now it has the size equal to the number of points... But this is also the size of the number of distances, right?
       int i = 0; // data_counter
       utils::Vector local_ray, tmpvec;
       double local_dist;
       base::Time timestamp = base::Time::Time::now(); 
       for(int b=0; b<config.bands; ++b) {
         partialDepthMaps[b].timestamps.push_back(timestamp);
-        for(int l=0; l<config.lasers; ++l, ++i){
-          // Calculates the ray/vector within the sensor frame.
+        for(int col=0; col<config.lasers; col++, ++i){
           local_ray = orientation_offset * directions[i] * data[i];
-          // Gathers pointcloud in the world frame to prevent/reduce movement distortion.
-          // This necessitates a back-transformation (world2node) in getPointcloud().
-          tmpvec = current_pose * local_ray;
-          toCloud->push_back(tmpvec); // Scale normalized vector.
-          partialDepthMaps[b].distances.push_back(data[i]);
-          /*
-          // If min/max are exceeded distance will be ignored.
-          //if ((i%10 == 0) && (b == 2)){
-          //  // Why are here the measurements already in the valid range??
-          //  LOG_DEBUG("i: %d", i); // 99
-          //  LOG_DEBUG("data[i]: %f", data[i]);
-          //  //LOG_DEBUG(("At timestamp" + timestamp.toString()).c_str());
-          //  //LOG_DEBUG("partialDepthMaps[b].distances.size: %d", partialDepthMaps[b].distances.size()); // 4
-          //  //LOG_DEBUG("Stored in partial depthmap: %f", data[i]);
-          //  //LOG_DEBUG("With config.maxDistance: %f", config.maxDistance);
-          //}
-          if ((data[i] >= config.minDistance) && (data[i] <= config.maxDistance)) {
-            // Calculates the ray/vector within the sensor frame.
-            local_ray = orientation_offset * directions[i] * data[i];
-            // Gathers pointcloud in the world frame to prevent/reduce movement distortion.
-            // This necessitates a back-transformation (world2node) in getPointcloud().
-            tmpvec = current_pose * local_ray;
-            toCloud->push_back(tmpvec); // Scale normalized vector.
-            partialDepthMaps[b].distances.push_back(data[i]);
-          }
-          else{
-            // FIXME Nothing enters in this else:
-            // Either all measurements in dara are correct
-            // OR the comparison is not fine
-            // OR 
-            LOG_DEBUG("It is detected in receiveData a not valid measure");
-            //double value = (data[i] < config.minDistance) ? 0.0 : base::infinity<double>();
-            //LOG_DEBUG("The distance %f is not valid", data[i]);
-            //LOG_DEBUG("The value %f will replace it", value);
-            //partialDepthMaps[b].distances.push_back(value);
-          }
-          */
+          partialDepthMaps[b].distances.push_back(local_ray.norm());
+          //partialDepthMaps[b].distances.push_back(data[i]);
+          // The distances here are not organized according to the depthmap
+          // structure because at initial time is unknown how many columns will
+          // the matrix have. The row size is given by the number of vertical
+          // measures, thus before integrating in the final depthmap the
+          // distances have to be transposed.
         }
-
       }
       num_points += data.size();
       update_available = true;
@@ -458,22 +425,39 @@ namespace mars {
     }
 
     void RotatingRaySensor::prepareFinalDepthMap(){
+      // For each partial depthMap
+      //
+      // For each column (sample)
+      // 
+      // Take the timestamp and put them in the final timestamps
+      //
+      // For each laser of the partial depthmap
+      //    Put the correspondent value in the final map
       for(int b=0; b<config.bands; b++){
-        int i = 0;
-        //LOG_DEBUG("The partial depthMap timestamps of band: %d", b);
-        //LOG_DEBUG("Has size: %d", partialDepthMaps[b].timestamps.size());
         for(unsigned int sample=0; sample < partialDepthMaps[b].timestamps.size(); sample++){
           finalDepthMap.timestamps.push_back(partialDepthMaps[b].timestamps[sample]);
-          for(int l=0; l<config.lasers; l++){
-            finalDepthMap.distances.push_back(partialDepthMaps[b].distances[l + sample*config.lasers]);
-            finalDepthMap.remissions.push_back(1.0);
-            //if ((l==3) && (b==3) && (sample==0)){
-            //  LOG_DEBUG(("At timestamp" + partialDepthMaps[b].timestamps[sample].toString()).c_str());
-            //  LOG_DEBUG("Final DepthMap index: %d", l + sample*config.lasers);
-            //  LOG_DEBUG("Stored in final depthmap from band 3, laser 3, index : %f", partialDepthMaps[b].distances[l + sample*config.lasers]);
-            //}
-          }
         }
+      }
+      //for (int row=0; row<config.lasers; row++){
+      for (int row=config.lasers-1; row >=0; row--){
+        int row_size = finalDepthMap.timestamps.size();
+        for (int col=0; col<finalDepthMap.timestamps.size(); col++){
+          // We have to invert the coordinates
+          int partial_row_size = config.lasers;
+          // FIXME Only works for one band!
+          for(int b=0; b<config.bands; b++){
+            int partial_num_rows = partialDepthMaps[b].timestamps.size();
+            finalDepthMap.distances.push_back(partialDepthMaps[b].distances[col*partial_row_size + row]);
+          }
+          //if (col <= (finalDepthMap.timestamps.size()/2.0))
+          //if (col < (finalDepthMap.timestamps.size()/2.0))
+          //    finalDepthMap.distances.push_back(5.0); 
+          //else 
+          //  finalDepthMap.distances.push_back(15.0);
+          finalDepthMap.remissions.push_back(1.0);
+        }
+      }
+      for(int b=0; b<config.bands; b++){
         partialDepthMaps[b].distances.clear();
         partialDepthMaps[b].timestamps.clear();
       }
