@@ -114,7 +114,8 @@ namespace mars {
       finalDepthMap = base::samples::DepthMap();
       double vAngle = config.lasers <= 1 ? config.opening_height/2.0 : config.opening_height/(config.lasers-1);
       double limitVAngle = config.lasers <= 1 ? 0.0 : - vAngle*((config.lasers-1)/2.0);
-      std::vector<double> vertical_interval = {-limitVAngle, limitVAngle};
+      //std::vector<double> vertical_interval = {-limitVAngle, limitVAngle};
+      std::vector<double> vertical_interval = {limitVAngle, -limitVAngle};
       finalDepthMap.vertical_interval = vertical_interval;
       std::vector<double> horizontal_interval = {-M_PI, M_PI};
       finalDepthMap.horizontal_interval = horizontal_interval;
@@ -438,8 +439,8 @@ namespace mars {
           finalDepthMap.timestamps.push_back(partialDepthMaps[b].timestamps[sample]);
         }
       }
-      //for (int row=0; row<config.lasers; row++){
-      for (int row=config.lasers-1; row >=0; row--){
+      for (int row=0; row<config.lasers; row++){
+      //for (int row=config.lasers-1; row >=0; row--){
         int row_size = finalDepthMap.timestamps.size();
         for (int col=0; col<finalDepthMap.timestamps.size(); col++){
           // We have to invert the coordinates
