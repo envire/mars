@@ -136,7 +136,7 @@ namespace mars {
                       const envire::core::GraphTraits::vertex_descriptor b) const;
                       
         /**Updates the drawing position of @p vertex */              
-        template <class physicsType> void updatePosition(const envire::core::GraphTraits::vertex_descriptor vertex) const;
+        template <class physicsType> void updatePosition(const envire::core::GraphTraits::vertex_descriptor vertex);
         void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
 	
       private:
@@ -144,6 +144,10 @@ namespace mars {
         std::unordered_map<boost::uuids::uuid, int, boost::hash<boost::uuids::uuid>> uuidToGraphicsId;
         envire::core::FrameId originId; /**<id of the current origin */
         envire::core::VertexRelationMap tree; /**<map from parent to children */
+        
+        //buffers the paths from origin to the nodes to avoid tree searches.
+        //FIXME paths might become invalid if the graph changes.
+        std::unordered_map<envire::core::GraphTraits::vertex_descriptor, envire::core::Path> pathsFromOrigin;
         
         bool viewCollidables = false;
         bool viewJoints = false;
