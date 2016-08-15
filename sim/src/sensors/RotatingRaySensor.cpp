@@ -112,12 +112,15 @@ namespace mars {
       // Initialize DepthMap 
       partialDepthMaps = std::vector<base::samples::DepthMap>(config.bands);
       finalDepthMap = base::samples::DepthMap();
-      double vAngle = config.lasers <= 1 ? config.opening_height/2.0 : config.opening_height/(config.lasers-1);
-      double limitVAngle = config.lasers <= 1 ? 0.0 : - vAngle*((config.lasers-1)/2.0);
+      double limitVAngle = config.lasers <= 1 ? 0.0 : config.opening_height/2.0;
       //std::vector<double> vertical_interval = {-limitVAngle, limitVAngle};
-      std::vector<double> vertical_interval = {limitVAngle, -limitVAngle};
+      std::vector<double> vertical_interval;
+      vertical_interval.push_back(-limitVAngle + config.vertical_offset);
+      vertical_interval.push_back(limitVAngle + config.vertical_offset);
       finalDepthMap.vertical_interval = vertical_interval;
-      std::vector<double> horizontal_interval = {-M_PI, M_PI};
+      std::vector<double> horizontal_interval;
+      horizontal_interval.push_back(-M_PI);
+      horizontal_interval.push_back(M_PI);
       finalDepthMap.horizontal_interval = horizontal_interval;
       finalDepthMap.vertical_size = config.lasers;
       //finalDepthMap.horizontal_size = config.bands;
