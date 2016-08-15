@@ -496,7 +496,7 @@ template <class physicsType> void GraphViz::updatePosition(const vertex_descript
     if(pathsFromOrigin.find(vertex) == pathsFromOrigin.end())
     {
       //this is an unknown vertex, find the path and store it
-      pathsFromOrigin[vertex] = control->graph->getPath(originId, frameId);
+      pathsFromOrigin[vertex] = control->graph->getPath(originId, frameId, true);
     }
     const Transform tf = control->graph->getTransform(pathsFromOrigin[vertex]);
     translation = tf.transform.translation;

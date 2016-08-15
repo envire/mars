@@ -32,6 +32,7 @@
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <mars/interfaces/NodeData.h>
 #include <string>
+#include <memory>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -43,6 +44,7 @@
 #include <envire_core/events/GraphItemEventDispatcher.hpp>
 #include <envire_core/items/ItemBase.hpp>
 #include <envire_core/graph/TreeView.hpp>
+#include <envire_core/graph/Path.hpp>
 
 namespace envire {namespace core {
   class Transform;
@@ -147,7 +149,7 @@ namespace mars {
         
         //buffers the paths from origin to the nodes to avoid tree searches.
         //FIXME paths might become invalid if the graph changes.
-        std::unordered_map<envire::core::GraphTraits::vertex_descriptor, envire::core::Path> pathsFromOrigin;
+        std::unordered_map<envire::core::GraphTraits::vertex_descriptor,std::shared_ptr<envire::core::Path>> pathsFromOrigin;
         
         bool viewCollidables = false;
         bool viewJoints = false;
