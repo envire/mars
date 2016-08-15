@@ -25,13 +25,6 @@
  *
  */
 
-// TODO Ask Malte what this method is for:
-// int RotatingRaySensor::getSensorData(double** data_) const
-//
-// TODO Why are the measures already set to maxDistance? When they are fetched from data[i]
-//
-// TODO Where is data coming from
-
 #include "RotatingRaySensor.h"
 #include <SimNode.h>
 
@@ -108,12 +101,11 @@ namespace mars {
       turning_offset = 0;
       turning_end_fullscan = config.opening_width / config.bands;
       turning_step = config.horizontal_resolution; 
-      vertical_resolution = config.lasers <= 1 ? 0 : config.opening_height/(config.lasers-1);
+      vertical_resolution = config.lasers <= 1 ? 0 : config.opening_height/(config.lasers -1);
       // Initialize DepthMap 
       partialDepthMaps = std::vector<base::samples::DepthMap>(config.bands);
       finalDepthMap = base::samples::DepthMap();
       double limitVAngle = config.lasers <= 1 ? 0.0 : config.opening_height/2.0;
-      //std::vector<double> vertical_interval = {-limitVAngle, limitVAngle};
       std::vector<double> vertical_interval;
       vertical_interval.push_back(-limitVAngle + config.vertical_offset);
       vertical_interval.push_back(limitVAngle + config.vertical_offset);
@@ -123,7 +115,6 @@ namespace mars {
       horizontal_interval.push_back(M_PI);
       finalDepthMap.horizontal_interval = horizontal_interval;
       finalDepthMap.vertical_size = config.lasers;
-      //finalDepthMap.horizontal_size = config.bands;
       finalDepthMap.horizontal_size = (2.0*M_PI)/config.horizontal_resolution;
       LOG_DEBUG("Horizontal size from config is: %d", finalDepthMap.horizontal_size );
       LOG_DEBUG("Horizontal by vertical size: %d", finalDepthMap.horizontal_size*finalDepthMap.vertical_size );
@@ -245,21 +236,6 @@ namespace mars {
         bool valid = true;
         unsigned int i = 0;
         int count_invalids = 0;
-        //while (i<finalDepthMap.distances.size() && valid){
-        /* I think this is executing before receive data some how*/
-        //while (i<finalDepthMap.distances.size()){
-        //  valid = finalDepthMap.isMeasurementValid(finalDepthMap.distances[i]);        
-        //  if (!valid){
-        //    //LOG_DEBUG("The measurement %f is not valid", finalDepthMap.distances[i]);
-        //    //LOG_DEBUG("The measurement state is %d", finalDepthMap.getMeasurementState(finalDepthMap.distances[i]));
-        //    double value = (finalDepthMap.distances[i] < config.minDistance) ? 0.0 : base::infinity<double>();
-        //    count_invalids ++;
-        //    //LOG_DEBUG("The measurement is replaced by %f", finalDepthMap.distances[i]);
-        //    finalDepthMap.distances[i] = value;
-        //  }
-        //  i++;
-        //}
-        //LOG_DEBUG("Found  %d invalid measurements in the final DepthMap", count_invalids);
         depthMap.time = finalDepthMap.time;
         depthMap.vertical_projection = finalDepthMap.vertical_projection;
         depthMap.horizontal_projection = finalDepthMap.horizontal_projection;
@@ -287,14 +263,6 @@ namespace mars {
       LOG_DEBUG("Executing getSensorData");       
       mars::utils::MutexLocker lock(&mutex_pointcloud);
       *data_ = (double*)malloc(pointcloud_full.size()*3*sizeof(double));
-      //for(unsigned int i=0; i<pointcloud_full.size(); i++) {
-      //  if((pointcloud_full[i]).norm() <= config.maxDistance) {
-      //    int array_pos = i*3;
-      //    (*data_)[array_pos] = (pointcloud_full[i])[0];
-      //    (*data_)[array_pos+1] = (pointcloud_full[i])[1];
-      //    (*data_)[array_pos+2] = (pointcloud_full[i])[2];
-      //  }
-      //}
       return pointcloud_full.size();
     }
       
@@ -343,12 +311,6 @@ namespace mars {
         for(int col=0; col<config.lasers; col++, ++i){
           local_ray = orientation_offset * directions[i] * data[i];
           partialDepthMaps[b].distances.push_back(local_ray.norm());
-          //partialDepthMaps[b].distances.push_back(data[i]);
-          // The distances here are not organized according to the depthmap
-          // structure because at initial time is unknown how many columns will
-          // the matrix have. The row size is given by the number of vertical
-          // measures, thus before integrating in the final depthmap the
-          // distances have to be transposed.
         }
       }
       num_points += data.size();
@@ -429,14 +391,6 @@ namespace mars {
     }
 
     void RotatingRaySensor::prepareFinalDepthMap(){
-      // For each partial depthMap
-      //
-      // For each column (sample)
-      // 
-      // Take the timestamp and put them in the final timestamps
-      //
-      // For each laser of the partial depthmap
-      //    Put the correspondent value in the final map
       for(int b=0; b<config.bands; b++){
         for(unsigned int sample=0; sample < partialDepthMaps[b].timestamps.size(); sample++){
           finalDepthMap.timestamps.push_back(partialDepthMaps[b].timestamps[sample]);
@@ -453,11 +407,6 @@ namespace mars {
             int partial_num_rows = partialDepthMaps[b].timestamps.size();
             finalDepthMap.distances.push_back(partialDepthMaps[b].distances[col*partial_row_size + row]);
           }
-          //if (col <= (finalDepthMap.timestamps.size()/2.0))
-          //if (col < (finalDepthMap.timestamps.size()/2.0))
-          //    finalDepthMap.distances.push_back(5.0); 
-          //else 
-          //  finalDepthMap.distances.push_back(15.0);
           finalDepthMap.remissions.push_back(1.0);
         }
       }
@@ -465,17 +414,17 @@ namespace mars {
         partialDepthMaps[b].distances.clear();
         partialDepthMaps[b].timestamps.clear();
       }
-      LOG_DEBUG("The final depthMap has a distances size of: %d", finalDepthMap.distances.size());
-      LOG_DEBUG("The final depthMap has %d timestamps", finalDepthMap.timestamps.size());
-      LOG_DEBUG("The final depthMap has %d vertical size", finalDepthMap.vertical_size);
-      LOG_DEBUG("The final depthMap timestamps multiplied by the number laser should be equal to the number of distances: %d", finalDepthMap.timestamps.size()*finalDepthMap.vertical_size);
+      //LOG_DEBUG("The final depthMap has a distances size of: %d", finalDepthMap.distances.size());
+      //LOG_DEBUG("The final depthMap has %d timestamps", finalDepthMap.timestamps.size());
+      //LOG_DEBUG("The final depthMap has %d vertical size", finalDepthMap.vertical_size);
+      //LOG_DEBUG("The final depthMap timestamps multiplied by the number laser should be equal to the number of distances: %d", finalDepthMap.timestamps.size()*finalDepthMap.vertical_size);
       finalDepthMap.time = base::Time::Time::now();
       finalDepthMap.horizontal_size = finalDepthMap.timestamps.size();
     }
 
     void RotatingRaySensor::run() {
       while(!closeThread) {
-        if(convertPointCloud) { //Initially this is false. I guess it set to true when a pointcloud is ready to be delivered
+        if(convertPointCloud) { 
           prepareFinalPointcloud();
           prepareFinalDepthMap();
           convertPointCloud = false;
@@ -577,17 +526,3 @@ namespace mars {
   } // end of namespace sim
 } // end of namespace mars
 
-        /*
-        // You have to know how many columns you have. That is given by the resolution
-        base::samples::DepthMap depthMap;
-        float num_columns = M_PI / config.horizontal_resolution;
-        //LOG_DEBUG("The number of columns for the Depthmap is %f ", num_columns);
-        //depthMap.timestamps
-        */
-        /* The next lines where completely useles
-        base::Orientation base_orientation;
-        base_orientation.x() = orientation_offset.x();
-        base_orientation.y() = orientation_offset.y();
-        base_orientation.z() = orientation_offset.z();
-        base_orientation.w() = orientation_offset.w();
-        */
