@@ -218,7 +218,9 @@ namespace mars {
       bool closeThread;
       unsigned int num_points;
       base::samples::DepthMap finalDepthMap;
-      std::vector<base::samples::DepthMap> partialDepthMaps; // Stores the full scan.
+      std::vector<base::samples::DepthMap> partialDepthMaps1; 
+      std::vector<base::samples::DepthMap> partialDepthMaps2;
+      std::vector<base::samples::DepthMap> *fromDepthMap, *toDepthMap;
     };
 
   } // end of namespace sim

@@ -83,6 +83,7 @@ namespace mars {
       current_pose.setIdentity();
       num_points = 0;
       toCloud = &pointcloud1;
+      toDepthMap = &partialDepthMaps1;
       convertPointCloud = false;
       nextCloud = 2;
       update_available = false;
@@ -103,7 +104,8 @@ namespace mars {
       turning_step = config.horizontal_resolution; 
       vertical_resolution = config.lasers <= 1 ? 0 : config.opening_height/(config.lasers -1);
       // Initialize DepthMap 
-      partialDepthMaps = std::vector<base::samples::DepthMap>(config.bands);
+      partialDepthMaps1 = std::vector<base::samples::DepthMap>(config.bands);
+      partialDepthMaps2 = std::vector<base::samples::DepthMap>(config.bands);
       finalDepthMap = base::samples::DepthMap();
       double limitVAngle = config.lasers <= 1 ? 0.0 : config.opening_height/2.0;
       std::vector<double> vertical_interval;
@@ -297,6 +299,7 @@ namespace mars {
                                 int callbackParam) {
       CPP_UNUSED(info);
       CPP_UNUSED(callbackParam);
+      std::vector<base::samples::DepthMap> &partialDepthMaps = *toDepthMap; 
       long id;
       package.get(0, &id);
       getCurrentPose(package);
@@ -347,12 +350,15 @@ namespace mars {
       if(turning_offset >= turning_end_fullscan) {
         while(convertPointCloud) msleep(1);
         fromCloud = toCloud;
+        fromDepthMap = toDepthMap;
         if(nextCloud == 2) {
           toCloud = &pointcloud2;
+          toDepthMap = &partialDepthMaps2;
           nextCloud = 1;
         }
         else {
           toCloud = &pointcloud1;
+          toDepthMap = &partialDepthMaps1;
           nextCloud = 2;
         }
         convertPointCloud = true;
@@ -391,23 +397,28 @@ namespace mars {
     }
 
     void RotatingRaySensor::prepareFinalDepthMap(){
+      std::vector<base::samples::DepthMap> &partialDepthMaps = *fromDepthMap; 
+
       for(int b=0; b<config.bands; b++){
+        //LOG_DEBUG("Num samples in partial depthmap %d: %d", b, partialDepthMaps[b].timestamps.size());
         for(unsigned int sample=0; sample < partialDepthMaps[b].timestamps.size(); sample++){
           finalDepthMap.timestamps.push_back(partialDepthMaps[b].timestamps[sample]);
         }
       }
-      for (int row=0; row<config.lasers; row++){
-      //for (int row=config.lasers-1; row >=0; row--){
-        int row_size = finalDepthMap.timestamps.size();
-        for (int col=0; col<finalDepthMap.timestamps.size(); col++){
-          // We have to invert the coordinates
-          int partial_row_size = config.lasers;
-          // FIXME Only works for one band!
-          for(int b=0; b<config.bands; b++){
-            int partial_num_rows = partialDepthMaps[b].timestamps.size();
-            finalDepthMap.distances.push_back(partialDepthMaps[b].distances[col*partial_row_size + row]);
+      int partial_row_size = config.lasers;
+      for (int laser_i=0; laser_i<config.lasers; laser_i++){
+        for(int b=0; b<config.bands; b++){
+          int partial_num_samples = partialDepthMaps[b].timestamps.size();
+          //LOG_DEBUG("Partial DepthMap: %d ", b);
+          //LOG_DEBUG("Partial num samples: %d", partial_num_samples);
+          //LOG_DEBUG("Distances size: %d", partialDepthMaps[b].distances.size());
+          //LOG_DEBUG("partialDepthMaps1[b] timestamps size: %d", partialDepthMaps1[b].timestamps.size() );
+          //LOG_DEBUG("partialDepthMaps2[b] timestamps size: %d", partialDepthMaps2[b].timestamps.size() );
+          for (int sample_i=0; sample_i<partial_num_samples; sample_i++){
+            // We have to invert the coordinates
+            finalDepthMap.distances.push_back(partialDepthMaps[b].distances[sample_i*partial_row_size + laser_i]);
+            finalDepthMap.remissions.push_back(1.0);
           }
-          finalDepthMap.remissions.push_back(1.0);
         }
       }
       for(int b=0; b<config.bands; b++){
