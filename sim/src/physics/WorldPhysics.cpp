@@ -47,10 +47,8 @@
 #include <mars/interfaces/Logging.hpp>
 
 
-#include <envire/maps/MLSGrid.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/intrusive_ptr.hpp>	
-#include <envire_collider_mls/MLSCollision.hpp>
 
 namespace mars {
   namespace sim {

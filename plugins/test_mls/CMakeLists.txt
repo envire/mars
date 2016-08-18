@@ -21,7 +21,8 @@ pkg_check_modules(PKGCONFIG REQUIRED
           envire_core
           lib_config
           base-lib	
-          envire_collider_mls		    
+          envire_collider_mls
+          maps		    
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
@@ -81,3 +82,5 @@ find_package(Boost REQUIRED filesystem system thread)
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
 
+add_subdirectory(mlsdata)
+file(COPY mlsdata DESTINATION ./)

@@ -3,11 +3,18 @@ set(PROJECT_VERSION 1.0)
 set(PROJECT_DESCRIPTION "This library ...")
 cmake_minimum_required(VERSION 2.6)
 
-find_package(Rock)
+#find_package(Rock)
 
 include(FindPkgConfig)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "${CMAKE_PREFIX_PATH}/include")
+
+#set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "/home/dfki.uni-bremen.de/rdominguez/Entern/marsSimBug/install/include" )
+set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "${CMAKE_PREFIX_PATH}/include/base/backward")
+set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "/usr/include/eigen3")
 
 find_package(lib_manager)
+
 lib_defaults()
 define_module_info()
 
@@ -31,7 +38,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in ${CMAKE_CURRENT_BINAR
 add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif(DOXYGEN_FOUND)
 
-rock_find_cmake(Boost)
+#rock_find_cmake(Boost)
 
 #Get linker and compiler flags from pkg-config
 pkg_check_modules(PKGCONFIG REQUIRED
@@ -226,9 +233,9 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 configure_file(configuration/mars_Preferences.in ${CMAKE_BINARY_DIR}/mars_Preferences.yaml @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/mars_Preferences.yaml DESTINATION configuration/mars_default/)
-set(ROCK_USE_CXX11 TRUE)
-rock_init(mars_sim 0.1)
-rock_standard_layout()
+#set(ROCK_USE_CXX11 TRUE)
+#rock_init(mars_sim 0.1)
+#rock_standard_layout()
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 target_link_libraries( mars_sim
   ${Boost_FILESYSTEM_LIBRARY}

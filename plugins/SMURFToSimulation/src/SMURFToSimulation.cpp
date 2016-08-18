@@ -57,10 +57,15 @@ namespace mars {
             : MarsPluginTemplate(theManager, "SMURFToSimulation") {
             }
             
-            vertex_descriptor SMURFToSimulation::addFloor()
+            vertex_descriptor SMURFToSimulation::addCenter()
             {
                 envire::core::FrameId center = "center";
                 control->graph->addFrame(center);
+                return control->graph->getVertex(center);
+            }
+
+            void SMURFToSimulation::addFloor(const vertex_descriptor &center)
+            {
                 NodeData data;
                 data.init("floorData", Vector(0,0,0));
                 data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(25, 25, 0.1), 0.1);
@@ -72,17 +77,17 @@ namespace mars {
                 data.material.emissionFront = mars::utils::Color(1.0, 1.0, 1.0, 1.0);
                 LOG_DEBUG("Color of the Item in the addFloor: %f , %f, %f, %f", data.material.emissionFront.a , data.material.emissionFront.b, data.material.emissionFront.g, data.material.emissionFront.r );
                 data.toConfigMap(&(item.get()->getData()));
-                control->graph->addItemToFrame(center, item);
-                return control->graph->getVertex(center);
+                control->graph->addItemToFrame(control->graph->getFrameId(center), item);
             }
             
             void SMURFToSimulation::addRobot(vertex_descriptor center)
             {    
                 //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SPACECLIMBER)%>"); 
                 //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>"); 
+                std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SIMULATED_ROBOT)%>"); 
                 //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_with_motor.smurf"); 
                 //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_dynamic_joint.smurf"); 
-                std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes.smurf"); 
+                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes.smurf"); 
                 //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_with_sensor.smurf");
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 envire::core::Transform iniPose;
@@ -139,11 +144,12 @@ namespace mars {
             void SMURFToSimulation::init()
             {
                 nextGroupId = 1;
-                vertex_descriptor center = addFloor();
+                //vertex_descriptor center = addFloor();
                 //envire::core::GraphViz viz;
                 //std::string timestamp = base::Time::now().toString();
                 //std::string name = "justFloor" + timestamp + ".dot";
                 //viz.write(*(control->graph), name);
+                vertex_descriptor center = addCenter();
                 addRobot(center);
                 // uncomment to print the graph
                 //envire::core::GraphViz viz;

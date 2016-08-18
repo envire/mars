@@ -86,7 +86,8 @@ namespace mars {
 
       private:
         cfg_manager::cfgPropertyStruct example;
-        envire::core::GraphTraits::vertex_descriptor addFloor();
+        envire::core::GraphTraits::vertex_descriptor addCenter();
+        void addFloor(const envire::core::GraphTraits::vertex_descriptor &center);
         void addRobot(envire::core::GraphTraits::vertex_descriptor center);
         int nextGroupId;
 

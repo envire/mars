@@ -42,8 +42,15 @@
 #include <mars/interfaces/sim/ControlCenter.h> 
 #include <mars/interfaces/NodeData.h>
 
-#include <envire_smurf/Robot.hpp>
+#include <envire_smurf/GraphLoader.hpp>
 #include <string>
+
+#include <maps/grid/MLSMap.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <envire_collider_mls/MLSCollision.hpp>
+#include <fstream>
+#include <boost/archive/polymorphic_binary_iarchive.hpp>
 
 namespace mars {
 
@@ -84,6 +91,7 @@ namespace mars {
         //void menuAction(int action, bool checked = false);
 
         // TestMls methods
+
         
       private:
         cfg_manager::cfgPropertyStruct example;
@@ -91,7 +99,9 @@ namespace mars {
         envire::core::FrameId createFrame();    
         void addMLS(envire::core::FrameId center);            
         void addSphere(envire::core::FrameId center);  
-
+ 		maps::grid::MLSMapKalman mls_kalman;
+ 		envire::collision::MLSCollision* mls_collision;
+		boost::shared_ptr<maps::grid::MLSMapKalman> mls;   	
 
 
       }; // end of class definition TestMls

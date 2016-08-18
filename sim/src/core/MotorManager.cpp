@@ -47,7 +47,6 @@
 
 #include <envire_core/items/Item.hpp>
 #include <envire_core/graph/EnvireGraph.hpp>
-#include <smurf/Joint.hpp>
 #include <mars/utils/mathUtils.h>
 
 namespace mars {

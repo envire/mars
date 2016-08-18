@@ -22,9 +22,7 @@
 #include <envire_core/graph/TreeView.hpp>
 
 
-#include <envire/maps/MLSGrid.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/intrusive_ptr.hpp>	
+#include <maps/grid/MLSMap.hpp>
 #include <mars/sim/PhysicsMapper.h>
 
 namespace mars {
@@ -160,9 +158,8 @@ namespace mars {
         const bool debugUpdatePos = false;
         
         dSpaceID current_space;
-		boost::scoped_ptr<envire::Environment> env;   
-		envire::MLSGrid::Ptr mlsgrid_ptr;     
-		boost::shared_ptr<envire::MLSGrid> mls_userdata;             
+ 
+	//	boost::shared_ptr<maps::grid::MLSMapKalman> mls;            
         bool addMlsSurface(mars::interfaces::NodeData* node);          
         
       };

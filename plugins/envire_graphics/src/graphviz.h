@@ -32,17 +32,19 @@
 #include <mars/cfg_manager/CFGManagerInterface.h>
 #include <mars/interfaces/NodeData.h>
 #include <string>
+#include <memory>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <smurf/Robot.hpp>
-#include <envire_smurf/Robot.hpp>
+#include <envire_smurf/Visual.hpp>
 
 #include <envire_core/items/Item.hpp>
 #include <envire_core/events/GraphEventDispatcher.hpp>
 #include <envire_core/events/GraphItemEventDispatcher.hpp>
 #include <envire_core/items/ItemBase.hpp>
 #include <envire_core/graph/TreeView.hpp>
+#include <envire_core/graph/Path.hpp>
 
 namespace envire {namespace core {
   class Transform;
@@ -136,7 +138,7 @@ namespace mars {
                       const envire::core::GraphTraits::vertex_descriptor b) const;
                       
         /**Updates the drawing position of @p vertex */              
-        template <class physicsType> void updatePosition(const envire::core::GraphTraits::vertex_descriptor vertex) const;
+        template <class physicsType> void updatePosition(const envire::core::GraphTraits::vertex_descriptor vertex);
         void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
 	
       private:
@@ -144,6 +146,10 @@ namespace mars {
         std::unordered_map<boost::uuids::uuid, int, boost::hash<boost::uuids::uuid>> uuidToGraphicsId;
         envire::core::FrameId originId; /**<id of the current origin */
         envire::core::VertexRelationMap tree; /**<map from parent to children */
+        
+        //buffers the paths from origin to the nodes to avoid tree searches.
+        //FIXME paths might become invalid if the graph changes.
+        std::unordered_map<envire::core::GraphTraits::vertex_descriptor,std::shared_ptr<envire::core::Path>> pathsFromOrigin;
         
         bool viewCollidables = false;
         bool viewJoints = false;

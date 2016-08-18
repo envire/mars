@@ -55,7 +55,7 @@ if (${Qt5Widgets_FOUND})
   include_directories(${Qt5Widgets_INCLUDES})
   add_definitions(-DUSE_QT5)
   add_definitions(${Qt5Widgets_DEFINITIONS})
-  set(CMAKE_CXX_FLAGS "${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 
 else (${Qt5Widgets_FOUND})
   find_package(Qt4 REQUIRED)

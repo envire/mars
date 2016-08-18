@@ -41,11 +41,8 @@
 #include <envire_core/graph/GraphViz.hpp>
 #include <envire_core/graph/EnvireGraph.hpp>
 	
-#include <envire_collider_mls/MLSCollision.hpp>
-#include <envire/maps/MLSGrid.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/intrusive_ptr.hpp>	
 #include <mars/sim/PhysicsMapper.h>
+
 
 namespace mars {
   namespace plugins {
@@ -58,6 +55,8 @@ namespace mars {
 
       TestMls::TestMls(lib_manager::LibManager *theManager)
         : MarsPluginTemplate(theManager, "TestMls") {
+			
+		mls_collision = envire::collision::MLSCollision::getInstance();
       }
       
 
@@ -71,36 +70,50 @@ namespace mars {
       void TestMls::addMLS(envire::core::FrameId center)
       {		
 		  
-		NodeData* data(new NodeData);
-		data->init("mls_1", Vector(0,0,0));
-		data->physicMode = interfaces::NODE_TYPE_MLS;
+		NodeData* node(new NodeData);
+		node->init("mls_1", Vector(0,0,0));
+		node->physicMode = interfaces::NODE_TYPE_MLS;
 		
-		std::string env_path("Quali1");
-		std::string mls_map_id("/mls-grid");
-		//std::string env_path("mls_data");
-		//std::string mls_map_id("/mls-grid");
-		data->env_path = env_path;
-		data->mls_map_id = mls_map_id;	
+		std::string env_path("./mlsdata/MLSMapKalman_waves.bin");
+		node->env_path = env_path;
 		
-		Vector pos(1,1,1);
-		data->pos = pos;
+		std::ifstream input(node->env_path,  std::ios::binary);
+		boost::archive::polymorphic_binary_iarchive  ia(input);
 	
-		if(data->env_path != env_path) printf("....false..TestMls \n");	
-		
-	    geom_data* gd = new geom_data;
-	    (*gd).setZero();
-	    gd->sense_contact_force = 0;
-	    gd->parent_geom = 0;
-	    
-        gd->c_params.cfm = 0.01;
-        gd->c_params.erp = 0.1;
-        gd->c_params.bounce = 0.0;
+		ia >> mls_kalman;
         
-        data->data = gd;
-  
-  		data->movable = false;	
+	    mls = static_cast< boost::shared_ptr<maps::grid::MLSMapKalman> >(&mls_kalman);   
+		node->g_mls = (void*)(mls_collision->createNewCollisionObject(mls));//_userdata);	
+
+		Vector pos1(1,1,1);
+		node->pos = pos1;
+	
+		dVector3 pos;
+		pos[ 0 ] = 0;
+		pos[ 1 ] = 0;
+		pos[ 2 ] = 0;
+	
+		// Rotate so Z is up, not Y (which is the default orientation)
+		dMatrix3 R;
+		dRSetIdentity( R );
+		//dRFromAxisAndAngle( R, 1, 0, 0, (3.141592/180) * 90 );  //DEGTORAD
+		
+		// Place it.
+		dGeomSetRotation( (dGeomID)node->g_mls, R );
+		dGeomSetPosition( (dGeomID)node->g_mls, pos[0], pos[1], pos[2] );
+	
+	  geom_data* gd = new geom_data;
+	  (*gd).setZero();
+	  gd->sense_contact_force = 0;
+	  gd->parent_geom = 0;
+	  gd->c_params.cfm = 0.001;
+	  gd->c_params.erp = 0.001;
+	  gd->c_params.bounce = 0.0;
+	  dGeomSetData((dGeomID)node->g_mls, gd);
+	
+  		node->movable = false;	
   		 	
-        Item<NodeData>::Ptr itemPtr(new Item<NodeData>(*data));
+        Item<NodeData>::Ptr itemPtr(new Item<NodeData>(*node));
         control->graph->addItemToFrame(center, itemPtr);        
 		
       }
@@ -127,14 +140,15 @@ namespace mars {
 		data.toConfigMap(&(item.get()->getData()));
 		control->graph->addItemToFrame(center, item);
 		
+		
       }      
       
       
       void TestMls::init() {
                 envire::core::FrameId center = createFrame();
                 addMLS(center);                
-                addSphere(center);
-             
+             //   addSphere(center);
+            
       }
 
       void TestMls::reset() {
@@ -151,7 +165,6 @@ namespace mars {
       void TestMls::receiveData(const data_broker::DataInfo& info,
                                     const data_broker::DataPackage& package,
                                     int id) {
-        // package.get("force1/x", force);
       }
   
       void TestMls::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {

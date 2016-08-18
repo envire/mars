@@ -541,7 +541,7 @@ namespace mars {
       vectorToConfigItem(&(*map)["extend"][0], &size);
     }
 
-    void SMURF::createOrigin(const boost::shared_ptr<urdf::Link> &link) {
+    void SMURF::createOrigin(const urdf::LinkSharedPtr &link) {
       ConfigMap config;
       std::string name;
       if (link->name.empty()) {
@@ -587,7 +587,7 @@ namespace mars {
       nodeList.push_back(config);
     }
 
-    void SMURF::createInertial(const boost::shared_ptr<urdf::Link> &link) {
+    void SMURF::createInertial(const urdf::LinkSharedPtr &link) {
       ConfigMap config;
       std::string name;
       if (link->name.empty()) {
@@ -638,7 +638,7 @@ namespace mars {
       nodeList.push_back(config);
     }
 
-    void SMURF::createCollision(const boost::shared_ptr<urdf::Collision> &collision) {
+    void SMURF::createCollision(const urdf::CollisionSharedPtr &collision) {
       ConfigMap config;
       std::string name;
       if (collision->name.empty()) {
@@ -658,7 +658,7 @@ namespace mars {
       config["density"] = 0.0;
 
       // parse geometry
-      boost::shared_ptr<urdf::Geometry> tmpGeometry = collision->geometry;
+      urdf::GeometrySharedPtr tmpGeometry = collision->geometry;
       Vector size(0.0, 0.0, 0.0);
       Vector scale(1.0, 1.0, 1.0);
       urdf::Vector3 tmpV;
@@ -711,7 +711,7 @@ namespace mars {
       nodeList.push_back(config);
     }
 
-    void SMURF::createVisual(const boost::shared_ptr<urdf::Visual> &visual) {
+    void SMURF::createVisual(const urdf::VisualSharedPtr &visual) {
       ConfigMap config;
       std::string name;
       if (visual->name.empty()) {
@@ -739,7 +739,7 @@ namespace mars {
       quaternionToConfigItem(&config["rotation"][0], &q);
 
       // parse geometry
-      boost::shared_ptr<urdf::Geometry> tmpGeometry = visual->geometry;
+      urdf::GeometrySharedPtr tmpGeometry = visual->geometry;
       Vector size(0.0, 0.0, 0.0);
       Vector scale(1.0, 1.0, 1.0);
       urdf::Vector3 tmpV;
@@ -784,7 +784,7 @@ namespace mars {
       nodeList.push_back(config);
     }
 
-    void SMURF::translateLink(boost::shared_ptr<urdf::Link> link) {
+    void SMURF::translateLink(urdf::LinkSharedPtr link) {
       Vector v;
       Quaternion q;
 
@@ -802,7 +802,7 @@ namespace mars {
 
       // collision
       if (link->collision) {
-        for (std::vector<boost::shared_ptr<urdf::Collision> >::iterator it = link->collision_array.begin();
+        for (std::vector<urdf::CollisionSharedPtr >::iterator it = link->collision_array.begin();
           it != link->collision_array.end(); ++it) {
             createCollision(*it);
         }
@@ -810,13 +810,13 @@ namespace mars {
 
       // visual
       if (link->visual) {
-        for (std::vector<boost::shared_ptr<urdf::Visual> >::iterator it = link->visual_array.begin();
+        for (std::vector<urdf::VisualSharedPtr >::iterator it = link->visual_array.begin();
           it != link->visual_array.end(); ++it) {
             createVisual(*it);
         }
       }
 
-      for (std::vector<boost::shared_ptr<urdf::Link> >::iterator it = link->child_links.begin();
+      for (std::vector<urdf::LinkSharedPtr >::iterator it = link->child_links.begin();
           it != link->child_links.end(); ++it) {
           fprintf(stderr, "parsing link %s->%s..\n", (link->name).c_str(), ((*it)->name).c_str());
         translateLink(*it);
@@ -824,9 +824,9 @@ namespace mars {
 
     }
 
-    void SMURF::translateJoint(boost::shared_ptr<urdf::Link> childlink) {
+    void SMURF::translateJoint(urdf::LinkSharedPtr childlink) {
         ConfigMap config;
-        boost::shared_ptr<urdf::Joint> joint = childlink->parent_joint;
+        urdf::JointSharedPtr joint = childlink->parent_joint;
         config["name"] = joint->name;
         config["index"] = nextJointID++;
         jointIDMap[joint->name] = nextJointID - 1;
@@ -870,9 +870,9 @@ namespace mars {
         jointList.push_back(config);
     }
 
-    urdf::Pose SMURF::getGlobalPose(const boost::shared_ptr<urdf::Link> &link) {
+    urdf::Pose SMURF::getGlobalPose(const urdf::LinkSharedPtr &link) {
       urdf::Pose globalPose;
-      boost::shared_ptr<urdf::Link> pLink = link->getParent();
+      urdf::LinkSharedPtr pLink = link->getParent();
       if (link->parent_joint) {
         globalPose = link->parent_joint->parent_to_joint_origin_transform;
       }
@@ -885,7 +885,7 @@ namespace mars {
       return globalPose;
     }
 
-    void SMURF::createMaterial(boost::shared_ptr<urdf::Material> material) {
+    void SMURF::createMaterial(urdf::MaterialSharedPtr material) {
       ConfigMap config;
 
       config["id"] = nextMaterialID++;
@@ -938,7 +938,7 @@ namespace mars {
 
       createEmptyVisualMaterial();
       createOriginMaterial();
-      std::map<std::string, boost::shared_ptr<urdf::Material> >::iterator it;
+      std::map<std::string, urdf::MaterialSharedPtr >::iterator it;
       for (it = model->materials_.begin(); it != model->materials_.end(); ++it) {
         createMaterial(it->second);
       }

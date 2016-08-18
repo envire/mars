@@ -480,7 +480,7 @@ void GraphViz::updateTree(const FrameId& origin)
 
 
 /**Updates the drawing position of @p vertex */              
-template <class physicsType> void GraphViz::updatePosition(const vertex_descriptor vertex) const
+template <class physicsType> void GraphViz::updatePosition(const vertex_descriptor vertex)
 {
   const FrameId& frameId = control->graph->getFrameId(vertex);
   base::Vector3d translation;
@@ -493,7 +493,12 @@ template <class physicsType> void GraphViz::updatePosition(const vertex_descript
   }
   else
   {
-    const Transform tf = control->graph->getTransform(originId, frameId);
+    if(pathsFromOrigin.find(vertex) == pathsFromOrigin.end())
+    {
+      //this is an unknown vertex, find the path and store it
+      pathsFromOrigin[vertex] = control->graph->getPath(originId, frameId, true);
+    }
+    const Transform tf = control->graph->getTransform(pathsFromOrigin[vertex]);
     translation = tf.transform.translation;
     orientation = tf.transform.orientation;
   }

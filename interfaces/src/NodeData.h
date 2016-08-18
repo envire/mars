@@ -303,13 +303,12 @@ namespace mars {
        * The env_path mls_map_id are necessary to use serialization and load mls data.   
        */
 	  std::string env_path;
-	  std::string mls_map_id;
+	  void *g_mls;   //user_geom for mls surface
 	  
       ///**
        //* The env_path mls_map_id are necessary to use serialization and load mls data.   
        //*/
-	  //geom_data* gd;  
-	  void *data;           // to define geom_data for mls loading
+	  void *g_data;           // to define geom_data for mls loading
 
       /**
        * The visual representation of a node can have a different position as the
