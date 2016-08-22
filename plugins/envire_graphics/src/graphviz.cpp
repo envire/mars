@@ -75,89 +75,6 @@ void GraphViz::frameAdded(const FrameAddedEvent& e)
 }
 
 
-void GraphViz::edgeAdded(const envire::core::EdgeAddedEvent& e)
-{
-  const vertex_descriptor target = control->graph->vertex(e.target);
-  const vertex_descriptor origin = control->graph->vertex(e.origin);
-  //update the tree structure
-  //find the vertex that was added
-  if(tree.find(origin) != tree.end() &&
-      tree.find(target) == tree.end())
-  {
-    //origin already is a parent in the tree and target is not
-    tree[origin].children.insert(target);
-    tree[target].parent = origin;
-  }
-  else if(tree.find(origin) == tree.end() &&
-          tree.find(target) != tree.end())
-  {
-    //target already is a parent in the tree and origin is not
-    tree[target].children.insert(origin);
-    tree[origin].parent = target;
-  }
-  else
-  {
-    // This can happen in three cases:
-    // 1: A loop was added to the current tree, in this case a new, shorter
-    //    path might have been added, therefore we update the whole tree.
-    // 2: A transform was added to another sub-tree, we dont care about this.
-    // 3:
-#define L The current tree is empty and this is the first transform that is added.
-    updateTree(originId);
-  }
-  
-}
-
-void GraphViz::edgeRemoved(const envire::core::EdgeRemovedEvent& e)
-{
-  //Removing a transform can lead to non trivial changes in the tree.
-  //Instead of thinking about them we just recalculate the tree.
-  //This is fast enough for now.
-  updateTree(originId);
-}
-
-void GraphViz::edgeModified(const envire::core::EdgeModifiedEvent& e)
-{
-  const vertex_descriptor target = control->graph->vertex(e.target);
-  const vertex_descriptor origin = control->graph->vertex(e.origin);
-  vertex_descriptor child;
-  
-  if(isParent(target, origin))
-  {
-    child = origin;
-  }
-  else if(isParent(origin, target))
-  {
-    child = target;
-  }
-  else
-  {
-    //a transform changed that is not part of the current tree. We don't care
-    //about it.
-    return;
-  }
-  //update all children
-  vector<vertex_descriptor> queue;
-  queue.push_back(child);
-  while(!queue.empty())
-  {
-    const vertex_descriptor vertex = queue.back();
-    queue.pop_back();
-    
-    updatePosition<Item<envire::smurf::Visual>>(vertex);
-    updatePosition<Item<smurf::Frame>>(vertex);
-    
-    //if the vertex has children, queue them
-    if(tree.find(vertex) != tree.end())
-    {
-      for(const vertex_descriptor vd : tree[vertex].children)
-      {
-        queue.emplace_back(vd);
-      }
-    }
-  }
-}
-
 void GraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node)
 {
     Transform fromOrigin;
@@ -426,30 +343,16 @@ void GraphViz::setNodeDataMaterial(NodeData& nodeData, boost::shared_ptr< urdf::
 }
 
 
-bool GraphViz::isParent(vertex_descriptor parent, vertex_descriptor child) const
-{
-  if(tree.find(child) != tree.end())
-  {
-    bool res = tree.at(child).parent == parent;
-    return res;
-  }
-  return false;
-}
-
 void GraphViz::update(sReal time_ms) {
-  //uncomment this to randomly change the origin
-  /*
-  static sReal secondsPassed = 0;
-  secondsPassed += time_ms / 1000;
-  if(secondsPassed > 500)
+  
+  const float timeBetweenFramesMs = 1000.0 / visualUpdateRateFps;
+  timeSinceLastUpdateMs += time_ms;
+  
+  if(timeSinceLastUpdateMs >= timeBetweenFramesMs)
   {
-    VertexRelationMap::iterator it = tree.begin();
-    int randomIndex = rand() % tree.size();
-    std::advance(it, randomIndex);
-    changeOrigin(control->graph->getFrameId(it->first));
-    secondsPassed = 0;
+    updateVisuals();
+    timeSinceLastUpdateMs = 0;
   }
-*/
 }
 
 void GraphViz::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
@@ -465,17 +368,18 @@ void GraphViz::updateTree(const FrameId& origin)
 {
   const vertex_descriptor newOrigin = control->graph->vertex(origin);
   assert(newOrigin != control->graph->null_vertex());
-  tree = control->graph->getTree(newOrigin).tree;
-  //update the origins position
-  updatePosition<Item<envire::smurf::Visual>>(newOrigin);
-  //update all childreen
-  for(const auto& it : tree)
+  tree.clear();
+  control->graph->getTree(newOrigin, true, &tree);
+}
+
+void GraphViz::updateVisuals()
+{
+  tree.visitBfs(tree.root, [&](GraphTraits::vertex_descriptor vd, 
+                               GraphTraits::vertex_descriptor parent)
   {
-    for(vertex_descriptor vertex : it.second.children)
-    {
-      updatePosition<Item<envire::smurf::Visual>>(vertex);
-    }
-  }
+    updatePosition<Item<envire::smurf::Visual>>(vd);
+    updatePosition<Item<smurf::Frame>>(vd);
+  });
 }
 
 

@@ -82,9 +82,6 @@ namespace mars {
         void update(mars::interfaces::sReal time_ms);
         
         
-        virtual void edgeAdded(const envire::core::EdgeAddedEvent& e);
-        virtual void edgeRemoved(const envire::core::EdgeRemovedEvent& e);
-        virtual void edgeModified(const envire::core::EdgeModifiedEvent& e);
         virtual void itemAdded(const envire::core::ItemAddedEvent& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e);
@@ -133,10 +130,9 @@ namespace mars {
          */
         void updateTree(const envire::core::FrameId& origin);
         
-        /**Determine whether @p a is the parent of @p b */
-        bool isParent(const envire::core::GraphTraits::vertex_descriptor a,
-                      const envire::core::GraphTraits::vertex_descriptor b) const;
-                      
+        //update position of all visuals
+        void updateVisuals();
+
         /**Updates the drawing position of @p vertex */              
         template <class physicsType> void updatePosition(const envire::core::GraphTraits::vertex_descriptor vertex);
         void setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
@@ -145,7 +141,7 @@ namespace mars {
         /**Maps the item's uuid to the graphics id used for drawing */
         std::unordered_map<boost::uuids::uuid, int, boost::hash<boost::uuids::uuid>> uuidToGraphicsId;
         envire::core::FrameId originId; /**<id of the current origin */
-        envire::core::VertexRelationMap tree; /**<map from parent to children */
+        envire::core::TreeView tree; /**<tree containing all visualized vertices */
         
         //buffers the paths from origin to the nodes to avoid tree searches.
         //FIXME paths might become invalid if the graph changes.
@@ -154,7 +150,8 @@ namespace mars {
         bool viewCollidables = false;
         bool viewJoints = false;
         bool viewFrames = false;
-        
+        const int visualUpdateRateFps = 30;
+        float timeSinceLastUpdateMs = 0; 
 
       }; // end of class definition TestTreeMars
 
