@@ -81,12 +81,12 @@ void GraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces::Node
     if(originId.compare(frame) == 0)
     {
       //this special case happens when the graph only contains one frame
-      //and items are added to that frame. In that case aksing the graph 
+      //and items are added to that frame. In that case asking the graph 
       //for the transformation would cause an exception
       fromOrigin.setTransform(TransformWithCovariance::Identity());
     }
     else
-    {
+    {     
       fromOrigin = control->graph->getTransform(originId, frame); 
     }
     node.pos = fromOrigin.transform.translation;
@@ -99,7 +99,7 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
   boost::shared_ptr<PhysicsConfigMapItem> pItem;
   if(pItem = boost::dynamic_pointer_cast<PhysicsConfigMapItem>(e.item))
   {
-	NodeData node1;
+    NodeData node1;
     node1.fromConfigMap(&pItem->getData(), "");
 
   if(node1.physicMode != NODE_TYPE_MLS) //TODO: implement a visualization for mls
@@ -201,7 +201,6 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
     {
         const FrameId source = e.item->getData().getSourceFrame().getName();
         const FrameId target = e.item->getData().getTargetFrame().getName();
-        
         
         const envire::core::Transform tf = control->graph->getTransform(source, target);
         const double length = tf.transform.translation.norm();
