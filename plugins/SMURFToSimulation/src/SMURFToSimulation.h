@@ -61,7 +61,7 @@ namespace mars {
         ~SMURFToSimulation();
 
         envire::core::GraphTraits::vertex_descriptor addCenter();
-        void addRobot(envire::core::GraphTraits::vertex_descriptor center);
+        void addRobot(envire::core::GraphTraits::vertex_descriptor center, const std::string& smurf_path);
 
         // LibInterface methods
         int getLibVersion() const
