@@ -149,8 +149,8 @@ namespace mars {
                 //std::string timestamp = base::Time::now().toString();
                 //std::string name = "justFloor" + timestamp + ".dot";
                 //viz.write(*(control->graph), name);
-                vertex_descriptor center = addCenter();
-                addRobot(center);
+                //vertex_descriptor center = addCenter();
+                //addRobot(center);
                 // uncomment to print the graph
                 //envire::core::GraphViz viz;
                 //std::string timestamp = base::Time::now().toString();

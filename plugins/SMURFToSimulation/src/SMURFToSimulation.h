@@ -60,6 +60,9 @@ namespace mars {
         SMURFToSimulation(lib_manager::LibManager *theManager);
         ~SMURFToSimulation();
 
+        envire::core::GraphTraits::vertex_descriptor addCenter();
+        void addRobot(envire::core::GraphTraits::vertex_descriptor center);
+
         // LibInterface methods
         int getLibVersion() const
         { return 1; }
@@ -86,9 +89,9 @@ namespace mars {
 
       private:
         cfg_manager::cfgPropertyStruct example;
-        envire::core::GraphTraits::vertex_descriptor addCenter();
+
         void addFloor(const envire::core::GraphTraits::vertex_descriptor &center);
-        void addRobot(envire::core::GraphTraits::vertex_descriptor center);
+
         int nextGroupId;
 
       }; // end of class definition SMURFToSimulation
