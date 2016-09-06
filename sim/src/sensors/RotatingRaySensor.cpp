@@ -304,7 +304,7 @@ namespace mars {
       assert((int)data.size() == config.bands * config.lasers);
       int i = 0; // data_counter
       float local_dist;
-      base::Time timestamp = base::Time::Time::now(); 
+      base::Time timestamp = base::Time::fromMilliseconds(control->sim->getTime());
       for(int b=0; b<config.bands; ++b) {
         partialDepthMaps[b].timestamps.push_back(timestamp);
         for(int col=0; col<config.lasers; col++, ++i){
@@ -430,7 +430,7 @@ namespace mars {
       //LOG_DEBUG("The final depthMap has %d timestamps", finalDepthMap.timestamps.size());
       //LOG_DEBUG("The final depthMap has %d vertical size", finalDepthMap.vertical_size);
       //LOG_DEBUG("The final depthMap timestamps multiplied by the number laser should be equal to the number of distances: %d", finalDepthMap.timestamps.size()*finalDepthMap.vertical_size);
-      finalDepthMap.time = base::Time::Time::now();
+      finalDepthMap.time = base::Time::fromMilliseconds(control->sim->getTime());
       finalDepthMap.horizontal_size = finalDepthMap.timestamps.size();
     }
 
