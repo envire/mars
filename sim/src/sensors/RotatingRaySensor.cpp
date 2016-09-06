@@ -235,9 +235,6 @@ namespace mars {
       mars::utils::MutexLocker lock(&mutex_pointcloud);
       if(full_scan) {
         full_scan = false;
-        bool valid = true;
-        unsigned int i = 0;
-        int count_invalids = 0;
         depthMap.time = finalDepthMap.time;
         depthMap.vertical_projection = finalDepthMap.vertical_projection;
         depthMap.horizontal_projection = finalDepthMap.horizontal_projection;
@@ -306,14 +303,18 @@ namespace mars {
       // data[] contains all the measured distances according to the define directions.
       assert((int)data.size() == config.bands * config.lasers);
       int i = 0; // data_counter
-      utils::Vector local_ray, tmpvec;
-      double local_dist;
+      float local_dist;
       base::Time timestamp = base::Time::Time::now(); 
       for(int b=0; b<config.bands; ++b) {
         partialDepthMaps[b].timestamps.push_back(timestamp);
         for(int col=0; col<config.lasers; col++, ++i){
-          local_ray = orientation_offset * directions[i] * data[i];
-          partialDepthMaps[b].distances.push_back(local_ray.norm());
+          local_dist = (orientation_offset * directions[i] * data[i]).norm();
+          if(local_dist < config.minDistance)
+            partialDepthMaps[b].distances.push_back(0.f);
+          else if(local_dist >= config.maxDistance)
+            partialDepthMaps[b].distances.push_back(std::numeric_limits<float>::infinity());
+          else
+            partialDepthMaps[b].distances.push_back(local_dist);
         }
       }
       num_points += data.size();
