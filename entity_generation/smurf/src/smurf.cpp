@@ -199,7 +199,11 @@ namespace mars {
         //   order of priority (or sort the contents in a way as to avoid errors upon loading).
 
         entity = new sim::SimEntity(control, entityconfig);
-        createModel();
+        bool fixed = false;
+        if (entityconfig.find("parent") != entityconfig.end())
+          if ((std::string)entityconfig["parent"] == "world")
+            fixed = true;
+        createModel(fixed);
 
         ConfigMap::iterator it;
 #ifdef DEBUG_SCENE_MAP
@@ -217,7 +221,7 @@ namespace mars {
         fprintf(stderr, "parsing model...\n");
         parseURDF(urdfpath);
         entity = new sim::SimEntity(control, entityconfig);
-        createModel();
+        createModel(false);
       }
 
       // node mapping and name checking
@@ -541,7 +545,7 @@ namespace mars {
       vectorToConfigItem(&(*map)["extend"][0], &size);
     }
 
-    void SMURF::createOrigin(const urdf::LinkSharedPtr &link) {
+    void SMURF::createOrigin(const urdf::LinkSharedPtr &link, bool fixed) {
       ConfigMap config;
       std::string name;
       if (link->name.empty()) {
@@ -562,7 +566,7 @@ namespace mars {
       nodeIDMap[name] = nextNodeID - 1;
       currentNodeID = nextNodeID - 1;
       config["groupid"] = groupID;
-      config["movable"] = true;
+      config["movable"] = !fixed;
 
       // pose
       Vector v;
@@ -638,7 +642,7 @@ namespace mars {
       nodeList.push_back(config);
     }
 
-    void SMURF::createCollision(const urdf::CollisionSharedPtr &collision) {
+    void SMURF::createCollision(const urdf::CollisionSharedPtr &collision, bool fixed=false) {
       ConfigMap config;
       std::string name;
       if (collision->name.empty()) {
@@ -652,7 +656,7 @@ namespace mars {
       config["index"] = nextNodeID++;
       nodeIDMap[name] = nextNodeID - 1;
       config["groupid"] = groupID;
-      config["movable"] = true;
+      config["movable"] = !fixed;
       config["relativeid"] = currentNodeID;
       config["mass"] = 0.001;
       config["density"] = 0.0;
@@ -711,7 +715,7 @@ namespace mars {
       nodeList.push_back(config);
     }
 
-    void SMURF::createVisual(const urdf::VisualSharedPtr &visual) {
+    void SMURF::createVisual(const urdf::VisualSharedPtr &visual, bool fixed=false) {
       ConfigMap config;
       std::string name;
       if (visual->name.empty()) {
@@ -725,7 +729,7 @@ namespace mars {
       config["index"] = nextNodeID++;
       nodeIDMap[name] = nextNodeID - 1;
       config["groupid"] = groupID;
-      config["movable"] = true;
+      config["movable"] = !fixed;
       config["relativeid"] = currentNodeID;
       config["mass"] = 0.001;
       config["density"] = 0.0;
@@ -784,19 +788,19 @@ namespace mars {
       nodeList.push_back(config);
     }
 
-    void SMURF::translateLink(urdf::LinkSharedPtr link) {
+    void SMURF::translateLink(urdf::LinkSharedPtr link, bool fixed=false) {
       Vector v;
       Quaternion q;
 
       groupID++;
 
-      createOrigin(link);
+      createOrigin(link, fixed);
 
       if (link->parent_joint)
         translateJoint(link);
 
       // inertial
-      if (link->inertial) {
+      if (link->inertial && !fixed) {
         createInertial(link);
       }
 
@@ -804,7 +808,7 @@ namespace mars {
       if (link->collision) {
         for (std::vector<urdf::CollisionSharedPtr >::iterator it = link->collision_array.begin();
           it != link->collision_array.end(); ++it) {
-            createCollision(*it);
+            createCollision(*it, fixed);
         }
       }
 
@@ -812,7 +816,7 @@ namespace mars {
       if (link->visual) {
         for (std::vector<urdf::VisualSharedPtr >::iterator it = link->visual_array.begin();
           it != link->visual_array.end(); ++it) {
-            createVisual(*it);
+            createVisual(*it, fixed);
         }
       }
 
@@ -930,7 +934,7 @@ namespace mars {
       return 1;
     }
 
-    void SMURF::createModel() {
+    void SMURF::createModel(bool fixed=false) {
 
       if (robotname == "") {
         robotname = model.get()->name_;
@@ -943,7 +947,7 @@ namespace mars {
         createMaterial(it->second);
       }
 
-      translateLink(model->root_link_);
+      translateLink(model->root_link_, fixed);
     }
 
     unsigned int SMURF::load() {
@@ -1012,11 +1016,12 @@ namespace mars {
           // turn our relative filename into an absolute filename
           removeFilenameSuffix(&tmpfilename);
           tmpfilename.append(".bobj");
+          string tmpfilename2 = tmpfilename;
           handleFilenamePrefix(&tmpfilename, tmpPath);
           // replace if that file exists
           if (pathExists(tmpfilename)) {
             fprintf(stderr, "Loading .bobj instead of .obj for file: %s\n", tmpfilename.c_str());
-            config["filename"] = tmpfilename;
+            config["filename"] = tmpfilename2;
           }
         }
       }

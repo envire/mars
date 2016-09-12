@@ -37,7 +37,7 @@
 #include <mars/entity_generation/entity_factory/EntityFactoryInterface.h>
 
 #include <urdf_parser/urdf_parser.h>
-#include <boost/function.hpp>
+//#include <boost/function.hpp>
 #include <urdf_model/model.h>
 #include <urdf_model/link.h>
 #include <urdf_model/joint.h>
@@ -62,7 +62,7 @@ namespace mars {
       /**
        * @return 0 on error.
        */
-      void createModel();
+      void createModel(bool fixed);
       unsigned int parseURDF(std::string filename);
       unsigned int load();
       void addConfigMap(configmaps::ConfigMap &config);
@@ -116,13 +116,13 @@ namespace mars {
       void getSensorIDList(configmaps::ConfigMap *map);
 
       // creating URDF objects
-      void translateLink(urdf::LinkSharedPtr link); // handleKinematics
+      void translateLink(urdf::LinkSharedPtr link, bool fixed); // handleKinematics
       void translateJoint(urdf::LinkSharedPtr childlink); // handleKinematics
       void createMaterial(const urdf::MaterialSharedPtr material); // handleMaterial
-      void createOrigin(const urdf::LinkSharedPtr &link);
+      void createOrigin(const urdf::LinkSharedPtr &link, bool fixed);
       void createInertial(const urdf::LinkSharedPtr &link);
-      void createVisual(const urdf::VisualSharedPtr &visual);
-      void createCollision(const urdf::CollisionSharedPtr &collision);
+      void createVisual(const urdf::VisualSharedPtr &visual, bool fixed);
+      void createCollision(const urdf::CollisionSharedPtr &collision, bool fixed);
       void addEmptyVisualToNode(configmaps::ConfigMap *map); // createFakeVisual
       void addEmptyCollisionToNode(configmaps::ConfigMap *map); // createFakeCollision
       void createEmptyVisualMaterial();

@@ -65,7 +65,7 @@
 namespace mars {
   namespace sim {
 
-    using namespace std;
+    using std::string;
     using namespace utils;
     using namespace interfaces;
 
