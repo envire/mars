@@ -49,11 +49,7 @@ namespace mars {
     namespace SMURFToSimulation {
 
       // inherit from MarsPluginTemplateGUI for extending the gui
-      class SMURFToSimulation: public mars::interfaces::MarsPluginTemplate,
-        public mars::data_broker::ReceiverInterface,
-        // for gui
-        // public mars::main_gui::MenuInterface,
-        public mars::cfg_manager::CFGClient {
+      class SMURFToSimulation: public mars::interfaces::MarsPluginTemplate{
 
 
       public:
@@ -75,21 +71,7 @@ namespace mars {
         void reset();
         void update(mars::interfaces::sReal time_ms);
 
-        // DataBrokerReceiver methods
-        virtual void receiveData(const data_broker::DataInfo &info,
-                                 const data_broker::DataPackage &package,
-                                 int callbackParam);
-        // CFGClient methods
-        virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);
-
-        // MenuInterface methods
-        //void menuAction(int action, bool checked = false);
-
-        // SMURFToSimulation methods
-
       private:
-        cfg_manager::cfgPropertyStruct example;
-
         void addFloor(const envire::core::GraphTraits::vertex_descriptor &center);
 
         int nextGroupId;

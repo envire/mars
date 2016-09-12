@@ -219,21 +219,7 @@ namespace mars {
             void SMURFToSimulation::update(sReal time_ms) {
                 
                 // control->motors->setMotorValue(id, value);
-            }
-            
-            void SMURFToSimulation::receiveData(const data_broker::DataInfo& info,
-                                                const data_broker::DataPackage& package,
-                                                int id) {
-                // package.get("force1/x", force);
-                                                }
-                                                
-                                                void SMURFToSimulation::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
-                                                    
-                                                    if(_property.paramId == example.paramId) {
-                                                        example.dValue = _property.dValue;
-                                                    }
-                                                }
-                                                
+            }                                                
         } // end of namespace SMURFToSimulation
     } // end of namespace plugins
 } // end of namespace mars
