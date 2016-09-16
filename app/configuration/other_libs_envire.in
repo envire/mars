@@ -3,4 +3,4 @@ envire_graphics
 envire_joints
 envire_motors
 envire_sensors
-SMURFToSimulation
+envire_smurf_loader

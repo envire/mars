@@ -19,14 +19,14 @@
  */
 
 /**
- * \file SMURFToSimulation.cpp
+ * \file EnvireSmurfLoader.cpp
  * \author Raul (raul.dominguez@dfki.de)
  * \brief Tests
  *
  * Version 0.1
  */
 
-#include "SMURFToSimulation.h"
+#include "EnvireSmurfLoader.h"
 
 #include <mars/interfaces/Logging.hpp>
 
@@ -52,12 +52,12 @@ using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
 
 namespace mars {
     namespace plugins {
-        namespace SMURFToSimulation {
+        namespace EnvireSmurfLoader {
             
             using namespace mars::utils;
             using namespace mars::interfaces;
             
-            SMURFToSimulation::SMURFToSimulation(lib_manager::LibManager *theManager)
+            EnvireSmurfLoader::EnvireSmurfLoader(lib_manager::LibManager *theManager)
                 : LoadSceneInterface(theManager), control(NULL), nextGroupId(1)
             {
                 mars::interfaces::SimulatorInterface *marsSim;
@@ -70,11 +70,11 @@ namespace mars {
                     control->loadCenter->loadScene[".smurfs"] = this; // smurf scene
                     control->loadCenter->loadScene[".svg"] = this; // smurfed vector graphic
                     control->loadCenter->loadScene[".urdf"] = this; // urdf model
-                    LOG_INFO("smurftosimulation_loader: added SMURF loader to loadCenter");                    
+                    LOG_INFO("envire_smurf_loader: SMURF loader to loadCenter");                    
                 }
             }
 
-            SMURFToSimulation::~SMURFToSimulation() {
+            EnvireSmurfLoader::~EnvireSmurfLoader() {
               if(control) {
                 control->loadCenter->loadScene.erase(".zsmurf");
                 control->loadCenter->loadScene.erase(".zsmurfs");
@@ -86,11 +86,9 @@ namespace mars {
               }                
             }       
 
-            bool SMURFToSimulation::loadFile(std::string filename, std::string tmpPath,
+            bool EnvireSmurfLoader::loadFile(std::string filename, std::string tmpPath,
                                     std::string robotname)
             {
-                LOG_INFO("smurftosimulation_loader: load File");   
-
                 vertex_descriptor center = addCenter();
 
                 std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions(filename); 
@@ -102,22 +100,21 @@ namespace mars {
                 robot->loadFromSmurf(path);
                 envire::smurf::GraphLoader graphLoader(control->graph);
                 graphLoader.loadRobot(nextGroupId, center, iniPose, *robot);
-                LOG_INFO("smurftosimulation_loader: load finished");   
             }
 
-            int SMURFToSimulation::saveFile(std::string filename, std::string tmpPath)
+            int EnvireSmurfLoader::saveFile(std::string filename, std::string tmpPath)
             {
                 return 0;
             }
             
-            vertex_descriptor SMURFToSimulation::addCenter()
+            vertex_descriptor EnvireSmurfLoader::addCenter()
             {
                 envire::core::FrameId center = "center";
                 control->graph->addFrame(center);
                 return control->graph->getVertex(center);
             }
 
-            void SMURFToSimulation::addFloor(const vertex_descriptor &center)
+            void EnvireSmurfLoader::addFloor(const vertex_descriptor &center)
             {
                 NodeData data;
                 data.init("floorData", Vector(0,0,0));
@@ -131,23 +128,10 @@ namespace mars {
                 LOG_DEBUG("Color of the Item in the addFloor: %f , %f, %f, %f", data.material.emissionFront.a , data.material.emissionFront.b, data.material.emissionFront.g, data.material.emissionFront.r );
                 data.toConfigMap(&(item.get()->getData()));
                 control->graph->addItemToFrame(control->graph->getFrameId(center), item);
-            }
-            
-            void SMURFToSimulation::addRobot(vertex_descriptor center, const std::string& smurf_path)
-            {    
-                std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions(smurf_path); 
-                LOG_DEBUG("Robot Path: %s",  path.c_str() );
-                envire::core::Transform iniPose;
-                iniPose.transform.orientation = base::Quaterniond::Identity();
-                iniPose.transform.translation << 1.0, 1.0, 0.3;
-                smurf::Robot* robot = new( smurf::Robot);
-                robot->loadFromSmurf(path);
-                envire::smurf::GraphLoader graphLoader(control->graph);
-                graphLoader.loadRobot(nextGroupId, center, iniPose, *robot);
-            }                                             
-        } // end of namespace SMURFToSimulation
+            }                                      
+        } // end of namespace EnvireSmurfLoader
     } // end of namespace plugins
 } // end of namespace mars
 
-DESTROY_LIB(mars::plugins::SMURFToSimulation::SMURFToSimulation);
-CREATE_LIB(mars::plugins::SMURFToSimulation::SMURFToSimulation);
+DESTROY_LIB(mars::plugins::EnvireSmurfLoader::EnvireSmurfLoader);
+CREATE_LIB(mars::plugins::EnvireSmurfLoader::EnvireSmurfLoader);
