@@ -72,6 +72,8 @@ namespace mars {
 
         void addFloor(const envire::core::GraphTraits::vertex_descriptor &center);
 
+        void addRobot(std::string filename,  envire::core::GraphTraits::vertex_descriptor center);
+
         int nextGroupId;
 
       }; // end of class definition EnvireSmurfLoader

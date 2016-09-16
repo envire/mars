@@ -90,7 +90,17 @@ namespace mars {
                                     std::string robotname)
             {
                 vertex_descriptor center = addCenter();
+                addRobot(filename, center);
+                return true;
+            }
 
+            int EnvireSmurfLoader::saveFile(std::string filename, std::string tmpPath)
+            {
+                return 0;
+            }
+
+            void EnvireSmurfLoader::addRobot(std::string filename, vertex_descriptor center)
+            {
                 std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions(filename); 
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 envire::core::Transform iniPose;
@@ -100,11 +110,6 @@ namespace mars {
                 robot->loadFromSmurf(path);
                 envire::smurf::GraphLoader graphLoader(control->graph);
                 graphLoader.loadRobot(nextGroupId, center, iniPose, *robot);
-            }
-
-            int EnvireSmurfLoader::saveFile(std::string filename, std::string tmpPath)
-            {
-                return 0;
             }
             
             vertex_descriptor EnvireSmurfLoader::addCenter()
