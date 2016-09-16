@@ -33,23 +33,21 @@
   #warning "SMURFToSimulation.h"
 #endif
 
-// set define if you want to extend the gui
-//#define PLUGIN_WITH_MARS_GUI
-#include <mars/interfaces/sim/MarsPluginTemplate.h>
-#include <mars/interfaces/MARSDefs.h>
-#include <mars/data_broker/ReceiverInterface.h>
-#include <mars/cfg_manager/CFGManagerInterface.h>
-#include <mars/interfaces/sim/ControlCenter.h> 
-#include <envire_core/graph/GraphTypes.hpp>
 #include <string>
 
-namespace mars {
+// set define if you want to extend the gui
+//#define PLUGIN_WITH_MARS_GUI
+#include <mars/interfaces/sim/LoadSceneInterface.h>
+#include <mars/interfaces/sim/ControlCenter.h>
 
+#include <envire_core/graph/GraphTypes.hpp>
+
+namespace mars {
   namespace plugins {
     namespace SMURFToSimulation {
 
       // inherit from MarsPluginTemplateGUI for extending the gui
-      class SMURFToSimulation: public mars::interfaces::MarsPluginTemplate{
+      class SMURFToSimulation: public mars::interfaces::LoadSceneInterface {
 
 
       public:
@@ -66,12 +64,13 @@ namespace mars {
         { return std::string("SMURFToSimulation"); }
         CREATE_MODULE_INFO();
 
-        // MarsPlugin methods
-        void init();
-        void reset();
-        void update(mars::interfaces::sReal time_ms);
+        virtual bool loadFile(std::string filename, std::string tmpPath,
+                                std::string robotname);
+        virtual int saveFile(std::string filename, std::string tmpPath);
 
       private:
+        interfaces::ControlCenter *control;
+
         void addFloor(const envire::core::GraphTraits::vertex_descriptor &center);
 
         int nextGroupId;

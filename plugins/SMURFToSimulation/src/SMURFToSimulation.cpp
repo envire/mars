@@ -26,19 +26,23 @@
  * Version 0.1
  */
 
-
 #include "SMURFToSimulation.h"
-#include <mars/data_broker/DataBrokerInterface.h>
-#include <mars/data_broker/DataPackage.h>
+
 #include <mars/interfaces/Logging.hpp>
+
+#include <lib_manager/LibManager.hpp>
+#include <mars/interfaces/sim/SimulatorInterface.h>
+#include <mars/interfaces/sim/LoadCenter.h>
 
 #include <lib_config/YAMLConfiguration.hpp>
 // To populate the Graph from the smurf
 #include <smurf/Robot.hpp>
 #include <envire_smurf/GraphLoader.hpp>
+
 // For the floor
 #include <mars/interfaces/NodeData.h>
 #include <mars/sim/ConfigMapItem.h>
+
 // To log the graph
 #include <base/Time.hpp>
 #include <envire_core/graph/GraphViz.hpp>
@@ -54,7 +58,56 @@ namespace mars {
             using namespace mars::interfaces;
             
             SMURFToSimulation::SMURFToSimulation(lib_manager::LibManager *theManager)
-            : MarsPluginTemplate(theManager, "SMURFToSimulation") {
+                : LoadSceneInterface(theManager), control(NULL), nextGroupId(1)
+            {
+                mars::interfaces::SimulatorInterface *marsSim;
+                marsSim = libManager->getLibraryAs<mars::interfaces::SimulatorInterface>("mars_sim");
+                if(marsSim) {
+                    control = marsSim->getControlCenter();
+                    control->loadCenter->loadScene[".zsmurf"] = this; // zipped smurf model
+                    control->loadCenter->loadScene[".zsmurfs"] = this; // zipped smurf scene
+                    control->loadCenter->loadScene[".smurf"] = this; // smurf model
+                    control->loadCenter->loadScene[".smurfs"] = this; // smurf scene
+                    control->loadCenter->loadScene[".svg"] = this; // smurfed vector graphic
+                    control->loadCenter->loadScene[".urdf"] = this; // urdf model
+                    LOG_INFO("smurftosimulation_loader: added SMURF loader to loadCenter");                    
+                }
+            }
+
+            SMURFToSimulation::~SMURFToSimulation() {
+              if(control) {
+                control->loadCenter->loadScene.erase(".zsmurf");
+                control->loadCenter->loadScene.erase(".zsmurfs");
+                control->loadCenter->loadScene.erase(".smurf");
+                control->loadCenter->loadScene.erase(".smurfs");
+                control->loadCenter->loadScene.erase(".svg");
+                control->loadCenter->loadScene.erase(".urdf");
+                libManager->releaseLibrary("mars_sim");
+              }                
+            }       
+
+            bool SMURFToSimulation::loadFile(std::string filename, std::string tmpPath,
+                                    std::string robotname)
+            {
+                LOG_INFO("smurftosimulation_loader: load File");   
+
+                vertex_descriptor center = addCenter();
+
+                std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions(filename); 
+                LOG_DEBUG("Robot Path: %s",  path.c_str() );
+                envire::core::Transform iniPose;
+                iniPose.transform.orientation = base::Quaterniond::Identity();
+                iniPose.transform.translation << 1.0, 1.0, 0.3;
+                smurf::Robot* robot = new( smurf::Robot);
+                robot->loadFromSmurf(path);
+                envire::smurf::GraphLoader graphLoader(control->graph);
+                graphLoader.loadRobot(nextGroupId, center, iniPose, *robot);
+                LOG_INFO("smurftosimulation_loader: load finished");   
+            }
+
+            int SMURFToSimulation::saveFile(std::string filename, std::string tmpPath)
+            {
+                return 0;
             }
             
             vertex_descriptor SMURFToSimulation::addCenter()
@@ -82,144 +135,16 @@ namespace mars {
             
             void SMURFToSimulation::addRobot(vertex_descriptor center, const std::string& smurf_path)
             {    
-                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SPACECLIMBER)%>"); 
-                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(ASGUARD4)%>"); 
-                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/<%=ENV(SIMULATED_ROBOT)%>"); 
                 std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions(smurf_path); 
-                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_with_motor.smurf"); 
-                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_dynamic_joint.smurf"); 
-                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes.smurf"); 
-                //std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions("<%=ENV(AUTOPROJ_CURRENT_ROOT) %>/tools/smurf/test/sample_smurfs/two_boxes_joined/smurf/two_boxes_with_sensor.smurf");
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 envire::core::Transform iniPose;
                 iniPose.transform.orientation = base::Quaterniond::Identity();
                 iniPose.transform.translation << 1.0, 1.0, 0.3;
                 smurf::Robot* robot = new( smurf::Robot);
                 robot->loadFromSmurf(path);
-                //std::shared_ptr<envire::core::EnvireGraph> targetGraph = control->graph;
                 envire::smurf::GraphLoader graphLoader(control->graph);
-                /*
-                graphLoader.loadStructure(center, *robot);
-                envire::core::GraphViz viz;
-                std::string timestamp = base::Time::now().toString();
-                std::string name = "loadStructure" + timestamp + ".dot";
-                viz.write(*(control->graph), name);
-                */
                 graphLoader.loadRobot(nextGroupId, center, iniPose, *robot);
-                /*
-                envire::core::GraphViz viz;
-                std::string timestamp = base::Time::now().toString();
-                std::string name = "loadRobot" + timestamp + ".dot";
-                viz.write(*(control->graph), name);
-                graphLoader.initGraph(*(control->graph), center);
-                //envire::core::GraphViz viz;
-                //std::string timestamp = base::Time::now().toString();
-                //std::string name = "initGraph" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
-                graphLoader.loadLinks(*(control->graph), nextGroupId);
-                //name = "loadLinks" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
-                graphLoader.loadCollidables(*(control->graph));
-                graphLoader.loadInertials(*(control->graph));
-                //name = "loadInertialAndCollidables" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
-                graphLoader.loadFixedJoints(*(control->graph));
-                //name = "loadFixedJoints" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
-                graphLoader.loadDynamicJoints(*(control->graph));
-                //name = "loadDynamicJoints" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
-                graphLoader.loadVisuals(*(control->graph));
-                //name = "loadVisuals" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
-                graphLoader.loadMotors(*(control->graph));
-                //name = "loadMotors" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
-                //LOG_DEBUG("Loaded to Mars/Envire graph");
-                graphLoader.loadSensors(*(control->graph));
-                //name = "loadSensors" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
-                */
-            }
-            
-            void SMURFToSimulation::init()
-            {
-                nextGroupId = 1;
-                //vertex_descriptor center = addFloor();
-                //envire::core::GraphViz viz;
-                //std::string timestamp = base::Time::now().toString();
-                //std::string name = "justFloor" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
-                //vertex_descriptor center = addCenter();
-                //addRobot(center);
-                // uncomment to print the graph
-                //envire::core::GraphViz viz;
-                //std::string timestamp = base::Time::now().toString();
-                //std::string name = "smurfToSimulationInit" + timestamp + ".dot";
-                //viz.write(*(control->graph), name);
-                // Place the robot
-                //envire::core::Transform robotPose;
-                // Update Transform event handler is not implemented
-                //robotPose.transform.translation << 2, 3, 1.0;
-                //robotPose.transform.orientation = base::Quaterniond::Identity();
-                //control->graph->updateTransform(center, robotRoot, robotPose);
-                
-                
-                // Create a Simulated Robot from the information in the robot model
-                // robot.simulate();
-                // Create configMap
-                //
-                // Load a Robot
-                // robot = envire_smurf.loadFromSMURF(Robot);
-                //configmaps::ConfigMap* map = new configmaps::ConfigMap;
-                //std::cout << "Create configMap" << std::endl;
-                //// Update the configMap from a Smurf file
-                //std::string path = std::string(std::getenv("AUTOPROJ_CURRENT_ROOT")) + "/models/robots/asguard_v4/smurf/";
-                //std::string fileName = "asguard_v4.smurf"; 
-                //std::cout << "Complete Part: " << path << fileName << std::endl;
-                //bool expandURIs = false;
-                //boost::shared_ptr<urdf::ModelInterface> modelInterface;
-                //std::cout << "Shared Pointer to modelInterface" << std::endl;
-                //modelInterface = parseFile(map, path, fileName, expandURIs);
-                //std::cout << "parseFile executed" << std::endl;
-                //// Make the tree load the model and configMap
-                
-                //control->tree->loadRobot(modelInterface, *map);
-                //control->tree->drawDotFile("smurf.dot");
-                //// Plot the Tree
-                ///*
-                //typedef configmaps::ConfigMap::const_iterator MapIterator;
-                //typedef configmaps::ConfigVectorTemplate<configmaps::ConfigItem>::const_iterator VectorIterator;
-                //for (MapIterator iter = map -> begin(); iter != map -> end(); iter++)
-                //{
-                //  cout << "Key: " << iter->first << endl;
-                //  for (VectorIterator iterV = iter-> second.begin(); iterV != iter-> second.end(); iterV++)
-                //  {
-                //    cout << "Vector item: " << iterV -> toString() << endl;
-                //  }
-                //}
-                
-                //std::string path2 = (std::string)(map->operator[]("path"));
-                //std::cout << "Path 2: " << path2 << std::endl;
-                //std::string filename2 = (std::string)(map->operator[]("file"));
-                //std::cout << "Filename 2: " << filename2 << std::endl;
-                //sim::SimEntity* entity = smurf.createEntity(*map);
-                //*/
-                
-                
-            }
-            
-            void SMURFToSimulation::reset() {
-            }
-            
-            SMURFToSimulation::~SMURFToSimulation() {
-            }
-            
-            
-            void SMURFToSimulation::update(sReal time_ms) {
-                
-                // control->motors->setMotorValue(id, value);
-            }                                                
+            }                                             
         } // end of namespace SMURFToSimulation
     } // end of namespace plugins
 } // end of namespace mars
