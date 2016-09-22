@@ -70,8 +70,8 @@ namespace mars {
   
       std::string groupName, dataName;
 
-      control->nodes->getDataBrokerNames(sensor_data.body_id,
-                                         &groupName, &dataName);
+      //control->nodes->getDataBrokerNames(sensor_data.body_id,
+      //                                   &groupName, &dataName);
       control->dataBroker->registerTimedReceiver(this, groupName, 
                                                  dataName,
                                                  "mars_sim/simTimer", 
@@ -100,10 +100,10 @@ namespace mars {
       control->dataBroker->registerTimedProducer(this, "mars_sim", text,
                                                  "mars_sim/simTimer", 0);
 
-      NodeData theNode = control->nodes->getFullNode(sensor_data.body_id);
-      JointData theJoint = control->joints->getFullJoint(sensor_data.joint_id);
-      sensor_data.anchor = theJoint.anchor;
-      sensor_data.anchor -= theNode.pos;
+      //NodeData theNode = control->nodes->getFullNode(sensor_data.body_id);
+      //JointData theJoint = control->joints->getFullJoint(sensor_data.joint_id);
+      //sensor_data.anchor = theJoint.anchor;
+      //sensor_data.anchor -= theNode.pos;
       sensor_data.tmp = 1 / (sensor_data.anchor.x()*sensor_data.anchor.x() +
                              sensor_data.anchor.y()*sensor_data.anchor.y() +
                              sensor_data.anchor.z()*sensor_data.anchor.z());
