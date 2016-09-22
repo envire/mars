@@ -99,6 +99,8 @@ namespace mars {
       long jointTorqueIndices[3];
       data_broker::DataPackage dbPackage;
       unsigned long dbPushId;
+
+      void dataBrokerSetup();
     };
 
   } // end of namespace sim
