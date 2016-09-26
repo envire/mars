@@ -456,7 +456,8 @@ void GraphPhysics::updatePositions( const GraphTraits::vertex_descriptor origin,
       control->graph->updateTransform(origin, target, tf);
     }
   }
-  updateChildPositions(target, tf.transform.inverse()*originToRoot);
+  const Transform invTf = control->graph->getTransform(target, origin);
+  updateChildPositions(target, invTf.transform * originToRoot);
 }
 
 DESTROY_LIB(mars::plugins::envire_physics::GraphPhysics);
