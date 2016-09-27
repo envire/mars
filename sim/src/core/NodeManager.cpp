@@ -68,8 +68,8 @@ namespace mars {
                                                  update_all_nodes(false),
                                                  visual_rep(1),
                                                  maxGroupID(0),
-                                                 control(c),
-                                                 libManager(theManager)
+                                                 libManager(theManager),
+                                                 control(c)
     {
       if(control->graphics) {
         GraphicsUpdateInterface *gui = static_cast<GraphicsUpdateInterface*>(this);
@@ -116,16 +116,31 @@ namespace mars {
         iMutex.lock();
         NodeData reloadNode = *nodeS;
         if((nodeS->physicMode == NODE_TYPE_TERRAIN) && nodeS->terrain ) {
-          if(!control->loadCenter || !control->loadCenter->loadHeightmap) {
-            LOG_ERROR("NodeManager:: loadCenter is missing, can not create Node");
+          if(!control->loadCenter){
+            LOG_ERROR("NodeManager:: loadCenter is missing, can not create terrain Node");
             return INVALID_ID;
           }
-          reloadNode.terrain = new(terrainStruct);
-          *(reloadNode.terrain) = *(nodeS->terrain);
-          control->loadCenter->loadHeightmap->readPixelData(reloadNode.terrain);
-          if(!reloadNode.terrain->pixelData) {
-            LOG_ERROR("NodeManager::addNode: could not load image for terrain");
-            return INVALID_ID;
+          if (!control->loadCenter->loadHeightmap){
+            GraphicsManagerInterface *g = libManager->getLibraryAs<GraphicsManagerInterface>("mars_graphics");
+            if(!g) {
+              libManager->loadLibrary("mars_graphics", NULL, false, true);
+              g = libManager->getLibraryAs<GraphicsManagerInterface>("mars_graphics");
+            }
+            if(g) {
+              reloadNode.terrain = new(terrainStruct);
+              *(reloadNode.terrain) = *(nodeS->terrain);
+              control->loadCenter->loadHeightmap = g->getLoadHeightmapInterface();
+              control->loadCenter->loadHeightmap->readPixelData(reloadNode.terrain);
+              libManager->releaseLibrary("mars_graphics");
+              LOG_INFO("NodeManager:: mars_graphics was just released");
+              if(!reloadNode.terrain->pixelData) {
+                LOG_ERROR("NodeManager::addNode: could not load image for terrain");
+                return INVALID_ID;
+              }
+            }
+            else {
+              LOG_ERROR("NodeManager:: loadHeightmap is missing, can not create Node");
+            }
           }
         }
         simNodesReload.push_back(reloadNode);
@@ -175,8 +190,10 @@ namespace mars {
             LOG_ERROR("NodeManager:: loadCenter is missing, can not create Node");
             return INVALID_ID;
           }
+          bool release_graphics = false;
           if(!control->loadCenter->loadHeightmap) {
             GraphicsManagerInterface *g = libManager->getLibraryAs<GraphicsManagerInterface>("mars_graphics");
+            release_graphics = true;
             if(!g) {
               libManager->loadLibrary("mars_graphics", NULL, false, true);
               g = libManager->getLibraryAs<GraphicsManagerInterface>("mars_graphics");
@@ -190,6 +207,12 @@ namespace mars {
             }
           }
           control->loadCenter->loadHeightmap->readPixelData(nodeS->terrain);
+          if (release_graphics){
+            libManager->releaseLibrary("mars_graphics");
+            LOG_INFO("NodeManager:: mars_graphics was just released");
+          }else{
+            LOG_INFO("NodeManager:: mars_graphics was not released");
+          }
           if(!nodeS->terrain->pixelData) {
             LOG_ERROR("NodeManager::addNode: could not load image for terrain");
             return INVALID_ID;
