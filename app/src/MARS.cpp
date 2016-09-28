@@ -194,7 +194,7 @@ namespace mars {
           libManager->loadLibrary("mars_smurf");
           libManager->loadLibrary("mars_smurf_loader");
           libManager->loadLibrary("envire_physics");
-          libManager->loadLibrary("SMURFToSimulation");
+          libManager->loadLibrary("envire_smurf_loader");
           libManager->loadLibrary("envire_joints");
           libManager->loadLibrary("envire_motors");
           libManager->loadLibrary("envire_sensors");

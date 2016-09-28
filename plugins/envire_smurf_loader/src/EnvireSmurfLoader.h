@@ -19,67 +19,67 @@
  */
 
 /**
- * \file SMURFToSimulation.h
+ * \file EnvireSmurfLoader.h
  * \author Raul (raul.dominguez@dfki.de)
  * \brief Tests
  *
  * Version 0.1
  */
 
-#ifndef MARS_PLUGINS_SMURF2SIMULATION_H
-#define MARS_PLUGINS_SMURF2SIMULATION_H
+#ifndef MARS_PLUGINS_ENVIRESMURFLOADER_H
+#define MARS_PLUGINS_ENVIRESMURFLOADER_H
 
 #ifdef _PRINT_HEADER_
-  #warning "SMURFToSimulation.h"
+  #warning "EnvireSmurfLoader.h"
 #endif
+
+#include <string>
 
 // set define if you want to extend the gui
 //#define PLUGIN_WITH_MARS_GUI
-#include <mars/interfaces/sim/MarsPluginTemplate.h>
-#include <mars/interfaces/MARSDefs.h>
-#include <mars/data_broker/ReceiverInterface.h>
-#include <mars/cfg_manager/CFGManagerInterface.h>
-#include <mars/interfaces/sim/ControlCenter.h> 
+#include <mars/interfaces/sim/LoadSceneInterface.h>
+#include <mars/interfaces/sim/ControlCenter.h>
+
 #include <envire_core/graph/GraphTypes.hpp>
-#include <string>
 
 namespace mars {
-
   namespace plugins {
-    namespace SMURFToSimulation {
+    namespace EnvireSmurfLoader {
 
       // inherit from MarsPluginTemplateGUI for extending the gui
-      class SMURFToSimulation: public mars::interfaces::MarsPluginTemplate{
+      class EnvireSmurfLoader: public mars::interfaces::LoadSceneInterface {
 
 
       public:
-        SMURFToSimulation(lib_manager::LibManager *theManager);
-        ~SMURFToSimulation();
+        EnvireSmurfLoader(lib_manager::LibManager *theManager);
+        ~EnvireSmurfLoader();
 
         envire::core::GraphTraits::vertex_descriptor addCenter();
-        void addRobot(envire::core::GraphTraits::vertex_descriptor center, const std::string& smurf_path);
 
         // LibInterface methods
         int getLibVersion() const
         { return 1; }
         const std::string getLibName() const
-        { return std::string("SMURFToSimulation"); }
+        { return std::string("eniver_smurf_loader"); }
         CREATE_MODULE_INFO();
 
-        // MarsPlugin methods
-        void init();
-        void reset();
-        void update(mars::interfaces::sReal time_ms);
+        virtual bool loadFile(std::string filename, std::string tmpPath,
+                                std::string robotname);
+        virtual int saveFile(std::string filename, std::string tmpPath);
 
       private:
+        interfaces::ControlCenter *control;
+
         void addFloor(const envire::core::GraphTraits::vertex_descriptor &center);
+
+        void addRobot(std::string filename,  envire::core::GraphTraits::vertex_descriptor center);
 
         int nextGroupId;
 
-      }; // end of class definition SMURFToSimulation
+      }; // end of class definition EnvireSmurfLoader
 
-    } // end of namespace SMURFToSimulation
+    } // end of namespace EnvireSmurfLoader
   } // end of namespace plugins
 } // end of namespace mars
 
-#endif // MARS_PLUGINS_SMURF2SIMULATION
+#endif // MARS_PLUGINS_ENVIRESMURFLOADER

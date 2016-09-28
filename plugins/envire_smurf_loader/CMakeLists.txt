@@ -1,4 +1,4 @@
-project(SMURFToSimulation)
+project(envire_smurf_loader)
 set(PROJECT_VERSION 1.0)
 set(PROJECT_DESCRIPTION "Tests")
 cmake_minimum_required(VERSION 2.6)
@@ -31,11 +31,11 @@ include_directories(
 )
 
 set(SOURCES 
-	src/SMURFToSimulation.cpp
+	src/EnvireSmurfLoader.cpp
 )
 
 set(HEADERS
-	src/SMURFToSimulation.h
+	src/EnvireSmurfLoader.h
 )
 
 
@@ -73,7 +73,7 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 find_package(Rock)
 set(ROCK_USE_CXX11 TRUE)
-rock_init(SMURFToSimulation 0.1)
+rock_init(envire_smurf_loader 0.1)
 rock_standard_layout()
 
 find_package(Boost REQUIRED filesystem system thread)

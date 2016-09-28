@@ -1,6 +1,6 @@
 <package>
-    <description brief="SMURFToSimulation">
-      Tests
+    <description brief="envire_smurf_loader">
+      Plugin to load smurf in mars based on the envire graph
    </description>
     <maintainer>Raul/raul.dominguez@dfki.de</maintainer>
     <author>Raul/raul.dominguez@dfki.de</author>
