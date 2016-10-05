@@ -30,7 +30,11 @@
 #include <cstdio>
 #include <cstring>
 
+#include <string>
+
 #include "Joint6DOFSensor.h"
+#include <SimNode.h>
+ #include <SimJoint.h>
 
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/interfaces/sim/NodeManagerInterface.h>
@@ -38,6 +42,9 @@
 #include <mars/interfaces/sim/LoadCenter.h>
 
 #include <mars/data_broker/DataBrokerInterface.h>
+
+#include <envire_core/graph/EnvireGraph.hpp>
+#include <envire_core/items/Item.hpp>
 
 namespace mars {
   namespace sim {
@@ -62,61 +69,107 @@ namespace mars {
       BaseSensor(config.id, config.name),
       config(config) {
 
+      frame = config.frame;
+      updateRate = config.updateRate;     
+
       std::vector<unsigned long>::iterator iter;
       jointPackageId = nodePackageId = 0;
 
       sensor_data.body_id = config.nodeID;
       sensor_data.joint_id = config.jointID;
   
-      std::string groupName, dataName;
+      dataBrokerSetup();
 
-      control->nodes->getDataBrokerNames(sensor_data.body_id,
-                                         &groupName, &dataName);
-      control->dataBroker->registerTimedReceiver(this, groupName, 
-                                                 dataName,
-                                                 "mars_sim/simTimer", 
-                                                 config.updateRate,
-                                                 CALLBACK_NODE);
-      control->joints->getDataBrokerNames(sensor_data.joint_id,
-                                          &groupName, &dataName);
-      control->dataBroker->registerTimedReceiver(this, groupName, 
-                                                 dataName,
-                                                 "mars_sim/simTimer",
-                                                 config.updateRate,
-                                                 CALLBACK_JOINT);
-      dbPackage.add("id", (long)config.id);
-      dbPackage.add("fx", 0.0);
-      dbPackage.add("fy", 0.0);
-      dbPackage.add("fz", 0.0);
-      dbPackage.add("tx", 0.0);
-      dbPackage.add("ty", 0.0);
-      dbPackage.add("tz", 0.0);
-
-      char text[55];
-      sprintf(text, "Sensors/FT_%05lu", config.id);
-      dbPushId = control->dataBroker->pushData("mars_sim", text,
-                                               dbPackage, NULL,
-                                               data_broker::DATA_PACKAGE_READ_FLAG);
-      control->dataBroker->registerTimedProducer(this, "mars_sim", text,
-                                                 "mars_sim/simTimer", 0);
-
-      NodeData theNode = control->nodes->getFullNode(sensor_data.body_id);
-      JointData theJoint = control->joints->getFullJoint(sensor_data.joint_id);
-      sensor_data.anchor = theJoint.anchor;
-      sensor_data.anchor -= theNode.pos;
+      // TODO: check the anchor!!!
+      //NodeData theNode = control->nodes->getFullNode(sensor_data.body_id);
+      //JointData theJoint = control->joints->getFullJoint(sensor_data.joint_id);
+      //sensor_data.anchor = theJoint.anchor;
+      //sensor_data.anchor -= theNode.pos;
+      //sensor_data.anchor = theJoint.anchor;
+      envire::core::Transform sensorTf = control->graph->getTransform("center", config.frame); 
+      sensor_data.anchor = sensorTf.transform.translation;
       sensor_data.tmp = 1 / (sensor_data.anchor.x()*sensor_data.anchor.x() +
                              sensor_data.anchor.y()*sensor_data.anchor.y() +
                              sensor_data.anchor.z()*sensor_data.anchor.z());
 
       sensor_data.length = sensor_data.anchor.norm();
-
     }
 
-    Joint6DOFSensor::~Joint6DOFSensor(void) {
-      control->dataBroker->unregisterTimedProducer(this, "*", "*",
-                                                   "mars_sim/simTimer");
-      control->dataBroker->unregisterTimedReceiver(this, "*", "*", 
-                                                   "mars_sim/simTimer");
+    void Joint6DOFSensor::dataBrokerSetup()
+    {
+        std::string groupName, dataName;
+
+        {
+            using SimNodeItem = envire::core::Item<std::shared_ptr<SimNode>>;
+            using Iterator = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
+            std::shared_ptr<SimNode> simNodePtr;
+            Iterator begin, end;        
+
+            // -------------- DataBroker for NODE
+            boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(frame);
+            if (begin != end){
+                simNodePtr = begin->getData(); 
+                simNodePtr->getDataBrokerNames(&groupName, &dataName);
+            }
+            else
+            {
+                LOG_DEBUG("[Joint6DOFSensor] The SimNode for the data broker to link *%s* to the sensor is NOT found", frame.c_str());
+            }
+
+            control->dataBroker->registerTimedReceiver(this, groupName, 
+                                                        dataName,
+                                                        "mars_sim/simTimer",
+                                                        updateRate, 
+                                                        CALLBACK_NODE);
+        }
+
+        // -------------- DataBroker for JOINT
+        {
+            using SimJointItem = envire::core::Item<std::shared_ptr<SimJoint>>;
+            using Iterator = envire::core::EnvireGraph::ItemIterator<SimJointItem>;
+            std::shared_ptr<SimJoint> simJointPtr;
+            Iterator begin, end;   
+            boost::tie(begin, end) = control->graph->getItems<SimJointItem>(frame);
+            if (begin != end){
+                simJointPtr = begin->getData(); 
+                simJointPtr->getDataBrokerNames(&groupName, &dataName);
+            }
+            else
+            {
+                LOG_DEBUG("[Joint6DOFSensor] The SimJoint for the data broker to link *%s* to the sensor is NOT found", frame.c_str());
+            }        
+
+            control->dataBroker->registerTimedReceiver(this, groupName, 
+                                                     dataName,
+                                                     "mars_sim/simTimer",
+                                                     updateRate,
+                                                     CALLBACK_JOINT);            
+        }
+
+        dbPackage.add("id", (long)config.id);
+        dbPackage.add("fx", 0.0);
+        dbPackage.add("fy", 0.0);
+        dbPackage.add("fz", 0.0);
+        dbPackage.add("tx", 0.0);
+        dbPackage.add("ty", 0.0);
+        dbPackage.add("tz", 0.0);     
+
+        char text[55];
+        sprintf(text, "Sensors/FT_%05lu", config.id);
+
+        dbPushId = control->dataBroker->pushData("mars_sim", text,
+                                           dbPackage, NULL,
+                                           data_broker::DATA_PACKAGE_READ_FLAG);
+        control->dataBroker->registerTimedProducer(this, "mars_sim", text,
+                                             "mars_sim/simTimer", 0);     
+    }    
+
+    Joint6DOFSensor::~Joint6DOFSensor(void) 
+    {
+        control->dataBroker->unregisterTimedProducer(this, "*", "*",
+                                               "mars_sim/simTimer");
+        control->dataBroker->unregisterTimedReceiver(this, "*", "*", 
+                                               "mars_sim/simTimer");
     }
 
     // this function should be overwritten by the special sensor to
@@ -183,6 +236,8 @@ namespace mars {
     void Joint6DOFSensor::receiveData(const data_broker::DataInfo &info,
                                       const data_broker::DataPackage &package,
                                       int callbackParam) {
+
+        
       if(nodePackageId == info.dataId) {
         package.get(nodeRotIndices[0], &sensor_data.body_q.x());
         package.get(nodeRotIndices[1], &sensor_data.body_q.y());

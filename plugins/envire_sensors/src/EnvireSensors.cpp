@@ -82,33 +82,90 @@ namespace mars {
           simNodePtr->update(0.0); //NOTE I need to provide a calc_ms. I provide 0.
         }
       }
+
+      void EnvireSensors::updateJoint6DOF()
+      {
+        using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
+        using SimNodeIterator = EnvireGraph::ItemIterator<SimNodeItem>;
+        std::shared_ptr<mars::sim::SimNode> simNodePtr;
+        for (int i = 0; i < joint6dof_frame.size(); ++i)
+        {
+            SimNodeIterator begin, end;
+            boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(joint6dof_frame.at(i));
+            if (begin != end){
+              simNodePtr = begin->getData();
+              simNodePtr->update(0.0); //NOTE I need to provide a calc_ms. I provide 0.
+            }        
+        }
+      }
       
       void EnvireSensors::update(sReal time_ms) {
         if (velodyneFrame != "")
         {
           updateVelodyneSim();
         }
+        if (joint6dof_frame.size() != 0)
+        {
+            updateJoint6DOF();
+        }
       }
 
       void EnvireSensors::itemAdded(const TypedItemAddedEvent<Item<smurf::Sensor>>& e)
       {
         using SensorItemPtr = envire::core::Item<std::shared_ptr<BaseSensor>>::Ptr;
-        if(debug) {LOG_DEBUG(("[EnvireSensors::ItemAdded] Smurf::Sensor in frame *" + e.frame + "*").c_str());}
+
         smurf::Sensor smurfSensor = e.item->getData();
+
+        if(debug) 
+        {
+            LOG_DEBUG(("[EnvireSensors::ItemAdded] Smurf::Sensor *" + smurfSensor.getName() + "* in frame *" + e.frame + "*").c_str());
+        }
+
         if (smurfSensor.getType() == "RotatingRaySensor")
         {
-          velodyneFrame = e.frame; 
-          std::shared_ptr<BaseSensor> sensor(createSensor(smurfSensor, e.frame));
-          SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
-          control->graph->addItemToFrame(e.frame, sensorItem);
-          if(debug) {LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");}
-          bool attached = attachSensor(sensor.get(), e.frame);
-          if (!attached)
-          {
-            LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor. ");
-          }
+            velodyneFrame = e.frame; 
+            std::shared_ptr<BaseSensor> sensor(createSensor(smurfSensor, e.frame));
+
+            
+            SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
+            control->graph->addItemToFrame(e.frame, sensorItem);
+            
+            if(debug) 
+            {
+                LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");
+            }
+
+            bool attached = attachSensor(sensor.get(), e.frame);
+            if (!attached)
+            {
+                LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + smurfSensor.getName() + "*.");
+            } else {
+                LOG_DEBUG(("[EnvireSensors::ItemAdded] *" + smurfSensor.getType() + "* *" + smurfSensor.getName() + "* is attached (frame: " + e.frame + ")").c_str());
+            }
         }
-        else{
+        else if (smurfSensor.getType() == "Joint6DOF")
+        {
+            joint6dof_frame.push_back(e.frame);
+            std::shared_ptr<BaseSensor> sensor(createSensor(smurfSensor, e.frame));
+
+
+            SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
+            control->graph->addItemToFrame(e.frame, sensorItem);
+            if(debug) 
+            {
+                LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");
+            }
+            bool attached = attachSensor(sensor.get(), e.frame);
+            if (!attached)
+            {
+                LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + smurfSensor.getName() + "*.");
+            } else 
+            {
+                LOG_DEBUG(("[EnvireSensors::ItemAdded] *" + smurfSensor.getType() + "* *" + smurfSensor.getName() + "* is attached (frame: " + e.frame + ")").c_str());
+            }
+        }
+        else
+        {
           if(debug) {LOG_DEBUG(("[EnvireSensors::ItemAdded] Sensor type " + smurfSensor.getType() + " not supported.").c_str());}
         }
       }
