@@ -38,7 +38,9 @@
 #endif
 #endif // __APPLE__
 
+#ifndef Q_MOC_RUN
 #include "GraphicsWidget.h"
+#endif
 
 #include <QWidget>
 

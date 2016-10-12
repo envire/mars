@@ -36,8 +36,11 @@
 #ifdef __APPLE__
   #include <QMacCocoaViewContainer>
 #endif
+
+#ifndef Q_MOC_RUN
 #include "HUD.h"
 #include "GraphicsManager.h"
+#endif
 
 // X defines these macros, and they conflict with QTEvent namespace
 // evil macros get replaced pre compiling and result for example in: QEvent::6
