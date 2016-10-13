@@ -151,6 +151,8 @@ namespace mars {
       virtual bool sceneChanged() const;
       virtual void sceneHasChanged(bool reset);
 
+      virtual void saveToFile(std::string file_name) const;
+
       //threads
       virtual bool allConcurrencysHandled(); ///< Checks if external requests are open.
       void setSyncThreads(bool value); ///< Syncs the threads of GUI and simulation.

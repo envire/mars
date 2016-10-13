@@ -1157,6 +1157,11 @@ namespace mars {
       }
     }
 
+    void Simulator::saveToFile(std::string file_name) const
+    {
+      control->graph->saveToFile("mars_envire.txt");
+    }
+
     void Simulator::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
                            printf("cfgUpdateProperty...\n");      
       if(_property.paramId == cfgCalcMs.paramId) {
