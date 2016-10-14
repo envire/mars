@@ -139,6 +139,10 @@ namespace mars {
          * Sets the axis1 value of the jointData for dynamic transformations, this is read from the smurf::Joint object
          */
         void setAxis1(smurf::Joint* smurfJoint, mars::interfaces::JointData* jointData);
+
+        void setLimits(smurf::Joint* smurfJoint, mars::interfaces::JointData* jointData);
+
+        void setLimits(smurf::StaticTransformation* smurfJoint, mars::interfaces::JointData* jointData);
         /*
          * Creates the physical simulation of the joint used by instantiate 
          */

@@ -215,12 +215,25 @@ namespace mars {
         jointData->init(smurfJoint->getName(), getJointType(smurfJoint));
         setAxis1(smurfJoint, jointData);
         setAnchor(smurfJoint, jointData);
+        setLimits(smurfJoint, jointData);
         std::shared_ptr<JointInterface> jointInterfacePtr = join(jointData, sourceSim, targetSim);
 #ifdef DEBUG
           LOG_DEBUG("[EnvireJoints::instantiate] The storageFrame is: %s", smurfJoint->getTargetFrame().getName().c_str());
 #endif
         storeSimJoint(jointInterfacePtr, jointData, smurfJoint->getSourceFrame().getName());
       }
+
+      void EnvireJoints::setLimits(smurf::Joint* smurfJoint, mars::interfaces::JointData* jointData)
+      {
+        std::pair<double, double> position_limits = smurfJoint->getPositionLimits();
+        jointData->lowStopAxis1 = position_limits.first;
+        jointData->highStopAxis1 = position_limits.second;
+
+        //jointData->print();
+      }
+
+      void EnvireJoints::setLimits(smurf::StaticTransformation* smurfJoint, mars::interfaces::JointData* jointData)
+      {}
       
       JointType EnvireJoints::getJointType(smurf::Joint* joint){
         boost::shared_ptr<urdf::Joint> jointModel = joint->getJointModel();
