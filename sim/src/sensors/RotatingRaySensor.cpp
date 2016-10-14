@@ -91,6 +91,7 @@ namespace mars {
         positionIndices[i] = -1;
       for(int i = 0; i < 4; ++i)
         rotationIndices[i] = -1;
+      depthmap_sent = false;
     }
 
     void RotatingRaySensor::setConfigBasedParameters(){
@@ -126,7 +127,7 @@ namespace mars {
      envire::core::Transform sensorTf = control->graph->getTransform("center", frame); //FIXME Standarize the center of the graph name
      position = sensorTf.transform.translation;
      orientation = sensorTf.transform.orientation;
-     LOG_DEBUG("[RotatingRaySensor] Position and orientation obtained ");
+     //LOG_DEBUG("[RotatingRaySensor] Position and orientation obtained ");
      orientation_offset.setIdentity();
    }
 
@@ -221,20 +222,34 @@ namespace mars {
     // We may implement a similar one, or extend it to return also a DepthMap
     bool RotatingRaySensor::getPointcloud(std::vector<utils::Vector>& pcloud) {
       mars::utils::MutexLocker lock(&mutex_pointcloud);
+      bool result = false;
       if(full_scan) {
-        full_scan = false;
-        pcloud.swap(pointcloud_full);
-        return true;
+        // Send pointclouds after depthmaps if both have to be sent
+        if ((!(config.provide_depthmap)) or 
+            ((config.provide_depthmap) and (depthmap_sent)))
+        {
+          depthmap_sent = false; // For next sample
+          full_scan = false;
+          result = true;
+          pcloud.swap(pointcloud_full);
+        }
+        else
+        {
+          // Depthmap was not sent yet
+          result = false;
+        }
       } else {
-          return false;
+        result = false;
       }
+      return result;
     }
 
 
     bool RotatingRaySensor::getDepthMap(base::samples::DepthMap &depthMap) {
       mars::utils::MutexLocker lock(&mutex_pointcloud);
       if(full_scan) {
-        full_scan = false;
+        if (!(config.provide_pointcloud))
+            full_scan = false;
         depthMap.time = finalDepthMap.time;
         depthMap.vertical_projection = finalDepthMap.vertical_projection;
         depthMap.horizontal_projection = finalDepthMap.horizontal_projection;
@@ -248,6 +263,7 @@ namespace mars {
         finalDepthMap.distances.clear();
         finalDepthMap.timestamps.clear();
         finalDepthMap.remissions.clear();
+        depthmap_sent = true;
         return true;
       } else {
           return false;
@@ -296,7 +312,6 @@ namespace mars {
                                 int callbackParam) {
       CPP_UNUSED(info);
       CPP_UNUSED(callbackParam);
-      std::vector<base::samples::DepthMap> &partialDepthMaps = *toDepthMap; 
       long id;
       package.get(0, &id);
       getCurrentPose(package);
@@ -304,19 +319,47 @@ namespace mars {
       assert((int)data.size() == config.bands * config.lasers);
       int i = 0; // data_counter
       float local_dist;
-      base::Time timestamp = base::Time::fromMilliseconds(control->sim->getTime());
-      for(int b=0; b<config.bands; ++b) {
-        partialDepthMaps[b].timestamps.push_back(timestamp);
-        for(int col=0; col<config.lasers; col++, ++i){
-          local_dist = (orientation_offset * directions[i] * data[i]).norm();
-          if(local_dist < config.minDistance)
-            partialDepthMaps[b].distances.push_back(0.f);
-          else if(local_dist >= config.maxDistance)
-            partialDepthMaps[b].distances.push_back(std::numeric_limits<float>::infinity());
-          else
-            partialDepthMaps[b].distances.push_back(local_dist);
+      if (config.provide_depthmap)
+      {
+        base::Time timestamp = base::Time::fromMilliseconds(control->sim->getTime());
+        std::vector<base::samples::DepthMap> &partialDepthMaps = *toDepthMap; 
+        for(int b=0; b<config.bands; ++b) {
+          partialDepthMaps[b].timestamps.push_back(timestamp);
+          for(int col=0; col<config.lasers; col++, ++i){
+            local_dist = (orientation_offset * directions[i] * data[i]).norm();
+            if(local_dist < config.minDistance)
+              partialDepthMaps[b].distances.push_back(0.f);
+            else if(local_dist >= config.maxDistance)
+              partialDepthMaps[b].distances.push_back(std::numeric_limits<float>::infinity());
+            else
+              partialDepthMaps[b].distances.push_back(local_dist);
+          }
         }
       }
+      i = 0;
+      if  (config.provide_pointcloud)
+      {
+        utils::Vector local_ray, tmpvec;
+        for(int b=0; b<config.bands; ++b) {
+          base::Orientation base_orientation;
+          base_orientation.x() = orientation_offset.x();
+          base_orientation.y() = orientation_offset.y();
+          base_orientation.z() = orientation_offset.z();
+          base_orientation.w() = orientation_offset.w();
+          // If min/max are exceeded distance will be ignored.
+          for(int l=0; l<config.lasers; ++l, ++i){
+            if (data[i] >= config.minDistance && data[i] <= config.maxDistance) {
+              // Calculates the ray/vector within the sensor frame.
+              local_ray = orientation_offset * directions[i] * data[i];
+              // Gathers pointcloud in the world frame to prevent/reduce movement distortion.
+              // This necessitates a back-transformation (world2node) in getPointcloud().
+              tmpvec = current_pose * local_ray;
+              toCloud->push_back(tmpvec); // Scale normalized vector.
+            }
+          }
+        }
+      }
+
       num_points += data.size();
       update_available = true;
     }
@@ -394,6 +437,7 @@ namespace mars {
         vec_local = rot * current_pose2.inverse() * (*it);
         pointcloud_full.push_back(vec_local);
       }
+      //LOG_DEBUG("[RotatingRaySensor::prepareFinalPointcloud]: Pointcloud size: %d", pointcloud_full.size());
       fromCloud->clear();
     }
 
@@ -437,8 +481,14 @@ namespace mars {
     void RotatingRaySensor::run() {
       while(!closeThread) {
         if(convertPointCloud) { 
-          prepareFinalPointcloud();
-          prepareFinalDepthMap();
+          if (config.provide_pointcloud)
+          {
+            prepareFinalPointcloud();
+          }
+          if (config.provide_depthmap)
+          {
+            prepareFinalDepthMap();
+          }
           convertPointCloud = false;
           full_scan = true;
         }
