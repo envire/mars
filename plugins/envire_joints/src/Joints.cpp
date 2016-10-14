@@ -229,6 +229,12 @@ namespace mars {
         jointData->lowStopAxis1 = position_limits.first;
         jointData->highStopAxis1 = position_limits.second;
 
+        // DIRTY FIX!!! 
+        jointData->damping_const_constraint_axis1 = 1.0;
+        jointData->spring_const_constraint_axis1 = 10000.0;
+        jointData->damping_constant = 1.0;
+        jointData->spring_constant = 10000.0;
+
         //jointData->print();
       }
 
