@@ -41,6 +41,9 @@
 #include <mars/interfaces/sim/JointInterface.h>
 #include <mars/interfaces/sim/NodeInterface.h>
 
+// Comment-in the following line in order to get debug traces
+//#define DEBUG
+
 namespace mars {
   namespace plugins {
     namespace envire_joints {
@@ -86,7 +89,9 @@ namespace mars {
         std::map<FrameId, std::vector<FrameId>>::iterator iterDeps = dependencies.find(e.frame);
         if (iterDeps != dependencies.end())
         {
-          if (debug) { LOG_DEBUG( "[EnvireJoints::itemAdded] Item added in frame '"+ e.frame + "' is matching at least a dependency"); }
+#ifdef DEBUG
+          LOG_DEBUG( "[EnvireJoints::itemAdded] Item added in frame '"+ e.frame + "' is matching at least a dependency"); 
+#endif
           std::vector<FrameId> dependentFrames = dependencies[e.frame];
           for(FrameId frame : dependentFrames)
           {
@@ -94,7 +99,9 @@ namespace mars {
             boost::tie(beginStaticTfs, endStaticTfs) = control->graph->getItems<Item<smurf::StaticTransformation>>(frame);
             if (beginStaticTfs != endStaticTfs)
             {
-              if (debug) { LOG_DEBUG( "[EnvireJoints::itemAdded] Item added in frame '"+ e.frame + "' is matching a static dependency"); }
+#ifdef DEBUG
+              LOG_DEBUG( "[EnvireJoints::itemAdded] Item added in frame '"+ e.frame + "' is matching a static dependency"); 
+#endif
               smurf::StaticTransformation* smurfTf = &(beginStaticTfs->getData());
               bool addDeps = false; // This avoids dependencies to be included twice
               checkAndInstantiate(smurfTf, addDeps);
@@ -106,7 +113,9 @@ namespace mars {
               boost::tie(beginDynTfs, endDynTfs) = control->graph->getItems<Item<smurf::Joint>>(frame);
               if (beginDynTfs != endDynTfs)
               {
-                if (debug) { LOG_DEBUG( "[EnvireJoints::itemAdded] Item added in frame '"+ e.frame + "' is matching a dynamic dependency"); }
+#ifdef DEBUG
+                LOG_DEBUG( "[EnvireJoints::itemAdded] Item added in frame '"+ e.frame + "' is matching a dynamic dependency");
+#endif
                 smurf::Joint * smurfTf = &(beginDynTfs->getData());
                 bool addDeps = false; // This avoids dependencies to be included twice
                 checkAndInstantiate(smurfTf, addDeps);
@@ -118,7 +127,9 @@ namespace mars {
       }
       
       void EnvireJoints::itemAdded(const  envire::core::TypedItemAddedEvent<envire::core::Item<smurf::StaticTransformation>>& e){ 
-        if (debug) { LOG_DEBUG( "[EnvireJoints::itemAdded] smurf::StaticTransformation received in Frame ***" + e.frame + "***");}
+#ifdef DEBUG
+        LOG_DEBUG( "[EnvireJoints::itemAdded] smurf::StaticTransformation received in Frame ***" + e.frame + "***");
+#endif
         smurf::StaticTransformation* smurfJoint = &(e.item->getData());
         checkAndInstantiate<smurf::StaticTransformation*>(smurfJoint);
       }
@@ -162,10 +173,9 @@ namespace mars {
       
       bool EnvireJoints::instantiable(smurf::Transformation* smurfJoint, std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, std::shared_ptr<mars::interfaces::NodeInterface>& targetSim)
       {
-        if (debug) 
-        {
+#ifdef DEBUG
             LOG_DEBUG("[EnvireJoints::instantiable] The joint " + smurfJoint->getName() + " binds " + smurfJoint->getSourceFrame().getName() + " with " + smurfJoint->getTargetFrame().getName());
-        }
+#endif
         bool instantiable = true;
         std::string dependencyName = smurfJoint->getSourceFrame().getName();
         if (! getSimObject(dependencyName, sourceSim))
@@ -188,10 +198,9 @@ namespace mars {
         if (begin != end){
           objectSim = begin->getData();
           found = true;
-          if (debug)
-          {
+#ifdef DEBUG
           LOG_DEBUG("[EnvireJoints::getSimObject] Found the physical object in frame "+ frameName);
-          }
+#endif
         }
         return found;
       }
@@ -199,13 +208,17 @@ namespace mars {
       template <class jointType>
       void EnvireJoints::instantiate(jointType smurfJoint, const std::shared_ptr< NodeInterface >& sourceSim, const std::shared_ptr< NodeInterface >& targetSim)
       {
-        LOG_DEBUG("[EnvireJoints::instantiate] The joint name is: %s", smurfJoint->getName().c_str());
+#ifdef DEBUG
+          LOG_DEBUG("[EnvireJoints::instantiate] The joint name is: %s", smurfJoint->getName().c_str());
+#endif
         JointData* jointData = new(JointData);
         jointData->init(smurfJoint->getName(), getJointType(smurfJoint));
         setAxis1(smurfJoint, jointData);
         setAnchor(smurfJoint, jointData);
         std::shared_ptr<JointInterface> jointInterfacePtr = join(jointData, sourceSim, targetSim);
-        LOG_DEBUG("[EnvireJoints::instantiate] The storageFrame is: %s", smurfJoint->getTargetFrame().getName().c_str());
+#ifdef DEBUG
+          LOG_DEBUG("[EnvireJoints::instantiate] The storageFrame is: %s", smurfJoint->getTargetFrame().getName().c_str());
+#endif
         storeSimJoint(jointInterfacePtr, jointData, smurfJoint->getSourceFrame().getName());
       }
       
@@ -263,7 +276,9 @@ namespace mars {
             break;
           }
         }
-        if (debug) {LOG_DEBUG("[Envire Joints] The joint type is: " + logType); }
+#ifdef DEBUG
+        LOG_DEBUG("[Envire Joints] The joint type is: " + logType); 
+#endif
         return jointType;
       }
 
@@ -274,7 +289,9 @@ namespace mars {
         envire::core::Transform targetPos = control->graph->getTransform(originId, targetFrame); 
         Eigen::Affine3d axisTf = targetPos.transform.orientation * smurfJoint -> getSourceToAxis().inverse();
         jointData->axis1 = axisTf.translation();
+#ifdef DEBUG
         LOG_DEBUG("[EnvireJoints::instantiate] The vector axis is: %.4f, %.4f, %.4f", jointData->axis1.x(), jointData->axis1.y(), jointData->axis1.z());
+#endif
       }      
     
       template <class jointType>
@@ -283,7 +300,9 @@ namespace mars {
         envire::core::Transform targetPos = control->graph->getTransform(originId, targetFrame); 
         utils::Vector anchor = targetPos.transform.translation;
         jointData->anchor = anchor;
+#ifdef DEBUG
         LOG_DEBUG("[EnvireJoints::instantiate] The vector anchor is: %.4f, %.4f, %.4f", jointData->anchor.x(), jointData->anchor.y(), jointData->anchor.z());
+#endif
       }
       
       std::shared_ptr<JointInterface> EnvireJoints::join(JointData* jointData, const std::shared_ptr<mars::interfaces::NodeInterface>& sourceSim, const std::shared_ptr<mars::interfaces::NodeInterface>& targetSim)
@@ -292,7 +311,9 @@ namespace mars {
         std::shared_ptr<JointInterface> jointInterfacePtr(jointPhysics);
         if(jointInterfacePtr->createJoint(jointData, sourceSim.get(), targetSim.get()))
         {
-          if (debug) { LOG_DEBUG("[EnvireJoints::join] Physical joint '" + jointData->name + "' created.");}
+#ifdef DEBUG
+          LOG_DEBUG("[EnvireJoints::join] Physical joint '" + jointData->name + "' created.");
+#endif
           control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
 
         }
@@ -308,7 +329,7 @@ namespace mars {
         JointInterfacePtrItemPtr jointInterfacePtrItemPtr(new envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>(jointInterface));
         // src/core/SimJoint.cpp:40:    SimJoint::SimJoint(ControlCenter *c, const JointData &sJoint_)
         std::shared_ptr<mars::sim::SimJoint> simJoint(new mars::sim::SimJoint(control, (*jointData)));
-        simJoint->setInterface(jointInterface.get());
+        simJoint->setPhysicalJoint(jointInterface.get());
         SimJointPtrItemPtr simJointPtrItemPtr(new envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>(simJoint));
         control->graph->addItemToFrame(storageFrame, simJointPtrItemPtr);          
         control->graph->addItemToFrame(storageFrame, jointInterfacePtrItemPtr);          

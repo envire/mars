@@ -165,7 +165,6 @@ namespace mars {
          * @Dependencies is used to keep track of the missing physics nodes required to create the joints. The first element of the list is the frame in which the joint having a dependency is and the second element a vector of the frames which are missing.
          */
         std::map<envire::core::FrameId, std::vector<envire::core::FrameId>> dependencies;
-        bool debug = true;
         envire::core::FrameId originId;
         
       }; // end of class definition EnvireJoints
