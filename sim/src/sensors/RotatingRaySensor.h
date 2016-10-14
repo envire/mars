@@ -65,6 +65,8 @@ namespace mars {
         transf_sensor_rot_to_sensor.setIdentity();
         horizontal_offset = 0.0;
         vertical_offset = (10.67/180.0)*M_PI;
+        provide_depthmap = true;
+        provide_pointcloud = false;
       }
 
       unsigned long attached_node;
@@ -85,6 +87,8 @@ namespace mars {
       // Pass the node orientation to receive an unturned sensor.
       // This transformation is only applied to the pointcloud.
       utils::Quaternion transf_sensor_rot_to_sensor;
+      bool provide_depthmap;
+      bool provide_pointcloud;
     };
 
     class RotatingRaySensor :
@@ -221,6 +225,7 @@ namespace mars {
       std::vector<base::samples::DepthMap> partialDepthMaps1; 
       std::vector<base::samples::DepthMap> partialDepthMaps2;
       std::vector<base::samples::DepthMap> *fromDepthMap, *toDepthMap;
+      bool depthmap_sent;
     };
 
   } // end of namespace sim
