@@ -84,6 +84,7 @@ namespace mars {
       void runPositionController(interfaces::sReal time_ms);
       void runVeloctiyController(interfaces::sReal time_ms);
       void runEffortController(interfaces::sReal time_ms);
+      void runVelocityPositionController(interfaces::sReal time_ms);
       void addMimic(SimMotor* mimic);
       void removeMimic(std::string mimicname);
       void clearMimics();
@@ -121,6 +122,7 @@ namespace mars {
       void setPosition(interfaces::sReal angle);
       void setMaxEffort(interfaces::sReal effort);
       void setMaxSpeed(interfaces::sReal value);
+      void setMinSpeed(interfaces::sReal value);
       void setName(const std::string &newname);
       void setSMotor(const interfaces::MotorData &sMotor);
       void setType(interfaces::MotorType mtype);
