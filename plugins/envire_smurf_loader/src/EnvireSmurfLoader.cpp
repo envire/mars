@@ -101,11 +101,16 @@ namespace mars {
 
             void EnvireSmurfLoader::addRobot(std::string filename, vertex_descriptor center)
             {
-                std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions(filename); 
-                LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 envire::core::Transform iniPose;
                 iniPose.transform.orientation = base::Quaterniond::Identity();
-                iniPose.transform.translation << 1.0, 1.0, 0.3;
+                iniPose.transform.translation << 0.0, 0.0, 0.3;
+                addRobot(filename, center, iniPose);
+            }
+
+            void EnvireSmurfLoader::addRobot(std::string filename, vertex_descriptor center, envire::core::Transform iniPose)
+            {
+                std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions(filename); 
+                LOG_DEBUG("Robot Path: %s",  path.c_str() );
                 smurf::Robot* robot = new( smurf::Robot);
                 robot->loadFromSmurf(path);
                 envire::smurf::GraphLoader graphLoader(control->graph);
