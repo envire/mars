@@ -605,6 +605,36 @@ namespace mars {
         return 1;
     }
 
+    int Simulator::loadScene(const std::string &filename,
+                          const std::string &robotname, 
+                          utils::Vector pos, 
+                          utils::Vector rot, bool threadsave, bool blocking)
+    {
+      printf("Load 3\n");
+      int result = loadScene(filename, false, robotname,threadsave,blocking);
+
+      try {
+        std::string suffix = utils::getFilenameSuffix(filename);
+        if( control->loadCenter->loadScene.find(suffix) !=
+            control->loadCenter->loadScene.end() ) {
+          if (! control->loadCenter->loadScene[suffix]->setPose(pos, rot)) {
+          return 0; //failed
+          }
+        }
+        else {
+          // no scene loader found
+          LOG_ERROR("Simulator: Could not find scene loader for: %s (%s)",
+                    filename.c_str(), suffix.c_str());
+          return 0; //failed
+        }
+      } catch(SceneParseException e) {
+        LOG_ERROR("Could not parse scene: %s", e.what());
+      } 
+
+      return result;     
+
+    }
+
     int Simulator::loadScene_internal(const std::string &filename,
                              bool wasrunning, const std::string &robotname) {
 

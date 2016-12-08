@@ -68,6 +68,8 @@ namespace mars {
                                 std::string robotname);
         virtual int saveFile(std::string filename, std::string tmpPath);
 
+        virtual int setPose(utils::Vector pos, utils::Vector rot);
+
       private:
         interfaces::ControlCenter *control;
 

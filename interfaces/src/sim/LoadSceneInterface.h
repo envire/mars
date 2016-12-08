@@ -35,6 +35,8 @@
 
 #include <lib_manager/LibInterface.hpp>
 
+#include <mars/utils/Vector.h>
+
 namespace mars {
 
   namespace interfaces {
@@ -48,6 +50,11 @@ namespace mars {
       virtual bool loadFile(std::string filename, std::string tmpPath,
                             std::string robotname) = 0;
       virtual int saveFile(std::string filename, std::string tmpPath) = 0;
+
+      virtual int setPose(utils::Vector pos, utils::Vector rot)
+      {
+
+      }
     };
 
   } // end of namespace interfaces

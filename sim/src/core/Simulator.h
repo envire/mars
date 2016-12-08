@@ -146,6 +146,12 @@ namespace mars {
       virtual int loadScene(const std::string &filename,
                             bool wasrunning=false,
                             const std::string &robotname="",bool threadsave=false, bool blocking=false);
+
+      virtual int loadScene(const std::string &filename,
+                          const std::string &robotname, 
+                          utils::Vector pos, 
+                          utils::Vector rot, bool threadsave=false, bool blocking=false);
+
       virtual int saveScene(const std::string &filename, bool wasrunning);
       virtual void exportScene() const; ///< Exports the current scene as both *.obj and *.osg file.
       virtual bool sceneChanged() const;
@@ -280,6 +286,7 @@ namespace mars {
 
       // scenes
       int loadScene_internal(const std::string &filename, bool wasrunning, const std::string &robotname);
+
       std::string scenename;
       std::list<std::string> arg_v_scene_name;
       bool b_SceneChanged;

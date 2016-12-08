@@ -99,6 +99,13 @@ namespace mars {
                 return 0;
             }
 
+            int EnvireSmurfLoader::setPose(utils::Vector pos, utils::Vector rot)
+            {
+                std::cout << "pos " << pos.x() << " " << pos.y() << " " << pos.z() << std::endl;
+                std::cout << "rot " << rot.x() << " " << rot.y() << " " << rot.z() << std::endl;
+                // TODO: transform the robot frame by pos and rot pose
+            }
+
             void EnvireSmurfLoader::addRobot(std::string filename, vertex_descriptor center)
             {
                 envire::core::Transform iniPose;
