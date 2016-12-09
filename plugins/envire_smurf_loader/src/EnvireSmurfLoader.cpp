@@ -89,30 +89,31 @@ namespace mars {
             bool EnvireSmurfLoader::loadFile(std::string filename, std::string tmpPath,
                                     std::string robotname)
             {
+                std::cout << "smurf loader zero position" << std::endl;
                 vertex_descriptor center = addCenter();
-                addRobot(filename, center);
+                envire::core::Transform iniPose;
+                iniPose.transform.orientation = base::Quaterniond::Identity();
+                iniPose.transform.translation << 0.0, 0.0, 0.3;
+                addRobot(filename, center, iniPose);
                 return true;
             }
+
+            bool EnvireSmurfLoader::loadFile(std::string filename, std::string tmpPath,
+                                std::string robotname, utils::Vector pos, utils::Vector rot)
+            {
+                std::cout << "smurf loader given position" << std::endl;
+                vertex_descriptor center = addCenter();
+                envire::core::Transform iniPose;
+                iniPose.transform.orientation = base::Quaterniond::Identity();
+                iniPose.transform.translation << pos.x(), pos.y(), pos.z();
+                addRobot(filename, center, iniPose);
+            }    
 
             int EnvireSmurfLoader::saveFile(std::string filename, std::string tmpPath)
             {
                 return 0;
             }
 
-            int EnvireSmurfLoader::setPose(utils::Vector pos, utils::Vector rot)
-            {
-                std::cout << "pos " << pos.x() << " " << pos.y() << " " << pos.z() << std::endl;
-                std::cout << "rot " << rot.x() << " " << rot.y() << " " << rot.z() << std::endl;
-                // TODO: transform the robot frame by pos and rot pose
-            }
-
-            void EnvireSmurfLoader::addRobot(std::string filename, vertex_descriptor center)
-            {
-                envire::core::Transform iniPose;
-                iniPose.transform.orientation = base::Quaterniond::Identity();
-                iniPose.transform.translation << 0.0, 0.0, 0.3;
-                addRobot(filename, center, iniPose);
-            }
 
             void EnvireSmurfLoader::addRobot(std::string filename, vertex_descriptor center, envire::core::Transform iniPose)
             {

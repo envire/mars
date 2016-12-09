@@ -66,16 +66,16 @@ namespace mars {
 
         virtual bool loadFile(std::string filename, std::string tmpPath,
                                 std::string robotname);
-        virtual int saveFile(std::string filename, std::string tmpPath);
 
-        virtual int setPose(utils::Vector pos, utils::Vector rot);
+        virtual bool loadFile(std::string filename, std::string tmpPath,
+                                std::string robotname, utils::Vector pos, utils::Vector rot);
+
+        virtual int saveFile(std::string filename, std::string tmpPath);
 
       private:
         interfaces::ControlCenter *control;
 
         void addFloor(const envire::core::GraphTraits::vertex_descriptor &center);
-
-        void addRobot(std::string filename,  envire::core::GraphTraits::vertex_descriptor center);
 
         void addRobot(std::string filename,  envire::core::GraphTraits::vertex_descriptor center, envire::core::Transform iniPose);
 

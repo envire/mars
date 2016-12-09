@@ -580,14 +580,16 @@ namespace mars {
     }
 
     int Simulator::loadScene(const std::string &filename, const std::string &robotname, bool threadsave, bool blocking) {
+      printf("Load 1\n");
       return loadScene(filename, false, robotname,threadsave,blocking);
     }
 
     int Simulator::loadScene(const std::string &filename,
                              bool wasrunning, const std::string &robotname, bool threadsave, bool blocking) {
-      printf("Load 2\n");
+        printf("Load 2\n");
+
         if(!threadsave){
-            return loadScene_internal(filename,wasrunning, robotname);
+            return loadScene_internal(filename, wasrunning, robotname);
         }
 
         //Loading is handles inside the mars thread itsels later
@@ -596,6 +598,7 @@ namespace mars {
         lo.filename = filename;
         lo.wasRunning = wasrunning;
         lo.robotname = robotname;
+        lo.zeroPose = true;
         filesToLoad.push_back(lo);
         externalMutex.unlock();
 
@@ -608,16 +611,53 @@ namespace mars {
     int Simulator::loadScene(const std::string &filename,
                           const std::string &robotname, 
                           utils::Vector pos, 
-                          utils::Vector rot, bool threadsave, bool blocking)
+                          utils::Vector rot, bool threadsave, bool blocking, bool wasrunning)
     {
       printf("Load 3\n");
-      int result = loadScene(filename, false, robotname,threadsave,blocking);
+
+      if(!threadsave){
+        printf("INSIDE\n");
+          return loadScene_internal(filename, robotname, pos, rot, wasrunning);
+      }
+
+      printf("TEST\n");
+
+      //Loading is handles inside the mars thread itsels later
+      externalMutex.lock();
+      LoadOptions lo;
+      lo.filename = filename;
+      lo.wasRunning = wasrunning;
+      lo.robotname = robotname;
+      lo.zeroPose = false;
+      lo.pos = pos;
+      lo.rot = rot;
+      filesToLoad.push_back(lo);
+      externalMutex.unlock();
+
+      while(blocking && !filesToLoad.empty()){
+          msleep(10);
+      }
+      return 1;  
+
+    }
+
+    int Simulator::loadScene_internal(const std::string &filename,
+                             const std::string &robotname,
+                             utils::Vector pos, utils::Vector rot,
+                             bool wasrunning) {
+
+      LOG_DEBUG("Loading scene internal with given position\n");
+
+      if(control->loadCenter->loadScene.empty()) {
+        LOG_ERROR("Simulator:: no module to load scene found");
+        return 0;
+      }
 
       try {
         std::string suffix = utils::getFilenameSuffix(filename);
         if( control->loadCenter->loadScene.find(suffix) !=
             control->loadCenter->loadScene.end() ) {
-          if (! control->loadCenter->loadScene[suffix]->setPose(pos, rot)) {
+          if (! control->loadCenter->loadScene[suffix]->loadFile(filename.c_str(), getTmpPath().c_str(), robotname.c_str(), pos, rot)) {
           return 0; //failed
           }
         }
@@ -629,16 +669,19 @@ namespace mars {
         }
       } catch(SceneParseException e) {
         LOG_ERROR("Could not parse scene: %s", e.what());
-      } 
+      }
 
-      return result;     
-
-    }
+      if (wasrunning) {
+        startStopTrigger();//if the simulation has been stopped for loading, now it continues
+      }
+      sceneHasChanged(false);
+      return 1;
+    }    
 
     int Simulator::loadScene_internal(const std::string &filename,
                              bool wasrunning, const std::string &robotname) {
 
-      LOG_DEBUG("Loading scene internal\n");
+      LOG_DEBUG("Loading scene internal with zero position\n");
 
       if(control->loadCenter->loadScene.empty()) {
         LOG_ERROR("Simulator:: no module to load scene found");
@@ -1165,8 +1208,17 @@ namespace mars {
         }
 
         for(unsigned int i=0;i<filesToLoad.size();i++){
-          loadScene_internal(filesToLoad[i].filename, false,
+          if (filesToLoad[i].zeroPose == true)
+          {
+            loadScene_internal(filesToLoad[i].filename, false,
                              filesToLoad[i].robotname);
+          } else 
+          {
+            loadScene_internal(filesToLoad[i].filename,
+                             filesToLoad[i].robotname,
+                             filesToLoad[i].pos, filesToLoad[i].rot,
+                             false);           
+          }
         }
         filesToLoad.clear();
 

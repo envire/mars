@@ -51,10 +51,12 @@ namespace mars {
                             std::string robotname) = 0;
       virtual int saveFile(std::string filename, std::string tmpPath) = 0;
 
-      virtual int setPose(utils::Vector pos, utils::Vector rot)
+      virtual bool loadFile(std::string filename, std::string tmpPath, 
+                            std::string robotname, utils::Vector pos, utils::Vector rot)
       {
-
+        throw std::runtime_error ("The function \"loadFile\" is not implemented for this plugin.");
       }
+
     };
 
   } // end of namespace interfaces
