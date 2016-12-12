@@ -54,7 +54,7 @@ namespace mars {
       virtual bool loadFile(std::string filename, std::string tmpPath, 
                             std::string robotname, utils::Vector pos, utils::Vector rot)
       {
-        printf("The function \"loadFile\" with pose parameters is not implemented for this plugin. Call \"loadFile\" without pose parameters.");
+        printf("The function \"loadFile\" with pose parameters is not implemented for this plugin. Call \"loadFile\" without pose parameters.\n");
         return loadFile(filename, tmpPath, robotname);
       }
 
