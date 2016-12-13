@@ -130,7 +130,6 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
 {
     envire::smurf::Visual vis = e.item->getData();
     addVisual(vis, e.frame, e.item->getID());
-    
 }
 
 void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e)
@@ -343,7 +342,6 @@ void GraphViz::setNodeDataMaterial(NodeData& nodeData, boost::shared_ptr< urdf::
 
 
 void GraphViz::update(sReal time_ms) {
-  
   const float timeBetweenFramesMs = 1000.0 / visualUpdateRateFps;
   timeSinceLastUpdateMs += time_ms;
   
@@ -373,6 +371,9 @@ void GraphViz::updateTree(const FrameId& origin)
 
 void GraphViz::updateVisuals()
 {
+  if (tree.hasRoot() == false)
+    return;
+
   tree.visitBfs(tree.root, [&](GraphTraits::vertex_descriptor vd, 
                                GraphTraits::vertex_descriptor parent)
   {
