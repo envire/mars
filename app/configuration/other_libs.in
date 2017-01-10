@@ -1,2 +1,6 @@
 # additional list of libraries to be loaded after the core libraries have been loaded
 @ADDITIONAL_LIBS@
+envire_physics
+envire_joints
+envire_motors
+envire_sensors
