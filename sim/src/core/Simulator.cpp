@@ -223,16 +223,16 @@ namespace mars {
         control->cfg->getOrCreateProperty("Preferences", "resources_path",
                                           std::string(MARS_PREFERENCES_DEFAULT_RESOURCES_PATH));
 
-	std::string loadFile = configPath.sValue+"/mars_Simulator.yaml";
-	control->cfg->loadConfig(loadFile.c_str());
-	loadFile = configPath.sValue+"/mars_Physics.yaml";
+        std::string loadFile = configPath.sValue+"/mars_Simulator.yaml";
+        control->cfg->loadConfig(loadFile.c_str());
+        loadFile = configPath.sValue+"/mars_Physics.yaml";
         control->cfg->loadConfig(loadFile.c_str());
 
         bool loadLastSave = false;
         control->cfg->getPropertyValue("Config", "loadLastSave", "value",
                                        &loadLastSave);
         if (loadLastSave) {
-	  loadFile = configPath.sValue+"/mars_saveOnClose.yaml";
+          loadFile = configPath.sValue+"/mars_saveOnClose.yaml";
           control->cfg->loadConfig(loadFile.c_str());
         }
 
@@ -274,6 +274,17 @@ namespace mars {
       fprintf(stderr, "INFO: set physics stack size to: %lu\n", getStackSize());
 #endif
 
+      // Add plugins that have been added via Simulator::addPlugin
+      // before to start simulation
+      for (unsigned int i = 0; i < newPlugins.size(); ++i) {
+        LOG_DEBUG("[Simulator::runSimulation] init plugin: %s\n", newPlugins[i].name.c_str());
+        allPlugins.push_back(newPlugins[i]);
+        activePlugins.push_back(newPlugins[i]);
+        newPlugins[i].p_interface->init();
+      }
+      newPlugins.clear();      
+
+      // load scene
       while(arg_v_scene_name.size() > 0) {
         LOG_INFO("Simulator: scene to load: %s",
                  arg_v_scene_name.back().c_str());
