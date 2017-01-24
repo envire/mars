@@ -267,7 +267,7 @@ namespace mars {
       utils::WaitCondition stepping_wc; ///< Used for preventing active waiting for a single step or start event.
       utils::Mutex getTimeMutex;
       int physics_mutex_count;
-      double avg_log_time;
+      double avg_log_time, avg_step_time;
       int count;
       interfaces::sReal calc_time;
       
@@ -297,6 +297,7 @@ namespace mars {
       std::string scenename;
       std::list<std::string> arg_v_scene_name;
       bool b_SceneChanged;
+      bool haveNewPlugin;
 
       // configuration
       void initCfgParams(void);
@@ -314,7 +315,7 @@ namespace mars {
       // data
       data_broker::DataPackage dbPhysicsUpdatePackage;
       data_broker::DataPackage dbSimTimePackage;
-      
+
       // IceServer comServer;
 
     protected:

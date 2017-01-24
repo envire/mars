@@ -11,6 +11,8 @@ find_package(lib_manager)
 lib_defaults()
 define_module_info()
 
+setup_qt()
+
 pkg_check_modules(PKGCONFIG REQUIRED
 			    lib_manager
 			    data_broker
@@ -43,6 +45,16 @@ set(HEADERS
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 setup_qt()
+if (${USE_QT5})
+  qt5_use_modules(${PROJECT_NAME} Widgets)
+  IF (UNIX)
+    set(PUBLIC_DEPENDECIES Qt5Widgets)
+  ENDIF (UNIX)
+else()
+  IF (UNIX)
+    set(PUBLIC_DEPENDENCIES "QtCore QtGui")
+  ENDIF (UNIX)
+endif()
 
 target_link_libraries(${PROJECT_NAME}
                       ${PKGCONFIG_LIBRARIES}
