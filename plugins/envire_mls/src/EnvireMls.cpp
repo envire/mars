@@ -28,9 +28,8 @@
 
 
 #include "EnvireMls.hpp"
-// TODO: Remove the following two lines:
-//#include <mars/data_broker/DataBrokerInterface.h>
-//#include <mars/data_broker/DataPackage.h>
+#include <envire_collider_mls/MLSCollision.hpp>
+
 
 namespace mars {
   namespace plugins {
@@ -41,32 +40,11 @@ namespace mars {
 
       EnvireMls::EnvireMls(lib_manager::LibManager *theManager)
         : MarsPluginTemplate(theManager, "EnvireMls") {
+		
+        envire::collision::MLSCollision* mls_collision = envire::collision::MLSCollision::getInstance();
       }
   
       void EnvireMls::init() {
-        // Load a scene file:
-        // control->sim->loadScene("some_file.scn");
-
-        // Register for node information:
-        /*
-          std::string groupName, dataName;
-          control->nodes->getDataBrokerNames(id, &groupName, &dataName);
-          control->dataBroker->registerTimedReceiver(this, groupName, dataName, "mars_sim/simTimer", 10, 0);
-        */
-
-        /* get or create cfg_param
-           example = control->cfg->getOrCreateProperty("plugin", "example",
-           0.0, this);
-        */
-
-        // Create a nonphysical box:
-
-        // Create a camera fixed on the box:
-
-        // Create a HUD texture element:
-
-        //gui->addGenericMenuAction("../EnvireMls/entry", 1, this);
-
       }
 
       void EnvireMls::reset() {
@@ -77,9 +55,12 @@ namespace mars {
 
 
       void EnvireMls::update(sReal time_ms) {
-
-        // control->motors->setMotorValue(id, value);
       }
+
+      void EnvireMls::addMLS(envire::core::FrameId center, const std::string & mlsPath){
+
+      }
+
 
     } // end of namespace envire_mls
   } // end of namespace plugins

@@ -33,6 +33,8 @@
 
 #include <string>
 
+#include <envire_core/graph/EnvireGraph.hpp>
+
 namespace mars {
 
   namespace plugins {
@@ -58,8 +60,10 @@ namespace mars {
         void update(mars::interfaces::sReal time_ms);
 
         // EnvireMls methods
+        void addMLS(envire::core::FrameId center, const std::string & mlsPath);
 
       private:
+
 
       }; // end of class definition EnvireMls
 
