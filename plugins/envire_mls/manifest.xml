@@ -1,0 +1,14 @@
+<package>
+    <description brief="envire_mls">
+      Provides loading of MLS in the Envire Mars Graph
+   </description>
+    <maintainer>Raul/Raul.Dominguez@dfki.de</maintainer>
+    <author>Raul/Raul.Dominguez@dfki.de</author>
+    <depend package="simulation/mars/scripts/cmake" />
+    <depend package="simulation/lib_manager" />
+    <depend package="simulation/mars/common/data_broker" />
+    <depend package="simulation/mars/interfaces" />
+    <depend package="envire/envire_core" />
+    <depend package="envire/envire_collider_mls" />
+    <tags>needs_opt</tags>
+</package>
