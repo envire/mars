@@ -136,7 +136,7 @@ namespace mars {
             {
                 NodeData data;
                 data.init("floorData", Vector(0,0,0));
-                data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(25, 25, 0.1), 0.1);
+                data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(25, 25, 0.1), 0.0001);
                 data.movable = false;
                 mars::sim::PhysicsConfigMapItem::Ptr item(new mars::sim::PhysicsConfigMapItem);
                 data.material.transparency = 0.5;

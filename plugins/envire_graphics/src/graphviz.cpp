@@ -149,7 +149,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
                 boost::shared_ptr<urdf::Box> box = boost::dynamic_pointer_cast<urdf::Box>(geom);
                 base::Vector3d extents(box->dim.x, box->dim.y, box->dim.z);
                 NodeData node;
-                node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, extents, 0);
+                node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, extents, 0.00001);
                 node.material.transparency = 0.5;
                 node.material.emissionFront = mars::utils::Color(0.0, 0.0, 0.8, 1.0);  
                 setPos(e.frame, node);
@@ -164,7 +164,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
                 //x = length, y = radius, z = not used
                 base::Vector3d extents(cylinder->radius, cylinder->length, 0);
                 NodeData node;
-                node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
+                node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0.00001); //mass is zero because it doesnt matter for visual representation
                 node.material.transparency = 0.5;
                 node.material.emissionFront = mars::utils::Color(0.0, 0.0, 0.8, 1.0);  
                 setPos(e.frame, node); //set link position
@@ -181,7 +181,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
                 //y and z are unused
                 base::Vector3d extents(sphere->radius, 0, 0);
                 NodeData node;
-                node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0); //mass is zero because it doesnt matter for visual representation
+                node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0.00001); //mass is zero because it doesnt matter for visual representation
                 node.material.transparency = 0.5;
                 node.material.emissionFront = mars::utils::Color(0.0, 0.0, 0.8, 1.0);  
                 setPos(e.frame, node); //set link position
@@ -206,7 +206,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
         base::Vector3d extents(0.01, length, 0);
         
         NodeData node;
-        node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
+        node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0.00001); //mass is zero because it doesnt matter for visual representation
         node.material.emissionFront = mars::utils::Color(0.0, 1.0, 0.0, 1.0);    
         node.material.transparency = 0.5;
         
@@ -230,7 +230,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
         //LOG_DEBUG_S("[Envire Graphics] add SPHERE visual. name: " << visual.name << ", frame: "   << frameId << ", radius: " << sphere->radius);
         
         NodeData node;
-        node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0); //mass is zero because it doesnt matter for visual representation
+        node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0.00001); //mass is zero because it doesnt matter for visual representation
         //setNodeDataMaterial(node, visual.material);
         //node.material.transparency = 0.5;
         node.material.emissionFront = mars::utils::Color(1.0, 0.0, 0.0, 1.0);
@@ -272,7 +272,7 @@ void GraphViz::addSphere(const envire::smurf::Visual& visual, const FrameId& fra
   //LOG_DEBUG_S("[Envire Graphics] add SPHERE visual. name: " << visual.name << ", frame: "   << frameId << ", radius: " << sphere->radius);
   
   NodeData node;
-  node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0); //mass is zero because it doesnt matter for visual representation
+  node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0.00001); //mass is zero because it doesnt matter for visual representation
   setNodeDataMaterial(node, visual.material);
   
   setPos(frameId, node); //set link position
@@ -289,7 +289,7 @@ void GraphViz::addBox(const envire::smurf::Visual& visual, const FrameId& frameI
   //LOG_DEBUG_S("[Envire Graphics] add BOX visual. name: " << visual.name << ", frame: "  << frameId << ", size: " << extents.transpose());
   
   NodeData node;
-  node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, extents, 0); //mass is zero because it doesnt matter for visual representation
+  node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, extents, 0.00001); //mass is zero because it doesnt matter for visual representation
   setNodeDataMaterial(node, visual.material);
   
   setPos(frameId, node); //set link position
@@ -307,7 +307,7 @@ void GraphViz::addCylinder(const envire::smurf::Visual& visual, const FrameId& f
   //LOG_DEBUG_S("[Envire Graphics] add CYLINDER visual. name: " << visual.name << ", frame: "   << frameId << ", radius: " << cylinder->radius << ", length: " << cylinder->length);
 
   NodeData node;
-  node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0); //mass is zero because it doesnt matter for visual representation
+  node.initPrimitive(mars::interfaces::NODE_TYPE_CYLINDER, extents, 0.00001); //mass is zero because it doesnt matter for visual representation
   setNodeDataMaterial(node, visual.material);
   
   setPos(frameId, node); //set link position
