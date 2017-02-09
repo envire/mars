@@ -108,7 +108,7 @@ namespace mars {
          */
         void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<configmaps::ConfigMap>>& e);
         void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem>& e);
-		void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<mars::interfaces::NodeData>>& e);
+    	void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<mars::interfaces::NodeData>>& e);
  
         /*
          *  dfs visit the tree and update all positions.

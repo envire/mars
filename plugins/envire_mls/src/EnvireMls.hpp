@@ -30,10 +30,16 @@
 
 #include <mars/interfaces/sim/MarsPluginTemplate.h>
 #include <mars/interfaces/MARSDefs.h>
+#include <mars/interfaces/NodeData.h>
 
 #include <string>
 
 #include <envire_core/graph/EnvireGraph.hpp>
+#include <envire_collider_mls/MLSCollision.hpp>
+
+#include <maps/grid/MLSMap.hpp>
+
+
 
 namespace mars {
 
@@ -60,10 +66,18 @@ namespace mars {
         void update(mars::interfaces::sReal time_ms);
 
         // EnvireMls methods
-        void addMLS(envire::core::FrameId center, const std::string & mlsPath);
+        void addMLS(const std::string & mlsPath);
+        //void addMLS(envire::core::FrameId frameId, const std::string & mlsPath);
 
       private:
 
+        void deserializeMLS(const std::string & mlsPath);
+        mars::interfaces::NodeData* setUpNodeData(const std::string & mlsPath);
+
+        // Private members
+ 	maps::grid::MLSMapKalman mlsKalman;
+ 	envire::collision::MLSCollision* mlsCollision;
+	boost::shared_ptr<maps::grid::MLSMapKalman> mls;   	
 
       }; // end of class definition EnvireMls
 
