@@ -114,8 +114,8 @@ namespace mars {
       vertical_interval.push_back(limitVAngle + config.vertical_offset);
       finalDepthMap.vertical_interval = vertical_interval;
       std::vector<double> horizontal_interval;
-      horizontal_interval.push_back(-M_PI);
       horizontal_interval.push_back(M_PI);
+      horizontal_interval.push_back(-M_PI);
       finalDepthMap.horizontal_interval = horizontal_interval;
       finalDepthMap.vertical_size = config.lasers;
       finalDepthMap.horizontal_size = (2.0*M_PI)/config.horizontal_resolution;
@@ -257,8 +257,13 @@ namespace mars {
         depthMap.vertical_interval = finalDepthMap.vertical_interval;
         depthMap.vertical_size = finalDepthMap.vertical_size;
         depthMap.horizontal_size = finalDepthMap.horizontal_size;
-        depthMap.timestamps.swap(finalDepthMap.timestamps);
+        depthMap.timestamps.resize(finalDepthMap.timestamps.size());
+        for(unsigned i = 0; i < finalDepthMap.timestamps.size(); i++)
+            depthMap.timestamps[(depthMap.timestamps.size()-1)-i] = finalDepthMap.timestamps[i];
         depthMap.distances.swap(finalDepthMap.distances);
+        base::samples::DepthMap::DepthMatrix distances = depthMap.getDistanceMatrixMap();
+        for(unsigned i = 0; i < depthMap.vertical_size; i++)
+                depthMap.getDistanceMatrixMap().block(i,0,1,depthMap.horizontal_size) = distances.block(i,0,1,depthMap.horizontal_size).reverse();
         finalDepthMap.distances.clear();
         finalDepthMap.timestamps.clear();
         finalDepthMap.remissions.clear();
