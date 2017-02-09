@@ -259,7 +259,6 @@ namespace mars {
         depthMap.horizontal_size = finalDepthMap.horizontal_size;
         depthMap.timestamps.swap(finalDepthMap.timestamps);
         depthMap.distances.swap(finalDepthMap.distances);
-        depthMap.remissions.swap(finalDepthMap.remissions);
         finalDepthMap.distances.clear();
         finalDepthMap.timestamps.clear();
         finalDepthMap.remissions.clear();
@@ -462,7 +461,6 @@ namespace mars {
           for (int sample_i=0; sample_i<partial_num_samples; sample_i++){
             // We have to invert the coordinates
             finalDepthMap.distances.push_back(partialDepthMaps[b].distances[sample_i*partial_row_size + laser_i]);
-            finalDepthMap.remissions.push_back(1.0);
           }
         }
       }
