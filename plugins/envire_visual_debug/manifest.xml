@@ -1,0 +1,13 @@
+<package>
+    <description brief="envire_visual_debug">
+      Debug
+   </description>
+    <maintainer>Raul/Raul.Dominguez@dfki.de</maintainer>
+    <author>Raul/Raul.Dominguez@dfki.de</author>
+    <depend package="simulation/mars/scripts/cmake" />
+    <depend package="simulation/lib_manager" />
+    <depend package="simulation/mars/common/data_broker" />
+    <depend package="simulation/mars/interfaces" />
+    <depend package="envire/envire_visualizer" />
+    <tags>needs_opt</tags>
+</package>
