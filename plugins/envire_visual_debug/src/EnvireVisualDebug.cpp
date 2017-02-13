@@ -36,17 +36,14 @@ namespace mars {
       using namespace mars::interfaces;
 
       EnvireVisualDebug::EnvireVisualDebug(lib_manager::LibManager *theManager)
-        : MarsPluginTemplateGUI(theManager, "EnvireVisualDebug") {
+          : MarsPluginTemplateGUI(theManager, "EnvireVisualDebug") {
 
-                graphWindow = new envire::viz::EnvireVisualizerWindow();
+        graphWindow = new envire::viz::EnvireVisualizerWindow();
       }
   
       void EnvireVisualDebug::init() {
 
         gui->addGenericMenuAction("../EnvireVisualDebug/showEnvireGraph", 1, this);
-
-
-        graphWindow->displayGraph(control->graph, "center");
 
       }
 
@@ -59,11 +56,13 @@ namespace mars {
 
       void EnvireVisualDebug::update(sReal time_ms) {
 
+
       }
 
       void EnvireVisualDebug::menuAction (int action, bool checked)
       {
-	 graphWindow -> show();
+        graphWindow->displayGraph(control->graph, "center");
+        graphWindow -> show();
       }
 
     } // end of namespace envire_visual_debug
