@@ -327,12 +327,24 @@ namespace mars {
 
       // set desired velocity. @todo add inertia
       velocity = 0; // by setting a different value we could specify a minimum
+      velocity += sMotor.minSpeed;
       // P part of the motor
       velocity += error * sMotor.p;
       // I part of the motor
       velocity += iPart;
       // D part of the motor
       velocity += ((error - last_error)/time) * sMotor.d;
+
+      /*if(velocity > sMotor.maxSpeed)
+      {
+        velocity = sMotor.maxSpeed;
+      }
+
+      if(velocity < -sMotor.maxSpeed)
+      {
+        velocity = -sMotor.maxSpeed;
+      }*/
+
       last_error = error;
     }
 
@@ -580,6 +592,10 @@ namespace mars {
     void SimMotor::setMaxSpeed(sReal speed) {
       sMotor.maxSpeed = fabs(speed);
     }
+
+    void SimMotor::setMinSpeed(sReal speed) {
+      sMotor.minSpeed = fabs(speed);
+    }    
 
     void SimMotor::setMaximumVelocity(sReal v) { // deprecated
       setMaxSpeed(v);

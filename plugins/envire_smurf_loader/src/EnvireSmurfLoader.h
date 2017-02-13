@@ -41,6 +41,7 @@
 #include <mars/interfaces/sim/ControlCenter.h>
 
 #include <envire_core/graph/GraphTypes.hpp>
+#include <envire_core/items/Transform.hpp>
 
 namespace mars {
   namespace plugins {
@@ -65,6 +66,10 @@ namespace mars {
 
         virtual bool loadFile(std::string filename, std::string tmpPath,
                                 std::string robotname);
+
+        virtual bool loadFile(std::string filename, std::string tmpPath,
+                                std::string robotname, utils::Vector pos, utils::Vector rot);
+
         virtual int saveFile(std::string filename, std::string tmpPath);
 
       private:
@@ -72,7 +77,7 @@ namespace mars {
 
         void addFloor(const envire::core::GraphTraits::vertex_descriptor &center);
 
-        void addRobot(std::string filename,  envire::core::GraphTraits::vertex_descriptor center);
+        void addRobot(std::string filename,  envire::core::GraphTraits::vertex_descriptor center, envire::core::Transform iniPose);
 
         int nextGroupId;
 

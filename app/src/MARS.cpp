@@ -189,19 +189,19 @@ namespace mars {
           fprintf(stderr, "Loading default core libraries...\n");
           libManager->loadLibrary("data_broker");
           libManager->loadLibrary("mars_sim");
+          libManager->loadLibrary("mars_entity_factory");          
           libManager->loadLibrary("mars_scene_loader");
-          libManager->loadLibrary("mars_entity_factory");
-          libManager->loadLibrary("mars_smurf");
-          libManager->loadLibrary("mars_smurf_loader");
-          libManager->loadLibrary("envire_physics");
           libManager->loadLibrary("envire_smurf_loader");
+          //libManager->loadLibrary("mars_smurf")
+          //libManager->loadLibrary("mars_smurf_loader");
+          libManager->loadLibrary("envire_physics");
           libManager->loadLibrary("envire_joints");
           libManager->loadLibrary("envire_motors");
           libManager->loadLibrary("envire_sensors");
           if(!noGUI) {           
             libManager->loadLibrary("main_gui");
-            libManager->loadLibrary("mars_graphics");
             libManager->loadLibrary("mars_gui");
+            libManager->loadLibrary("osgviz_mars_graphics");            
             libManager->loadLibrary("envire_graphics");
           }
         }

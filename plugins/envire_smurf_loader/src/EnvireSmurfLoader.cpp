@@ -89,23 +89,36 @@ namespace mars {
             bool EnvireSmurfLoader::loadFile(std::string filename, std::string tmpPath,
                                     std::string robotname)
             {
+                std::cout << "smurf loader zero position" << std::endl;
                 vertex_descriptor center = addCenter();
-                addRobot(filename, center);
+                envire::core::Transform iniPose;
+                iniPose.transform.orientation = base::Quaterniond::Identity();
+                iniPose.transform.translation << 0.0, 0.0, 0.3;
+                addRobot(filename, center, iniPose);
                 return true;
             }
+
+            bool EnvireSmurfLoader::loadFile(std::string filename, std::string tmpPath,
+                                std::string robotname, utils::Vector pos, utils::Vector rot)
+            {
+                std::cout << "smurf loader given position" << std::endl;
+                vertex_descriptor center = addCenter();
+                envire::core::Transform iniPose;
+                iniPose.transform.orientation = base::Quaterniond::Identity();
+                iniPose.transform.translation << pos.x(), pos.y(), pos.z();
+                addRobot(filename, center, iniPose);
+            }    
 
             int EnvireSmurfLoader::saveFile(std::string filename, std::string tmpPath)
             {
                 return 0;
             }
 
-            void EnvireSmurfLoader::addRobot(std::string filename, vertex_descriptor center)
+
+            void EnvireSmurfLoader::addRobot(std::string filename, vertex_descriptor center, envire::core::Transform iniPose)
             {
                 std::string path = libConfig::YAMLConfigParser::applyStringVariableInsertions(filename); 
                 LOG_DEBUG("Robot Path: %s",  path.c_str() );
-                envire::core::Transform iniPose;
-                iniPose.transform.orientation = base::Quaterniond::Identity();
-                iniPose.transform.translation << 1.0, 1.0, 0.3;
                 smurf::Robot* robot = new( smurf::Robot);
                 robot->loadFromSmurf(path);
                 envire::smurf::GraphLoader graphLoader(control->graph);
@@ -123,7 +136,7 @@ namespace mars {
             {
                 NodeData data;
                 data.init("floorData", Vector(0,0,0));
-                data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(25, 25, 0.1), 0.1);
+                data.initPrimitive(interfaces::NODE_TYPE_BOX, Vector(25, 25, 0.1), 0.0001);
                 data.movable = false;
                 mars::sim::PhysicsConfigMapItem::Ptr item(new mars::sim::PhysicsConfigMapItem);
                 data.material.transparency = 0.5;

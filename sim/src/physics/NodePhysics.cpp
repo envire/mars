@@ -47,6 +47,8 @@
 #include <set>
 #include <iostream>
 
+#define _VERIFY_WORLD_ true
+
 
 namespace mars {
   namespace sim {
@@ -138,7 +140,8 @@ namespace mars {
     bool NodePhysics::createNode(NodeData* node) {
 #ifdef _VERIFY_WORLD_
       sRotation euler = utils::quaternionTosRotation(node->rot);
-      fprintf(stderr, "node %d  ;  %.4f, %.4f, %.4f  ;  %.4f, %.4f, %.4f  ;  %.4f  ;  %.4f\n",
+      fprintf(stderr, "node %s, %d  ;  %.4f, %.4f, %.4f  ;  %.4f, %.4f, %.4f  ;  %.4f  ;  %.4f\n",
+              node->name.c_str(),
               node->index, node->pos.x(), node->pos.y(),
               node->pos.z(), euler.alpha, euler.beta, euler.gamma,
               node->mass, node->density);

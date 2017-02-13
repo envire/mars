@@ -139,6 +139,10 @@ namespace mars {
          * Sets the axis1 value of the jointData for dynamic transformations, this is read from the smurf::Joint object
          */
         void setAxis1(smurf::Joint* smurfJoint, mars::interfaces::JointData* jointData);
+
+        void setLimits(smurf::Joint* smurfJoint, mars::interfaces::JointData* jointData);
+
+        void setLimits(smurf::StaticTransformation* smurfJoint, mars::interfaces::JointData* jointData);
         /*
          * Creates the physical simulation of the joint used by instantiate 
          */
@@ -165,7 +169,6 @@ namespace mars {
          * @Dependencies is used to keep track of the missing physics nodes required to create the joints. The first element of the list is the frame in which the joint having a dependency is and the second element a vector of the frames which are missing.
          */
         std::map<envire::core::FrameId, std::vector<envire::core::FrameId>> dependencies;
-        bool debug = true;
         envire::core::FrameId originId;
         
       }; // end of class definition EnvireJoints

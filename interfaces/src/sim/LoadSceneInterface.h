@@ -35,6 +35,8 @@
 
 #include <lib_manager/LibInterface.hpp>
 
+#include <mars/utils/Vector.h>
+
 namespace mars {
 
   namespace interfaces {
@@ -48,6 +50,14 @@ namespace mars {
       virtual bool loadFile(std::string filename, std::string tmpPath,
                             std::string robotname) = 0;
       virtual int saveFile(std::string filename, std::string tmpPath) = 0;
+
+      virtual bool loadFile(std::string filename, std::string tmpPath, 
+                            std::string robotname, utils::Vector pos, utils::Vector rot)
+      {
+        printf("The function \"loadFile\" with pose parameters is not implemented for this plugin. Call \"loadFile\" without pose parameters.\n");
+        return loadFile(filename, tmpPath, robotname);
+      }
+
     };
 
   } // end of namespace interfaces

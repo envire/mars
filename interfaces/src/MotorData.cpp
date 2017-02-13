@@ -90,6 +90,7 @@ namespace mars {
       d = 0;
       maxValue = M_PI;
       minValue = -M_PI;
+      minSpeed = 0;
       this->jointName = "";
     }
 

@@ -114,10 +114,11 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Frame>>& e)
     std::shared_ptr<NodeData> nodeDataPtr(node);
     smurf::Frame link = e.item->getData();
     nodeDataPtr->init(link.getName());
-    nodeDataPtr->initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.5, 0.5, 0.5), 0.1);
+    nodeDataPtr->initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.5, 0.5, 0.5), 0.00001);
     nodeDataPtr->c_params.coll_bitmask = 0;
     nodeDataPtr->movable = true;
     nodeDataPtr->groupID = link.getGroupId();
+    nodeDataPtr->density = 0.0;
     setPos(e.frame, nodeDataPtr);
     if (instantiateNode(nodeDataPtr, e.frame))
     {
@@ -156,6 +157,8 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e
   NodeData * node = new NodeData;
   node->init(collision.name);
   node->fromGeometry(collision.geometry);
+  node->mass = 0.00001;
+  node->density = 0.0;
   std::shared_ptr<NodeData> nodePtr(node);
   setPos(e.frame, nodePtr);
   node->movable = true;
@@ -295,6 +298,8 @@ std::shared_ptr<NodeData> GraphPhysics::getCollidableNode(const smurf::Collidabl
   urdf::Collision collision = collidable.getCollision();
   node->init(collision.name);
   node->fromGeometry(collision.geometry);
+  node->density = 0.0;
+  node->mass = 0.00001;
   setPos(frame, nodePtr);
   node->movable = true;
   node->c_params = collidable.getContactParams();

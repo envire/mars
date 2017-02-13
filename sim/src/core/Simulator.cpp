@@ -223,16 +223,16 @@ namespace mars {
         control->cfg->getOrCreateProperty("Preferences", "resources_path",
                                           std::string(MARS_PREFERENCES_DEFAULT_RESOURCES_PATH));
 
-	std::string loadFile = configPath.sValue+"/mars_Simulator.yaml";
-	control->cfg->loadConfig(loadFile.c_str());
-	loadFile = configPath.sValue+"/mars_Physics.yaml";
+        std::string loadFile = configPath.sValue+"/mars_Simulator.yaml";
+        control->cfg->loadConfig(loadFile.c_str());
+        loadFile = configPath.sValue+"/mars_Physics.yaml";
         control->cfg->loadConfig(loadFile.c_str());
 
         bool loadLastSave = false;
         control->cfg->getPropertyValue("Config", "loadLastSave", "value",
                                        &loadLastSave);
         if (loadLastSave) {
-	  loadFile = configPath.sValue+"/mars_saveOnClose.yaml";
+          loadFile = configPath.sValue+"/mars_saveOnClose.yaml";
           control->cfg->loadConfig(loadFile.c_str());
         }
 
@@ -274,6 +274,17 @@ namespace mars {
       fprintf(stderr, "INFO: set physics stack size to: %lu\n", getStackSize());
 #endif
 
+      // Add plugins that have been added via Simulator::addPlugin
+      // before to start simulation
+      for (unsigned int i = 0; i < newPlugins.size(); ++i) {
+        LOG_DEBUG("[Simulator::runSimulation] init plugin: %s\n", newPlugins[i].name.c_str());
+        allPlugins.push_back(newPlugins[i]);
+        activePlugins.push_back(newPlugins[i]);
+        newPlugins[i].p_interface->init();
+      }
+      newPlugins.clear();      
+
+      // load scene
       while(arg_v_scene_name.size() > 0) {
         LOG_INFO("Simulator: scene to load: %s",
                  arg_v_scene_name.back().c_str());
@@ -580,14 +591,16 @@ namespace mars {
     }
 
     int Simulator::loadScene(const std::string &filename, const std::string &robotname, bool threadsave, bool blocking) {
+      printf("Load 1\n");
       return loadScene(filename, false, robotname,threadsave,blocking);
     }
 
     int Simulator::loadScene(const std::string &filename,
                              bool wasrunning, const std::string &robotname, bool threadsave, bool blocking) {
-      printf("Load 2\n");
+        printf("Load 2\n");
+
         if(!threadsave){
-            return loadScene_internal(filename,wasrunning, robotname);
+            return loadScene_internal(filename, wasrunning, robotname);
         }
 
         //Loading is handles inside the mars thread itsels later
@@ -596,6 +609,7 @@ namespace mars {
         lo.filename = filename;
         lo.wasRunning = wasrunning;
         lo.robotname = robotname;
+        lo.zeroPose = true;
         filesToLoad.push_back(lo);
         externalMutex.unlock();
 
@@ -605,10 +619,80 @@ namespace mars {
         return 1;
     }
 
+    int Simulator::loadScene(const std::string &filename,
+                          const std::string &robotname, 
+                          utils::Vector pos, 
+                          utils::Vector rot, bool threadsave, bool blocking, bool wasrunning)
+    {
+      printf("Load 3\n");
+
+      if(!threadsave){
+        printf("INSIDE\n");
+          return loadScene_internal(filename, robotname, pos, rot, wasrunning);
+      }
+
+      printf("TEST\n");
+
+      //Loading is handles inside the mars thread itsels later
+      externalMutex.lock();
+      LoadOptions lo;
+      lo.filename = filename;
+      lo.wasRunning = wasrunning;
+      lo.robotname = robotname;
+      lo.zeroPose = false;
+      lo.pos = pos;
+      lo.rot = rot;
+      filesToLoad.push_back(lo);
+      externalMutex.unlock();
+
+      while(blocking && !filesToLoad.empty()){
+          msleep(10);
+      }
+      return 1;  
+
+    }
+
+    int Simulator::loadScene_internal(const std::string &filename,
+                             const std::string &robotname,
+                             utils::Vector pos, utils::Vector rot,
+                             bool wasrunning) {
+
+      LOG_DEBUG("Loading scene internal with given position\n");
+
+      if(control->loadCenter->loadScene.empty()) {
+        LOG_ERROR("Simulator:: no module to load scene found");
+        return 0;
+      }
+
+      try {
+        std::string suffix = utils::getFilenameSuffix(filename);
+        if( control->loadCenter->loadScene.find(suffix) !=
+            control->loadCenter->loadScene.end() ) {
+          if (! control->loadCenter->loadScene[suffix]->loadFile(filename.c_str(), getTmpPath().c_str(), robotname.c_str(), pos, rot)) {
+          return 0; //failed
+          }
+        }
+        else {
+          // no scene loader found
+          LOG_ERROR("Simulator: Could not find scene loader for: %s (%s)",
+                    filename.c_str(), suffix.c_str());
+          return 0; //failed
+        }
+      } catch(SceneParseException e) {
+        LOG_ERROR("Could not parse scene: %s", e.what());
+      }
+
+      if (wasrunning) {
+        startStopTrigger();//if the simulation has been stopped for loading, now it continues
+      }
+      sceneHasChanged(false);
+      return 1;
+    }    
+
     int Simulator::loadScene_internal(const std::string &filename,
                              bool wasrunning, const std::string &robotname) {
 
-      LOG_DEBUG("Loading scene internal\n");
+      LOG_DEBUG("Loading scene internal with zero position\n");
 
       if(control->loadCenter->loadScene.empty()) {
         LOG_ERROR("Simulator:: no module to load scene found");
@@ -1135,8 +1219,17 @@ namespace mars {
         }
 
         for(unsigned int i=0;i<filesToLoad.size();i++){
-          loadScene_internal(filesToLoad[i].filename, false,
+          if (filesToLoad[i].zeroPose == true)
+          {
+            loadScene_internal(filesToLoad[i].filename, false,
                              filesToLoad[i].robotname);
+          } else 
+          {
+            loadScene_internal(filesToLoad[i].filename,
+                             filesToLoad[i].robotname,
+                             filesToLoad[i].pos, filesToLoad[i].rot,
+                             false);           
+          }
         }
         filesToLoad.clear();
 
