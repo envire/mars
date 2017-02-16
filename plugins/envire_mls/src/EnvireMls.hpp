@@ -67,7 +67,10 @@ namespace mars {
 
         // EnvireMls methods
         void addMLS(const std::string & mlsPath);
+        void loadSerializedMLS(const std::string & mlsPath);
         //void addMLS(envire::core::FrameId frameId, const std::string & mlsPath);
+        void testAddMLS();
+        void testLoadSerializedMLS();
 
       private:
 
@@ -78,6 +81,8 @@ namespace mars {
  	maps::grid::MLSMapKalman mlsKalman;
  	envire::collision::MLSCollision* mlsCollision;
 	boost::shared_ptr<maps::grid::MLSMapKalman> mls;   	
+
+        bool tested;
 
       }; // end of class definition EnvireMls
 

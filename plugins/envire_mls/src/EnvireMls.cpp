@@ -29,17 +29,24 @@
 #include "EnvireMls.hpp"
 
 #include <fstream>
-#include <boost/archive/polymorphic_binary_iarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 #include <envire_core/items/Transform.hpp>
 #include <envire_core/items/Item.hpp>
+
+#include <envire_core/graph/GraphViz.hpp>
 
 #include <mars/sim/NodePhysics.h>
 
 // Hardcoded parameters:
 #define MLS_NAME std::string("mls_01")
-#define MLS_FRAME_NAME std::string("mls_frame_01")
+#define MLS_FRAME_NAME std::string("mls_01")
+#define DUMPED_MLS_FRAME_NAME std::string("mls_map")
 #define SIM_CENTER_FRAME_ID std::string("center")
-#define MLS_FRAME_TF_X 0
+//#define TEST_MLS_PATH std::string("./testMlsData/MLSMapKalman_waves.bin")
+//#define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/simulation/mars/plugins/envire_mls/testMlsData/MLSMapKalman_waves.bin")
+//#define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/models/environments/dlr_map/mls/mls_map.bin")
+#define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
+#define MLS_FRAME_TF_X 1
 #define MLS_FRAME_TF_Y 0
 #define MLS_FRAME_TF_Z 0
 
@@ -49,7 +56,7 @@
 #define GD_C_PARAMS_ERP 0.001
 #define GD_C_PARAMS_BOUNCE 0.0
 
-
+#define DEBUG 1
 
 namespace mars {
   namespace plugins {
@@ -65,12 +72,18 @@ namespace mars {
       }
   
       void EnvireMls::init() {
+#ifdef DEBUG
+        LOG_DEBUG( "[EnvireMls::init]"); 
+#endif
         // Create the default frame for the MLS 
         envire::core::FrameId mlsFrameId = MLS_FRAME_NAME; 
         control->graph->addFrame(mlsFrameId);
         envire::core::Transform mlsTf(base::Time::now());
         mlsTf.transform.translation << MLS_FRAME_TF_X, MLS_FRAME_TF_Y, MLS_FRAME_TF_Z;
+        mlsTf.transform.orientation = base::AngleAxisd(0.25, base::Vector3d::UnitX());
         control->graph->addTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_ID, mlsTf);
+
+        tested = false;
       }
 
       void EnvireMls::reset() {
@@ -79,16 +92,41 @@ namespace mars {
       EnvireMls::~EnvireMls() {
       }
 
-
       void EnvireMls::update(sReal time_ms) {
+          if (not tested){
+              //testAddMLS();
+              testLoadSerializedMLS();
+              tested = true;
+          }
       }
 
       void EnvireMls::deserializeMLS(const std::string & mlsPath)
       {
         std::ifstream input(mlsPath,  std::ios::binary);
-        boost::archive::polymorphic_binary_iarchive  ia(input);
+        boost::archive::binary_iarchive  ia(input);
+#ifdef DEBUG
+        LOG_DEBUG("[EnvireMls::deserializeMLS] mlsPath: " + mlsPath);
+#endif
+
         ia >> mlsKalman;
-        mls = static_cast< boost::shared_ptr<maps::grid::MLSMapKalman> >(&mlsKalman);   
+        mls = boost::shared_ptr<maps::grid::MLSMapKalman>(&mlsKalman);   
+      }
+
+      void EnvireMls::loadSerializedMLS(const std::string & mlsPath)
+      {
+          using namespace envire::core;
+          using namespace maps::grid;
+          using mlsType = MLSMap<(MLSConfig::update_model)0>;
+          EnvireGraph mlsGraph;
+          mlsGraph.loadFromFile(mlsPath);
+
+          FrameId dumpedFrameId(DUMPED_MLS_FRAME_NAME);
+          EnvireGraph::ItemIterator<Item<mlsType>> beginItem, endItem;
+          boost::tie(beginItem, endItem) = mlsGraph.getItems<Item<mlsType>>(dumpedFrameId);
+          mlsType mlsAux = beginItem->getData();
+          Item<mlsType>::Ptr mlsItemPtr(new Item<mlsType>(mlsAux));
+          FrameId targetFrameId(MLS_FRAME_NAME);
+          control->graph->addItemToFrame(targetFrameId, mlsItemPtr);
       }
 
       NodeData* EnvireMls::setUpNodeData(const std::string & mlsPath)
@@ -100,6 +138,7 @@ namespace mars {
         //std::string env_path("./mlsdata/MLSMapKalman_waves.bin");
 
         deserializeMLS(mlsPath);
+
         // Store MLS geometry in simulation node
         node->g_mls = (void*)(mlsCollision->createNewCollisionObject(mls));//_userdata);	
 
@@ -157,6 +196,28 @@ namespace mars {
         control->graph->addItemToFrame(mlsFrameId, itemPtr);        
 
         // TODO Instantiate node in simulation and store reference of simulation object. This was done before in envirePhysics
+      }
+
+      void EnvireMls::testAddMLS()
+      {
+#ifdef DEBUG
+        LOG_DEBUG( "[EnvireMls::addMLS] 1"); 
+#endif
+        addMLS(TEST_MLS_PATH);
+#ifdef DEBUG
+        LOG_DEBUG( "[EnvireMls::addMLS] 2"); 
+#endif
+      }
+
+      void EnvireMls::testLoadSerializedMLS()
+      {
+#ifdef DEBUG
+        LOG_DEBUG( "[EnvireMls::testLoadSerializedMLS] 1"); 
+#endif
+        loadSerializedMLS(TEST_MLS_PATH);
+#ifdef DEBUG
+        LOG_DEBUG( "[EnvireMls::testLoadSerializedMLS] 2"); 
+#endif
       }
 
 
