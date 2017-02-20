@@ -31,7 +31,7 @@
 #include <fstream>
 #include <boost/archive/binary_iarchive.hpp>
 #include <envire_core/items/Transform.hpp>
-#include <envire_core/items/Item.hpp>
+
 
 #include <envire_core/graph/GraphViz.hpp>
 
@@ -65,13 +65,18 @@ namespace mars {
       using namespace mars::utils;
       using namespace mars::interfaces;
 
+      using namespace envire::core;
+      using namespace maps::grid;
+
+
       EnvireMls::EnvireMls(lib_manager::LibManager *theManager)
-        : MarsPluginTemplate(theManager, "EnvireMls") {
-		
+        : MarsPluginTemplate(theManager, "EnvireMls") 
+      {
         mlsCollision = envire::collision::MLSCollision::getInstance();
       }
-  
-      void EnvireMls::init() {
+
+      void EnvireMls::init() 
+      {
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::init]"); 
 #endif
@@ -86,68 +91,62 @@ namespace mars {
         tested = false;
       }
 
-      void EnvireMls::reset() {
-      }
+      void EnvireMls::reset() { }
 
-      EnvireMls::~EnvireMls() {
-      }
+      EnvireMls::~EnvireMls() { }
 
-      void EnvireMls::update(sReal time_ms) {
-          if (not tested){
-              //testAddMLS();
-              testLoadSerializedMLS();
-              tested = true;
-          }
-      }
-
-      void EnvireMls::deserializeMLS(const std::string & mlsPath)
+      void EnvireMls::update(sReal time_ms) 
       {
-        std::ifstream input(mlsPath,  std::ios::binary);
-        boost::archive::binary_iarchive  ia(input);
-#ifdef DEBUG
-        LOG_DEBUG("[EnvireMls::deserializeMLS] mlsPath: " + mlsPath);
-#endif
-
-        ia >> mlsKalman;
-        mls = boost::shared_ptr<maps::grid::MLSMapKalman>(&mlsKalman);   
+        if (not tested){
+          testAddMLS();
+          tested = true;
+        }
       }
 
-      void EnvireMls::loadSerializedMLS(const std::string & mlsPath)
+      void EnvireMls::loadMLSMap(const std::string & mlsPath)
       {
-          using namespace envire::core;
-          using namespace maps::grid;
-          using mlsType = MLSMap<(MLSConfig::update_model)0>;
-          EnvireGraph mlsGraph;
-          mlsGraph.loadFromFile(mlsPath);
-
-          FrameId dumpedFrameId(DUMPED_MLS_FRAME_NAME);
-          EnvireGraph::ItemIterator<Item<mlsType>> beginItem, endItem;
-          boost::tie(beginItem, endItem) = mlsGraph.getItems<Item<mlsType>>(dumpedFrameId);
-          mlsType mlsAux = beginItem->getData();
-          Item<mlsType>::Ptr mlsItemPtr(new Item<mlsType>(mlsAux));
-          FrameId targetFrameId(MLS_FRAME_NAME);
-          control->graph->addItemToFrame(targetFrameId, mlsItemPtr);
+        /* Loads in the envire graph the mls given in the path after
+         * deserializing it.
+         */
+        EnvireGraph auxMlsGraph;
+        auxMlsGraph.loadFromFile(mlsPath);
+        FrameId dumpedFrameId(DUMPED_MLS_FRAME_NAME);
+        mlsType mlsAux = getMLSMap(auxMlsGraph, dumpedFrameId);
+        //mlsType mlsAux = getMLSMap(mlsGraph, dumpedFrameId);
+        Item<mlsType>::Ptr mlsItemPtr(new Item<mlsType>(mlsAux));
+        FrameId targetFrameId(MLS_FRAME_NAME);
+        control->graph->addItemToFrame(targetFrameId, mlsItemPtr);
       }
 
-      NodeData* EnvireMls::setUpNodeData(const std::string & mlsPath)
+      mlsType EnvireMls::getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId mlsFrameId)
       {
+        EnvireGraph::ItemIterator<Item<mlsType>> beginItem, endItem;
+        boost::tie(beginItem, endItem) = graph.getItems<Item<mlsType>>(mlsFrameId);
+        mlsType mls = beginItem->getData();
+        return mls;
+      }
+
+      NodeData* EnvireMls::setUpNodeData()
+      {
+        /*
+         * Look up the stored mls map and generate the correspondent MLSNodeData
+         */
         NodeData* node(new NodeData);
         node->init(MLS_NAME, mars::utils::Vector(0,0,0));
         node->physicMode = interfaces::NODE_TYPE_MLS;
-        node->env_path = mlsPath;
-        //std::string env_path("./mlsdata/MLSMapKalman_waves.bin");
-
-        deserializeMLS(mlsPath);
-
+        //node->env_path = mlsPath;
+        FrameId mlsFrameId(MLS_FRAME_NAME);
+        mlsType mls = getMLSMap(*(control->graph), mlsFrameId);
+	boost::shared_ptr<maps::grid::MLSMapKalman> mlsPtr(& mls);
         // Store MLS geometry in simulation node
-        node->g_mls = (void*)(mlsCollision->createNewCollisionObject(mls));//_userdata);	
+        node->g_mls = (void*)(mlsCollision->createNewCollisionObject(mlsPtr));//_userdata);	
 
         // NOTE What is this pos1 for?
         mars::utils::Vector pos1(1,1,1);
         node->pos = pos1;
 
         // The position should be read from the envire graph
-    
+
         dVector3 pos;
         pos[ 0 ] = 0;
         pos[ 1 ] = 0;
@@ -177,25 +176,18 @@ namespace mars {
 
         return node;
       }
-      
 
-      void EnvireMls::addMLS(const std::string & mlsPath)
+
+      void EnvireMls::addMLSNode()
       {
         // TODO for loading various MLSs.
         // If the frame where the MLS should be
         // stored does not exists, create it by now we assume that the frame to
         // add to is the default one for the mls, created in the init step
-        
-        NodeData* node = setUpNodeData(mlsPath);
-
-        // NOTE Instantiate the simulation node in simulation is missing
-
-        // Store the node in the graph
+        NodeData* node = setUpNodeData();
         envire::core::Item<NodeData>::Ptr itemPtr(new envire::core::Item<NodeData>(*node));
         envire::core::FrameId mlsFrameId = MLS_FRAME_NAME;
         control->graph->addItemToFrame(mlsFrameId, itemPtr);        
-
-        // TODO Instantiate node in simulation and store reference of simulation object. This was done before in envirePhysics
       }
 
       void EnvireMls::testAddMLS()
@@ -203,23 +195,14 @@ namespace mars {
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::addMLS] 1"); 
 #endif
-        addMLS(TEST_MLS_PATH);
+        loadMLSMap(TEST_MLS_PATH);
+        // Next is to instantiate a load the correspondent nodeData
+        addMLSNode();
+        
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::addMLS] 2"); 
 #endif
       }
-
-      void EnvireMls::testLoadSerializedMLS()
-      {
-#ifdef DEBUG
-        LOG_DEBUG( "[EnvireMls::testLoadSerializedMLS] 1"); 
-#endif
-        loadSerializedMLS(TEST_MLS_PATH);
-#ifdef DEBUG
-        LOG_DEBUG( "[EnvireMls::testLoadSerializedMLS] 2"); 
-#endif
-      }
-
 
     } // end of namespace envire_mls
   } // end of namespace plugins

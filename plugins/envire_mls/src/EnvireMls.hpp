@@ -35,6 +35,8 @@
 #include <string>
 
 #include <envire_core/graph/EnvireGraph.hpp>
+#include <envire_core/items/Item.hpp>
+
 #include <envire_collider_mls/MLSCollision.hpp>
 
 #include <maps/grid/MLSMap.hpp>
@@ -45,6 +47,9 @@ namespace mars {
 
   namespace plugins {
     namespace envire_mls {
+
+      using mlsType = maps::grid::MLSMapKalman;
+      //using mlsType = maps::grid::MLSMap<maps::grid::MLSConfig::KALMAN>;
 
       // inherit from MarsPluginTemplateGUI for extending the gui
       class EnvireMls: public mars::interfaces::MarsPluginTemplate {
@@ -66,21 +71,20 @@ namespace mars {
         void update(mars::interfaces::sReal time_ms);
 
         // EnvireMls methods
-        void addMLS(const std::string & mlsPath);
-        void loadSerializedMLS(const std::string & mlsPath);
-        //void addMLS(envire::core::FrameId frameId, const std::string & mlsPath);
+        void loadMLSMap(const std::string & mlsPath);
+        void addMLSNode();
         void testAddMLS();
-        void testLoadSerializedMLS();
 
       private:
 
-        void deserializeMLS(const std::string & mlsPath);
-        mars::interfaces::NodeData* setUpNodeData(const std::string & mlsPath);
+        //void deserializeMLS(const std::string & mlsPath);
+        mars::interfaces::NodeData* setUpNodeData();
+        mlsType getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId mlsFrameId);
 
         // Private members
  	maps::grid::MLSMapKalman mlsKalman;
  	envire::collision::MLSCollision* mlsCollision;
-	boost::shared_ptr<maps::grid::MLSMapKalman> mls;   	
+	boost::shared_ptr<maps::grid::MLSMapKalman> mlsPtr;   	
 
         bool tested;
 
