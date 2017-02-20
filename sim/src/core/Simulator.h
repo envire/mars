@@ -221,6 +221,8 @@ namespace mars {
        */
       virtual unsigned long getTime();
 
+      virtual double getCalcMs();
+
     private:
 
       struct LoadOptions {

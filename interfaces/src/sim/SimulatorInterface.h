@@ -121,6 +121,8 @@ namespace mars {
        */
       virtual unsigned long getTime() = 0;
 
+      virtual double getCalcMs() = 0;
+
     };
 
 

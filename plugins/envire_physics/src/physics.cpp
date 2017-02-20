@@ -244,6 +244,7 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
 
 void GraphPhysics::update(sReal time_ms) 
 {
+  std::cout << "GraphPhysics::update" << std::endl;
   const GraphTraits::vertex_descriptor originDesc = control->graph->vertex(originId);
   if(printGraph)
   {
@@ -260,6 +261,8 @@ void GraphPhysics::update(sReal time_ms)
     std::string name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
     viz.write(*(control->graph), name);
   }
+
+
   /*
    * TODO Remove this
   //updateChildPositions<Item<smurf::Frame>>(originDesc, TransformWithCovariance::Identity());
@@ -441,6 +444,20 @@ void GraphPhysics::updatePositions( const GraphTraits::vertex_descriptor origin,
       LOG_DEBUG("[updatePositions] Tf from origin (of the tf to be updated) to root (of the tree): " );
       std::cout << originToRoot << std::endl;
     }
+
+    // Update simulation node
+    using simNodeType = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
+    using IteratorSimNode = EnvireGraph::ItemIterator<simNodeType>;
+    IteratorSimNode begin_sim, end_sim;
+    boost::tie(begin_sim, end_sim) = control->graph->getItems<simNodeType>(target);
+    double calc_ms = control->sim->getCalcMs();
+    for (;begin_sim!=end_sim; begin_sim++)
+    {
+      const std::shared_ptr<mars::sim::SimNode> sim_node = begin_sim->getData();
+      sim_node->update(calc_ms);
+    }
+
+
     using Iterator = EnvireGraph::ItemIterator<physicsType>;
     Iterator begin, end;
     boost::tie(begin, end) = control->graph->getItems<physicsType>(target);

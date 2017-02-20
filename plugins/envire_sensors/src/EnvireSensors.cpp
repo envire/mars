@@ -72,29 +72,33 @@ namespace mars {
       }
         
       void EnvireSensors::updateVelodyneSim(){
+        std::cout << "EnvireSensors::updateVelodyneSim" << std::endl;
         using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
         using SimNodeIterator = EnvireGraph::ItemIterator<SimNodeItem>;
         std::shared_ptr<mars::sim::SimNode> simNodePtr;
         SimNodeIterator begin, end;
         boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(velodyneFrame);
+        double calc_ms = control->sim->getCalcMs();
         if (begin != end){
           simNodePtr = begin->getData();
-          simNodePtr->update(0.0); //NOTE I need to provide a calc_ms. I provide 0.
+          simNodePtr->update(calc_ms); //NOTE I need to provide a calc_ms. I provide 0.
         }
       }
 
       void EnvireSensors::updateJoint6DOF()
       {
+        std::cout << "EnvireSensors::updateJoint6DOF" << std::endl;
         using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
         using SimNodeIterator = EnvireGraph::ItemIterator<SimNodeItem>;
         std::shared_ptr<mars::sim::SimNode> simNodePtr;
+        double calc_ms = control->sim->getCalcMs();
         for (int i = 0; i < joint6dof_frame.size(); ++i)
         {
             SimNodeIterator begin, end;
             boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(joint6dof_frame.at(i));
             if (begin != end){
               simNodePtr = begin->getData();
-              simNodePtr->update(0.0); //NOTE I need to provide a calc_ms. I provide 0.
+              simNodePtr->update(calc_ms); //NOTE I need to provide a calc_ms. I provide 0.
             }        
         }
       }

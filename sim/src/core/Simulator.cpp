@@ -425,6 +425,7 @@ namespace mars {
         if(show_time)
           time = utils::getTime();
 
+        std::cout << "Simulator::step >> " << activePlugins[i].name << std::endl;
         activePlugins[i].p_interface->update(calc_ms);
 
         if(!erased_active) {
@@ -1445,6 +1446,11 @@ namespace mars {
       return returnTime;
     }
 
+
+    double Simulator::getCalcMs()
+    {
+      return calc_ms;
+    }
 
   } // end of namespace sim
 

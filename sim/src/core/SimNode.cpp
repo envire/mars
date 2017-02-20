@@ -522,6 +522,7 @@ namespace mars {
      *
      */
     void SimNode::update(sReal calc_ms, bool physics_thread) {
+      std::cout << "SimNode::update" << std::endl;
       MutexLocker locker(&iMutex);
       if (my_interface) {
         Vector damping;
