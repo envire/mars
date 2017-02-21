@@ -72,7 +72,6 @@ namespace mars {
       }
         
       void EnvireSensors::updateVelodyneSim(){
-        std::cout << "EnvireSensors::updateVelodyneSim" << std::endl;
         using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
         using SimNodeIterator = EnvireGraph::ItemIterator<SimNodeItem>;
         std::shared_ptr<mars::sim::SimNode> simNodePtr;
@@ -87,7 +86,6 @@ namespace mars {
 
       void EnvireSensors::updateJoint6DOF()
       {
-        std::cout << "EnvireSensors::updateJoint6DOF" << std::endl;
         using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
         using SimNodeIterator = EnvireGraph::ItemIterator<SimNodeItem>;
         std::shared_ptr<mars::sim::SimNode> simNodePtr;

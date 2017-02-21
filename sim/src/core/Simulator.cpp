@@ -424,8 +424,7 @@ namespace mars {
         erased_active = false;
         if(show_time)
           time = utils::getTime();
-
-        std::cout << "Simulator::step >> " << activePlugins[i].name << std::endl;
+        
         activePlugins[i].p_interface->update(calc_ms);
 
         if(!erased_active) {

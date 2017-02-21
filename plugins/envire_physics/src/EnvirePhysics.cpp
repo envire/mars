@@ -301,7 +301,6 @@ void EnvirePhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
 
 void EnvirePhysics::update(sReal time_ms) 
 {
-  std::cout << "EnvirePhysics::update" << std::endl;
   const GraphTraits::vertex_descriptor originDesc = control->graph->vertex(originId);
   if(printGraph)
   {
