@@ -49,8 +49,6 @@ using namespace mars::sim;
 using namespace std;
 using namespace base;
 
-#define DEBUG
-
 EnvirePhysics::EnvirePhysics(lib_manager::LibManager *theManager)
   : MarsPluginTemplate(theManager, "EnvirePhysics"){
 }
@@ -518,7 +516,7 @@ void EnvirePhysics::updatePositions( const GraphTraits::vertex_descriptor origin
       control->graph->updateTransform(origin, target, tf);
     }
   }
-  
+
   const Transform invTf = control->graph->getTransform(target, origin);
   updateChildPositions(target, invTf.transform * originToRoot);
 }

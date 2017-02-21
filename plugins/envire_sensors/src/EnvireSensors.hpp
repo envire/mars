@@ -111,7 +111,6 @@ namespace mars {
 
         envire::core::FrameId velodyneFrame="";
         std::vector<envire::core::FrameId> joint6dof_frame;
-        bool debug = true;
         unsigned long next_sensor_id = 0;
         
       }; // end of class definition EnvireSensors

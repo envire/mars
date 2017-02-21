@@ -35,8 +35,6 @@
 
 #include <cstdio>
 
-#define _VERIFY_WORLD_
-
 namespace mars {
   namespace sim {
 
@@ -131,9 +129,6 @@ namespace mars {
         if(n2) b2 = n2->getBody();
         body1 = b1;
         body2 = b2;
-
-        std::cout << "NodePhysics: " << n1 << " " << n2 << std::endl;
-        std::cout << "BODY: " << b1 << " " << b2 << std::endl;
 
         switch(jointS->type) {
         case  JOINT_TYPE_HINGE:

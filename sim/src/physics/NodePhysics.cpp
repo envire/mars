@@ -47,9 +47,6 @@
 #include <set>
 #include <iostream>
 
-#define _VERIFY_WORLD_ true
-
-
 namespace mars {
   namespace sim {
 

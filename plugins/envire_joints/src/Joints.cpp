@@ -42,7 +42,6 @@
 #include <mars/interfaces/sim/NodeInterface.h>
 
 // Comment-in the following line in order to get debug traces
-#define DEBUG
 
 namespace mars {
   namespace plugins {
@@ -232,7 +231,6 @@ namespace mars {
         setAxis1(smurfJoint, jointData);
         setAnchor(smurfJoint, jointData);
         setLimits(smurfJoint, jointData);
-        std::cout << "----------NAME " << sourceSim->getName() << " " << targetSim->getName() << std::endl;
         std::shared_ptr<JointInterface> jointInterfacePtr = join(jointData, sourceSim, targetSim);
 #ifdef DEBUG
           LOG_DEBUG("[EnvireJoints::instantiate] The storageFrame is: %s", smurfJoint->getTargetFrame().getName().c_str());

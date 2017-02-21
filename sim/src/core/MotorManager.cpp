@@ -95,11 +95,15 @@ namespace mars {
 
       if (attachAndStoreMotor(newMotor, motorS->jointName))
       {
+#ifdef DEBUG        
         LOG_DEBUG(("[MotorManager::addMotor]: Found the joint " + motorS->jointName + " to which the motor " + motorS->name + " should be attached").c_str());
+#endif
       }
       else
       {
+#ifdef DEBUG        
         LOG_ERROR(("[MotorManager::addMotor]: Not found the joint " + motorS->jointName + " to which the motor " + motorS->name + " should be attached in any frame ").c_str());
+#endif
       }
       newMotor->setSMotor(*motorS);
       iMutex.lock();

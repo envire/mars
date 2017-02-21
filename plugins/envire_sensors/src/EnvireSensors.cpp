@@ -120,10 +120,9 @@ namespace mars {
 
         smurf::Sensor smurfSensor = e.item->getData();
 
-        if(debug) 
-        {
+#ifdef DEBUG
             LOG_DEBUG(("[EnvireSensors::ItemAdded] Smurf::Sensor *" + smurfSensor.getName() + "* in frame *" + e.frame + "*").c_str());
-        }
+#endif
 
         if (smurfSensor.getType() == "RotatingRaySensor")
         {
@@ -134,14 +133,13 @@ namespace mars {
             SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
             control->graph->addItemToFrame(e.frame, sensorItem);
             
-            if(debug) 
-            {
+#ifdef DEBUG
                 LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");
-            }
+#endif
 
             bool attached = attachSensor(sensor.get(), e.frame);
             if (!attached)
-            {
+            {              
                 LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + smurfSensor.getName() + "*.");
             } else {
                 LOG_DEBUG(("[EnvireSensors::ItemAdded] *" + smurfSensor.getType() + "* *" + smurfSensor.getName() + "* is attached (frame: " + e.frame + ")").c_str());
@@ -155,22 +153,27 @@ namespace mars {
 
             SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
             control->graph->addItemToFrame(e.frame, sensorItem);
-            if(debug) 
-            {
+
+#ifdef DEBUG
                 LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");
-            }
+#endif
+
             bool attached = attachSensor(sensor.get(), e.frame);
             if (!attached)
             {
                 LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + smurfSensor.getName() + "*.");
             } else 
             {
+#ifdef DEBUG              
                 LOG_DEBUG(("[EnvireSensors::ItemAdded] *" + smurfSensor.getType() + "* *" + smurfSensor.getName() + "* is attached (frame: " + e.frame + ")").c_str());
+#endif
             }
         }
         else
         {
-          if(debug) {LOG_DEBUG(("[EnvireSensors::ItemAdded] Sensor type " + smurfSensor.getType() + " not supported.").c_str());}
+#ifdef DEBUG
+          LOG_DEBUG(("[EnvireSensors::ItemAdded] Sensor type " + smurfSensor.getType() + " not supported.").c_str());
+#endif
         }
       }
 
@@ -194,7 +197,9 @@ namespace mars {
           simNodePtr = begin->getData();
           simNodePtr->addSensor(sensor);
           attached = true;
-          if (debug) { LOG_DEBUG("[EnvireSensors::ItemAdded] The SimNode to attach the sensor is found"); }
+#ifdef DEBUG
+          LOG_DEBUG("[EnvireSensors::ItemAdded] The SimNode to attach the sensor is found"); 
+#endif
         }
         return attached;
       }
