@@ -113,7 +113,7 @@ namespace mars {
             }
             else
             {
-                LOG_DEBUG("[Joint6DOFSensor] The SimNode for the data broker to link *%s* to the sensor is NOT found", frame.c_str());
+                LOG_ERROR("[Joint6DOFSensor] The SimNode for the data broker to link *%s* to the sensor is NOT found", frame.c_str());
             }
 
             control->dataBroker->registerTimedReceiver(this, groupName, 
@@ -136,7 +136,7 @@ namespace mars {
             }
             else
             {
-                LOG_DEBUG("[Joint6DOFSensor] The SimJoint for the data broker to link *%s* to the sensor is NOT found", frame.c_str());
+                LOG_ERROR("[Joint6DOFSensor] The SimJoint for the data broker to link *%s* to the sensor is NOT found", frame.c_str());
             }        
 
             control->dataBroker->registerTimedReceiver(this, groupName, 

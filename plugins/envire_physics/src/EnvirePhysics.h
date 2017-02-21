@@ -38,7 +38,7 @@ namespace mars {
       /** This plugin adds all PhysicsConfigMapItems and JointConfigMapItems
        *  to the simulation and updates the transforms when the items move.
        * */
-      class GraphPhysics : public mars::interfaces::MarsPluginTemplate,
+      class EnvirePhysics : public mars::interfaces::MarsPluginTemplate,
                            public envire::core::GraphEventDispatcher,
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<configmaps::ConfigMap>>,
                            public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem>,
@@ -50,13 +50,13 @@ namespace mars {
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<mars::interfaces::NodeData>>
       {
       public:
-        GraphPhysics(lib_manager::LibManager *theManager);
+        EnvirePhysics(lib_manager::LibManager *theManager);
         
         // LibInterface methods
         int getLibVersion() const
         { return 1; }
         const std::string getLibName() const
-        { return std::string("GraphPhysics"); }
+        { return std::string("EnvirePhysics"); }
         CREATE_MODULE_INFO();
         
         void init();
@@ -153,7 +153,6 @@ namespace mars {
         envire::core::FrameId originId;
         envire::core::TreeView treeView;
         
-        const bool debug = false;
         const bool printGraph = false;
         const bool debugUpdatePos = false;
         

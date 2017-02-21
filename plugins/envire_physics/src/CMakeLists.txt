@@ -1,9 +1,9 @@
 set(SOURCES 
-    src/physics.cpp
+    src/EnvirePhysics.cpp
     PARENT_SCOPE
 )
 
 set(HEADERS
-    src/physics.h
+    src/EnvirePhysics.h
     PARENT_SCOPE
 )
