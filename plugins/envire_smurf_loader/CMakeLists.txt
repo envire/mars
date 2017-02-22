@@ -35,7 +35,7 @@ set(SOURCES
 )
 
 set(HEADERS
-	src/EnvireSmurfLoader.h
+	src/EnvireSmurfLoader.hpp
 )
 
 
