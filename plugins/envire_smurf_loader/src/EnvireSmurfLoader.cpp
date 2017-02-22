@@ -26,7 +26,7 @@
  * Version 0.1
  */
 
-#include "EnvireSmurfLoader.h"
+#include "EnvireSmurfLoader.hpp"
 
 #include <mars/interfaces/Logging.hpp>
 
@@ -128,7 +128,8 @@ namespace mars {
             vertex_descriptor EnvireSmurfLoader::addCenter()
             {
                 envire::core::FrameId center = "center";
-                control->graph->addFrame(center);
+                if (! control->graph->containsFrame(center))
+                    control->graph->addFrame(center);
                 return control->graph->getVertex(center);
             }
 
