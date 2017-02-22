@@ -37,24 +37,30 @@
 
 #include <mars/sim/NodePhysics.h>
 
+#include <mars/interfaces/sim/LoadCenter.h>
+
+
+
 // Hardcoded parameters:
 #define MLS_NAME std::string("mls_01")
 #define MLS_FRAME_NAME std::string("mls_01")
 #define DUMPED_MLS_FRAME_NAME std::string("mls_map")
-#define SIM_CENTER_FRAME_ID std::string("center")
+#define SIM_CENTER_FRAME_NAME std::string("center")
 //#define TEST_MLS_PATH std::string("./testMlsData/MLSMapKalman_waves.bin")
 //#define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/simulation/mars/plugins/envire_mls/testMlsData/MLSMapKalman_waves.bin")
 //#define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/models/environments/dlr_map/mls/mls_map.bin")
 #define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
-#define MLS_FRAME_TF_X 1
+#define MLS_FRAME_TF_X 0
 #define MLS_FRAME_TF_Y 0
-#define MLS_FRAME_TF_Z 0
+#define MLS_FRAME_TF_Z 0.5 // Somehow positive values set the mls below the center...
 
 #define GD_SENSE_CONTACT_FORCE 0
 #define GD_PARENT_GEOM 0
 #define GD_C_PARAMS_CFM 0.001
 #define GD_C_PARAMS_ERP 0.001
 #define GD_C_PARAMS_BOUNCE 0.0
+
+#define ASGUARD_PATH std::string("<%= ENV['AUTOPROJ_CURRENT_ROOT'] %>/models/robots/asguard_v4/smurf/asguard_v4.smurf")
 
 #define DEBUG 1
 
@@ -80,14 +86,18 @@ namespace mars {
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::init]"); 
 #endif
+        envire::core::FrameId center = SIM_CENTER_FRAME_NAME; 
+        if (! control->graph->containsFrame(center))
+        {
+          control->graph->addFrame(center);
+        }
         // Create the default frame for the MLS 
         envire::core::FrameId mlsFrameId = MLS_FRAME_NAME; 
         control->graph->addFrame(mlsFrameId);
         envire::core::Transform mlsTf(base::Time::now());
         mlsTf.transform.translation << MLS_FRAME_TF_X, MLS_FRAME_TF_Y, MLS_FRAME_TF_Z;
         mlsTf.transform.orientation = base::AngleAxisd(0.25, base::Vector3d::UnitX());
-        control->graph->addTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_ID, mlsTf);
-
+        control->graph->addTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_NAME, mlsTf);
         tested = false;
       }
 
@@ -98,7 +108,8 @@ namespace mars {
       void EnvireMls::update(sReal time_ms) 
       {
         if (not tested){
-          testAddMLS();
+          //testAddMLS();
+          testAddMLSAndRobot();
           tested = true;
         }
       }
@@ -112,7 +123,6 @@ namespace mars {
         auxMlsGraph.loadFromFile(mlsPath);
         FrameId dumpedFrameId(DUMPED_MLS_FRAME_NAME);
         mlsType mlsAux = getMLSMap(auxMlsGraph, dumpedFrameId);
-        //mlsType mlsAux = getMLSMap(mlsGraph, dumpedFrameId);
         Item<mlsType>::Ptr mlsItemPtr(new Item<mlsType>(mlsAux));
         FrameId targetFrameId(MLS_FRAME_NAME);
         control->graph->addItemToFrame(targetFrameId, mlsItemPtr);
@@ -202,6 +212,31 @@ namespace mars {
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::addMLS] 2"); 
 #endif
+      }
+
+      void EnvireMls::testAddMLSAndRobot()
+      {
+#ifdef DEBUG
+        LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] 1"); 
+#endif
+        loadMLSMap(TEST_MLS_PATH);
+        // Next is to instantiate a load the correspondent nodeData
+        addMLSNode();
+        
+#ifdef DEBUG
+        LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] 2"); 
+#endif
+        mars::utils::Vector pos(0,0,0);
+        mars::utils::Vector rot(0,0,0);
+
+        control->loadCenter->loadScene[".smurf"]->loadFile(ASGUARD_PATH, "", "Asguard_v4", pos, rot);
+        //FrameId mlsFrameId(MLS_FRAME_NAME);
+        //envire::core::GraphTraits::vertex_descriptor vertex = control->graph->getVertex(mlsFrameId);
+        //envire::core::Transform iniPose;
+        //iniPose.transform.orientation = base::Quaterniond::Identity();
+        //iniPose.transform.translation << 0.0, 0.0, 2.0;
+        //theLoader -> addRobot(ASGUARD_PATH, vertex, iniPose);
+
       }
 
     } // end of namespace envire_mls

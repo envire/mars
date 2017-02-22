@@ -74,6 +74,7 @@ namespace mars {
         void loadMLSMap(const std::string & mlsPath);
         void addMLSNode();
         void testAddMLS();
+        void testAddMLSAndRobot();
 
       private:
 
