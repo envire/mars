@@ -1,10 +1,10 @@
 set(SOURCES 
-    src/Joints.cpp
+    src/EnvireJoints.cpp
     PARENT_SCOPE
 )
 
 set(HEADERS
-    src/Joints.h
+    src/EnvireJoints.h
     PARENT_SCOPE
 )
 

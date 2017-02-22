@@ -18,7 +18,7 @@
  *
  */
 
-#include "graphviz.h"
+#include "EnvireGraphViz.h"
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
@@ -46,13 +46,13 @@ using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
   LOG_DEBUG(ss.str());
 
 
-GraphViz::GraphViz(lib_manager::LibManager *theManager)
-  : MarsPluginTemplate(theManager, "GraphViz"), GraphEventDispatcher(), originId("")
+EnvireGraphViz::EnvireGraphViz(lib_manager::LibManager *theManager)
+  : MarsPluginTemplate(theManager, "EnvireGraphViz"), GraphEventDispatcher(), originId("")
 {
 
 }
 
-void GraphViz::init() 
+void EnvireGraphViz::init() 
 {
   assert(control->graph != nullptr);
   GraphEventDispatcher::subscribe(control->graph.get());
@@ -62,10 +62,10 @@ void GraphViz::init()
   GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph.get());
 }
 
-void GraphViz::reset() {
+void EnvireGraphViz::reset() {
 }
 
-void GraphViz::frameAdded(const FrameAddedEvent& e)
+void EnvireGraphViz::frameAdded(const FrameAddedEvent& e)
 {
   //use the first frame we get as originId
   if(originId.empty())
@@ -75,7 +75,7 @@ void GraphViz::frameAdded(const FrameAddedEvent& e)
 }
 
 
-void GraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node)
+void EnvireGraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces::NodeData& node)
 {
     Transform fromOrigin;
     if(originId.compare(frame) == 0)
@@ -93,7 +93,7 @@ void GraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces::Node
     node.rot = fromOrigin.transform.orientation;
 }   
 
-void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
+void EnvireGraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
 {
   //FIXME replace with specific itemAddedEvent for PhysicsConfigMapItem
   boost::shared_ptr<PhysicsConfigMapItem> pItem;
@@ -126,13 +126,13 @@ void GraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
   }
 }
 
-void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>>& e)
+void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>>& e)
 {
     envire::smurf::Visual vis = e.item->getData();
     addVisual(vis, e.frame, e.item->getID());
 }
 
-void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e)
+void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e)
 {
     if (viewCollidables)
     {
@@ -194,7 +194,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
     }
 }
 
-void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e)
+void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e)
 {
     if (viewJoints)
     {
@@ -219,7 +219,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
     }
 }
 
-void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e)
+void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e)
 {
     if (viewFrames)
     {
@@ -240,7 +240,7 @@ void GraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::I
     }
 }
 
-void GraphViz::addVisual(const envire::smurf::Visual& visual, const FrameId& frameId,
+void EnvireGraphViz::addVisual(const envire::smurf::Visual& visual, const FrameId& frameId,
                          const boost::uuids::uuid& uuid)
 {
   switch(visual.geometry->type)
@@ -262,7 +262,7 @@ void GraphViz::addVisual(const envire::smurf::Visual& visual, const FrameId& fra
   }
 }
 
-void GraphViz::addSphere(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+void EnvireGraphViz::addSphere(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
   boost::shared_ptr<urdf::Sphere> sphere = boost::dynamic_pointer_cast<urdf::Sphere>(visual.geometry);
   assert(sphere.get() != nullptr);
@@ -280,7 +280,7 @@ void GraphViz::addSphere(const envire::smurf::Visual& visual, const FrameId& fra
 }
 
 
-void GraphViz::addBox(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+void EnvireGraphViz::addBox(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
   boost::shared_ptr<urdf::Box> box = boost::dynamic_pointer_cast<urdf::Box>(visual.geometry);
   assert(box.get() != nullptr);
@@ -296,7 +296,7 @@ void GraphViz::addBox(const envire::smurf::Visual& visual, const FrameId& frameI
   uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); //remeber graphics handle
 }
 
-void GraphViz::addCylinder(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+void EnvireGraphViz::addCylinder(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
   boost::shared_ptr<urdf::Cylinder> cylinder = boost::dynamic_pointer_cast<urdf::Cylinder>(visual.geometry);
   assert(cylinder.get() != nullptr);
@@ -315,7 +315,7 @@ void GraphViz::addCylinder(const envire::smurf::Visual& visual, const FrameId& f
 }
 
 
-void GraphViz::addMesh(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+void EnvireGraphViz::addMesh(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
   boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh>(visual.geometry);
   assert(mesh.get() != nullptr);
@@ -333,7 +333,7 @@ void GraphViz::addMesh(const envire::smurf::Visual& visual, const FrameId& frame
   uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); //remeber graphics handle
 }
 
-void GraphViz::setNodeDataMaterial(NodeData& nodeData, boost::shared_ptr< urdf::Material > material) const
+void EnvireGraphViz::setNodeDataMaterial(NodeData& nodeData, boost::shared_ptr< urdf::Material > material) const
 {
   nodeData.material.texturename = material->texture_filename;
   nodeData.material.diffuseFront = mars::utils::Color(material->color.r, material->color.g,
@@ -341,7 +341,7 @@ void GraphViz::setNodeDataMaterial(NodeData& nodeData, boost::shared_ptr< urdf::
 }
 
 
-void GraphViz::update(sReal time_ms) {
+void EnvireGraphViz::update(sReal time_ms) {
   const float timeBetweenFramesMs = 1000.0 / visualUpdateRateFps;
   timeSinceLastUpdateMs += time_ms;
   
@@ -352,16 +352,16 @@ void GraphViz::update(sReal time_ms) {
   }
 }
 
-void GraphViz::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
+void EnvireGraphViz::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
 }
 
-void GraphViz::changeOrigin(const FrameId& origin)
+void EnvireGraphViz::changeOrigin(const FrameId& origin)
 {
   originId = origin;  
   updateTree(origin);
 } 
 
-void GraphViz::updateTree(const FrameId& origin)
+void EnvireGraphViz::updateTree(const FrameId& origin)
 {
   const vertex_descriptor newOrigin = control->graph->vertex(origin);
   assert(newOrigin != control->graph->null_vertex());
@@ -369,7 +369,7 @@ void GraphViz::updateTree(const FrameId& origin)
   control->graph->getTree(newOrigin, true, &tree);
 }
 
-void GraphViz::updateVisuals()
+void EnvireGraphViz::updateVisuals()
 {
   if (tree.hasRoot() == false)
     return;
@@ -384,7 +384,7 @@ void GraphViz::updateVisuals()
 
 
 /**Updates the drawing position of @p vertex */              
-template <class physicsType> void GraphViz::updatePosition(const vertex_descriptor vertex)
+template <class physicsType> void EnvireGraphViz::updatePosition(const vertex_descriptor vertex)
 {
   const FrameId& frameId = control->graph->getFrameId(vertex);
   base::Vector3d translation;
@@ -423,5 +423,5 @@ template <class physicsType> void GraphViz::updatePosition(const vertex_descript
   }
 }
 
-DESTROY_LIB(mars::plugins::graph_viz_plugin::GraphViz);
-CREATE_LIB(mars::plugins::graph_viz_plugin::GraphViz);
+DESTROY_LIB(mars::plugins::graph_viz_plugin::EnvireGraphViz);
+CREATE_LIB(mars::plugins::graph_viz_plugin::EnvireGraphViz);

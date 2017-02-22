@@ -1,9 +1,9 @@
 set(SOURCES 
-    src/graphviz.cpp
+    src/EnvireGraphViz.cpp
     PARENT_SCOPE
 )
 
 set(HEADERS
-    src/graphviz.h
+    src/EnvireGraphViz.h
     PARENT_SCOPE
 )
