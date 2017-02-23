@@ -23,6 +23,7 @@
 
 #include "MARSDefs.h"
 #include <mars/utils/Vector.h>
+#include <smurf/ContactParams.hpp>
 
 namespace mars {
   namespace interfaces {
@@ -45,6 +46,24 @@ namespace mars {
 
       contact_params(){
         setZero();
+      }
+
+      void fromSmurfCP(const smurf::ContactParams& smurf_cp) {
+        max_num_contacts = smurf_cp.max_num_contacts;
+        erp = smurf_cp.erp;
+        cfm = smurf_cp.cfm;
+        friction1 = smurf_cp.friction1;
+        friction2 = smurf_cp.friction2;
+        friction_direction1 = smurf_cp.friction_direction1;
+        motion1 = smurf_cp.motion1;
+        motion2 = smurf_cp.motion2;
+        fds1 = smurf_cp.fds1;
+        fds2 = smurf_cp.fds2;
+        bounce = smurf_cp.bounce;
+        bounce_vel = smurf_cp.bounce_vel;
+        approx_pyramid = smurf_cp.approx_pyramid;
+        coll_bitmask = smurf_cp.coll_bitmask;
+        depth_correction = smurf_cp.depth_correction;
       }
 
       int max_num_contacts;
