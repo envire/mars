@@ -37,6 +37,8 @@ set(SOURCES
 set(HEADERS
   src/SimNodeCreator.h
   src/SimJointCreator.h
+  src/SimMotorCreator.h
+  src/SimSensorCreator.h  
 	src/EnvireSmurfLoader.h
 )
 

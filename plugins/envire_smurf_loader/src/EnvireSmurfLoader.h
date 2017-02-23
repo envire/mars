@@ -94,6 +94,8 @@ namespace mars {
 
         void loadNodes();
         void loadJoints();
+        void loadMotors();
+        void loadSensors();
 
         bool getSimObject(const envire::core::FrameId& frameName, std::shared_ptr<mars::sim::SimNode>& objectSim);
 

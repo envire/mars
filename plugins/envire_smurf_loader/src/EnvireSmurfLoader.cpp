@@ -51,6 +51,8 @@
 
 #include "SimNodeCreator.h"
 #include "SimJointCreator.h"
+#include "SimMotorCreator.h"
+#include "SimSensorCreator.h"
 
 using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
 
@@ -163,9 +165,9 @@ namespace mars {
 
                 loadNodes();
                 loadJoints();
-                //motors
+                loadMotors();
                 //TODO: control->motors->connectMimics();
-                //sensors
+                loadSensors();
                 //controller
                 //light
                 //graphic
@@ -221,7 +223,51 @@ namespace mars {
                     sj_joint.create(v_itr);
                     sj_static_tranf.create(v_itr);
                 }
-            }                
+            }       
+
+            void EnvireSmurfLoader::loadMotors()
+            {
+#ifdef DEBUG
+                LOG_DEBUG("[EnvireSmurfLoader::loadMotors] ------------------- Parse the graph and create SimMotors -------------------");
+#endif                
+
+                SimMotorCreator sm(control, center);
+
+                // search the graph
+                envire::core::EnvireGraph::vertex_iterator v_itr, v_end;
+                boost::tie(v_itr, v_end) = control->graph->getVertices();
+                for(; v_itr != v_end; v_itr++)
+                {              
+#ifdef DEBUG          
+                    envire::core::FrameId frame_id = control->graph->getFrameId(*v_itr);                
+                    LOG_DEBUG(("[EnvireSmurfLoader::loadMotors] --- IN ***" + frame_id + "*** ---" ).c_str());
+#endif 
+                    //
+                    sm.create(v_itr);
+                }                
+            }
+
+            void EnvireSmurfLoader::loadSensors()
+            {
+#ifdef DEBUG
+                LOG_DEBUG("[EnvireSmurfLoader::loadSensors] ------------------- Parse the graph and create SimSensors -------------------");
+#endif                
+
+                SimSensorCreator sm(control, center);
+
+                // search the graph
+                envire::core::EnvireGraph::vertex_iterator v_itr, v_end;
+                boost::tie(v_itr, v_end) = control->graph->getVertices();
+                for(; v_itr != v_end; v_itr++)
+                {              
+#ifdef DEBUG          
+                    envire::core::FrameId frame_id = control->graph->getFrameId(*v_itr);                
+                    LOG_DEBUG(("[EnvireSmurfLoader::loadSensors] --- IN ***" + frame_id + "*** ---" ).c_str());
+#endif 
+                    //
+                    sm.create(v_itr);
+                }                
+            }            
         } // end of namespace EnvireSmurfLoader
     } // end of namespace plugins
 } // end of namespace mars
