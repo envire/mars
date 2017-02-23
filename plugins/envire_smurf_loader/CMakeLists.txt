@@ -35,6 +35,7 @@ set(SOURCES
 )
 
 set(HEADERS
+  src/SimNodeCreator.h
 	src/EnvireSmurfLoader.h
 )
 

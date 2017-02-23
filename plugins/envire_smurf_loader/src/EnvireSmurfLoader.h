@@ -50,9 +50,13 @@
 
 #include <smurf/Robot.hpp>
 
+#include "SimNodeCreator.h"
+
 namespace mars {
   namespace plugins {
     namespace EnvireSmurfLoader {
+
+#define DEBUG
 
       // inherit from MarsPluginTemplateGUI for extending the gui
       class EnvireSmurfLoader: public mars::interfaces::LoadSceneInterface {
@@ -93,20 +97,10 @@ namespace mars {
         void loadNodes();
         void loadJoints();
 
-        template <class ItemDataType>
-        void loadNode(envire::core::EnvireGraph::vertex_iterator v_itr, mars::interfaces::NodeData (*createNodeData)(const ItemDataType &item_data), std::string type_name);
+        
 
         template <class ItemDataType>
         void loadJoint(envire::core::EnvireGraph::vertex_iterator v_itr, std::string type_name);
-
-        void createSimNode(mars::interfaces::NodeData &node, std::string name, envire::core::FrameId frame_id);
-
-        static mars::interfaces::NodeData createNodeDataForFrame(const smurf::Frame &frame);
-        static mars::interfaces::NodeData createNodeDataForCollidable(const smurf::Collidable &collidable);
-        static mars::interfaces::NodeData createNodeDataForInertial(const smurf::Inertial &inertial);
-
-
-        void setPose(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
 
         envire::core::FrameId center;
 
