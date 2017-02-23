@@ -40,8 +40,15 @@
 #include <mars/interfaces/sim/LoadSceneInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h>
 
+#include <mars/interfaces/NodeData.h>
+
+#include <mars/sim/JointRecord.h>
+
+#include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/graph/GraphTypes.hpp>
 #include <envire_core/items/Transform.hpp>
+
+#include <smurf/Robot.hpp>
 
 namespace mars {
   namespace plugins {
@@ -80,6 +87,28 @@ namespace mars {
         void addRobot(std::string filename,  envire::core::GraphTraits::vertex_descriptor center, envire::core::Transform iniPose);
 
         int nextGroupId;
+
+        void createSimObjects();
+
+        void loadNodes();
+        void loadJoints();
+
+        template <class ItemDataType>
+        void loadNode(envire::core::EnvireGraph::vertex_iterator v_itr, mars::interfaces::NodeData (*createNodeData)(const ItemDataType &item_data), std::string type_name);
+
+        template <class ItemDataType>
+        void loadJoint(envire::core::EnvireGraph::vertex_iterator v_itr, std::string type_name);
+
+        void createSimNode(mars::interfaces::NodeData &node, std::string name, envire::core::FrameId frame_id);
+
+        static mars::interfaces::NodeData createNodeDataForFrame(const smurf::Frame &frame);
+        static mars::interfaces::NodeData createNodeDataForCollidable(const smurf::Collidable &collidable);
+        static mars::interfaces::NodeData createNodeDataForInertial(const smurf::Inertial &inertial);
+
+
+        void setPose(const envire::core::FrameId& frame, mars::interfaces::NodeData& node);
+
+        envire::core::FrameId center;
 
       }; // end of class definition EnvireSmurfLoader
 
