@@ -62,12 +62,12 @@ namespace mars {
         template <class ItemDataType>
         class SimNodeCreator 
         {
-        private:
+        protected:
             mars::interfaces::ControlCenter *control;
             envire::core::FrameId origin_frame_id;
-
-        protected:
             std::string type_name;
+
+            virtual mars::interfaces::NodeData createNodeData(const ItemDataType &item_data) = 0;
 
         public:
             SimNodeCreator(mars::interfaces::ControlCenter *control, envire::core::FrameId origin_frame_id, std::string type_name)
@@ -107,12 +107,7 @@ namespace mars {
                 }         
             }
 
-        protected:
-
-            virtual mars::interfaces::NodeData createNodeData(const ItemDataType &item_data) = 0;
-
         private:
-
             void createSimNode(mars::interfaces::NodeData &node_data, envire::core::FrameId frame_id, std::string name) 
             {
                 // create NodePhysik
@@ -134,14 +129,22 @@ namespace mars {
                     simNode->setInterface(node_physics);
                     std::shared_ptr<mars::sim::SimNode> simNodePtr(simNode);
 
+                    std::cout << "TEEEEEEEEST" << std::endl;
+                    simNode->getInterface();
+
                     using SimNodeItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>::Ptr;
                     using SimNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
 
                     SimNodeItemPtr simNodeItem( new SimNodeItem(simNodePtr));        
                     control->graph->addItemToFrame(frame_id, simNodeItem);
+
+                    std::cout << "TEEEEEEEEST2" << std::endl;
+                    simNodeItem->getData()->getInterface();
 #ifdef DEBUG
-                    LOG_DEBUG(("[SimNodeCreator::createSimNode] The SimNode is created for ***" + name + "***").c_str());
+                    LOG_DEBUG(("[SimNodeCreator::createSimNode] The SimNode ***" + simNode->getName() + "*** is created for ***" + name + "***").c_str());
 #endif                   
+
+
                 } else {
                     LOG_ERROR(("[SimNodeCreator::createSimNode] Failed to create SimNode for ***" + name + "***").c_str());
                 }                  

@@ -50,8 +50,6 @@
 
 #include <smurf/Robot.hpp>
 
-#include "SimNodeCreator.h"
-
 namespace mars {
   namespace plugins {
     namespace EnvireSmurfLoader {
@@ -97,7 +95,7 @@ namespace mars {
         void loadNodes();
         void loadJoints();
 
-        
+        bool getSimObject(const envire::core::FrameId& frameName, std::shared_ptr<mars::sim::SimNode>& objectSim);
 
         template <class ItemDataType>
         void loadJoint(envire::core::EnvireGraph::vertex_iterator v_itr, std::string type_name);

@@ -48,6 +48,10 @@
 #include <base/Time.hpp>
 #include <envire_core/graph/GraphViz.hpp>
 
+
+#include "SimNodeCreator.h"
+#include "SimJointCreator.h"
+
 using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
 
 #define DEBUG
@@ -158,7 +162,7 @@ namespace mars {
                 //nodes
 
                 loadNodes();
-                //loadJoints();
+                loadJoints();
                 //motors
                 //TODO: control->motors->connectMimics();
                 //sensors
@@ -176,7 +180,7 @@ namespace mars {
                 SimNodeCreatorFrame         sn_frame(control, center);
                 SimNodeCreatorCollidable    sn_collidable(control, center);
                 SimNodeCreatorInertial      sn_inertial(control, center);
-                
+
                 // search the graph
                 envire::core::EnvireGraph::vertex_iterator v_itr, v_end;
                 boost::tie(v_itr, v_end) = control->graph->getVertices();
@@ -192,17 +196,18 @@ namespace mars {
                     sn_collidable.create(v_itr);
                     sn_inertial.create(v_itr);
 
-                    //using FrameItem = envire::core::Item<smurf::Frame>;
-                    //if (control->graph->containsItems<FrameItem>(*begin)) {
-                    //    smurf::Frame link = e.item->getData()
                 }
             }                   
 
-            /*void EnvireSmurfLoader::loadJoints()
+            void EnvireSmurfLoader::loadJoints()
             {
 #ifdef DEBUG
                 LOG_DEBUG("[EnvireSmurfLoader::loadJoints] ------------------- Parse the graph and create SimJoints -------------------");
 #endif                
+
+                SimJointCreatorJoint            sj_joint(control, center);
+                SimJointCreatorStaticTranf      sj_static_tranf(control, center);
+
                 // search the graph
                 envire::core::EnvireGraph::vertex_iterator v_itr, v_end;
                 boost::tie(v_itr, v_end) = control->graph->getVertices();
@@ -212,84 +217,11 @@ namespace mars {
                     envire::core::FrameId frame_id = control->graph->getFrameId(*v_itr);                
                     LOG_DEBUG(("[EnvireSmurfLoader::loadJoints] --- IN ***" + frame_id + "*** ---" ).c_str());
 #endif 
-
-                    loadJoint<smurf::Joint>(v_itr, "smurf::Joint");            
-                    loadJoint<smurf::StaticTransformation>(v_itr, "smurf::StaticTransformation");
+                    //
+                    sj_joint.create(v_itr);
+                    sj_static_tranf.create(v_itr);
                 }
-            }          
-
-            template <class ItemDataType>
-            void EnvireSmurfLoader::loadJoint(envire::core::EnvireGraph::vertex_iterator v_itr, std::string type_name)
-            {
-                envire::core::FrameId frame_id = control->graph->getFrameId(*v_itr);
-
-                using Item = envire::core::Item<ItemDataType>;
-                using ItemItr = envire::core::EnvireGraph::ItemIterator<Item>;
-
-                const std::pair<ItemItr, ItemItr> pair = control->graph->getItems<Item>(*v_itr);
-#ifdef DEBUG
-                if (pair.first == pair.second) {
-                    LOG_DEBUG(("[EnvireSmurfLoader::loadJoint] No " + type_name + " was found").c_str());
-                }
-#endif                 
-                ItemItr i_itr;
-                for(i_itr = pair.first; i_itr != pair.second; i_itr++)
-                {
-                    const ItemDataType &item_data = i_itr->getData();
-
-#ifdef DEBUG
-                    LOG_DEBUG(("[EnvireSmurfLoader::loadJoint] " + type_name + " ***" + item_data.getName() + "*** was found" ).c_str());
-#endif
-
-                    // if the ItemDataType is smurf::Joint
-                    // than create SimJoint first
-                    if (std::is_same<ItemDataType, smurf::Joint>::value)
-                    {
-                        mars::sim::JointRecord* jointInfo(new mars::sim::JointRecord);
-                        jointInfo->name = item_data.getName();
-                        envire::core::Item<mars::sim::JointRecord>::Ptr jointItemPtr(new envire::core::Item<mars::sim::JointRecord>(*jointInfo));
-                        control->graph->addItemToFrame(frame_id, jointItemPtr);                   
-
-#ifdef DEBUG
-                        LOG_DEBUG(("[EnvireSmurfLoader::createSimJoint] The SimJoint is created for ***" + item_data.getName() + "***").c_str());
-#endif                        
-                    }
-
-
-
-
-                }                  
-            }   
-
-            void EnvireSmurfLoader::createJoint(smurf::Transformation& tranf)
-            {
-                std::shared_ptr<mars::sim::SimNode> sourceSim;
-                std::shared_ptr<mars::sim::SimNode> targetSim;
-
-                if (instantiable(smurfTf, sourceSim, targetSim))
-                {
-                    instantiate(smurfJoint, sourceSim, targetSim);
-                } else {
-                    LOG_ERROR(("[EnvireSmurfLoader::createSimJoint] The SimJoint can not be instantiate ***" + tranf.getName() + "***").c_str());
-                }               
-            }           
-
-            bool EnvireJoints::instantiable(const smurf::Transformation& tranf, std::shared_ptr<mars::sim::SimNode>& sourceSim, std::shared_ptr<mars::sim::SimNode>& targetSim)
-            {
-                bool instantiable = true;
-                std::string dependencyName = smurfJoint->getSourceFrame().getName();
-                if (! getSimObject(dependencyName, sourceSim))
-                {
-                    instantiable = false;
-                }
-                dependencyName = smurfJoint->getTargetFrame().getName();
-                if (! getSimObject(dependencyName, targetSim))
-                {
-                    instantiable = false;
-                }
-                return instantiable;
-            }            */
-
+            }                
         } // end of namespace EnvireSmurfLoader
     } // end of namespace plugins
 } // end of namespace mars
