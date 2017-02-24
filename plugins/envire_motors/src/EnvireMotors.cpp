@@ -33,11 +33,12 @@
 
 #include <envire_core/graph/EnvireGraph.hpp>
 
-#include <mars/interfaces/sim/MotorManagerInterface.h>
 #include <mars/interfaces/sim/LoadCenter.h>
 
 #include <configmaps/ConfigData.h>
 #include <base/Logging.hpp>
+
+#include "EnvireMotorManager.hpp"
 
 // Comment-in the following line in order to get debug traces
 //#define DEBUG
@@ -49,12 +50,13 @@ using namespace envire::core;
 
 EnvireMotors::EnvireMotors(lib_manager::LibManager *theManager)
 : MarsPluginTemplate(theManager, "EnvireMotors") {
+
+    LOG_INFO("[EnvireMotors] set EnvireMotorManager for control->motors");
+    control->motors = new EnvireMotorManager(control);
 }
 
 void EnvireMotors::init() {
     assert(control->graph != nullptr);
-    //GraphEventDispatcher::subscribe(control->graph.get());
-    //GraphItemEventDispatcher<Item<smurf::Motor>>::subscribe(control->graph.get());
     motorIndex = 1;
 }
 
@@ -62,56 +64,6 @@ void EnvireMotors::reset() {
 }
 
 EnvireMotors::~EnvireMotors() {
-}
-
-void EnvireMotors::itemAdded(const TypedItemAddedEvent<Item<smurf::Motor>>& e)
-{
-    // FIXME This method can fail if a motor tries to connect to a joint which has not been instantiated in simulation. We need dependencies as we needed for the joints.
-#ifdef DEBUG
-        LOG_DEBUG(("[EnvireMotors::ItemAdded] Smurf::Motor Detected in frame ***" + e.frame + "***").c_str());
-#endif
-    smurf::Motor motorSmurf = e.item->getData();
-    configmaps::ConfigMap motorMap = motorSmurf.getMotorMap();    
-    //motorMap["mapIndex"].push_back(configmaps::ConfigItem(motorIndex)); // Maybe we don't need this
-    mars::interfaces::MotorData motorData;
-    std::string prefix = "";
-    bool valid = motorData.fromConfigMap(&motorMap, prefix, control->loadCenter);
-    if (!valid){
-        LOG_ERROR("Reading motor map failed");
-    }
-#ifdef DEBUG
-        LOG_DEBUG("[EnvireMotors::ItemAdded] motor max speed: %f", motorData.maxSpeed);
-        LOG_DEBUG(("[EnvireMotors::ItemAdded] motor name in the map " + static_cast<std::string>(motorMap["name"])).c_str());
-#endif
-    std::shared_ptr<mars::interfaces::MotorData> motorPtr(&motorData);
-    ////bool valid = motorPtr->fromConfigMap(&motorMap, prefix, control->loadCenter);
-    ////if (debug) {LOG_DEBUG(("[EnvireMotors::ItemAdded] motor name: " + motorPtr->name).c_str());}
-    ////if (!valid){
-    ////    LOG_ERROR("Reading motor map failed");
-    ////}
-    //unsigned long oldId = motorPtr->index;
-    // I would have expected this oldId to be the one that is taken from the motorSmurf
-    // TODO You must make sure before you instantiate the motor that the joint is already created. We can do a dependency list again.
-    unsigned long newId = control->motors->addMotor(motorPtr.get());
-#ifdef DEBUG
-    LOG_DEBUG("[EnvireMotors::ItemAdded] NewId: %d", newId);
-#endif
-    if (!newId){
-        LOG_ERROR("addMotor returned 0");
-    }
-    else{
-        // NOTE Save the data of the instantiated motor in the graph
-        using motorItemPtr = Item<std::shared_ptr<MotorData>>::Ptr;
-        motorItemPtr motorItem(new Item<std::shared_ptr<MotorData>>(motorPtr));
-        control->graph->addItemToFrame(e.frame, motorItem);
-    }
-    //control->loadCenter->setMappedID(oldId, newId, MAP_TYPE_MOTOR, motorIndex);
-    //motorIndex += 1;
-#ifdef DEBUG
-    LOG_DEBUG(("[EnvireMotors::ItemAdded] Smurf::Motor - Instantiated the marsMotor in frame ***" + e.frame + "***").c_str());
-#endif
-    //
-    //if (debug) {LOG_DEBUG("[EnvireMotors::ItemAdded] Motor index is %d", motorIndex);}
 }
 
 void EnvireMotors::update(sReal time_ms) {

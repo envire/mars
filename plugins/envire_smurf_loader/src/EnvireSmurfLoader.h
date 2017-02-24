@@ -54,8 +54,6 @@ namespace mars {
   namespace plugins {
     namespace EnvireSmurfLoader {
 
-#define DEBUG
-
       // inherit from MarsPluginTemplateGUI for extending the gui
       class EnvireSmurfLoader: public mars::interfaces::LoadSceneInterface {
 

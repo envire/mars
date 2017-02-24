@@ -54,8 +54,6 @@
 
 #include <configmaps/ConfigData.h>
 
-#define DEBUG
-
 namespace mars {
   namespace plugins {
     namespace EnvireSmurfLoader {

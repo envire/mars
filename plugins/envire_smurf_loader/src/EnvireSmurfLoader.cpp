@@ -56,8 +56,6 @@
 
 using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
 
-#define DEBUG
-
 namespace mars {
     namespace plugins {
         namespace EnvireSmurfLoader {
@@ -162,7 +160,6 @@ namespace mars {
             {
                 //materials
                 //nodes
-
                 loadNodes();
                 loadJoints();
                 loadMotors();
@@ -197,7 +194,6 @@ namespace mars {
                     sn_frame.create(v_itr);
                     sn_collidable.create(v_itr);
                     sn_inertial.create(v_itr);
-
                 }
             }                   
 

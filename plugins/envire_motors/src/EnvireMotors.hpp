@@ -36,6 +36,7 @@
 // set define if you want to extend the gui
 //#define PLUGIN_WITH_MARS_GUI
 #include <mars/interfaces/sim/MarsPluginTemplate.h>
+#include <mars/interfaces/sim/MotorManagerInterface.h>
 #include <mars/interfaces/MARSDefs.h>
 //#include <mars/data_broker/ReceiverInterface.h>
 //#include <mars/cfg_manager/CFGManagerInterface.h>
@@ -58,9 +59,7 @@ namespace mars {
     namespace envire_motors {
 
       // inherit from MarsPluginTemplateGUI for extending the gui
-      class EnvireMotors: public mars::interfaces::MarsPluginTemplate,
-                          public envire::core::GraphEventDispatcher,
-                          public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Motor>>
+      class EnvireMotors: public mars::interfaces::MarsPluginTemplate
       {
 
       public:
@@ -78,9 +77,6 @@ namespace mars {
         void init();
         void reset();
         void update(mars::interfaces::sReal time_ms);
-
-        
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Motor>>& e);
         
       private:
         const bool debug = true;

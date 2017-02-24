@@ -53,8 +53,6 @@
 
 #include <smurf/Robot.hpp>
 
-#define DEBUG
-
 namespace mars {
   namespace plugins {
     namespace EnvireSmurfLoader {
@@ -129,7 +127,6 @@ namespace mars {
                     simNode->setInterface(node_physics);
                     std::shared_ptr<mars::sim::SimNode> simNodePtr(simNode);
 
-                    std::cout << "TEEEEEEEEST" << std::endl;
                     simNode->getInterface();
 
                     using SimNodeItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>::Ptr;
@@ -138,7 +135,6 @@ namespace mars {
                     SimNodeItemPtr simNodeItem( new SimNodeItem(simNodePtr));        
                     control->graph->addItemToFrame(frame_id, simNodeItem);
 
-                    std::cout << "TEEEEEEEEST2" << std::endl;
                     simNodeItem->getData()->getInterface();
 #ifdef DEBUG
                     LOG_DEBUG(("[SimNodeCreator::createSimNode] The SimNode ***" + simNode->getName() + "*** is created for ***" + name + "***").c_str());
@@ -210,7 +206,7 @@ namespace mars {
                 node.density = 0.0;
                 node.mass = 0.00001;
                 node.movable = true;
-                node.c_params = collidable.getContactParams();
+                node.c_params.fromSmurfCP(collidable.getContactParams());
                 node.groupID = collidable.getGroupId();         
                 
                 return node; 

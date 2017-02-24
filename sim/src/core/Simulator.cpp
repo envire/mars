@@ -241,7 +241,13 @@ namespace mars {
 
       control->nodes = new NodeManager(control, libManager);
       control->joints = new JointManager(control);
-      control->motors = new MotorManager(control);
+      //control->motors = new MotorManager(control);
+
+      if (control->motors == NULL)
+      {
+        fprintf(stderr, "ERROR: No MotorManager is defined!\n");
+      }
+
       control->sensors = new SensorManager(control);
       control->controllers = new ControllerManager(control);
       control->entities = new EntityManager(control);
