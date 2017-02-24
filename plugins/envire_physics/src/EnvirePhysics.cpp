@@ -361,7 +361,7 @@ std::shared_ptr<NodeData> EnvirePhysics::getCollidableNode(const smurf::Collidab
   node->mass = 0.00001;
   setPos(frame, nodePtr);
   node->movable = true;
-  node->c_params = collidable.getContactParams();
+  node->c_params.fromSmurfCP(collidable.getContactParams());
   node->groupID = collidable.getGroupId();
   return nodePtr;
 }
