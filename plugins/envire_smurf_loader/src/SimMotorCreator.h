@@ -103,8 +103,7 @@ namespace mars {
                         return;
                     }
 
-                    std::shared_ptr<mars::interfaces::MotorData> motorPtr(&motor_data);
-                    unsigned long newId = control->motors->addMotor(motorPtr.get());
+                    unsigned long newId = control->motors->addMotor(&motor_data);
                     if (!newId){
                         LOG_ERROR("[SimMotorCreator::create] Add Motor into Simulation failed");
                         return;
@@ -112,15 +111,7 @@ namespace mars {
                     else{
 #ifdef DEBUG
                         LOG_DEBUG("[SimMotorCreator::create] New Motor was added into simulation");
-#endif
-
-                        // NOTE Save the data of the instantiated motor in the graph
-                        using motorItemPtr = envire::core::Item<std::shared_ptr<mars::interfaces::MotorData>>::Ptr;
-                        motorItemPtr motorItem(new envire::core::Item<std::shared_ptr<mars::interfaces::MotorData>>(motorPtr));
-                        control->graph->addItemToFrame(frame_id, motorItem);
-#ifdef DEBUG
-                        LOG_DEBUG(("[SimMotorCreator::create] Motor is added into the Graph***" + frame_id + "***").c_str());
-#endif                        
+#endif   
                     }
                 }         
             }
