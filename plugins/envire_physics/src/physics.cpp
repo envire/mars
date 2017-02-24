@@ -334,6 +334,20 @@ std::shared_ptr<NodeData> GraphPhysics::getInertialNode(const smurf::Inertial& i
   return resultPtr;
 }
 
+void GraphPhysics::storeSimNode(const NodeData* node, const envire::core::FrameId frameId, shared_ptr<NodeInterface> physics)
+{
+    //NOTE Create and store also a simNode. The simNode interface is set to the physics node
+    mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (*node)); 
+    simNode->setInterface(physics.get());
+    std::shared_ptr<mars::sim::SimNode> simNodePtr(simNode);
+    using SimNodeItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>::Ptr;
+    using SimNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
+    SimNodeItemPtr simNodeItem( new SimNodeItem(simNodePtr));        
+    control->graph->addItemToFrame(frameId, simNodeItem);
+    if (debug){ LOG_DEBUG("[GraphPhysics::storeSimNode] The SimNode is created and added to the graph");}
+
+}
+
 bool GraphPhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const envire::core::FrameId& frame)
 {
   shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
@@ -341,7 +355,8 @@ bool GraphPhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const 
   instantiated = (physics->createNode(node.get()));
   if (instantiated)
   {
-    
+    storeSimNode(node.get(), frame, physics);
+    /*
     //NOTE Create and store also a simNode. The simNode interface is set to the physics node
     mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (*node)); 
     simNode->setInterface(physics.get());
@@ -351,6 +366,7 @@ bool GraphPhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const 
     SimNodeItemPtr simNodeItem( new SimNodeItem(simNodePtr));        
     control->graph->addItemToFrame(frame, simNodeItem);
     if (debug){ LOG_DEBUG("[EnvirePhysics::InstantiateNode] The SimNode is created and added to the graph");}
+    */
     
   }
   return instantiated;
@@ -370,17 +386,10 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
     bool instantiated = addMlsSurface(&node);
     if (debug) {LOG_DEBUG("[GraphPhysics::itemAdded] AddMlsSurface was just executed");}
     if (instantiated)
-    { //TODO move this code, because is repeated in instantiateNode
-      //NOTE Create and store also a simNode. The simNode interface is set to the physics node
-      mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (node)); 
+    { 
       shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
-      simNode->setInterface(physics.get());
-      std::shared_ptr<mars::sim::SimNode> simNodePtr(simNode);
-      using SimNodeItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>::Ptr;
-      using SimNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
-      SimNodeItemPtr simNodeItem( new SimNodeItem(simNodePtr));        
-      control->graph->addItemToFrame(e.frame, simNodeItem);
-      if (debug){ LOG_DEBUG("[EnvirePhysics::InstantiateNode] The SimNode is created and added to the graph");}
+      storeSimNode(&node, e.frame, physics); 
+
     }
   }
   else
@@ -444,14 +453,14 @@ void GraphPhysics::updatePositions( const GraphTraits::vertex_descriptor origin,
   Transform tf = control->graph->getTransform(origin, target);
   if (debugUpdatePos)
   {
-    LOG_DEBUG("[updatePositions] Tf values before update: " );
+    LOG_DEBUG("[GraphPhysics::updatePositions] Tf values before update: " );
     std::cout << tf.transform << std::endl;
   }
   if (control->graph->containsItems<physicsType>(target))
   {
     if (debugUpdatePos)
     {
-      LOG_DEBUG("[updatePositions] Tf from origin (of the tf to be updated) to root (of the tree): " );
+      LOG_DEBUG("[GraphPhysics::updatePositions] Tf from origin (of the tf to be updated) to root (of the tree): " );
       std::cout << originToRoot << std::endl;
     }
     using Iterator = EnvireGraph::ItemIterator<physicsType>;
@@ -466,9 +475,9 @@ void GraphPhysics::updatePositions( const GraphTraits::vertex_descriptor origin,
       tf.setTransform(originToRoot * absolutTransform); 
       if (debugUpdatePos)
       {
-        LOG_DEBUG("[Envire Physics] AbsolutTransform, provided by the physical engine: ");
+        LOG_DEBUG("[GraphPhysics] AbsolutTransform, provided by the physical engine: ");
         std::cout << absolutTransform << std::endl;
-        LOG_DEBUG("[Envire Physics] Final updated transform = AbsolutTransform*origiToRoot: ");
+        LOG_DEBUG("[GraphPhysics] Final updated transform = AbsolutTransform*origiToRoot: ");
         std::cout << tf.transform << std::endl;
       }
       control->graph->updateTransform(origin, target, tf);

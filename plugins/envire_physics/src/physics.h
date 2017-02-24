@@ -131,7 +131,8 @@ namespace mars {
          * Returns a NodeData configured with the data provided by the smurf::Inertial object and positioned according to the frame
          */
         std::shared_ptr<mars::interfaces::NodeData> getInertialNode(const smurf::Inertial& inertial,const envire::core::FrameId& frame);        
-        /*
+        void storeSimNode(const mars::interfaces::NodeData* node, const envire::core::FrameId frameId, std::shared_ptr<mars::interfaces::NodeInterface> physics);
+        /**
          * Create the physical objects and save them in the Graph
          * We add the shared_ptr of the physical node interface to access to the physical simulation of the object
          */
