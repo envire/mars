@@ -244,11 +244,15 @@ namespace mars {
         jointData->lowStopAxis1 = position_limits.first;
         jointData->highStopAxis1 = position_limits.second;
 
-        // DIRTY FIX!!! 
-        jointData->damping_const_constraint_axis1 = 1.0;
-        jointData->spring_const_constraint_axis1 = 10000.0;
-        jointData->damping_constant = 1.0;
-        jointData->spring_constant = 10000.0;
+        // if the joints has spring (dynamic), than set the parameter in simulation
+        if (smurfJoint->hasSpring())
+        {
+          smurf::SpringParam spring_param = smurfJoint->getSpringParam();
+          jointData->damping_const_constraint_axis1 = spring_param.damping_const_constraint_axis1;
+          jointData->spring_const_constraint_axis1 = spring_param.spring_const_constraint_axis1;
+          jointData->damping_constant = spring_param.springDamping;
+          jointData->spring_constant = spring_param.springStiffness;
+        }        
 
         //jointData->print();
       }
