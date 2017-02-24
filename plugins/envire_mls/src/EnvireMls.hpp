@@ -42,6 +42,7 @@
 #include <maps/grid/MLSMap.hpp>
 
 
+#include <mars/plugins/envire_smurf_loader/EnvireSmurfLoader.hpp>
 
 namespace mars {
 
@@ -88,6 +89,10 @@ namespace mars {
 	boost::shared_ptr<maps::grid::MLSMapKalman> mlsPtr;   	
 
         bool tested;
+        envire::core::FrameId mlsFrameId;
+        envire::core::FrameId centerFrameId;
+
+        //EnvireSmurfLoader::EnvireSmurfLoader* theLoader;
 
       }; // end of class definition EnvireMls
 

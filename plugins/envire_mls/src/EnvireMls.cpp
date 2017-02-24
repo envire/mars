@@ -52,7 +52,7 @@
 #define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
 #define MLS_FRAME_TF_X 0
 #define MLS_FRAME_TF_Y 0
-#define MLS_FRAME_TF_Z 0.5 // Somehow positive values set the mls below the center...
+#define MLS_FRAME_TF_Z 2.0 // Somehow positive values set the mls below the center...
 
 #define GD_SENSE_CONTACT_FORCE 0
 #define GD_PARENT_GEOM 0
@@ -79,12 +79,13 @@ namespace mars {
         : MarsPluginTemplate(theManager, "EnvireMls") 
       {
         mlsCollision = envire::collision::MLSCollision::getInstance();
+        //theLoader = theManager->getLibraryAs<EnvireSmurfLoader::EnvireSmurfLoader>("envire_smurf_loader");
       }
 
       void EnvireMls::init() 
       {
 #ifdef DEBUG
-        LOG_DEBUG( "[EnvireMls::init]"); 
+        LOG_DEBUG( "[EnvireMls::init] Tests"); 
 #endif
         envire::core::FrameId center = SIM_CENTER_FRAME_NAME; 
         if (! control->graph->containsFrame(center))
@@ -92,7 +93,8 @@ namespace mars {
           control->graph->addFrame(center);
         }
         // Create the default frame for the MLS 
-        envire::core::FrameId mlsFrameId = MLS_FRAME_NAME; 
+        mlsFrameId = MLS_FRAME_NAME; 
+        centerFrameId = SIM_CENTER_FRAME_NAME;
         control->graph->addFrame(mlsFrameId);
         envire::core::Transform mlsTf(base::Time::now());
         mlsTf.transform.translation << MLS_FRAME_TF_X, MLS_FRAME_TF_Y, MLS_FRAME_TF_Z;
@@ -110,6 +112,7 @@ namespace mars {
         if (not tested){
           //testAddMLS();
           testAddMLSAndRobot();
+
           tested = true;
         }
       }
@@ -124,14 +127,13 @@ namespace mars {
         FrameId dumpedFrameId(DUMPED_MLS_FRAME_NAME);
         mlsType mlsAux = getMLSMap(auxMlsGraph, dumpedFrameId);
         Item<mlsType>::Ptr mlsItemPtr(new Item<mlsType>(mlsAux));
-        FrameId targetFrameId(MLS_FRAME_NAME);
-        control->graph->addItemToFrame(targetFrameId, mlsItemPtr);
+        control->graph->addItemToFrame(mlsFrameId, mlsItemPtr);
       }
 
-      mlsType EnvireMls::getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId mlsFrameId)
+      mlsType EnvireMls::getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId frameId)
       {
         EnvireGraph::ItemIterator<Item<mlsType>> beginItem, endItem;
-        boost::tie(beginItem, endItem) = graph.getItems<Item<mlsType>>(mlsFrameId);
+        boost::tie(beginItem, endItem) = graph.getItems<Item<mlsType>>(frameId);
         mlsType mls = beginItem->getData();
         return mls;
       }
@@ -141,26 +143,27 @@ namespace mars {
         /*
          * Look up the stored mls map and generate the correspondent MLSNodeData
          */
+        mlsType mls = getMLSMap(*(control->graph), mlsFrameId);
+        Transform mlsTransform = control->graph->getTransform(centerFrameId, mlsFrameId);
+        Vector pos = mlsTransform.transform.translation;
         NodeData* node(new NodeData);
-        node->init(MLS_NAME, mars::utils::Vector(0,0,0));
+        //NodeData* node(new NodeData);
+        node->init(MLS_NAME, pos);
         node->physicMode = interfaces::NODE_TYPE_MLS;
         //node->env_path = mlsPath;
-        FrameId mlsFrameId(MLS_FRAME_NAME);
-        mlsType mls = getMLSMap(*(control->graph), mlsFrameId);
+
 	boost::shared_ptr<maps::grid::MLSMapKalman> mlsPtr(& mls);
         // Store MLS geometry in simulation node
         node->g_mls = (void*)(mlsCollision->createNewCollisionObject(mlsPtr));//_userdata);	
 
-        // NOTE What is this pos1 for?
-        mars::utils::Vector pos1(1,1,1);
-        node->pos = pos1;
+        node->pos = mlsTransform.transform.translation; // The position was already set
 
         // The position should be read from the envire graph
 
-        dVector3 pos;
-        pos[ 0 ] = 0;
-        pos[ 1 ] = 0;
-        pos[ 2 ] = 0;
+        //dVector3 pos; // = mlsTransform.transform.translation;
+        //pos[ 0 ] = mlsTransform.transform.translation.x();
+        //pos[ 1 ] = mlsTransform.transform.translation.y();
+        //pos[ 2 ] = mlsTransform.transform.translation.z();
 
         // Rotate so Z is up, not Y (which is the default orientation)
         // NOTE is this to be done for all MLS or only for this particular case?
@@ -194,8 +197,8 @@ namespace mars {
         // If the frame where the MLS should be
         // stored does not exists, create it by now we assume that the frame to
         // add to is the default one for the mls, created in the init step
-        NodeData* node = setUpNodeData();
-        envire::core::Item<NodeData>::Ptr itemPtr(new envire::core::Item<NodeData>(*node));
+        NodeData* nodePtr = setUpNodeData();
+        envire::core::Item<NodeData>::Ptr itemPtr(new envire::core::Item<NodeData>(*nodePtr));
         envire::core::FrameId mlsFrameId = MLS_FRAME_NAME;
         control->graph->addItemToFrame(mlsFrameId, itemPtr);        
       }
@@ -207,7 +210,7 @@ namespace mars {
 #endif
         loadMLSMap(TEST_MLS_PATH);
         // Next is to instantiate a load the correspondent nodeData
-        addMLSNode();
+        //addMLSNode();
         
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::addMLS] 2"); 
@@ -229,7 +232,7 @@ namespace mars {
         mars::utils::Vector pos(0,0,0);
         mars::utils::Vector rot(0,0,0);
 
-        control->loadCenter->loadScene[".smurf"]->loadFile(ASGUARD_PATH, "", "Asguard_v4", pos, rot);
+        //control->loadCenter->loadScene[".smurf"]->loadFile(ASGUARD_PATH, "", "Asguard_v4", pos, rot);
         //FrameId mlsFrameId(MLS_FRAME_NAME);
         //envire::core::GraphTraits::vertex_descriptor vertex = control->graph->getVertex(mlsFrameId);
         //envire::core::Transform iniPose;

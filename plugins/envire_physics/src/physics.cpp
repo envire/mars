@@ -338,18 +338,9 @@ bool GraphPhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const 
 {
   shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
   bool instantiated = false;
-  if(node->physicMode == NODE_TYPE_MLS) instantiated = addMlsSurface(node.get());
-  else instantiated = (physics->createNode(node.get()));
+  instantiated = (physics->createNode(node.get()));
   if (instantiated)
   {
-    // Store the physics NodeInterface
-    using physicsItemPtr = envire::core::Item<shared_ptr<NodeInterface>>::Ptr;
-    physicsItemPtr physicsItem(new envire::core::Item<shared_ptr<NodeInterface>>(physics));
-    control->graph->addItemToFrame(frame, physicsItem);
-    // Store the Nodedata
-    using dataItemPtr = envire::core::Item<shared_ptr<NodeData>>::Ptr;
-    dataItemPtr dataItem(new envire::core::Item<shared_ptr<NodeData>>(node));
-    control->graph->addItemToFrame(frame, dataItem);
     
     //NOTE Create and store also a simNode. The simNode interface is set to the physics node
     mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (*node)); 
@@ -369,15 +360,38 @@ void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
 {
   Item<NodeData>::Ptr pItem = e.item; 
   NodeData node = pItem->getData();
-
-  //geom_data* gd = (geom_data*)node.data;
-
-  std::shared_ptr<NodeData> nodePtr(&node);
-  if (instantiateNode(nodePtr, e.frame))
+  if (debug) 
   {
-    if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded] Smurf::Inertial - Instantiated and Stored the nodeInterface in frame ***" + e.frame +"***").c_str());}
-  } 
-
+    LOG_DEBUG(("[GraphPhysics::ItemAdded <NodeData>] Node name :" + node.name).c_str());
+    //LOG_DEBUG(("[GraphPhysics::ItemAdded <NodeData>] Node physicMode :" + node.physicMode));
+  }
+  if(node.physicMode == NODE_TYPE_MLS)
+  {
+    bool instantiated = addMlsSurface(&node);
+    if (debug) {LOG_DEBUG("[GraphPhysics::itemAdded] AddMlsSurface was just executed");}
+    if (instantiated)
+    { //TODO move this code, because is repeated in instantiateNode
+      //NOTE Create and store also a simNode. The simNode interface is set to the physics node
+      mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (node)); 
+      shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
+      simNode->setInterface(physics.get());
+      std::shared_ptr<mars::sim::SimNode> simNodePtr(simNode);
+      using SimNodeItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>::Ptr;
+      using SimNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
+      SimNodeItemPtr simNodeItem( new SimNodeItem(simNodePtr));        
+      control->graph->addItemToFrame(e.frame, simNodeItem);
+      if (debug){ LOG_DEBUG("[EnvirePhysics::InstantiateNode] The SimNode is created and added to the graph");}
+    }
+  }
+  else
+  {
+    //geom_data* gd = (geom_data*)node.data;
+    std::shared_ptr<NodeData> nodePtr(&node); 
+    if (instantiateNode(nodePtr, e.frame))
+    {
+      if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded <NodeData>] Instantiated the node "+node.name+ " in the frame" + e.frame).c_str());}
+    } 
+  }
 }
 
 //struct NullDeleter {template<typename T> void operator()(T*) {}};   
@@ -390,7 +404,6 @@ bool GraphPhysics::addMlsSurface(NodeData* node)
  
   return true;
 } 	
-
 
 void GraphPhysics::setPos(const envire::core::FrameId& frame, const std::shared_ptr<mars::interfaces::NodeData>& node)
 {
@@ -468,3 +481,59 @@ void GraphPhysics::updatePositions( const GraphTraits::vertex_descriptor origin,
 DESTROY_LIB(mars::plugins::envire_physics::GraphPhysics);
 CREATE_LIB(mars::plugins::envire_physics::GraphPhysics);
 
+/*
+ * Copy of the previous implementation of itemAdded fo nodedata and instantiate
+ * node to investigate what is worng here
+ *
+bool GraphPhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const envire::core::FrameId& frame)
+{
+  shared_ptr<NodeInterface> physics(PhysicsMapper::newNodePhysics(control->sim->getPhysics()));
+  bool instantiated = false;
+  //NODE_TYPE_MLS defined in marsdefs.h in the mars interfaces 
+  if(node->physicMode == NODE_TYPE_MLS){
+    instantiated = addMlsSurface(node.get());
+    if (debug) {LOG_DEBUG("[GraphPhysics::instantiateNode] AddMlsSurface was just executed");}
+  }
+  instantiated = (physics->createNode(node.get()));
+  if (instantiated)
+  {
+    //// Store the physics NodeInterface
+    //using physicsItemPtr = envire::core::Item<shared_ptr<NodeInterface>>::Ptr;
+    //physicsItemPtr physicsItem(new envire::core::Item<shared_ptr<NodeInterface>>(physics));
+    //control->graph->addItemToFrame(frame, physicsItem);
+    //// Store the Nodedata
+    //using dataItemPtr = envire::core::Item<shared_ptr<NodeData>>::Ptr;
+    //dataItemPtr dataItem(new envire::core::Item<shared_ptr<NodeData>>(node));
+    //control->graph->addItemToFrame(frame, dataItem);
+        
+    //NOTE Create and store also a simNode. The simNode interface is set to the physics node
+    mars::sim::SimNode * simNode = new mars::sim::SimNode(control, (*node)); 
+    simNode->setInterface(physics.get());
+    std::shared_ptr<mars::sim::SimNode> simNodePtr(simNode);
+    using SimNodeItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>::Ptr;
+    using SimNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
+    SimNodeItemPtr simNodeItem( new SimNodeItem(simNodePtr));        
+    control->graph->addItemToFrame(frame, simNodeItem);
+    if (debug){ LOG_DEBUG("[EnvirePhysics::InstantiateNode] The SimNode is created and added to the graph");}
+    
+  }
+  return instantiated;
+}
+
+void GraphPhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
+{
+  Item<NodeData>::Ptr pItem = e.item; 
+  NodeData node = pItem->getData();
+  if (debug) 
+  {
+    LOG_DEBUG(("[GraphPhysics::ItemAdded <NodeData>] Node name :" + node.name).c_str());
+    //LOG_DEBUG(("[GraphPhysics::ItemAdded <NodeData>] Node physicMode :" + node.physicMode));
+  }
+  //geom_data* gd = (geom_data*)node.data;
+  std::shared_ptr<NodeData> nodePtr(&node); // This is failing when receiving the mls node, apparently I can't make a shared pointer of it because it is already pointed by the item. Right?
+   (instantiateNode(nodePtr, e.frame))
+  
+  if (debug) {LOG_DEBUG(("[GraphPhysics::ItemAdded <NodeData>] Instantiated the node "+node.name+ " in the frame" + e.frame).c_str());}
+  
+}
+*/
