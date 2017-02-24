@@ -64,9 +64,9 @@ namespace mars {
       void EnvireJoints::init() {
         assert(control->graph != nullptr);
         GraphEventDispatcher::subscribe(control->graph.get());
-        GraphItemEventDispatcher<envire::core::Item<smurf::StaticTransformation>>::subscribe(control->graph.get());
-        GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>::subscribe(control->graph.get());
-        GraphItemEventDispatcher<envire::core::Item<smurf::Joint>>::subscribe(control->graph.get());
+        //GraphItemEventDispatcher<envire::core::Item<smurf::StaticTransformation>>::subscribe(control->graph.get());
+        //GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>::subscribe(control->graph.get());
+        //GraphItemEventDispatcher<envire::core::Item<smurf::Joint>>::subscribe(control->graph.get());
       }
       
       void EnvireJoints::reset() {

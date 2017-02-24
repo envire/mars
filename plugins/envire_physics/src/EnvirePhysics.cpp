@@ -49,21 +49,22 @@ using namespace mars::sim;
 using namespace std;
 using namespace base;
 
+#define DEBUG
+
 EnvirePhysics::EnvirePhysics(lib_manager::LibManager *theManager)
   : MarsPluginTemplate(theManager, "EnvirePhysics"){
+    LOG_INFO("EnvirePhysics");  
 }
 
 void EnvirePhysics::init() {
+  LOG_INFO("EnvirePhysics INIT");  
   assert(control->graph != nullptr);
-  GraphEventDispatcher::subscribe(control->graph.get());
-  GraphItemEventDispatcher<Item<configmaps::ConfigMap>>::subscribe(control->graph.get());
-  GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem>::subscribe(control->graph.get());
-  GraphItemEventDispatcher<mars::sim::JointConfigMapItem>::subscribe(control->graph.get());
-  GraphItemEventDispatcher<Item<smurf::Frame>>::subscribe(control->graph.get());
-  GraphItemEventDispatcher<Item<urdf::Collision>>::subscribe(control->graph.get());
-  GraphItemEventDispatcher<Item<smurf::Collidable>>::subscribe(control->graph.get());
-  GraphItemEventDispatcher<Item<smurf::Inertial>>::subscribe(control->graph.get());
-  GraphItemEventDispatcher<Item<NodeData>>::subscribe(control->graph.get());
+  originId = "center";
+  //GraphEventDispatcher::subscribe(control->graph.get());
+  //GraphItemEventDispatcher<mars::sim::JointConfigMapItem>::subscribe(control->graph.get());
+  //GraphItemEventDispatcher<Item<smurf::Frame>>::subscribe(control->graph.get());
+  //GraphItemEventDispatcher<Item<smurf::Collidable>>::subscribe(control->graph.get());
+  //GraphItemEventDispatcher<Item<smurf::Inertial>>::subscribe(control->graph.get());
 #ifdef DEBUG
   LOG_DEBUG("[EnvirePhysics::init] ");
 #endif
@@ -174,133 +175,11 @@ void EnvirePhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>>& 
   } 
 }
 
-void EnvirePhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e)
-{
-#ifdef DEBUG
-  LOG_DEBUG(("[EnvirePhysics::ItemAdded] urdf::Collision item received in frame *** " + e.frame + "***").c_str());
-#endif
-  urdf::Collision collision = e.item->getData();
-  NodeData * node = new NodeData;
-  node->init(collision.name);
-  node->fromGeometry(collision.geometry);
-  node->mass = 0.00001;
-  node->density = 0.0;
-  std::shared_ptr<NodeData> nodePtr(node);
-  setPos(e.frame, nodePtr);
-  node->movable = true;
-  if (instantiateNode(nodePtr, e.frame))
-  {
-#ifdef DEBUG    
-    LOG_DEBUG(("[EnvirePhysics::ItemAdded] Smurf::Collision - Instantiated and stored the nodeInterface in frame ***" + e.frame +"***").c_str());
-#endif
-  }
-}
 
-void EnvirePhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<configmaps::ConfigMap>>& e)
-{
-#ifdef DEBUG
-  LOG_DEBUG(("[EnvirePhysics::ItemAdded] configmaps::ConfigMap item received in frame *** " + e.frame + "***").c_str());
-#endif
-  configmaps::ConfigMap configMap = e.item->getData();
-  try
-  {         
-    //try to convert the item into a node Data
-    NodeData* node = new NodeData;
-    std::shared_ptr<NodeData> nodePtr(node);
-    if(node->fromConfigMap(&(configMap), ""))
-    {
-      Transform fromOrigin;
-      if(originId.compare(e.frame) == 0)
-      {
-        //this special case happens when the graph only contains one frame
-        //and items are added to that frame. In that case aksing the graph 
-        //for the transformation would cause an exception
-        fromOrigin.setTransform(TransformWithCovariance::Identity());
-      }
-      else
-      {
-        fromOrigin = control->graph->getTransform(originId, e.frame); 
-      }
-      node->pos = fromOrigin.transform.translation;
-      node->rot = fromOrigin.transform.orientation;
-      if (instantiateNode(nodePtr, e.frame))
-      {
-#ifdef DEBUG
-        LOG_DEBUG(("[EnvirePhysics::ItemAdded] PhysicsConfigMapItem - Instantiated and stored the nodeInterface in frame ***" + e.frame + "***").c_str());
-#endif
-      }
-    }
-  }
-  catch(const UnknownTransformException& ex)
-  {
-    cerr << ex.what() << endl;
-  }
-}   
-
-void EnvirePhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
-{
-#ifdef DEBUG
-  LOG_DEBUG(("[EnvirePhysics::ItemAdded] PhysicsConfigMapItem item received in frame *** " + e.frame + "***").c_str());
-#endif
-  PhysicsConfigMapItem::Ptr pItem = e.item;
-  try
-  {         
-    //try to convert the item into a node Data
-    NodeData * node = new NodeData;
-    std::shared_ptr<NodeData> nodePtr(node);
-    if(node->fromConfigMap(&pItem->getData(), ""))
-    {
-      Transform fromOrigin;
-      if(originId.compare(e.frame) == 0)
-      {
-        //this special case happens when the graph only contains one frame
-        //and items are added to that frame. In that case aksing the graph 
-        //for the transformation would cause an exception
-        fromOrigin.setTransform(TransformWithCovariance::Identity());
-      }
-      else
-      {
-        fromOrigin = control->graph->getTransform(originId, e.frame); 
-      }
-      node->pos = fromOrigin.transform.translation;
-      node->rot = fromOrigin.transform.orientation;
-      if (instantiateNode(nodePtr, e.frame))
-      {
-#ifdef DEBUG
-        LOG_DEBUG(("[EnvirePhysics::ItemAdded] PhysicsConfigMapItem - Instantiated and stored the nodeInterface in frame ***" + e.frame + "***").c_str());
-#endif
-      }
-    }
-  }
-  catch(const UnknownTransformException& ex)
-  {
-    cerr << ex.what() << endl;
-  }
-}
-
-
-void EnvirePhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
-{
-#ifdef DEBUG
-  LOG_DEBUG(("[EnvirePhysics::ItemAdded] NodeData item received in frame *** " + e.frame + "***").c_str());
-#endif
-  Item<NodeData>::Ptr pItem = e.item; 
-  NodeData node = pItem->getData();
-
-  //geom_data* gd = (geom_data*)node.data;
-
-  std::shared_ptr<NodeData> nodePtr(&node);
-  if (instantiateNode(nodePtr, e.frame))
-  {
-#ifdef DEBUG
-    LOG_DEBUG(("[EnvirePhysics::ItemAdded] Smurf::Inertial - Instantiated and Stored the nodeInterface in frame ***" + e.frame +"***").c_str());
-#endif
-  } 
-
-}
 
 void EnvirePhysics::update(sReal time_ms) 
 {
+  updateTree();
   const GraphTraits::vertex_descriptor originDesc = control->graph->vertex(originId);
   if(printGraph)
   {
@@ -481,13 +360,14 @@ void EnvirePhysics::updateChildPositions(const GraphTraits::vertex_descriptor ve
     {
       updatePositions(vertex, child, frameToRoot);
     }
-  } 
+  }
 }
 
 void EnvirePhysics::updatePositions( const GraphTraits::vertex_descriptor origin,
                                     const GraphTraits::vertex_descriptor target,
                                     const TransformWithCovariance& originToRoot)
 {
+
 #ifdef DEBUG  
   LOG_DEBUG("EnvirePhysics::updatePositions");
 #endif
@@ -505,6 +385,7 @@ void EnvirePhysics::updatePositions( const GraphTraits::vertex_descriptor origin
     for (;begin_sim!=end_sim; begin_sim++)
     {
       const std::shared_ptr<mars::sim::SimNode> sim_node = begin_sim->getData();
+
       sim_node->update(calc_ms);
 
       TransformWithCovariance absolutTransform;
@@ -523,3 +404,127 @@ void EnvirePhysics::updatePositions( const GraphTraits::vertex_descriptor origin
 DESTROY_LIB(mars::plugins::envire_physics::EnvirePhysics);
 CREATE_LIB(mars::plugins::envire_physics::EnvirePhysics);
 
+/*void EnvirePhysics::itemAdded(const TypedItemAddedEvent<Item<urdf::Collision>>& e)
+{
+#ifdef DEBUG
+  LOG_DEBUG(("[EnvirePhysics::ItemAdded] urdf::Collision item received in frame *** " + e.frame + "***").c_str());
+#endif
+  urdf::Collision collision = e.item->getData();
+  NodeData * node = new NodeData;
+  node->init(collision.name);
+  node->fromGeometry(collision.geometry);
+  node->mass = 0.00001;
+  node->density = 0.0;
+  std::shared_ptr<NodeData> nodePtr(node);
+  setPos(e.frame, nodePtr);
+  node->movable = true;
+  if (instantiateNode(nodePtr, e.frame))
+  {
+#ifdef DEBUG    
+    LOG_DEBUG(("[EnvirePhysics::ItemAdded] Smurf::Collision - Instantiated and stored the nodeInterface in frame ***" + e.frame +"***").c_str());
+#endif
+  }
+}*/
+
+/*void EnvirePhysics::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<configmaps::ConfigMap>>& e)
+{
+#ifdef DEBUG
+  LOG_DEBUG(("[EnvirePhysics::ItemAdded] configmaps::ConfigMap item received in frame *** " + e.frame + "***").c_str());
+#endif
+  configmaps::ConfigMap configMap = e.item->getData();
+  try
+  {         
+    //try to convert the item into a node Data
+    NodeData* node = new NodeData;
+    std::shared_ptr<NodeData> nodePtr(node);
+    if(node->fromConfigMap(&(configMap), ""))
+    {
+      Transform fromOrigin;
+      if(originId.compare(e.frame) == 0)
+      {
+        //this special case happens when the graph only contains one frame
+        //and items are added to that frame. In that case aksing the graph 
+        //for the transformation would cause an exception
+        fromOrigin.setTransform(TransformWithCovariance::Identity());
+      }
+      else
+      {
+        fromOrigin = control->graph->getTransform(originId, e.frame); 
+      }
+      node->pos = fromOrigin.transform.translation;
+      node->rot = fromOrigin.transform.orientation;
+      if (instantiateNode(nodePtr, e.frame))
+      {
+#ifdef DEBUG
+        LOG_DEBUG(("[EnvirePhysics::ItemAdded] PhysicsConfigMapItem - Instantiated and stored the nodeInterface in frame ***" + e.frame + "***").c_str());
+#endif
+      }
+    }
+  }
+  catch(const UnknownTransformException& ex)
+  {
+    cerr << ex.what() << endl;
+  }
+}   */
+
+/*void EnvirePhysics::itemAdded(const TypedItemAddedEvent<PhysicsConfigMapItem>& e)
+{
+#ifdef DEBUG
+  LOG_DEBUG(("[EnvirePhysics::ItemAdded] PhysicsConfigMapItem item received in frame *** " + e.frame + "***").c_str());
+#endif
+  PhysicsConfigMapItem::Ptr pItem = e.item;
+  try
+  {         
+    //try to convert the item into a node Data
+    NodeData * node = new NodeData;
+    std::shared_ptr<NodeData> nodePtr(node);
+    if(node->fromConfigMap(&pItem->getData(), ""))
+    {
+      Transform fromOrigin;
+      if(originId.compare(e.frame) == 0)
+      {
+        //this special case happens when the graph only contains one frame
+        //and items are added to that frame. In that case aksing the graph 
+        //for the transformation would cause an exception
+        fromOrigin.setTransform(TransformWithCovariance::Identity());
+      }
+      else
+      {
+        fromOrigin = control->graph->getTransform(originId, e.frame); 
+      }
+      node->pos = fromOrigin.transform.translation;
+      node->rot = fromOrigin.transform.orientation;
+      if (instantiateNode(nodePtr, e.frame))
+      {
+#ifdef DEBUG
+        LOG_DEBUG(("[EnvirePhysics::ItemAdded] PhysicsConfigMapItem - Instantiated and stored the nodeInterface in frame ***" + e.frame + "***").c_str());
+#endif
+      }
+    }
+  }
+  catch(const UnknownTransformException& ex)
+  {
+    cerr << ex.what() << endl;
+  }
+}*/
+
+
+/*void EnvirePhysics::itemAdded(const TypedItemAddedEvent<Item<NodeData>>& e)
+{
+#ifdef DEBUG
+  LOG_DEBUG(("[EnvirePhysics::ItemAdded] NodeData item received in frame *** " + e.frame + "***").c_str());
+#endif
+  Item<NodeData>::Ptr pItem = e.item; 
+  NodeData node = pItem->getData();
+
+  //geom_data* gd = (geom_data*)node.data;
+
+  std::shared_ptr<NodeData> nodePtr(&node);
+  if (instantiateNode(nodePtr, e.frame))
+  {
+#ifdef DEBUG
+    LOG_DEBUG(("[EnvirePhysics::ItemAdded] Smurf::Inertial - Instantiated and Stored the nodeInterface in frame ***" + e.frame +"***").c_str());
+#endif
+  } 
+
+}*/

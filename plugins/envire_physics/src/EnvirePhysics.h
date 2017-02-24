@@ -98,7 +98,7 @@ namespace mars {
          * case the simulated node will be based only on the urdf collision 
          * object.
          */
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<urdf::Collision>>& e);
+        //void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<urdf::Collision>>& e);
         /**
          * When a PhysicsConfigMapItem objects is introduced, a NodeData is 
          * generated with the information of the object and it is 
@@ -106,9 +106,9 @@ namespace mars {
          * simulated object is stored through a shared_ptr in the frame where 
          * the PhysicsConfigMapItem was found.
          */
-        void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<configmaps::ConfigMap>>& e);
-        void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem>& e);
-		void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<mars::interfaces::NodeData>>& e);
+        //void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<configmaps::ConfigMap>>& e);
+        //void itemAdded(const envire::core::TypedItemAddedEvent<mars::sim::PhysicsConfigMapItem>& e);
+		//void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<mars::interfaces::NodeData>>& e);
  
         /*
          *  dfs visit the tree and update all positions.

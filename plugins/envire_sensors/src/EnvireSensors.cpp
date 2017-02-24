@@ -62,7 +62,16 @@ namespace mars {
       void EnvireSensors::init() {
         assert(control->graph != nullptr);
         GraphEventDispatcher::subscribe(control->graph.get());
-        GraphItemEventDispatcher<Item<smurf::Sensor>>::subscribe(control->graph.get());
+        //GraphItemEventDispatcher<Item<smurf::Sensor>>::subscribe(control->graph.get());
+        velodyneFrame = "velodyne";
+
+        joint6dof_frame.push_back("leg0_ft");
+        joint6dof_frame.push_back("leg1_ft");
+        joint6dof_frame.push_back("leg2_ft");
+        joint6dof_frame.push_back("leg3_ft");
+        joint6dof_frame.push_back("leg4_ft");
+        joint6dof_frame.push_back("leg5_ft");
+        
       }
 
       void EnvireSensors::reset() {
