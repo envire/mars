@@ -53,8 +53,6 @@
 
 #include <smurf/Robot.hpp>
 
-#define DEBUG
-
 namespace mars {
   namespace plugins {
     namespace EnvireSmurfLoader {
@@ -258,10 +256,15 @@ namespace mars {
                 joint_data.highStopAxis1 = position_limits.second;
 
                 // DIRTY FIX!!! 
-                joint_data.damping_const_constraint_axis1 = 1.0;
-                joint_data.spring_const_constraint_axis1 = 10000.0;
-                joint_data.damping_constant = 1.0;
-                joint_data.spring_constant = 10000.0;
+                // if the joints has spring (dynamic), than set the parameter in simulation
+                if (joint.hasSpring())
+                {
+                    smurf::SpringParam spring_param = joint.getSpringParam();
+                    joint_data.damping_const_constraint_axis1 = spring_param.damping_const_constraint_axis1;
+                    joint_data.spring_const_constraint_axis1 = spring_param.spring_const_constraint_axis1;
+                    joint_data.damping_constant = spring_param.springDamping;
+                    joint_data.spring_constant = spring_param.springStiffness;
+                }        
 
                 // create Sim Joint
                 createSimJoint(joint, joint_data);
