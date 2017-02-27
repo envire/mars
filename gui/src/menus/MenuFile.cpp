@@ -70,6 +70,9 @@ namespace mars {
                                     (main_gui::MenuInterface*)this, 0, tmp1, true);
 
 
+      mainGui->addGenericMenuAction("../File/Export/Envire Graph", GUI_ACTION_SAVE_GRAPH,
+                                    (main_gui::MenuInterface*)this, 0, tmp1, true);      
+
       // add separator
       mainGui->addGenericMenuAction("../File/", 0, NULL, 0, "", 0, -1);
 
@@ -91,7 +94,13 @@ namespace mars {
       case GUI_ACTION_RESET_SCENE: menu_resetScene(); break;
       case GUI_ACTION_NEW_SCENE: menu_newScene(); break;
       case GUI_ACTION_EXPORT_SCENE: menu_exportScene(); break;
+      case GUI_ACTION_SAVE_GRAPH: menu_saveGraphFile(); break;
       }
+    }
+
+    void MenuFile::menu_saveGraphFile(void)
+    {
+      control->sim->saveToFile("mars_envire.txt");
     }
 
     void MenuFile::menu_exportScene(void) {

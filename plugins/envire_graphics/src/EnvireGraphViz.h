@@ -58,7 +58,7 @@ namespace mars {
        * A very simple plugin that tries to convert all ConfigMaps found in the
        * transform graph into NodeData and draw it.
        * */
-      class GraphViz : public mars::interfaces::MarsPluginTemplate,
+      class EnvireGraphViz : public mars::interfaces::MarsPluginTemplate,
                        public envire::core::GraphEventDispatcher,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
@@ -67,13 +67,13 @@ namespace mars {
       {
 
       public:
-        GraphViz(lib_manager::LibManager *theManager);
+        EnvireGraphViz(lib_manager::LibManager *theManager);
 
         // LibInterface methods
         int getLibVersion() const
         { return 1; }
         const std::string getLibName() const
-        { return std::string("GraphViz"); }
+        { return std::string("EnvireGraphViz"); }
         CREATE_MODULE_INFO();
 
         // MarsPlugin methods

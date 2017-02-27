@@ -198,7 +198,7 @@ namespace mars {
       utils::Vector a_acc;
       bool ground_contact;
       interfaces::sReal ground_contact_force;
-      interfaces::NodeInterface *my_interface;
+      std::shared_ptr<interfaces::NodeInterface> my_interface;
       bool has_sensor;
       interfaces::sReal i_velocity_sum;
       interfaces::sReal i_velocity[BACK_VEL];

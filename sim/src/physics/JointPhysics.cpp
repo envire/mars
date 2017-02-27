@@ -129,6 +129,7 @@ namespace mars {
         if(n2) b2 = n2->getBody();
         body1 = b1;
         body2 = b2;
+
         switch(jointS->type) {
         case  JOINT_TYPE_HINGE:
           createHinge(jointS, b1, b2);

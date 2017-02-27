@@ -424,7 +424,7 @@ namespace mars {
         erased_active = false;
         if(show_time)
           time = utils::getTime();
-
+        
         activePlugins[i].p_interface->update(calc_ms);
 
         if(!erased_active) {
@@ -1250,6 +1250,11 @@ namespace mars {
       }
     }
 
+    void Simulator::saveToFile(std::string file_name) const
+    {
+      control->graph->saveToFile("mars_envire.txt");
+    }
+
     void Simulator::cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property) {
                            printf("cfgUpdateProperty...\n");      
       if(_property.paramId == cfgCalcMs.paramId) {
@@ -1440,6 +1445,11 @@ namespace mars {
       return returnTime;
     }
 
+
+    double Simulator::getCalcMs()
+    {
+      return calc_ms;
+    }
 
   } // end of namespace sim
 

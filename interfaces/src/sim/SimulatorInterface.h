@@ -88,6 +88,7 @@ namespace mars {
       virtual void exportScene() const = 0;
       virtual bool sceneChanged() const = 0;
       virtual void sceneHasChanged(bool reset) = 0;
+      virtual void saveToFile(std::string file_name) const = 0;
 
       //threads
       bool allConcurrencysHandled();
@@ -119,6 +120,8 @@ namespace mars {
        *  returns the calculated simulation time + the start timestamp
        */
       virtual unsigned long getTime() = 0;
+
+      virtual double getCalcMs() = 0;
 
     };
 

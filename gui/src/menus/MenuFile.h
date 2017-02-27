@@ -85,6 +85,7 @@ namespace mars {
       void menu_saveSceneFile();
       void menu_resetScene();
       void menu_newScene();
+      void menu_saveGraphFile();
 
     };
 

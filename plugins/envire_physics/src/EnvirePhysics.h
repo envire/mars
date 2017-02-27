@@ -38,7 +38,7 @@ namespace mars {
       /** This plugin adds all PhysicsConfigMapItems and JointConfigMapItems
        *  to the simulation and updates the transforms when the items move.
        * */
-      class GraphPhysics : public mars::interfaces::MarsPluginTemplate,
+      class EnvirePhysics : public mars::interfaces::MarsPluginTemplate,
                            public envire::core::GraphEventDispatcher,
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<configmaps::ConfigMap>>,
                            public envire::core::GraphItemEventDispatcher<mars::sim::PhysicsConfigMapItem>,
@@ -50,13 +50,13 @@ namespace mars {
                            public envire::core::GraphItemEventDispatcher<envire::core::Item<mars::interfaces::NodeData>>
       {
       public:
-        GraphPhysics(lib_manager::LibManager *theManager);
+        EnvirePhysics(lib_manager::LibManager *theManager);
         
         // LibInterface methods
         int getLibVersion() const
         { return 1; }
         const std::string getLibName() const
-        { return std::string("GraphPhysics"); }
+        { return std::string("EnvirePhysics"); }
         CREATE_MODULE_INFO();
         
         void init();
@@ -131,7 +131,7 @@ namespace mars {
          * Returns a NodeData configured with the data provided by the smurf::Inertial object and positioned according to the frame
          */
         std::shared_ptr<mars::interfaces::NodeData> getInertialNode(const smurf::Inertial& inertial,const envire::core::FrameId& frame);        
-        void storeSimNode(const mars::interfaces::NodeData* node, const envire::core::FrameId frameId, std::shared_ptr<mars::interfaces::NodeInterface> physics);
+        void storeSimNode(const mars::interfaces::NodeData* node, const envire::core::FrameId frameId, mars::interfaces::NodeInterface* physics);
         /**
          * Create the physical objects and save them in the Graph
          * We add the shared_ptr of the physical node interface to access to the physical simulation of the object
@@ -154,7 +154,6 @@ namespace mars {
         envire::core::FrameId originId;
         envire::core::TreeView treeView;
         
-        const bool debug = false;
         const bool printGraph = false;
         const bool debugUpdatePos = false;
         

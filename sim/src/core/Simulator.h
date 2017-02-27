@@ -157,6 +157,8 @@ namespace mars {
       virtual bool sceneChanged() const;
       virtual void sceneHasChanged(bool reset);
 
+      virtual void saveToFile(std::string file_name) const;
+
       //threads
       virtual bool allConcurrencysHandled(); ///< Checks if external requests are open.
       void setSyncThreads(bool value); ///< Syncs the threads of GUI and simulation.
@@ -218,6 +220,8 @@ namespace mars {
        * returns the real startTimestamp plus the calculated simulation time
        */
       virtual unsigned long getTime();
+
+      virtual double getCalcMs();
 
     private:
 

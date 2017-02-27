@@ -77,9 +77,10 @@ namespace mars {
         std::shared_ptr<mars::sim::SimNode> simNodePtr;
         SimNodeIterator begin, end;
         boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(velodyneFrame);
+        double calc_ms = control->sim->getCalcMs();
         if (begin != end){
           simNodePtr = begin->getData();
-          simNodePtr->update(0.0); //NOTE I need to provide a calc_ms. I provide 0.
+          simNodePtr->update(calc_ms); //NOTE I need to provide a calc_ms. I provide 0.
         }
       }
 
@@ -88,13 +89,14 @@ namespace mars {
         using SimNodeItem = Item<std::shared_ptr<mars::sim::SimNode>>;
         using SimNodeIterator = EnvireGraph::ItemIterator<SimNodeItem>;
         std::shared_ptr<mars::sim::SimNode> simNodePtr;
+        double calc_ms = control->sim->getCalcMs();
         for (int i = 0; i < joint6dof_frame.size(); ++i)
         {
             SimNodeIterator begin, end;
             boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(joint6dof_frame.at(i));
             if (begin != end){
               simNodePtr = begin->getData();
-              simNodePtr->update(0.0); //NOTE I need to provide a calc_ms. I provide 0.
+              simNodePtr->update(calc_ms); //NOTE I need to provide a calc_ms. I provide 0.
             }        
         }
       }
@@ -116,10 +118,9 @@ namespace mars {
 
         smurf::Sensor smurfSensor = e.item->getData();
 
-        if(debug) 
-        {
+#ifdef DEBUG
             LOG_DEBUG(("[EnvireSensors::ItemAdded] Smurf::Sensor *" + smurfSensor.getName() + "* in frame *" + e.frame + "*").c_str());
-        }
+#endif
 
         if (smurfSensor.getType() == "RotatingRaySensor")
         {
@@ -130,14 +131,13 @@ namespace mars {
             SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
             control->graph->addItemToFrame(e.frame, sensorItem);
             
-            if(debug) 
-            {
+#ifdef DEBUG
                 LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");
-            }
+#endif
 
             bool attached = attachSensor(sensor.get(), e.frame);
             if (!attached)
-            {
+            {              
                 LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + smurfSensor.getName() + "*.");
             } else {
                 LOG_DEBUG(("[EnvireSensors::ItemAdded] *" + smurfSensor.getType() + "* *" + smurfSensor.getName() + "* is attached (frame: " + e.frame + ")").c_str());
@@ -151,22 +151,27 @@ namespace mars {
 
             SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<BaseSensor>>(sensor));
             control->graph->addItemToFrame(e.frame, sensorItem);
-            if(debug) 
-            {
+
+#ifdef DEBUG
                 LOG_DEBUG("[EnvireSensors::ItemAdded] Base sensor instantiated and addedto the graph.");
-            }
+#endif
+
             bool attached = attachSensor(sensor.get(), e.frame);
             if (!attached)
             {
                 LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + smurfSensor.getName() + "*.");
             } else 
             {
+#ifdef DEBUG              
                 LOG_DEBUG(("[EnvireSensors::ItemAdded] *" + smurfSensor.getType() + "* *" + smurfSensor.getName() + "* is attached (frame: " + e.frame + ")").c_str());
+#endif
             }
         }
         else
         {
-          if(debug) {LOG_DEBUG(("[EnvireSensors::ItemAdded] Sensor type " + smurfSensor.getType() + " not supported.").c_str());}
+#ifdef DEBUG
+          LOG_DEBUG(("[EnvireSensors::ItemAdded] Sensor type " + smurfSensor.getType() + " not supported.").c_str());
+#endif
         }
       }
 
@@ -190,7 +195,9 @@ namespace mars {
           simNodePtr = begin->getData();
           simNodePtr->addSensor(sensor);
           attached = true;
-          if (debug) { LOG_DEBUG("[EnvireSensors::ItemAdded] The SimNode to attach the sensor is found"); }
+#ifdef DEBUG
+          LOG_DEBUG("[EnvireSensors::ItemAdded] The SimNode to attach the sensor is found"); 
+#endif
         }
         return attached;
       }

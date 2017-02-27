@@ -60,7 +60,7 @@ namespace mars {
     SimNode::SimNode(ControlCenter *c, const NodeData &sNode_)
       : control(c), sNode(sNode_) {
 
-      my_interface = 0;
+      my_interface.reset();
       l_vel = Vector(0.0, 0.0, 0.0);
       a_vel = Vector(0.0, 0.0, 0.0);
       f = Vector(0.0, 0.0, 0.0);
@@ -133,9 +133,9 @@ namespace mars {
         control->dataBroker->unregisterTimedProducer(this, groupName, dataName,
                                                      "mars_sim/simTimer");
       }
-      if (my_interface) {
-        delete my_interface;
-        my_interface = 0;
+      if (my_interface != nullptr) {
+        delete my_interface.get();
+        my_interface.reset();
       }
       if (sNode.mesh.vertices) {
         delete[] sNode.mesh.vertices;
@@ -205,7 +205,7 @@ namespace mars {
         sNode.pos = newPosition;
       }
 
-      if (my_interface && update) {
+      if (my_interface != nullptr && update) {
         if (sNode.movable) {
           Vector p = my_interface->setPosition(sNode.pos, move_group);
           return p;
@@ -255,7 +255,7 @@ namespace mars {
 
       sNode.rot = rotation;
 
-      if (my_interface) {
+      if (my_interface != nullptr) {
         if (sNode.movable) {
           Quaternion q =  my_interface->setRotation(sNode.rot, move_all);
           return q;
@@ -409,7 +409,7 @@ namespace mars {
           }
           control->graphics->setDrawObjectScale(graphics_id, scale);
         }
-        if (my_interface) my_interface->changeNode(&sNode);
+        if (my_interface != nullptr) my_interface->changeNode(&sNode);
 
         /*  //TODO is this really needed?
             nodes = simNodes;
@@ -432,12 +432,12 @@ namespace mars {
 
     void SimNode::setInterface(NodeInterface* _interface) {
       MutexLocker locker(&iMutex);
-      my_interface = _interface;
+      my_interface.reset(_interface);
     }
 
     NodeInterface *SimNode::getInterface(void) const {
       MutexLocker locker(&iMutex);
-      return my_interface;
+      return my_interface.get();
     }
 
     unsigned long SimNode::getID(void) const {
@@ -523,7 +523,7 @@ namespace mars {
      */
     void SimNode::update(sReal calc_ms, bool physics_thread) {
       MutexLocker locker(&iMutex);
-      if (my_interface) {
+      if (my_interface != nullptr) {
         Vector damping;
         sReal d;
         last_l_vel = l_vel;
@@ -624,7 +624,7 @@ namespace mars {
                                 bool move_group) {
       MutexLocker locker(&iMutex);
       //rot = *rotation;
-      if (my_interface) {
+      if (my_interface != nullptr) {
         sNode.pos = my_interface->rotateAtPoint(rotation_point,
                                                 rotation, move_group);
         my_interface->getRotation(&sNode.rot);
@@ -651,13 +651,13 @@ namespace mars {
 
     void SimNode::changeNode(NodeData *node) {
       MutexLocker locker(&iMutex);
-      if (my_interface) my_interface->changeNode(node);
+      if (my_interface != nullptr) my_interface->changeNode(node);
       sNode = *node;
     }
 
     void SimNode::setPhysicalState(const nodeState &state) {
       MutexLocker locker(&iMutex);
-      if (my_interface) {
+      if (my_interface != nullptr) {
         my_interface->setLinearVelocity(state.l_vel);
         l_vel = state.l_vel;
         my_interface->setAngularVelocity(state.a_vel);
@@ -667,7 +667,7 @@ namespace mars {
 
     void SimNode::getPhysicalState(nodeState *state) const {
       MutexLocker locker(&iMutex);
-      if (my_interface) {
+      if (my_interface != nullptr) {
         state->l_vel = l_vel;
         state->a_vel = a_vel;
       }
@@ -675,7 +675,7 @@ namespace mars {
 
     void SimNode::setLinearVelocity(const Vector &vel) {
       MutexLocker locker(&iMutex);
-      if (my_interface) {
+      if (my_interface != nullptr) {
         my_interface->setLinearVelocity(vel);
         l_vel = vel;
       }
@@ -683,7 +683,7 @@ namespace mars {
 
     void SimNode::setAngularVelocity(const Vector &vel) {
       MutexLocker locker(&iMutex);
-      if (my_interface) {
+      if (my_interface != nullptr) {
         my_interface->setAngularVelocity(vel);
         a_vel = vel;
       }
@@ -712,32 +712,32 @@ namespace mars {
     }
     void SimNode::applyForce(const Vector &force, const Vector &pos) {
       MutexLocker locker(&iMutex);
-      if (my_interface) my_interface->addForce(force, pos);
+      if (my_interface != nullptr) my_interface->addForce(force, pos);
     }
     void SimNode::applyForce(const Vector &force) {
       MutexLocker locker(&iMutex);
-      if (my_interface) my_interface->addForce(force);
+      if (my_interface != nullptr) my_interface->addForce(force);
     }
 
     void SimNode::applyTorque(const Vector &torque) {
       MutexLocker locker(&iMutex);
-      if (my_interface) my_interface->addTorque(torque);
+      if (my_interface != nullptr) my_interface->addTorque(torque);
     }
 
     void SimNode::setContactMotion1(sReal motion) {
       MutexLocker locker(&iMutex);
       sNode.c_params.motion1 = motion;
-      if (my_interface) my_interface->setContactParams(sNode.c_params);
+      if (my_interface != nullptr) my_interface->setContactParams(sNode.c_params);
     }
 
     void SimNode::addSensor(BaseSensor *s_cfg) {
       MutexLocker locker(&iMutex);
-      if (my_interface) my_interface->addSensor(s_cfg);
+      if (my_interface != nullptr) my_interface->addSensor(s_cfg);
     }
 
     void SimNode::reloadSensor(BaseSensor *s_cfg) {
       MutexLocker locker(&iMutex);
-      if (my_interface) {
+      if (my_interface != nullptr) {
         my_interface->removeSensor(s_cfg);
         my_interface->addSensor(s_cfg);
       }
@@ -751,12 +751,12 @@ namespace mars {
     void SimNode::setContactParams(const contact_params &cp) {
       MutexLocker locker(&iMutex);
       sNode.c_params = cp;
-      if (my_interface) my_interface->setContactParams(sNode.c_params);
+      if (my_interface != nullptr) my_interface->setContactParams(sNode.c_params);
     }
 
     void SimNode::getMass(sReal *mass, sReal *inertia) const {
       MutexLocker locker(&iMutex);
-      if (my_interface) my_interface->getMass(mass, inertia);
+      if (my_interface != nullptr) my_interface->getMass(mass, inertia);
     }
 
     void SimNode::setAngularDamping(sReal damping) {
@@ -788,21 +788,21 @@ namespace mars {
 
     void SimNode::getContactPoints(std::vector<Vector> *contact_points) const {
       MutexLocker locker(&iMutex);
-      if(my_interface) {
+      if(my_interface != nullptr) {
         my_interface->getContactPoints(contact_points);
       }
     }
 
     void SimNode::getContactIDs(std::list<interfaces::NodeId> *ids) const {
       MutexLocker locker(&iMutex);
-      if(my_interface) {
+      if(my_interface != nullptr) {
         my_interface->getContactIDs(ids);
       }
     }
 
     const Vector SimNode::getContactForce(void) const {
       MutexLocker locker(&iMutex);
-      if(my_interface) {
+      if(my_interface != nullptr) {
         return my_interface->getContactForce();
       }
       return Vector(0.0, 0.0, 0.0);
@@ -816,7 +816,7 @@ namespace mars {
     double SimNode::getCollisionDepth(void) const {
       MutexLocker locker(&iMutex);
 
-      if(my_interface) {
+      if(my_interface != nullptr) {
         return my_interface->getCollisionDepth();
       }
       return 0.0;

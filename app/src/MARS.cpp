@@ -198,11 +198,12 @@ namespace mars {
           libManager->loadLibrary("envire_joints");
           libManager->loadLibrary("envire_motors");
           libManager->loadLibrary("envire_sensors");
+          libManager->loadLibrary("envire_mls");
           if(!noGUI) {           
             libManager->loadLibrary("main_gui");
             libManager->loadLibrary("mars_gui");
             libManager->loadLibrary("osgviz_mars_graphics");            
-            libManager->loadLibrary("envire_graphics");
+            //libManager->loadLibrary("envire_graphics");
           }
         }
       }
