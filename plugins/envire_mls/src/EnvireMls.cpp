@@ -50,9 +50,10 @@
 //#define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/simulation/mars/plugins/envire_mls/testMlsData/MLSMapKalman_waves.bin")
 //#define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/models/environments/dlr_map/mls/mls_map.bin")
 #define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
-#define MLS_FRAME_TF_X 0
-#define MLS_FRAME_TF_Y 0
+#define MLS_FRAME_TF_X 0.0
+#define MLS_FRAME_TF_Y 0.0
 #define MLS_FRAME_TF_Z 2.0 // Somehow positive values set the mls below the center...
+#define MLS_FRAME_TF_ROT_X 0.0 // Somehow positive values set the mls below the center...
 
 #define GD_SENSE_CONTACT_FORCE 0
 #define GD_PARENT_GEOM 0
@@ -97,8 +98,8 @@ namespace mars {
         centerFrameId = SIM_CENTER_FRAME_NAME;
         control->graph->addFrame(mlsFrameId);
         envire::core::Transform mlsTf(base::Time::now());
-        mlsTf.transform.translation << MLS_FRAME_TF_X, MLS_FRAME_TF_Y, MLS_FRAME_TF_Z;
-        mlsTf.transform.orientation = base::AngleAxisd(0.25, base::Vector3d::UnitX());
+        mlsTf.transform.translation << double(MLS_FRAME_TF_X), double(MLS_FRAME_TF_Y), double(MLS_FRAME_TF_Z);
+        mlsTf.transform.orientation = base::AngleAxisd(double(MLS_FRAME_TF_ROT_X), base::Vector3d::UnitX());
         control->graph->addTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_NAME, mlsTf);
         tested = false;
       }
@@ -157,6 +158,7 @@ namespace mars {
         node->g_mls = (void*)(mlsCollision->createNewCollisionObject(mlsPtr));//_userdata);	
 
         node->pos = mlsTransform.transform.translation; // The position was already set
+        node->rot = mlsTransform.transform.orientation; // The position was already set
 
         // The position should be read from the envire graph
 
@@ -173,7 +175,14 @@ namespace mars {
 
         // Place it.
         dGeomSetRotation( (dGeomID)node->g_mls, R );
-        dGeomSetPosition( (dGeomID)node->g_mls, pos[0], pos[1], pos[2] );
+#ifdef DEBUG
+        LOG_DEBUG("[EnvireMls::addMLS] Set Position to %f, %f, %f", pos[0], pos[1], pos[2]);
+        LOG_DEBUG("[EnvireMls::addMLS] Tf x y z %f, %f, %f", 
+            mlsTransform.transform.translation.x(), 
+            mlsTransform.transform.translation.y(), 
+            mlsTransform.transform.translation.z());
+#endif
+        dGeomSetPosition( (dGeomID)node->g_mls, pos[0], pos[1], pos[2]);
 
         // set geom data (move to its own method)
         mars::sim::geom_data* gd = new mars::sim::geom_data;
