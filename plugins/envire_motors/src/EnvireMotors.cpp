@@ -39,6 +39,7 @@
 #include <base/Logging.hpp>
 
 #include "EnvireMotorManager.hpp"
+#include "EnvireNodeManager.hpp"
 
 // Comment-in the following line in order to get debug traces
 //#define DEBUG
@@ -52,6 +53,7 @@ EnvireMotors::EnvireMotors(lib_manager::LibManager *theManager)
 : MarsPluginTemplate(theManager, "EnvireMotors") {
 
     LOG_INFO("[EnvireMotors] set EnvireMotorManager for control->motors");
+    control->nodes = new EnvireNodeManager(control, theManager);
     control->motors = new EnvireMotorManager(control);
 }
 
