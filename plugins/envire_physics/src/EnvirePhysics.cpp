@@ -26,6 +26,7 @@
 #include <mars/sim/ConfigMapItem.h>
 #include <mars/sim/PhysicsMapper.h>
 #include <mars/sim/SimNode.h>
+#include <mars/sim/SimJoint.h>
 
 #include <base/TransformWithCovariance.hpp>
 #include <stdlib.h>
@@ -492,6 +493,7 @@ void EnvirePhysics::updatePositions( const GraphTraits::vertex_descriptor origin
   LOG_DEBUG("EnvirePhysics::updatePositions");
 #endif
 
+
   Transform tf = control->graph->getTransform(origin, target);
 
   if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(target))
@@ -513,6 +515,21 @@ void EnvirePhysics::updatePositions( const GraphTraits::vertex_descriptor origin
 
       tf.setTransform(originToRoot * absolutTransform); 
       control->graph->updateTransform(origin, target, tf);
+    }
+  }
+
+  if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>>(target))
+  {
+    // Update simulation Joints
+    using simJointType = envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>;
+    using IteratorSimJoint = EnvireGraph::ItemIterator<simJointType>;
+    IteratorSimJoint begin_sim, end_sim;
+    boost::tie(begin_sim, end_sim) = control->graph->getItems<simJointType>(target);
+    double calc_ms = control->sim->getCalcMs();
+    for (;begin_sim!=end_sim; begin_sim++)
+    {
+      const std::shared_ptr<mars::sim::SimJoint> sim_joint = begin_sim->getData();
+      sim_joint->update(calc_ms);
     }
   }
 
