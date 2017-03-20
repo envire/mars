@@ -1,4 +1,4 @@
-project(envire_motors)
+project(envire_managers)
 set(PROJECT_VERSION 1.0)
 set(PROJECT_DESCRIPTION "Create")
 cmake_minimum_required(VERSION 2.6)
@@ -69,11 +69,11 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 find_package(Rock)
 set(ROCK_USE_CXX11 TRUE)
-rock_init(envire_motors 0.1)
+rock_init(envire_managers 0.1)
 rock_standard_layout()
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
-target_link_libraries(envire_motors
+target_link_libraries(envire_managers
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   )
