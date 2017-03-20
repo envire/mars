@@ -58,6 +58,11 @@ namespace mars {
   namespace plugins {
     namespace envire_managers {
 
+      // TODO: move the graph from control into envire_manager
+      // add, remove, change all nodes/sensors etc over envire managers
+      // access to graph over envire managers
+      // hide graph from mars
+
       // inherit from MarsPluginTemplateGUI for extending the gui
       class EnvireManager: public mars::interfaces::MarsPluginTemplate
       {

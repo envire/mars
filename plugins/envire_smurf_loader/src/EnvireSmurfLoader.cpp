@@ -78,6 +78,8 @@ namespace mars {
                     control->loadCenter->loadScene[".urdf"] = this; // urdf model
                     LOG_INFO("envire_smurf_loader: SMURF loader to loadCenter");                    
                 }
+
+                center = "center";
             }
 
             EnvireSmurfLoader::~EnvireSmurfLoader() {
@@ -96,7 +98,7 @@ namespace mars {
                                     std::string robotname)
             {
                 std::cout << "smurf loader zero position" << std::endl;
-                vertex_descriptor center = addCenter();
+                vertex_descriptor center = control->graph->getVertex("center");
                 envire::core::Transform iniPose;
                 iniPose.transform.orientation = base::Quaterniond::Identity();
                 iniPose.transform.translation << 0.0, 0.0, 0.3;
@@ -109,7 +111,7 @@ namespace mars {
                                 std::string robotname, utils::Vector pos, utils::Vector rot)
             {
                 std::cout << "smurf loader given position" << std::endl;
-                vertex_descriptor center = addCenter();
+                vertex_descriptor center = control->graph->getVertex("center");
                 envire::core::Transform iniPose;
                 iniPose.transform.orientation = base::Quaterniond::Identity();
                 iniPose.transform.translation << pos.x(), pos.y(), pos.z();

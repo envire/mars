@@ -38,6 +38,9 @@
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/NodeManagerInterface.h>
 
+#include <envire_core/graph/EnvireGraph.hpp>
+#include <envire_core/items/Item.hpp>
+
 namespace mars { 
   namespace sim {
     class SimJoint; 
@@ -49,7 +52,10 @@ namespace mars {
   namespace plugins {
         namespace envire_managers {
 
-          typedef std::map<mars::interfaces::NodeId, mars::sim::SimNode*> NodeMap;
+          using SimNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
+          using SimNodeItemPtr = SimNodeItem::Ptr;          
+
+          typedef std::map<mars::interfaces::NodeId, SimNodeItemPtr> NodeMap;
 
           /**
            * The declaration of the EnvireNodeManager class.
@@ -74,6 +80,12 @@ namespace mars {
             virtual mars::interfaces::NodeId addNode(mars::interfaces::NodeData *nodeS,
                                                bool reload = false,
                                                bool loadGraphics = true);
+
+            mars::interfaces::NodeId addNode(mars::interfaces::NodeData *nodeS,
+                                               envire::core::FrameId frame_id,
+                                               bool reload = false,
+                                               bool loadGraphics = true);
+
             virtual mars::interfaces::NodeId addTerrain(mars::interfaces::terrainStruct *terrainS);
             virtual std::vector<mars::interfaces::NodeId> addNode(std::vector<mars::interfaces::NodeData> v_NodeData);
             virtual mars::interfaces::NodeId addPrimitive(mars::interfaces::NodeData *snode);

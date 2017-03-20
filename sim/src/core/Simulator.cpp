@@ -251,7 +251,6 @@ namespace mars {
       control->sensors = new SensorManager(control);
       control->controllers = new ControllerManager(control);
       control->entities = new EntityManager(control);
-      control->graph = std::shared_ptr<envire::core::EnvireGraph> (new envire::core::EnvireGraph());
             
       control->controllers->setDefaultPort(std_port);
       control->nodes->setVisualRep(0, cfgVisRep.iValue);
