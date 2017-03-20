@@ -61,6 +61,10 @@
 #define GD_C_PARAMS_ERP 0.001
 #define GD_C_PARAMS_BOUNCE 0.0
 
+#define ROBOT_TEST_POS  mars::utils::Vector(0,0,1)
+#define ROBOT_TEST_ROT  mars::utils::Vector(0,0,0)
+#define ROBOT_NAME std::string("Asguard_v4")
+
 #define ASGUARD_PATH std::string("<%= ENV['AUTOPROJ_CURRENT_ROOT'] %>/models/robots/asguard_v4/smurf/asguard_v4.smurf")
 
 #define DEBUG 1
@@ -100,6 +104,16 @@ namespace mars {
         envire::core::Transform mlsTf(base::Time::now());
         mlsTf.transform.translation << double(MLS_FRAME_TF_X), double(MLS_FRAME_TF_Y), double(MLS_FRAME_TF_Z);
         mlsTf.transform.orientation = base::AngleAxisd(double(MLS_FRAME_TF_ROT_X), base::Vector3d::UnitX());
+#ifdef DEBUG
+        LOG_DEBUG("[EnvireMls::init] mlsTf x y z %f, %f, %f", 
+            mlsTf.transform.translation.x(), 
+            mlsTf.transform.translation.y(), 
+            mlsTf.transform.translation.z());
+        LOG_DEBUG("[EnvireMls::init] Constants for x y z %f, %f, %f", 
+            double(MLS_FRAME_TF_X), 
+            double(MLS_FRAME_TF_Y), 
+            double(MLS_FRAME_TF_Z));
+#endif
         control->graph->addTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_NAME, mlsTf);
         tested = false;
       }
@@ -141,11 +155,21 @@ namespace mars {
 
       NodeData* EnvireMls::setUpNodeData()
       {
-        /*
+        /**
          * Look up the stored mls map and generate the correspondent MLSNodeData
+         *
+         * BUG: Currenty after one step the mls frame position is set to the
+         * centre centerFrame.
          */
+
         mlsType mls = getMLSMap(*(control->graph), mlsFrameId);
         Transform mlsTransform = control->graph->getTransform(centerFrameId, mlsFrameId);
+#ifdef DEBUG
+        LOG_DEBUG("[EnvireMls::addMLS] Tf x y z %f, %f, %f", 
+            mlsTransform.transform.translation.x(), 
+            mlsTransform.transform.translation.y(), 
+            mlsTransform.transform.translation.z());
+#endif
         Vector pos = mlsTransform.transform.translation;
         NodeData* node(new NodeData);
         //NodeData* node(new NodeData);
@@ -238,16 +262,7 @@ namespace mars {
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] 2"); 
 #endif
-        mars::utils::Vector pos(0,0,0);
-        mars::utils::Vector rot(0,0,0);
-
-        //control->loadCenter->loadScene[".smurf"]->loadFile(ASGUARD_PATH, "", "Asguard_v4", pos, rot);
-        //FrameId mlsFrameId(MLS_FRAME_NAME);
-        //envire::core::GraphTraits::vertex_descriptor vertex = control->graph->getVertex(mlsFrameId);
-        //envire::core::Transform iniPose;
-        //iniPose.transform.orientation = base::Quaterniond::Identity();
-        //iniPose.transform.translation << 0.0, 0.0, 2.0;
-        //theLoader -> addRobot(ASGUARD_PATH, vertex, iniPose);
+        control->sim->loadScene(ASGUARD_PATH, ROBOT_NAME, ROBOT_TEST_POS, ROBOT_TEST_ROT);
 
       }
 

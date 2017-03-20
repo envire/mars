@@ -203,7 +203,7 @@ namespace mars {
             libManager->loadLibrary("main_gui");
             libManager->loadLibrary("mars_gui");
             libManager->loadLibrary("osgviz_mars_graphics");            
-            //libManager->loadLibrary("envire_graphics");
+            libManager->loadLibrary("envire_graphics");
           }
         }
       }

@@ -45,6 +45,7 @@ using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
   ss << __VA_ARGS__; \
   LOG_DEBUG(ss.str());
 
+#define SIM_CENTER_FRAME_NAME std::string("center")
 
 EnvireGraphViz::EnvireGraphViz(lib_manager::LibManager *theManager)
   : MarsPluginTemplate(theManager, "EnvireGraphViz"), GraphEventDispatcher(), originId("")
@@ -60,6 +61,15 @@ void EnvireGraphViz::init()
   GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph.get());
+  if(originId.empty())
+  {
+    envire::core::FrameId center = SIM_CENTER_FRAME_NAME; 
+    if (! control->graph->containsFrame(center))
+    {
+      control->graph->addFrame(center);
+    }
+    changeOrigin(center);
+  }
 }
 
 void EnvireGraphViz::reset() {
@@ -67,11 +77,6 @@ void EnvireGraphViz::reset() {
 
 void EnvireGraphViz::frameAdded(const FrameAddedEvent& e)
 {
-  //use the first frame we get as originId
-  if(originId.empty())
-  {
-    changeOrigin(e.frame);
-  }
 }
 
 
