@@ -47,7 +47,7 @@ namespace mars {
 
 namespace mars {
   namespace plugins {
-        namespace envire_motors {
+        namespace envire_managers {
 
           typedef std::map<mars::interfaces::NodeId, mars::sim::SimNode*> NodeMap;
 

@@ -39,7 +39,7 @@
 
 namespace mars {
   namespace plugins {
-    namespace envire_motors {
+    namespace envire_managers {
 
       // inherit from MarsPluginTemplateGUI for extending the gui
       class EnvireMotorManager: public mars::interfaces::MotorManagerInterface
@@ -345,7 +345,7 @@ namespace mars {
 
       }; // end of class definition EnvireMotors
 
-    } // end of namespace envire_motors
+    } // end of namespace envire_managers
   } // end of namespace plugins
 } // end of namespace mars
 

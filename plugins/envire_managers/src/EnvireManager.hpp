@@ -19,18 +19,18 @@
  */
 
 /**
- * \file EnvireMotors.h
+ * \file EnvireManager.h
  * \author Raul (raul.dominguez@dfki.de)
  * \brief Create and store simulated motors from their definition in the envire representation
  *
  * Version 0.1
  */
 
-#ifndef MARS_PLUGINS_ENVIRE_MOTORS_H
-#define MARS_PLUGINS_ENVIRE_MOTORS_H
+#ifndef MARS_PLUGINS_ENVIRE_MANAGER_H
+#define MARS_PLUGINS_ENVIRE_MANAGER_H
 
 #ifdef _PRINT_HEADER_
-  #warning "EnvireMotors.hpp"
+  #warning "EnvireManager.hpp"
 #endif
 
 // set define if you want to extend the gui
@@ -56,21 +56,21 @@
 namespace mars {
 
   namespace plugins {
-    namespace envire_motors {
+    namespace envire_managers {
 
       // inherit from MarsPluginTemplateGUI for extending the gui
-      class EnvireMotors: public mars::interfaces::MarsPluginTemplate
+      class EnvireManager: public mars::interfaces::MarsPluginTemplate
       {
 
       public:
-        EnvireMotors(lib_manager::LibManager *theManager);
-        ~EnvireMotors();
+        EnvireManager(lib_manager::LibManager *theManager);
+        ~EnvireManager();
 
         // LibInterface methods
         int getLibVersion() const
         { return 1; }
         const std::string getLibName() const
-        { return std::string("envire_motors"); }
+        { return std::string("envire_managers"); }
         CREATE_MODULE_INFO();
 
         // MarsPlugin methods
@@ -82,10 +82,10 @@ namespace mars {
         const bool debug = true;
         unsigned int motorIndex;
 
-      }; // end of class definition EnvireMotors
+      }; // end of class definition EnvireManager
 
-    } // end of namespace envire_motors
+    } // end of namespace envire_managers
   } // end of namespace plugins
 } // end of namespace mars
 
-#endif // MARS_PLUGINS_ENVIRE_MOTORS_H
+#endif // MARS_PLUGINS_ENVIRE_MANAGER_H

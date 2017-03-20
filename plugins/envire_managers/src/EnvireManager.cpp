@@ -19,7 +19,7 @@
  */
 
 /**
- * \file EnvireMotors.cpp
+ * \file EnvireManager.cpp
  * \author Raul (raul.dominguez@dfki.de)
  * \brief Create
  *
@@ -27,7 +27,7 @@
  */
 
 
-#include "EnvireMotors.hpp"
+#include "EnvireManager.hpp"
 #include <mars/data_broker/DataBrokerInterface.h>
 #include <mars/data_broker/DataPackage.h>
 
@@ -44,34 +44,34 @@
 // Comment-in the following line in order to get debug traces
 //#define DEBUG
 
-using namespace mars::plugins::envire_motors;
+using namespace mars::plugins::envire_managers;
 using namespace mars::utils;
 using namespace mars::interfaces;
 using namespace envire::core;
 
-EnvireMotors::EnvireMotors(lib_manager::LibManager *theManager)
-: MarsPluginTemplate(theManager, "EnvireMotors") {
+EnvireManager::EnvireManager(lib_manager::LibManager *theManager)
+: MarsPluginTemplate(theManager, "EnvireManager") {
 
-    LOG_INFO("[EnvireMotors] set EnvireMotorManager for control->motors");
+    LOG_INFO("[EnvireManager] set EnvireMotorManager for control->motors");
     control->nodes = new EnvireNodeManager(control, theManager);
     control->motors = new EnvireMotorManager(control);
 }
 
-void EnvireMotors::init() {
+void EnvireManager::init() {
     assert(control->graph != nullptr);
     motorIndex = 1;
 }
 
-void EnvireMotors::reset() {
+void EnvireManager::reset() {
 }
 
-EnvireMotors::~EnvireMotors() {
+EnvireManager::~EnvireManager() {
 }
 
-void EnvireMotors::update(sReal time_ms) {
+void EnvireManager::update(sReal time_ms) {
     //control->motors->setMotorValue(1, 0.15);
     // control->motors->setMotorValue(id, value);
 }
 
-DESTROY_LIB(mars::plugins::envire_motors::EnvireMotors);
-CREATE_LIB(mars::plugins::envire_motors::EnvireMotors);
+DESTROY_LIB(mars::plugins::envire_managers::EnvireManager);
+CREATE_LIB(mars::plugins::envire_managers::EnvireManager);

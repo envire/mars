@@ -1,14 +1,14 @@
 set(SOURCES 
 	src/EnvireMotorManager.cpp
 	src/EnvireNodeManager.cpp
-    src/EnvireMotors.cpp
+    src/EnvireManager.cpp
     PARENT_SCOPE
 )
 
 set(HEADERS
 	src/EnvireMotorManager.hpp
 	src/EnvireNodeManager.hpp
-    src/EnvireMotors.hpp
+    src/EnvireManager.hpp
     PARENT_SCOPE
 )
 

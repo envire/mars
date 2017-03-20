@@ -56,7 +56,7 @@
 
 namespace mars {
   namespace plugins {
-  namespace envire_motors {
+  namespace envire_managers {
   
     using namespace std;
     using namespace utils;

@@ -54,7 +54,7 @@
 
 namespace mars {
   namespace plugins {
-        namespace envire_motors {
+        namespace envire_managers {
 
     /**
      *\brief Initialization of a new EnvireNodeManager
