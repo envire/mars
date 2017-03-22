@@ -52,16 +52,17 @@ using namespace envire::core;
 EnvireManager::EnvireManager(lib_manager::LibManager *theManager)
 : MarsPluginTemplate(theManager, "EnvireManager") {
 
-    LOG_INFO("[EnvireManager] set EnvireMotorManager for control->motors");
-    control->nodes = new EnvireNodeManager(control, theManager);
-    control->motors = new EnvireMotorManager(control);
-
     // create graph
     control->graph = std::shared_ptr<envire::core::EnvireGraph> (new envire::core::EnvireGraph());
     
     // init root frame
     std::string center = "center";
-	control->graph->addFrame(center);
+    control->graph->addFrame(center);
+    
+
+    LOG_INFO("[EnvireManager] set EnvireMotorManager for control->motors");
+    control->nodes = new EnvireNodeManager(control, theManager);
+    control->motors = new EnvireMotorManager(control);
 }
 
 void EnvireManager::init() {
