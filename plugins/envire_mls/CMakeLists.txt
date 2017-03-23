@@ -56,6 +56,3 @@ set(ROCK_USE_CXX11 TRUE)
 rock_init(envire_mls 0.1)
 rock_standard_layout()
 
-
-add_subdirectory(testMlsData)
-file(COPY testMlsData DESTINATION ./)

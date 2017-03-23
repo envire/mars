@@ -46,10 +46,8 @@
 #define MLS_FRAME_NAME std::string("mls_01")
 #define DUMPED_MLS_FRAME_NAME std::string("mls_map")
 #define SIM_CENTER_FRAME_NAME std::string("center")
-//#define TEST_MLS_PATH std::string("./testMlsData/MLSMapKalman_waves.bin")
-//#define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/simulation/mars/plugins/envire_mls/testMlsData/MLSMapKalman_waves.bin")
-//#define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/models/environments/dlr_map/mls/mls_map.bin")
-#define TEST_MLS_PATH std::string("/home/dfki.uni-bremen.de/rdominguez/Entern/old_navigation/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
+#define ENV_AUTOPROJ_ROOT "AUTOPROJ_CURRENT_ROOT"
+#define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
 #define MLS_FRAME_TF_X 0.0
 #define MLS_FRAME_TF_Y 0.0
 #define MLS_FRAME_TF_Z 2.0 // Somehow positive values set the mls below the center...
@@ -65,7 +63,7 @@
 #define ROBOT_TEST_ROT  mars::utils::Vector(0,0,0)
 #define ROBOT_NAME std::string("Asguard_v4")
 
-#define ASGUARD_PATH std::string("<%= ENV['AUTOPROJ_CURRENT_ROOT'] %>/models/robots/asguard_v4/smurf/asguard_v4.smurf")
+#define ASGUARD_PATH std::string("/models/robots/asguard_v4/smurf/asguard_v4.smurf")
 
 #define DEBUG 1
 
@@ -239,7 +237,8 @@ namespace mars {
       void EnvireMls::testAddMLS()
       {
 #ifdef DEBUG
-        LOG_DEBUG( "[EnvireMls::addMLS] 1"); 
+        std::string path = std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH;
+        LOG_DEBUG( "[EnvireMls::addMLS] Mls to test with: " + path); 
 #endif
         loadMLSMap(TEST_MLS_PATH);
         // Next is to instantiate a load the correspondent nodeData
@@ -253,16 +252,17 @@ namespace mars {
       void EnvireMls::testAddMLSAndRobot()
       {
 #ifdef DEBUG
-        LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] 1"); 
+        std::string path = std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH;
+        LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] Mls to test with: " + path); 
 #endif
-        loadMLSMap(TEST_MLS_PATH);
+        loadMLSMap(std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH);
         // Next is to instantiate a load the correspondent nodeData
         //addMLSNode();
         
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] 2"); 
 #endif
-        control->sim->loadScene(ASGUARD_PATH, ROBOT_NAME, ROBOT_TEST_POS, ROBOT_TEST_ROT);
+        control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + ASGUARD_PATH, ROBOT_NAME, ROBOT_TEST_POS, ROBOT_TEST_ROT);
 
       }
 
