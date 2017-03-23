@@ -49,7 +49,7 @@ using namespace mars::sim;
 using namespace std;
 using namespace base;
 
-#define DEBUG
+//#define DEBUG
 
 EnvirePhysics::EnvirePhysics(lib_manager::LibManager *theManager)
   : MarsPluginTemplate(theManager, "EnvirePhysics"){
