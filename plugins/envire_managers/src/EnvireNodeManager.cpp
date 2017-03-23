@@ -206,40 +206,40 @@ namespace mars {
 
         // ------ NODE_TYPE_TERRAIN
         if((nodeS->physicMode == mars::interfaces::NODE_TYPE_TERRAIN) && nodeS->terrain ) {
-            LOG_ERROR("EnvireNodeManager::addNode: NODE_TYPE_TERRAIN not implemented: " + nodeS->name);
-            /*if(!nodeS->terrain->pixelData) {
-            if(!control->loadCenter) {
-            LOG_ERROR("EnvireNodeManager:: loadCenter is missing, can not create Node");
-            return INVALID_ID;
-            }
-            bool release_graphics = false;
-            if(!control->loadCenter->loadHeightmap) {
-            mars::interfaces::GraphicsManagerInterface *g = libManager->getLibraryAs<mars::interfaces::GraphicsManagerInterface>("mars_graphics");
-            release_graphics = true;
-            if(!g) {
-            libManager->loadLibrary("mars_graphics", NULL, false, true);
-            g = libManager->getLibraryAs<mars::interfaces::GraphicsManagerInterface>("mars_graphics");
-            }
-            if(g) {
-            control->loadCenter->loadHeightmap = g->getLoadHeightmapInterface();
-            }
-            else {
-            LOG_ERROR("EnvireNodeManager:: loadHeightmap is missing, can not create Node");
-            return INVALID_ID;
-            }
-            }
-            control->loadCenter->loadHeightmap->readPixelData(nodeS->terrain);
-            if (release_graphics){
-            libManager->releaseLibrary("mars_graphics");
-            LOG_INFO("EnvireNodeManager:: mars_graphics was just released");
-            }else{
-            LOG_INFO("EnvireNodeManager:: mars_graphics was not released");
-            }
             if(!nodeS->terrain->pixelData) {
-            LOG_ERROR("EnvireNodeManager::addNode: could not load image for terrain");
-            return INVALID_ID;
+                if(!control->loadCenter) {
+                    LOG_ERROR("EnvireNodeManager:: loadCenter is missing, can not create Node");
+                    return INVALID_ID;
+                }
+                
+                bool release_graphics = false;
+                if(!control->loadCenter->loadHeightmap) {
+                    mars::interfaces::GraphicsManagerInterface *g = libManager->getLibraryAs<mars::interfaces::GraphicsManagerInterface>("mars_graphics");
+                    release_graphics = true;
+                    if(!g) {
+                        libManager->loadLibrary("mars_graphics", NULL, false, true);
+                        g = libManager->getLibraryAs<mars::interfaces::GraphicsManagerInterface>("mars_graphics");
+                    }
+                    if(g) {
+                        control->loadCenter->loadHeightmap = g->getLoadHeightmapInterface();
+                    } else {
+                        LOG_ERROR("EnvireNodeManager:: loadHeightmap is missing, can not create Node");
+                        return INVALID_ID;
+                    }
+                }
+            
+                control->loadCenter->loadHeightmap->readPixelData(nodeS->terrain);
+                if (release_graphics){
+                    libManager->releaseLibrary("mars_graphics");
+                    LOG_INFO("EnvireNodeManager:: mars_graphics was just released");
+                } else {
+                    LOG_INFO("EnvireNodeManager:: mars_graphics was not released");
+                }
+                if(!nodeS->terrain->pixelData) {
+                    LOG_ERROR("EnvireNodeManager::addNode: could not load image for terrain");
+                    return INVALID_ID;
+                }
             }
-            }*/
         }
 
         // this should be done somewhere else
@@ -650,21 +650,20 @@ namespace mars {
   //       obj = NULL;
    }
 
-  //   /**
-  //    * \brief get the full struct of a Node for editing purposes
-  //    * \throw std::runtime_error if the node cannot be found
-  //    */
-   const mars::interfaces::NodeData EnvireNodeManager::getFullNode(mars::interfaces::NodeId id) const {
-          printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-  //     mars::utils::MutexLocker locker(&iMutex);
-  //     NodeMap::const_iterator iter = simNodes.find(id);
-  //     if (iter != simNodes.end())
-  //       return iter->second->getSNode();
-  //     else {
-  //       char msg[128];
-  //       sprintf(msg, "could not find node with id: %lu", id);
-  //       throw std::runtime_error(msg);
-  //     }
+    /**
+     * \brief get the full struct of a Node for editing purposes
+     * \throw std::runtime_error if the node cannot be found
+     */
+    const mars::interfaces::NodeData EnvireNodeManager::getFullNode(mars::interfaces::NodeId id) const {
+        mars::utils::MutexLocker locker(&iMutex);
+        NodeMap::const_iterator iter = simNodes.find(id);
+        if (iter != simNodes.end())
+            return iter->second->getData()->getSNode();
+        else {
+            char msg[128];
+            sprintf(msg, "could not find node with id: %lu", id);
+            throw std::runtime_error(msg);
+        }
     }
 
 
@@ -1638,18 +1637,17 @@ namespace mars {
   //     iMutex.unlock();
      }
 
-     mars::interfaces::NodeId EnvireNodeManager::getID(const std::string& node_name) const {
-      printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-  //     iMutex.lock();
-  //     NodeMap::const_iterator iter;
-  //     for(iter = simNodes.begin(); iter != simNodes.end(); iter++) {
-  //       if (iter->second->getName() == node_name)  {
-  //         iMutex.unlock();
-  //         return iter->first;
-  //       }
-  //     }
-  //     iMutex.unlock();
-  //     return INVALID_ID;
+    mars::interfaces::NodeId EnvireNodeManager::getID(const std::string& node_name) const {
+        iMutex.lock();
+        NodeMap::const_iterator iter;
+        for(iter = simNodes.begin(); iter != simNodes.end(); iter++) {
+            if (iter->second->getData()->getName() == node_name)  {
+                iMutex.unlock();
+                return iter->first;
+            }
+        }
+        iMutex.unlock();
+        return INVALID_ID;
      }
 
      void EnvireNodeManager::pushToUpdate(mars::sim::SimNode* node) {
