@@ -13,5 +13,6 @@
     <depend package="envire/envire_smurf" />
     <depend package="tools/smurf" />
     <depend package="simulation/mars/sim" />
+    <depend package="slam/maps" />
     <tags>needs_opt</tags>
 </package>

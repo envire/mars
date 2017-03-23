@@ -257,7 +257,7 @@ namespace mars {
 #endif
         loadMLSMap(TEST_MLS_PATH);
         // Next is to instantiate a load the correspondent nodeData
-        addMLSNode();
+        //addMLSNode();
         
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] 2"); 

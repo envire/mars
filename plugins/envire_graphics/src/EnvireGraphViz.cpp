@@ -25,6 +25,7 @@
 #include <mars/sim/ConfigMapItem.h>
 #include <base/TransformWithCovariance.hpp>
 #include <envire_core/graph/EnvireGraph.hpp>
+
 #include <stdlib.h>
 #include <algorithm>
 #include <cassert>
@@ -61,6 +62,7 @@ void EnvireGraphViz::init()
   GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapKalman>>::subscribe(control->graph.get());
   if(originId.empty())
   {
     envire::core::FrameId center = SIM_CENTER_FRAME_NAME; 
@@ -107,6 +109,7 @@ void EnvireGraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
     NodeData node1;
     node1.fromConfigMap(&pItem->getData(), "");
 
+  // MLS objects are visualized using their own osg visual (see void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<maps::grid::MLSMapKalman>>& e))
   if(node1.physicMode != NODE_TYPE_MLS) //TODO: implement a visualization for mls
   {    
     //assert that this item has not been added before
@@ -245,6 +248,21 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
     }
 }
 
+void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<maps::grid::MLSMapKalman>>& e)
+{
+  LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapKalman>] Added an MLS to the graph, let's visualize it");
+  maps::grid::MLSMapKalman map = e.item->getData();
+  osgNode = createMainNode(); // vizkit3d Protected
+  updateData(map);
+  updateMainNode(osgNode);// vizkit3d Protected
+  osgGroup = getVizNode();
+  if (!osgGroup){ LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapKalman>] The generated osgGroup is null");}
+  else {LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapKalman>] The OSG group is not null");}
+  control->graphics->addOSGNode(osgNode);
+  // We don't get any id back from addOSGNode, so I guess we don't need the following:
+  //uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+}
+
 void EnvireGraphViz::addVisual(const envire::smurf::Visual& visual, const FrameId& frameId,
                          const boost::uuids::uuid& uuid)
 {
@@ -347,6 +365,7 @@ void EnvireGraphViz::setNodeDataMaterial(NodeData& nodeData, boost::shared_ptr< 
 
 
 void EnvireGraphViz::update(sReal time_ms) {
+  //updateMainNode(osgNode);
   const float timeBetweenFramesMs = 1000.0 / visualUpdateRateFps;
   timeSinceLastUpdateMs += time_ms;
   
@@ -379,6 +398,7 @@ void EnvireGraphViz::updateVisuals()
   if (tree.hasRoot() == false)
     return;
 
+
   tree.visitBfs(tree.root, [&](GraphTraits::vertex_descriptor vd, 
                                GraphTraits::vertex_descriptor parent)
   {
@@ -394,7 +414,7 @@ template <class physicsType> void EnvireGraphViz::updatePosition(const vertex_de
   const FrameId& frameId = control->graph->getFrameId(vertex);
   base::Vector3d translation;
   base::Quaterniond orientation;
-   
+
   if(originId.compare(frameId) == 0)
   {
     translation << 0, 0, 0;

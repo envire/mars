@@ -46,6 +46,9 @@
 #include <envire_core/graph/TreeView.hpp>
 #include <envire_core/graph/Path.hpp>
 
+#include <vizkit3d/MLSMapVisualization.hpp>
+#include <maps/grid/MLSMap.hpp>
+
 namespace envire {namespace core {
   class Transform;
 }}
@@ -63,7 +66,9 @@ namespace mars {
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Collidable>>,
-                       public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>,
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapKalman>>,
+                       public vizkit3d::MLSMapVisualization
       {
 
       public:
@@ -87,6 +92,7 @@ namespace mars {
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e);
+        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<maps::grid::MLSMapKalman>>& e);
         virtual void frameAdded(const envire::core::FrameAddedEvent& e);
 
         // CFGClient methods
@@ -152,7 +158,8 @@ namespace mars {
         bool viewFrames = false;
         const int visualUpdateRateFps = 30;
         float timeSinceLastUpdateMs = 0; 
-
+        osg::ref_ptr<osg::Group> osgGroup;
+        osg::ref_ptr<osg::Node>  osgNode;
       }; // end of class definition TestTreeMars
 
     } // end of namespace TestTreeMars
