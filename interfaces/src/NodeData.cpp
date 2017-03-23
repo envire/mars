@@ -105,6 +105,8 @@ namespace mars {
 
       name = trim(config->get("name", name));
 
+      frameID = trim(config->get("frameID", frameID)); 
+
       { // handle node mass
         if((it = config->find("mass")) != config->end()) {
           mass = it->second;
@@ -298,6 +300,7 @@ namespace mars {
       }
 
       SET_VALUE("name", name, writeDefaults);
+      SET_VALUE("frameID", frameID, writeDefaults);
       SET_VALUE("mass", mass, writeDefaults);
       SET_VALUE("density", density, writeDefaults);
       SET_VALUE("noPhysical", noPhysical, writeDefaults);

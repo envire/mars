@@ -81,11 +81,6 @@ namespace mars {
                                                bool reload = false,
                                                bool loadGraphics = true);
 
-            mars::interfaces::NodeId addNode(mars::interfaces::NodeData *nodeS,
-                                               envire::core::FrameId frame_id,
-                                               bool reload = false,
-                                               bool loadGraphics = true);
-
             virtual mars::interfaces::NodeId addTerrain(mars::interfaces::terrainStruct *terrainS);
             virtual std::vector<mars::interfaces::NodeId> addNode(std::vector<mars::interfaces::NodeData> v_NodeData);
             virtual mars::interfaces::NodeId addPrimitive(mars::interfaces::NodeData *snode);

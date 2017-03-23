@@ -101,23 +101,13 @@ namespace mars {
 
     mars::interfaces::NodeId EnvireNodeManager::addNode(mars::interfaces::NodeData *nodeS, bool reload,
                                 bool loadGraphics) {
-        //TODO: replace hardcoded center frame id
-        addNode(nodeS, "center", reload, loadGraphics);
-    }    
 
-    /**
-     *\brief Add a node to the node pool of the simulation
-     *
-     * It is very important to assure the serialization between the threads to
-     * have the desired results.
-     *
-     * pre:
-     *     - nodeS->groupID >= 0
-     */
-    mars::interfaces::NodeId EnvireNodeManager::addNode(mars::interfaces::NodeData *nodeS, 
-                                envire::core::FrameId frame_id,
-                                bool reload,
-                                bool loadGraphics) {
+        // FIX: if frameID is not set
+        // FIX: add source and target frame id in node data
+        // so we can specify where the node should be placed
+        if (nodeS->frameID.empty())
+            nodeS->frameID = nodeS->name;
+
         iMutex.lock();
         nodeS->index = next_node_id;
         next_node_id++;
@@ -271,10 +261,19 @@ namespace mars {
             // put all data to the correct place
             //      newNode->setSNode(*nodeS);
             newNode->setInterface(newNodeInterface);
+
+            // if frame is not in the graph, create one
+            if (control->graph->containsFrame(nodeS->frameID) == false)
+            {
+                LOG_DEBUG("EnvireNodeManager::addNode: create new transformation between center and " + nodeS->frameID);
+                envire::core::Transform nodeTransf(nodeS->pos, nodeS->rot);
+                nodeTransf.time = base::Time::now();
+                control->graph->addTransform(nodeS->frameID, "center", nodeTransf);                
+            }
             
             // add node into the graph
             SimNodeItemPtr newNodeItemPtr( new SimNodeItem(newNode));        
-            control->graph->addItemToFrame(frame_id, newNodeItemPtr);   
+            control->graph->addItemToFrame(nodeS->frameID, newNodeItemPtr);   
                      
             // add node into the node map
             iMutex.lock();         

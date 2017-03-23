@@ -96,6 +96,8 @@ namespace mars {
         pos = position;
         rot = orientation;
         graphicsID1 = graphicsID2 = 0;
+
+        frameID = "";
       }
 
       /**
@@ -144,6 +146,8 @@ namespace mars {
        * The name of the node. \verbatim Default value: "" \endverbatim
        */
       std::string name;
+
+      std::string frameID;
 
       /** The original object name; needed for importing objects from files (like
        * wavefront object files). \n
