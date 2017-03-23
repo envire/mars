@@ -381,12 +381,10 @@ void EnvirePhysics::updatePositions( const GraphTraits::vertex_descriptor origin
     using IteratorSimNode = EnvireGraph::ItemIterator<simNodeType>;
     IteratorSimNode begin_sim, end_sim;
     boost::tie(begin_sim, end_sim) = control->graph->getItems<simNodeType>(target);
-    double calc_ms = control->sim->getCalcMs();
+
     for (;begin_sim!=end_sim; begin_sim++)
     {
       const std::shared_ptr<mars::sim::SimNode> sim_node = begin_sim->getData();
-
-      sim_node->update(calc_ms);
 
       TransformWithCovariance absolutTransform;
       absolutTransform.translation = sim_node->getPosition();

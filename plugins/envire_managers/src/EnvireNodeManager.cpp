@@ -1323,16 +1323,19 @@ namespace mars {
      }
 
 
-  //   /**
-  //    *\brief Updates the Node values of dynamical nodes from the physics.
-  //    */
-     void EnvireNodeManager::updateDynamicNodes(mars::interfaces::sReal calc_ms, bool physics_thread) {
-      printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-  //     mars::utils::MutexLocker locker(&iMutex);
-  //     NodeMap::iterator iter;
-  //     for(iter = simNodesDyn.begin(); iter != simNodesDyn.end(); iter++) {
-  //       iter->second->update(calc_ms, physics_thread);
-  //     }
+    /**
+     *\brief Updates the Node values of dynamical nodes from the physics.
+     */
+    void EnvireNodeManager::updateDynamicNodes(mars::interfaces::sReal calc_ms, bool physics_thread) {
+        mars::utils::MutexLocker locker(&iMutex);
+
+        // update the physic of sim node
+        NodeMap::iterator iter;
+        for(iter = simNodesDyn.begin(); iter != simNodesDyn.end(); iter++) {
+            iter->second->getData()->update(calc_ms, physics_thread);
+        }
+
+        // FIX: update Graph
     }
 
      void EnvireNodeManager::preGraphicsUpdate() {

@@ -394,6 +394,7 @@ namespace mars {
       LOG_DEBUG("Step World: %ld", getTimeDiff(startTime));
 #endif
 
+      control->nodes->updateDynamicNodes(calc_ms);
       control->joints->updateJoints(calc_ms);
       control->motors->updateMotors(calc_ms);
       control->controllers->updateControllers(calc_ms);
