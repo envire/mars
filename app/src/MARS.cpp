@@ -196,7 +196,6 @@ namespace mars {
             libManager->loadLibrary("main_gui");
             libManager->loadLibrary("mars_gui");
             libManager->loadLibrary("osgviz_mars_graphics");            
-            libManager->loadLibrary("envire_graphics");
           }
 
           libManager->loadLibrary("envire_managers");
@@ -206,6 +205,11 @@ namespace mars {
           //libManager->loadLibrary("mars_smurf_loader");
           libManager->loadLibrary("envire_physics");
           libManager->loadLibrary("envire_sensors");
+
+          if (!noGUI)
+          {
+            libManager->loadLibrary("envire_graphics");
+          }
 
         }
       }
