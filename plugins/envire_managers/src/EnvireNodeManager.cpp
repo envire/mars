@@ -74,10 +74,10 @@ namespace mars {
                                                  libManager(theManager),
                                                  control(c)
     {
-      if(control->graphics) {
-        mars::interfaces::GraphicsUpdateInterface *gui = static_cast<mars::interfaces::GraphicsUpdateInterface*>(this);
-        control->graphics->addGraphicsUpdateInterface(gui);
-      }
+      //if(control->graphics) {
+      //  mars::interfaces::GraphicsUpdateInterface *gui = static_cast<mars::interfaces::GraphicsUpdateInterface*>(this);
+      //  control->graphics->addGraphicsUpdateInterface(gui);
+      //}
     }
 
 
@@ -108,6 +108,9 @@ namespace mars {
         if (nodeS->frameID.empty())
             nodeS->frameID = nodeS->name;
 
+
+        std::cout << "[EnvireNodeManager::addNode] at position: " << nodeS->pos.x() << " " << nodeS->pos.y() << " " << nodeS->pos.z() << std::endl;
+        
         iMutex.lock();
         nodeS->index = next_node_id;
         next_node_id++;
@@ -115,7 +118,8 @@ namespace mars {
 
         // ------ NOT RELOADED OBJECTS -> TERRAIN
         if (reload == false) {
-            iMutex.lock();
+            LOG_ERROR("EnvireNodeManager::addNode: Reload is not implemented: " + nodeS->name);
+            /*iMutex.lock();
 
             //TODO: check if we can take out the mars_graphics
 
@@ -160,7 +164,7 @@ namespace mars {
                     simNodesReload.back().c_params.friction_direction1 = tmp;
                 }
             }
-            iMutex.unlock();
+            iMutex.unlock();*/
         }
 
         // to check some preconditions
@@ -196,6 +200,7 @@ namespace mars {
 
         // ------ NODE_TYPE_TERRAIN
         if((nodeS->physicMode == mars::interfaces::NODE_TYPE_TERRAIN) && nodeS->terrain ) {
+            LOG_DEBUG("EnvireNodeManager::addNode: NODE_TYPE_TERRAIN and nodeS->terrain: " + nodeS->name);
             if(!nodeS->terrain->pixelData) {
                 if(!control->loadCenter) {
                     LOG_ERROR("EnvireNodeManager:: loadCenter is missing, can not create Node");
@@ -243,7 +248,8 @@ namespace mars {
         std::shared_ptr<mars::sim::SimNode> newNode(new mars::sim::SimNode(control, *nodeS));
 
         // ------ PHYSICAL NODE
-        if(nodeS->noPhysical == false) {     
+        if(nodeS->noPhysical == false) {  
+            LOG_DEBUG("EnvireNodeManager::addNode: nodeS->noPhysical: " + nodeS->name);   
             // create an interface object to the physics
             mars::interfaces::NodeInterface *newNodeInterface = mars::sim::PhysicsMapper::newNodePhysics(control->sim->getPhysics());
 
@@ -265,10 +271,11 @@ namespace mars {
             // if frame is not in the graph, create one
             if (control->graph->containsFrame(nodeS->frameID) == false)
             {
-                LOG_DEBUG("EnvireNodeManager::addNode: create new transformation between center and " + nodeS->frameID);
+                LOG_DEBUG("[EnvireNodeManager::addNode] create new transformation between center and " + nodeS->frameID);
+                std::cout << "[EnvireNodeManager::addNode] at position: " << nodeS->pos.x() << " " << nodeS->pos.y() << " " << nodeS->pos.z() << std::endl;
                 envire::core::Transform nodeTransf(nodeS->pos, nodeS->rot);
                 nodeTransf.time = base::Time::now();
-                control->graph->addTransform(nodeS->frameID, "center", nodeTransf);                
+                control->graph->addTransform("center", nodeS->frameID, nodeTransf);                
             }
             
             // add node into the graph
@@ -286,32 +293,38 @@ namespace mars {
             mars::interfaces::NodeId id;
             // TODO: graphic manager
             if(control->graphics) {
+                // Draw visual Representation
                 if(loadGraphics) {
                     id = control->graphics->addDrawObject(*nodeS, visual_rep & 1);
                     if(id) {
                         newNode->setGraphicsID(id);
-                        if(!reload) {
-                            simNodesReload.back().graphicsID1 = id;
-                        }
+                        //if(!reload) {
+                        //    simNodesReload.back().graphicsID1 = id;
+                        //}
                     }
                 } else {
                     newNode->setGraphicsID(nodeS->graphicsID1);
                 }
 
-                //        NEW_NODE_STRUCT(physicalRep);
-                mars::interfaces::NodeData physicalRep;
-                physicalRep = *nodeS;
-                physicalRep.material = nodeS->material;
-                physicalRep.material.exists = 1;
-                physicalRep.material.transparency = 0.3;
-                physicalRep.material.name += "_trans";
-                physicalRep.visual_offset_pos = mars::utils::Vector(0.0, 0.0, 0.0);
-                physicalRep.visual_offset_rot = mars::utils::Quaternion::Identity();
-                physicalRep.visual_size = mars::utils::Vector(0.0, 0.0, 0.0);
-                physicalRep.map["sharedDrawID"] = 0lu;
-                physicalRep.map["visualType"] = mars::interfaces::NodeData::toString(nodeS->physicMode);
+                LOG_DEBUG("EnvireNodeManager::addNode: nodeS->noPhysical: " + nodeS->name);   
 
                 if(nodeS->physicMode != mars::interfaces::NODE_TYPE_TERRAIN) {
+                    LOG_DEBUG("EnvireNodeManager::addNode: nodeS->physicMode != mars::interfaces::NODE_TYPE_TERRAIN: " + nodeS->name);   
+
+                    // NEW_NODE_STRUCT(physicalRep);
+                    // Draw physical representation -> collision objects
+                    mars::interfaces::NodeData physicalRep;
+                    physicalRep = *nodeS;
+                    physicalRep.material = nodeS->material;
+                    physicalRep.material.exists = 1;
+                    physicalRep.material.transparency = 0.3;
+                    physicalRep.material.name += "_trans";
+                    physicalRep.visual_offset_pos = mars::utils::Vector(0.0, 0.0, 0.0);
+                    physicalRep.visual_offset_rot = mars::utils::Quaternion::Identity();
+                    physicalRep.visual_size = mars::utils::Vector(0.0, 0.0, 0.0);
+                    physicalRep.map["sharedDrawID"] = 0lu;
+                    physicalRep.map["visualType"] = mars::interfaces::NodeData::toString(nodeS->physicMode);                    
+
                     if(nodeS->physicMode != mars::interfaces::NODE_TYPE_MESH) {
                         physicalRep.filename = "PRIMITIVE";
                         //physicalRep.filename = nodeS->filename;
@@ -324,9 +337,9 @@ namespace mars {
                                                         visual_rep & 2);
                         if(id) {
                             newNode->setGraphicsID2(id);
-                            if(!reload) {
-                                simNodesReload.back().graphicsID2 = id;
-                            }
+                            //if(!reload) {
+                            //    simNodesReload.back().graphicsID2 = id;
+                            //}
                         }
                     } else {
                         newNode->setGraphicsID2(nodeS->graphicsID2);
@@ -1611,32 +1624,35 @@ namespace mars {
      }
 
 
-     void EnvireNodeManager::setVisualRep(mars::interfaces::NodeId id, int val) {
-      printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-  //     if(!(control->graphics))
-  //       return;
-  //     visual_rep = val;
-  //     NodeMap::iterator iter;
-  //     int current;
+    void EnvireNodeManager::setVisualRep(mars::interfaces::NodeId id, int val) {
+        std::cout << "[EnvireNodeManager::setVisualRep] val: " << val << std::endl;
 
-  //     iMutex.lock();
-  //     for(iter = simNodes.begin(); iter != simNodes.end(); iter++) {
-  //       if(id == 0 || iter->first == id) {
-  //         current = iter->second->getVisualRep();
-  //         if(val & 1 && !(current & 1))
-  //           control->graphics->setDrawObjectShow(iter->second->getGraphicsID(), true);
-  //         else if(!(val & 1) && current & 1)
-  //           control->graphics->setDrawObjectShow(iter->second->getGraphicsID(), false);
-  //         if(val & 2 && !(current & 2))
-  //           control->graphics->setDrawObjectShow(iter->second->getGraphicsID2(), true);
-  //         else if(!(val & 2) && current & 2)
-  //           control->graphics->setDrawObjectShow(iter->second->getGraphicsID2(), false);
 
-  //         iter->second->setVisualRep(val);
-  //         if(id != 0) break;
-  //       }
-  //     }
-  //     iMutex.unlock();
+        if(!(control->graphics))
+            return;
+        visual_rep = val;
+        NodeMap::iterator iter;
+        int current;
+
+        iMutex.lock();
+        for(iter = simNodes.begin(); iter != simNodes.end(); iter++) {
+            if(id == 0 || iter->first == id) {
+                current = iter->second->getData()->getVisualRep();
+                std::cout << "[EnvireNodeManager::setVisualRep] current: " << current << std::endl;
+                if(val & 1 && !(current & 1))
+                    control->graphics->setDrawObjectShow(iter->second->getData()->getGraphicsID(), true);
+                else if(!(val & 1) && current & 1)
+                    control->graphics->setDrawObjectShow(iter->second->getData()->getGraphicsID(), false);
+                if(val & 2 && !(current & 2))
+                    control->graphics->setDrawObjectShow(iter->second->getData()->getGraphicsID2(), true);
+                else if(!(val & 2) && current & 2)
+                    control->graphics->setDrawObjectShow(iter->second->getData()->getGraphicsID2(), false);
+
+                iter->second->getData()->setVisualRep(val);
+                if(id != 0) break;
+            }
+        }
+        iMutex.unlock();
      }
 
     mars::interfaces::NodeId EnvireNodeManager::getID(const std::string& node_name) const {

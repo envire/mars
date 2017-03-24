@@ -60,6 +60,8 @@ void EnvireGraphViz::init()
   GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph.get());
+
+  GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>::subscribe(control->graph.get());
 }
 
 void EnvireGraphViz::reset() {
@@ -92,6 +94,24 @@ void EnvireGraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces
     node.pos = fromOrigin.transform.translation;
     node.rot = fromOrigin.transform.orientation;
 }   
+
+void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>& e)
+{
+    LOG_DEBUG("[EnvireGraphViz::itemAdded] SimNode is added into the graph");
+
+    // FIX: so we can change the visual representation, visual and/or physical
+    int  visual_rep = 1;
+
+    std::shared_ptr<mars::sim::SimNode> simNode = e.item->getData();
+    // Draw Visual Representation
+    mars::interfaces::NodeData nodeData = simNode->getSNode();
+    mars::interfaces::NodeId id = control->graphics->addDrawObject(nodeData, visual_rep & 1);
+    if(id) {
+        simNode->setGraphicsID(id);
+    } else {
+        simNode->setGraphicsID(nodeData.graphicsID1);
+    }
+}
 
 void EnvireGraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
 {

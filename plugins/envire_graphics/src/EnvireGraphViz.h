@@ -46,6 +46,8 @@
 #include <envire_core/graph/TreeView.hpp>
 #include <envire_core/graph/Path.hpp>
 
+#include <mars/sim/SimNode.h>
+
 namespace envire {namespace core {
   class Transform;
 }}
@@ -63,7 +65,8 @@ namespace mars {
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Collidable>>,
-                       public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>,
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>
       {
 
       public:
@@ -88,6 +91,8 @@ namespace mars {
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e);
         virtual void frameAdded(const envire::core::FrameAddedEvent& e);
+
+        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>& e);
 
         // CFGClient methods
         virtual void cfgUpdateProperty(cfg_manager::cfgPropertyStruct _property);

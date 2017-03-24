@@ -111,14 +111,14 @@ namespace mars {
       }
       
       void EnvireSensors::update(sReal time_ms) {
-        if (velodyneFrame != "")
-        {
-          updateVelodyneSim();
-        }
-        if (joint6dof_frame.size() != 0)
-        {
-            updateJoint6DOF();
-        }
+        //if (velodyneFrame != "")
+        //{
+         // updateVelodyneSim();
+        //}
+        //if (joint6dof_frame.size() != 0)
+        //{
+         //   updateJoint6DOF();
+        //}
       }
 
       void EnvireSensors::itemAdded(const TypedItemAddedEvent<Item<smurf::Sensor>>& e)

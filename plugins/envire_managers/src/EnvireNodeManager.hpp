@@ -179,7 +179,7 @@ namespace mars {
             NodeMap simNodes;
             NodeMap simNodesDyn;
             NodeMap nodesToUpdate;
-            std::list<mars::interfaces::NodeData> simNodesReload;
+            //std::list<mars::interfaces::NodeData> simNodesReload;
             unsigned long maxGroupID;
             lib_manager::LibManager *libManager;
             mutable mars::utils::Mutex iMutex;
