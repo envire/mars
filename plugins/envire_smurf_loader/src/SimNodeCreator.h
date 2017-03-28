@@ -42,6 +42,7 @@
 
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/SimulatorInterface.h>
+#include <mars/interfaces/sim/NodeManagerInterface.h>
 
 #include <mars/sim/PhysicsMapper.h>
 #include <mars/sim/SimNode.h>
@@ -51,7 +52,12 @@
 #include <envire_core/items/Transform.hpp>
 #include <envire_core/items/Item.hpp>
 
+#include <envire_smurf/Visual.hpp>
+
 #include <smurf/Robot.hpp>
+
+#include <mars/utils/misc.h>
+#include <mars/utils/mathUtils.h>
 
 namespace mars {
   namespace plugins {
@@ -66,6 +72,11 @@ namespace mars {
             std::string type_name;
 
             virtual mars::interfaces::NodeData createNodeData(const ItemDataType &item_data) = 0;
+
+            void poseToVectorAndQuaternion(const urdf::Pose &pose, mars::utils::Vector *v, mars::utils::Quaternion*q) {
+                *v = mars::utils::Vector(pose.position.x, pose.position.y, pose.position.z);
+                *q = mars::utils::quaternionFromMembers(pose.rotation); //Quaternion(pose.rotation.x, pose.rotation.y, pose.rotation.z, pose.rotation.w);
+            }            
 
         public:
             SimNodeCreator(mars::interfaces::ControlCenter *control, envire::core::FrameId origin_frame_id, std::string type_name)
@@ -96,12 +107,14 @@ namespace mars {
 
                     // create NodeData
                     mars::interfaces::NodeData node_data = createNodeData(item_data);
+                    node_data.frameID = frame_id;
 
                     // set Pose of NodeData according to Frame
                     setPose(node_data, frame_id);
 
                     // create SimNode with NodeData
-                    createSimNode(node_data, frame_id, item_data.getName()); 
+                    //createSimNode(node_data, frame_id, item_data.getName()); 
+                    control->nodes->addNode(&node_data);
                 }         
             }
 
@@ -175,14 +188,31 @@ namespace mars {
         private:
             virtual mars::interfaces::NodeData createNodeData(const smurf::Frame &frame)
             {
+                // FIX: do we need to add frames into simuation
+                // to create simnode for each frame???
+
+                boost::shared_ptr<urdf::Sphere> sphere( new urdf::Sphere);
+                sphere->radius = 0.01;
+                //y and z are unused
+                base::Vector3d extents(sphere->radius, 0, 0);
+
                 // create NodeData
                 mars::interfaces::NodeData node;
                 node.init(frame.getName());
-                node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, mars::utils::Vector(0.5, 0.5, 0.5), 0.00001);
+                node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, extents, 0.00001); //mass is zero because it doesnt matter for visual representation
+                node.material.emissionFront = mars::utils::Color(1.0, 0.0, 0.0, 1.0);
                 node.c_params.coll_bitmask = 0;
                 node.movable = true;
                 node.groupID = frame.getGroupId();
-                node.density = 0.0;               
+                node.density = 0.0;      
+
+                // FIX: show the frame as small spheres
+                // change to physical representation for example
+
+                // add empty visual
+                node.map["origname"] = "";
+                node.map["materialName"] = "_emptyVisualMaterial";
+                node.map["visualType"] = "empty";                           
                 
                 return node; 
             }            
@@ -198,16 +228,77 @@ namespace mars {
         private:         
             virtual mars::interfaces::NodeData createNodeData(const smurf::Collidable &collidable)
             {
-                urdf::Collision collision = collidable.getCollision();                
-                // create NodeData
-                mars::interfaces::NodeData node;
-                node.init(collidable.getName());
-                node.fromGeometry(collision.geometry);
-                node.density = 0.0;
-                node.mass = 0.00001;
-                node.movable = true;
-                node.c_params.fromSmurfCP(collidable.getContactParams());
-                node.groupID = collidable.getGroupId();         
+                urdf::Collision collision = collidable.getCollision(); 
+
+                configmaps::ConfigMap config;
+                std::string name;
+                if (collision.name.empty()) {
+                    name = "collision_"; // FIXME
+                } else {
+                    name = collision.name;
+                }
+
+                // init node
+                config["name"] = name;
+                //config["index"] = nextNodeID++;
+                config["groupid"] = collidable.getGroupId(); 
+                config["movable"] = true ;//config["movable"] = !fixed;
+                //config["relativeid"] = currentNodeID;
+                config["mass"] = 0.001;
+                config["density"] = 0.0;
+
+                // parse geometry
+                urdf::GeometrySharedPtr tmpGeometry = collision.geometry;
+                mars::utils::Vector size(0.0, 0.0, 0.0);
+                mars::utils::Vector scale(1.0, 1.0, 1.0);
+                urdf::Vector3 tmpV;
+                switch (tmpGeometry->type) {
+                    case urdf::Geometry::SPHERE:
+                        size.x() = ((urdf::Sphere*) tmpGeometry.get())->radius;
+                        config["physicmode"] = "sphere";
+                        break;
+                    case urdf::Geometry::BOX:
+                        tmpV = ((urdf::Box*) tmpGeometry.get())->dim;
+                        size = mars::utils::Vector(tmpV.x, tmpV.y, tmpV.z);
+                        config["physicmode"] = "box";
+                        break;
+                    case urdf::Geometry::CYLINDER:
+                        size.x() = ((urdf::Cylinder*) tmpGeometry.get())->radius;
+                        size.y() = ((urdf::Cylinder*) tmpGeometry.get())->length;
+                        config["physicmode"] = "cylinder";
+                        break;
+                    case urdf::Geometry::MESH:
+                        tmpV = ((urdf::Mesh*) tmpGeometry.get())->scale;
+                        scale = mars::utils::Vector(tmpV.x, tmpV.y, tmpV.z);
+                        mars::utils::vectorToConfigItem(&config["physicalScale"][0], &scale);
+                        config["filename"] = ((urdf::Mesh*) tmpGeometry.get())->filename;
+                        config["origname"] = "";
+                        config["physicmode"] = "mesh";
+                        config["loadSizeFromMesh"] = true;
+                        break;
+                    default:
+                        config["physicmode"] = "undefined";
+                        break;
+                }
+                mars::utils::vectorToConfigItem(&config["extend"][0], &size);
+                mars::utils::vectorToConfigItem(&config["scale"][0], &scale);
+                // FIXME: We need to correctly deal with scale and size in MARS
+                //       if we have a mesh here, as a first hack we use the scale as size
+
+                // pose
+                mars::utils::Vector v;
+                mars::utils::Quaternion q;
+                poseToVectorAndQuaternion(collision.origin, &v, &q);
+                mars::utils::vectorToConfigItem(&config["position"][0], &v);
+                mars::utils::quaternionToConfigItem(&config["rotation"][0], &q);
+
+                // addEmptyVisualToNode(&config);
+                config["origname"] = "";
+                config["materialName"] = "_emptyVisualMaterial";
+                config["visualType"] = "empty";     
+
+                mars::interfaces::NodeData node;  
+                node.fromConfigMap(&config, "", control->loadCenter);
                 
                 return node; 
             }      
@@ -225,28 +316,163 @@ namespace mars {
             {
                 urdf::Inertial inertial_urd = inertial.getUrdfInertial();
 
-                // create NodeData
-                mars::interfaces::NodeData node;                    
-                node.init(inertial.getName());
-                node.initPrimitive(mars::interfaces::NODE_TYPE_SPHERE, mars::utils::Vector(0.1, 0.1, 0.1), inertial_urd.mass);
-                node.groupID = inertial.getGroupId();
-                node.movable = true;
-                node.inertia[0][0] = inertial_urd.ixx;
-                node.inertia[0][1] = inertial_urd.ixy;
-                node.inertia[0][2] = inertial_urd.ixz;
-                node.inertia[1][0] = inertial_urd.ixy;
-                node.inertia[1][1] = inertial_urd.iyy;
-                node.inertia[1][2] = inertial_urd.iyz;
-                node.inertia[2][0] = inertial_urd.ixz;
-                node.inertia[2][1] = inertial_urd.iyz;
-                node.inertia[2][2] = inertial_urd.izz;
-                node.inertia_set = true;
-                node.c_params.coll_bitmask = 0;
-                node.density = 0.0;         
+                configmaps::ConfigMap config;
+                std::string name;
+                if (inertial.getName().empty()) {
+                    name = "inertial_"; // FIXME
+                } else {
+                    name = "inertial_" + inertial.getName();
+                }
+
+                // init node
+                config["name"] = name;
+                //config["index"] = nextNodeID++;
+                config["groupid"] = inertial.getGroupId();
+                config["movable"] = true;
+                //config["relativeid"] = currentNodeID;
+
+                // add inertial information
+
+                config["density"] = 0.0;
+                config["mass"] = inertial_urd.mass;
+                config["inertia"] = true;
+                config["i00"] = inertial_urd.ixx;
+                config["i01"] = inertial_urd.ixy;
+                config["i02"] = inertial_urd.ixz;
+                config["i10"] = inertial_urd.ixy;
+                config["i11"] = inertial_urd.iyy;
+                config["i12"] = inertial_urd.iyz;
+                config["i20"] = inertial_urd.ixz;
+                config["i21"] = inertial_urd.iyz;
+                config["i22"] = inertial_urd.izz;
+
+                // pose
+                mars::utils::Vector v;
+                mars::utils::Quaternion q;
+                urdf::Pose pose;
+                pose = inertial_urd.origin;
+                poseToVectorAndQuaternion(pose, &v, &q);
+                mars::utils::vectorToConfigItem(&config["position"][0], &v);
+                mars::utils::quaternionToConfigItem(&config["rotation"][0], &q);
+
+                // complete node
+                //addEmptyVisualToNode(&config);
+                config["origname"] = "";
+                config["materialName"] = "_emptyVisualMaterial";
+                config["visualType"] = "empty";
+                //addEmptyCollisionToNode(&config);
+                mars::utils::Vector size(0.01, 0.01, 0.01);
+                config["physicmode"] = "box";
+                config["coll_bitmask"] = 0;                
+
+                mars::interfaces::NodeData node;  
+                node.fromConfigMap(&config, "", control->loadCenter);
                 
                 return node; 
             }               
         };
+
+        class SimNodeCreatorVisual: public SimNodeCreator<envire::smurf::Visual>
+        {
+        public:
+            SimNodeCreatorVisual(mars::interfaces::ControlCenter *control, envire::core::FrameId origin_frame_id)
+                : SimNodeCreator(control, origin_frame_id, std::string("envire::smurf::Visual"))
+            {}    
+
+        private:
+
+            virtual mars::interfaces::NodeData createNodeData(const envire::smurf::Visual &visual)
+            {
+                configmaps::ConfigMap config;
+                std::string name;
+                if (visual.name.empty()) {
+                    name = "visual_"; // FIXME
+                } else {
+                    name = visual.name;
+                }
+
+                // init node
+                config["name"] = name;
+                config["groupid"] = visual.groupId;          // FIX: set right group id
+                config["movable"] = true;     // FIX
+                //config["relativeid"] = currentNodeID
+                config["mass"] = 0.001;
+                config["density"] = 0.0;
+                mars::utils::Vector v(0.001, 0.001, 0.001);
+                mars::utils::vectorToConfigItem(&config["extend"][0], &v);
+
+                  // parse position
+                mars::utils::Quaternion q;
+                poseToVectorAndQuaternion(visual.origin, &v, &q);
+                mars::utils::vectorToConfigItem(&config["position"][0], &v);
+                mars::utils::quaternionToConfigItem(&config["rotation"][0], &q);
+
+                  // parse geometry
+                urdf::GeometrySharedPtr tmpGeometry = visual.geometry;
+                mars::utils::Vector size(0.0, 0.0, 0.0);
+                mars::utils::Vector scale(1.0, 1.0, 1.0);
+                urdf::Vector3 tmpV;
+                config["filename"] = "PRIMITIVE";
+                switch (tmpGeometry->type) {
+                  case urdf::Geometry::SPHERE:
+                    size.x() = 2.0*((urdf::Sphere*) tmpGeometry.get())->radius;
+                    size.y() = 2.0*((urdf::Sphere*) tmpGeometry.get())->radius;
+                    size.z() = 2.0*((urdf::Sphere*) tmpGeometry.get())->radius;
+                    config["origname"] = "sphere";
+                    break;
+                  case urdf::Geometry::BOX:
+                    tmpV = ((urdf::Box*) tmpGeometry.get())->dim;
+                    size = mars::utils::Vector(tmpV.x, tmpV.y, tmpV.z);
+                    config["origname"] = "box";
+                    break;
+                  case urdf::Geometry::CYLINDER:
+                    size.x() = 2.0*((urdf::Cylinder*) tmpGeometry.get())->radius;
+                    size.y() = 2.0*((urdf::Cylinder*) tmpGeometry.get())->radius;
+                    size.z() = ((urdf::Cylinder*) tmpGeometry.get())->length;
+                    config["origname"] = "cylinder";
+                    break;
+                  case urdf::Geometry::MESH:
+                    tmpV = ((urdf::Mesh*) tmpGeometry.get())->scale;
+                    scale = mars::utils::Vector(tmpV.x, tmpV.y, tmpV.z);
+                    config["filename"] = ((urdf::Mesh*) tmpGeometry.get())->filename;
+                    config["origname"] = "";
+                    break;
+                  default:
+                    break;
+                  }
+                mars::utils::vectorToConfigItem(&config["visualsize"][0], &size);
+                mars::utils::vectorToConfigItem(&config["visualscale"][0], &scale);
+                config["materialName"] = visual.material_name;
+
+                //addEmptyCollisionToNode(&config);
+                mars::utils::Vector size_tmp(0.01, 0.01, 0.01);
+                config["physicmode"] = "box";
+                config["coll_bitmask"] = 0;
+                mars::utils::vectorToConfigItem(&config["extend"][0], &size_tmp);  
+
+                mars::interfaces::NodeData node;  
+                node.fromConfigMap(&config, "", control->loadCenter);
+
+                // ---- create materials
+                configmaps::ConfigMap material_config;
+                //material_config["id"] = nextMaterialID++;
+                material_config["name"] = visual.material->name;
+                material_config["exists"] = true;
+                material_config["diffuseFront"][0]["a"] = (double) visual.material->color.a;
+                material_config["diffuseFront"][0]["r"] = (double) visual.material->color.r;
+                material_config["diffuseFront"][0]["g"] = (double) visual.material->color.g;
+                material_config["diffuseFront"][0]["b"] = (double) visual.material->color.b;
+                material_config["texturename"] = visual.material->texture_filename;
+
+                std::string tmpPath("");
+
+                mars::interfaces::MaterialData material;
+                int valid = material.fromConfigMap(&material_config, tmpPath);
+                node.material = material;
+
+                return node;
+            }               
+        };        
 
     } // end of namespace EnvireSmurfLoader
   } // end of namespace plugins

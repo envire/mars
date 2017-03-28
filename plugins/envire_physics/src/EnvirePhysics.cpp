@@ -386,7 +386,7 @@ void EnvirePhysics::updatePositions( const GraphTraits::vertex_descriptor origin
     {
       const std::shared_ptr<mars::sim::SimNode> sim_node = begin_sim->getData();
 
-      sim_node->update(calc_ms);
+      //sim_node->update(calc_ms);
 
       TransformWithCovariance absolutTransform;
       absolutTransform.translation = sim_node->getPosition();

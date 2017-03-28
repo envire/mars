@@ -47,18 +47,20 @@ using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
 
 
 EnvireGraphViz::EnvireGraphViz(lib_manager::LibManager *theManager)
-  : MarsPluginTemplate(theManager, "EnvireGraphViz"), GraphEventDispatcher(), originId("")
+  : MarsPluginTemplate(theManager, "EnvireGraphViz"), GraphEventDispatcher(), originId("center")
 {
-
+    // FIX: take originId from the node manager
+    // change the name of origin id from center into the world
+    updateTree(originId);
 }
 
 void EnvireGraphViz::init() 
 {
   assert(control->graph != nullptr);
   GraphEventDispatcher::subscribe(control->graph.get());
-  GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>::subscribe(control->graph.get());
-  GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>::subscribe(control->graph.get());
-  GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>::subscribe(control->graph.get());
+  //GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>::subscribe(control->graph.get());
+  //GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>::subscribe(control->graph.get());
+  //GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph.get());
 
   GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>::subscribe(control->graph.get());
@@ -70,10 +72,10 @@ void EnvireGraphViz::reset() {
 void EnvireGraphViz::frameAdded(const FrameAddedEvent& e)
 {
   //use the first frame we get as originId
-  if(originId.empty())
-  {
-    changeOrigin(e.frame);
-  }
+  //if(originId.empty())
+  //{
+  //  changeOrigin(e.frame);
+  //}
 }
 
 
@@ -97,20 +99,50 @@ void EnvireGraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces
 
 void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>& e)
 {
-    LOG_DEBUG("[EnvireGraphViz::itemAdded] SimNode is added into the graph");
-
-    // FIX: so we can change the visual representation, visual and/or physical
-    int  visual_rep = 1;
+    LOG_DEBUG("[EnvireGraphViz::itemAdded] SimNode is added into the graph ");
 
     std::shared_ptr<mars::sim::SimNode> simNode = e.item->getData();
-    // Draw Visual Representation
+
+    int visual_rep = simNode->getVisualRep(); 
+
+    // ----- Set Visual Representation
     mars::interfaces::NodeData nodeData = simNode->getSNode();
+    std::cout << "[EnvireGraphViz::itemAdded] Name: " << nodeData.name << " "
+                << nodeData.pos.x() << " " << nodeData.pos.y() << " " << nodeData.pos.z() << std::endl;
+
     mars::interfaces::NodeId id = control->graphics->addDrawObject(nodeData, visual_rep & 1);
     if(id) {
         simNode->setGraphicsID(id);
-    } else {
-        simNode->setGraphicsID(nodeData.graphicsID1);
-    }
+        uuidToGraphicsId[e.item->getID()] = id;
+    }    
+
+    /// ---- Set Physical Representation -> collision objects
+    if(nodeData.physicMode != mars::interfaces::NODE_TYPE_TERRAIN) {
+        mars::interfaces::NodeData physicalRep;
+        physicalRep = nodeData;
+        physicalRep.material = nodeData.material;
+        physicalRep.material.exists = 1;
+        physicalRep.material.transparency = 0.3;
+        physicalRep.material.name += "_trans";
+        physicalRep.visual_offset_pos = mars::utils::Vector(0.0, 0.0, 0.0);
+        physicalRep.visual_offset_rot = mars::utils::Quaternion::Identity();
+        physicalRep.visual_size = mars::utils::Vector(0.0, 0.0, 0.0);
+        physicalRep.map["sharedDrawID"] = 0lu;
+        physicalRep.map["visualType"] = mars::interfaces::NodeData::toString(nodeData.physicMode);                    
+
+        if(nodeData.physicMode != mars::interfaces::NODE_TYPE_MESH) {
+            physicalRep.filename = "PRIMITIVE";
+            //physicalRep.filename = nodeS->filename;
+            if(nodeData.physicMode > 0 && nodeData.physicMode < mars::interfaces::NUMBER_OF_NODE_TYPES){
+                physicalRep.origName = mars::interfaces::NodeData::toString(nodeData.physicMode);
+            }
+        }
+            
+        id = control->graphics->addDrawObject(physicalRep, visual_rep & 2);
+        if(id) {
+            simNode->setGraphicsID2(id);
+        }
+    }  
 }
 
 void EnvireGraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
@@ -364,6 +396,8 @@ void EnvireGraphViz::setNodeDataMaterial(NodeData& nodeData, boost::shared_ptr< 
 void EnvireGraphViz::update(sReal time_ms) {
   const float timeBetweenFramesMs = 1000.0 / visualUpdateRateFps;
   timeSinceLastUpdateMs += time_ms;
+
+   std::cout << "[EnvireGraphViz::updatePosition]" << std::endl;
   
   if(timeSinceLastUpdateMs >= timeBetweenFramesMs)
   {
@@ -397,8 +431,9 @@ void EnvireGraphViz::updateVisuals()
   tree.visitBfs(tree.root, [&](GraphTraits::vertex_descriptor vd, 
                                GraphTraits::vertex_descriptor parent)
   {
-    updatePosition<Item<envire::smurf::Visual>>(vd);
-    updatePosition<Item<smurf::Frame>>(vd);
+    //updatePosition<Item<envire::smurf::Visual>>(vd);
+    //updatePosition<Item<smurf::Frame>>(vd);
+    updatePosition<Item<std::shared_ptr<mars::sim::SimNode>>>(vd);
   });
 }
 
@@ -426,6 +461,9 @@ template <class physicsType> void EnvireGraphViz::updatePosition(const vertex_de
     translation = tf.transform.translation;
     orientation = tf.transform.orientation;
   }
+
+    std::cout << "[EnvireGraphViz::updatePosition]" << originId << " " << frameId << " " 
+                << translation.x() << " " << translation.y() << " " << translation.z() << std::endl;  
   
   using Iterator = EnvireGraph::ItemIterator<physicsType>;
   Iterator begin, end;

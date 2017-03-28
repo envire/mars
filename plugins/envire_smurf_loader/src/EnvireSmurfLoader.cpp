@@ -181,6 +181,7 @@ namespace mars {
                 SimNodeCreatorFrame         sn_frame(control, center);
                 SimNodeCreatorCollidable    sn_collidable(control, center);
                 SimNodeCreatorInertial      sn_inertial(control, center);
+                SimNodeCreatorVisual        sn_visual(control, center);
 
                 // search the graph
                 envire::core::EnvireGraph::vertex_iterator v_itr, v_end;
@@ -196,6 +197,7 @@ namespace mars {
                     sn_frame.create(v_itr);
                     sn_collidable.create(v_itr);
                     sn_inertial.create(v_itr);
+                    sn_visual.create(v_itr);
                 }
             }                   
 

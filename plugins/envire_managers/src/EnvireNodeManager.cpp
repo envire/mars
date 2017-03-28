@@ -119,7 +119,7 @@ namespace mars {
         // ------ NOT RELOADED OBJECTS -> TERRAIN
         if (reload == false) {
             LOG_ERROR("EnvireNodeManager::addNode: Reload is not implemented: " + nodeS->name);
-            /*iMutex.lock();
+            iMutex.lock();
 
             //TODO: check if we can take out the mars_graphics
 
@@ -154,17 +154,17 @@ namespace mars {
                 }
             }
             
-            simNodesReload.push_back(reloadNode);
+            //simNodesReload.push_back(reloadNode);
 
             if (nodeS->c_params.friction_direction1) {
                 mars::utils::Vector *tmp = new mars::utils::Vector();
                 *tmp = *(nodeS->c_params.friction_direction1);
 
-                if(simNodesReload.back().index == nodeS->index) {
-                    simNodesReload.back().c_params.friction_direction1 = tmp;
-                }
+                //if(simNodesReload.back().index == nodeS->index) {
+                //    simNodesReload.back().c_params.friction_direction1 = tmp;
+                //}
             }
-            iMutex.unlock();*/
+            iMutex.unlock();
         }
 
         // to check some preconditions
@@ -272,7 +272,6 @@ namespace mars {
             if (control->graph->containsFrame(nodeS->frameID) == false)
             {
                 LOG_DEBUG("[EnvireNodeManager::addNode] create new transformation between center and " + nodeS->frameID);
-                std::cout << "[EnvireNodeManager::addNode] at position: " << nodeS->pos.x() << " " << nodeS->pos.y() << " " << nodeS->pos.z() << std::endl;
                 envire::core::Transform nodeTransf(nodeS->pos, nodeS->rot);
                 nodeTransf.time = base::Time::now();
                 control->graph->addTransform("center", nodeS->frameID, nodeTransf);                
@@ -294,7 +293,7 @@ namespace mars {
             // TODO: graphic manager
             if(control->graphics) {
                 // Draw visual Representation
-                if(loadGraphics) {
+                /*if(loadGraphics) {
                     id = control->graphics->addDrawObject(*nodeS, visual_rep & 1);
                     if(id) {
                         newNode->setGraphicsID(id);
@@ -304,11 +303,14 @@ namespace mars {
                     }
                 } else {
                     newNode->setGraphicsID(nodeS->graphicsID1);
-                }
+                }*/
+
+                newNode->setGraphicsID(nodeS->graphicsID1);
+                
 
                 LOG_DEBUG("EnvireNodeManager::addNode: nodeS->noPhysical: " + nodeS->name);   
 
-                if(nodeS->physicMode != mars::interfaces::NODE_TYPE_TERRAIN) {
+                /*if(nodeS->physicMode != mars::interfaces::NODE_TYPE_TERRAIN) {
                     LOG_DEBUG("EnvireNodeManager::addNode: nodeS->physicMode != mars::interfaces::NODE_TYPE_TERRAIN: " + nodeS->name);   
 
                     // NEW_NODE_STRUCT(physicalRep);
@@ -344,7 +346,10 @@ namespace mars {
                     } else {
                         newNode->setGraphicsID2(nodeS->graphicsID2);
                     }
-                }
+                }*/
+
+                newNode->setGraphicsID2(nodeS->graphicsID2);
+
                 newNode->setVisualRep(visual_rep);
             }
         } else {  // ------ NONE PHYSICAL NODE
@@ -1625,8 +1630,9 @@ namespace mars {
 
 
     void EnvireNodeManager::setVisualRep(mars::interfaces::NodeId id, int val) {
+        // FIX: move this into envire graph viz
+        // Take care of the nodeid 0, it is part of sim
         std::cout << "[EnvireNodeManager::setVisualRep] val: " << val << std::endl;
-
 
         if(!(control->graphics))
             return;
