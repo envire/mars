@@ -145,6 +145,7 @@ namespace mars {
       private:
         /**Maps the item's uuid to the graphics id used for drawing */
         std::unordered_map<boost::uuids::uuid, int, boost::hash<boost::uuids::uuid>> uuidToGraphicsId;
+        std::unordered_map<boost::uuids::uuid, int, boost::hash<boost::uuids::uuid>> uuidToGraphicsId2;
         envire::core::FrameId originId; /**<id of the current origin */
         envire::core::TreeView tree; /**<tree containing all visualized vertices */
         

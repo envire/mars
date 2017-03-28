@@ -10,7 +10,6 @@
     <depend package="simulation/mars/interfaces" />
     <depend package="simulation/mars/entity_generation/entity_factory" />
     <depend package="envire/envire_smurf" />
-    <depend package="simulation/mars/plugins/envire_physics" />
     <depend package="simulation/mars/plugins/envire_joints" />
     <!--<depend package="simulation/mars/plugins/envire_motors" />-->
     <depend package="tools/lib_config" />

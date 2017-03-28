@@ -99,6 +99,8 @@ void EnvireGraphViz::setPos(const envire::core::FrameId& frame, mars::interfaces
 
 void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>& e)
 {
+
+    // FIX: do we need? control->sim->sceneHasChanged(false); 
     LOG_DEBUG("[EnvireGraphViz::itemAdded] SimNode is added into the graph ");
 
     std::shared_ptr<mars::sim::SimNode> simNode = e.item->getData();
@@ -112,6 +114,7 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
 
     mars::interfaces::NodeId id = control->graphics->addDrawObject(nodeData, visual_rep & 1);
     if(id) {
+        std::cout << "setGraphicsID 1 " << std::endl;
         simNode->setGraphicsID(id);
         uuidToGraphicsId[e.item->getID()] = id;
     }    
@@ -140,7 +143,9 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
             
         id = control->graphics->addDrawObject(physicalRep, visual_rep & 2);
         if(id) {
+            std::cout << "setGraphicsID 2 " << std::endl;
             simNode->setGraphicsID2(id);
+            uuidToGraphicsId2[e.item->getID()] = id;
         }
     }  
 }
@@ -461,9 +466,6 @@ template <class physicsType> void EnvireGraphViz::updatePosition(const vertex_de
     translation = tf.transform.translation;
     orientation = tf.transform.orientation;
   }
-
-    std::cout << "[EnvireGraphViz::updatePosition]" << originId << " " << frameId << " " 
-                << translation.x() << " " << translation.y() << " " << translation.z() << std::endl;  
   
   using Iterator = EnvireGraph::ItemIterator<physicsType>;
   Iterator begin, end;
@@ -476,7 +478,16 @@ template <class physicsType> void EnvireGraphViz::updatePosition(const vertex_de
     {
       const int graphicsId = uuidToGraphicsId.at(item.getID());
       control->graphics->setDrawObjectPos(graphicsId, translation);
-      control->graphics->setDrawObjectRot(graphicsId, orientation);
+      control->graphics->setDrawObjectRot(graphicsId, orientation);   
+
+    }
+
+    if(uuidToGraphicsId2.find(item.getID()) != uuidToGraphicsId2.end())
+    {   
+
+      const int graphicsId2 = uuidToGraphicsId2.at(item.getID());
+      control->graphics->setDrawObjectPos(graphicsId2, translation);
+      control->graphics->setDrawObjectRot(graphicsId2, orientation);       
     }
   }
 }

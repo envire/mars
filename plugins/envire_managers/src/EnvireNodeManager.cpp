@@ -306,9 +306,9 @@ namespace mars {
                     }
                 } else {
                     newNode->setGraphicsID(nodeS->graphicsID1);
-                }*/
+                }
 
-                newNode->setGraphicsID(nodeS->graphicsID1);
+                newNode->setGraphicsID(nodeS->graphicsID1);*/
                 
 
                 LOG_DEBUG("EnvireNodeManager::addNode: nodeS->noPhysical: " + nodeS->name);   
@@ -349,11 +349,11 @@ namespace mars {
                     } else {
                         newNode->setGraphicsID2(nodeS->graphicsID2);
                     }
-                }*/
+                }
 
                 newNode->setGraphicsID2(nodeS->graphicsID2);
 
-                newNode->setVisualRep(visual_rep);
+                newNode->setVisualRep(visual_rep);*/
             }
         } else {  // ------ NONE PHYSICAL NODE
             LOG_ERROR("EnvireNodeManager::addNode: nonPhysical not implemented: " + nodeS->name);
@@ -1698,7 +1698,6 @@ namespace mars {
     void EnvireNodeManager::setVisualRep(mars::interfaces::NodeId id, int val) {
         // FIX: move this into envire graph viz
         // Take care of the nodeid 0, it is part of sim
-        std::cout << "[EnvireNodeManager::setVisualRep] val: " << val << std::endl;
 
         if(!(control->graphics))
             return;
@@ -1710,7 +1709,7 @@ namespace mars {
         for(iter = simNodes.begin(); iter != simNodes.end(); iter++) {
             if(id == 0 || iter->first == id) {
                 current = iter->second->getData()->getVisualRep();
-                std::cout << "[EnvireNodeManager::setVisualRep] current: " << current << std::endl;
+                std::cout << "[EnvireNodeManager::setVisualRep] current: " << iter->second->getData()->getName() << " " << current << std::endl;
                 if(val & 1 && !(current & 1))
                     control->graphics->setDrawObjectShow(iter->second->getData()->getGraphicsID(), true);
                 else if(!(val & 1) && current & 1)
