@@ -177,7 +177,7 @@ namespace mars {
             bool update_all_nodes;
             int visual_rep;
             NodeMap simNodes;
-            NodeMap simNodesDyn;
+            //NodeMap simNodesDyn;
             NodeMap nodesToUpdate;
             //std::list<mars::interfaces::NodeData> simNodesReload;
             unsigned long maxGroupID;
@@ -234,10 +234,12 @@ namespace mars {
             void printNodeMasses(bool onlysum);
 
             void updateChildPositions(const envire::core::GraphTraits::vertex_descriptor vertex,
-                                      const base::TransformWithCovariance& frameToRoot);
+                                      const base::TransformWithCovariance& frameToRoot,
+                                      mars::interfaces::sReal calc_ms, bool physics_thread);
             void updatePositions(const envire::core::GraphTraits::vertex_descriptor origin,
                                  const envire::core::GraphTraits::vertex_descriptor target,
-                                 const base::TransformWithCovariance& originToRoot);            
+                                 const base::TransformWithCovariance& originToRoot,
+                                 mars::interfaces::sReal calc_ms, bool physics_thread);            
 
             // for passing parameters to the recursiveHelper.
             struct Params

@@ -287,8 +287,8 @@ namespace mars {
             // add node into the node map
             iMutex.lock();         
             simNodes[nodeS->index] = newNodeItemPtr;
-            if (nodeS->movable)
-                simNodesDyn[nodeS->index] = newNodeItemPtr;
+            //if (nodeS->movable)
+            //    simNodesDyn[nodeS->index] = newNodeItemPtr;
             iMutex.unlock();
         
             control->sim->sceneHasChanged(false);
@@ -1350,12 +1350,6 @@ namespace mars {
     void EnvireNodeManager::updateDynamicNodes(mars::interfaces::sReal calc_ms, bool physics_thread) {
         mars::utils::MutexLocker locker(&iMutex);
 
-        // update the physic of sim node
-        NodeMap::iterator iter;
-        for(iter = simNodesDyn.begin(); iter != simNodesDyn.end(); iter++) {
-            iter->second->getData()->update(calc_ms, physics_thread);
-        }
-
         // FIX: update Graph
         if(graphTreeView.crossEdges.size() > 0)
         {
@@ -1368,34 +1362,32 @@ namespace mars {
             throw std::runtime_error(msg);
         }        
 
+        // update the graph from top to bottom
+        // starts with the parent and go to children
         const envire::core::GraphTraits::vertex_descriptor originDesc = control->graph->vertex("center");
-        updateChildPositions(originDesc, base::TransformWithCovariance::Identity()); 
+        updateChildPositions(originDesc, base::TransformWithCovariance::Identity(), calc_ms, physics_thread); 
     }
 
     void EnvireNodeManager::updateChildPositions(const envire::core::GraphTraits::vertex_descriptor vertex,
-                                                const base::TransformWithCovariance& frameToRoot)
+                                                const base::TransformWithCovariance& frameToRoot,
+                                                mars::interfaces::sReal calc_ms, bool physics_thread)
     {
         if(graphTreeView.tree.find(vertex) != graphTreeView.tree.end())
         {
             const std::unordered_set<envire::core::GraphTraits::vertex_descriptor>& children = graphTreeView.tree[vertex].children;
             for(const envire::core::GraphTraits::vertex_descriptor child : children)
             {
-                updatePositions(vertex, child, frameToRoot);
+                updatePositions(vertex, child, frameToRoot, calc_ms, physics_thread);
             }
         }
     }
 
     void EnvireNodeManager::updatePositions( const envire::core::GraphTraits::vertex_descriptor origin,
                                         const envire::core::GraphTraits::vertex_descriptor target,
-                                        const base::TransformWithCovariance& originToRoot)
+                                        const base::TransformWithCovariance& originToRoot,
+                                        mars::interfaces::sReal calc_ms, bool physics_thread)
     {
 
-        // FIX: do we need update time in transformation?
-        // FIX: we don't need to update the position of static nodes
-        // update only dynamic node => so combine the update method from simulation
-        // and transformation update of envire
-        // we don't need a list of dynamic nodes, it is enough if the simnode can
-        // be marked as dynamics
         envire::core::Transform tf = control->graph->getTransform(origin, target);
 
         if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(target))
@@ -1408,17 +1400,26 @@ namespace mars {
             {
                 const std::shared_ptr<mars::sim::SimNode> sim_node = begin_sim->getData();
 
-                base::TransformWithCovariance absolutTransform;
-                absolutTransform.translation = sim_node->getPosition();
-                absolutTransform.orientation = sim_node->getRotation();    
+                // update the pose of node only if it is dynamic
+                if (sim_node->isMovable() == true) {
+                    // update the physic of sim node
+                    sim_node->update(calc_ms, physics_thread);
+                    
+                    // update graph: update the pose of sim node in graph
+                    base::TransformWithCovariance absolutTransform;
+                    absolutTransform.translation = sim_node->getPosition();
+                    absolutTransform.orientation = sim_node->getRotation();  
 
-                tf.setTransform(originToRoot * absolutTransform); 
-                control->graph->updateTransform(origin, target, tf);
+                    // FIX: do we need update time in transformation?  
+
+                    tf.setTransform(originToRoot * absolutTransform); 
+                    control->graph->updateTransform(origin, target, tf);
+                }
             }
         }
 
         const envire::core::Transform invTf = control->graph->getTransform(target, origin);
-        updateChildPositions(target, invTf.transform * originToRoot);
+        updateChildPositions(target, invTf.transform * originToRoot, calc_ms, physics_thread);
     }    
 
      void EnvireNodeManager::preGraphicsUpdate() {
