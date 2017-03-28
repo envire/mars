@@ -186,6 +186,8 @@ namespace mars {
 
             mars::interfaces::ControlCenter *control;
 
+            envire::core::TreeView graphTreeView;
+
             std::list<mars::interfaces::NodeData>::iterator getReloadNode(mars::interfaces::NodeId id);
 
             // interfaces::NodeInterface* getNodeInterface(NodeId node_id);
@@ -230,6 +232,12 @@ namespace mars {
             void pushToUpdate(mars::sim::SimNode* node);
 
             void printNodeMasses(bool onlysum);
+
+            void updateChildPositions(const envire::core::GraphTraits::vertex_descriptor vertex,
+                                      const base::TransformWithCovariance& frameToRoot);
+            void updatePositions(const envire::core::GraphTraits::vertex_descriptor origin,
+                                 const envire::core::GraphTraits::vertex_descriptor target,
+                                 const base::TransformWithCovariance& originToRoot);            
 
             // for passing parameters to the recursiveHelper.
             struct Params

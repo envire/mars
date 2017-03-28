@@ -179,7 +179,7 @@ void EnvirePhysics::itemAdded(const TypedItemAddedEvent<Item<smurf::Inertial>>& 
 
 void EnvirePhysics::update(sReal time_ms) 
 {
-  updateTree();
+  //updateTree();
   const GraphTraits::vertex_descriptor originDesc = control->graph->vertex(originId);
   if(printGraph)
   {
@@ -188,7 +188,7 @@ void EnvirePhysics::update(sReal time_ms)
     std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
     viz.write(*(control->graph), name);
   }
-  updateChildPositions(originDesc, TransformWithCovariance::Identity()); 
+  //updateChildPositions(originDesc, TransformWithCovariance::Identity()); 
   if(printGraph)
   {
     envire::core::GraphViz viz;

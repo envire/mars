@@ -464,6 +464,7 @@ namespace mars {
                 material_config["diffuseFront"][0]["b"] = (double) visual.material->color.b;
                 material_config["texturename"] = visual.material->texture_filename;
 
+                // FIX: tmpPath
                 std::string tmpPath("");
 
                 mars::interfaces::MaterialData material;

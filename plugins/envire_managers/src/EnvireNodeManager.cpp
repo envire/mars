@@ -78,6 +78,9 @@ namespace mars {
       //  mars::interfaces::GraphicsUpdateInterface *gui = static_cast<mars::interfaces::GraphicsUpdateInterface*>(this);
       //  control->graphics->addGraphicsUpdateInterface(gui);
       //}
+
+        // keep updating tree
+        control->graph->getTree("center", true, &graphTreeView);
     }
 
 
@@ -1354,7 +1357,69 @@ namespace mars {
         }
 
         // FIX: update Graph
+        if(graphTreeView.crossEdges.size() > 0)
+        {
+            const envire::core::GraphTraits::vertex_descriptor source = control->graph->source(graphTreeView.crossEdges[0].edge);
+            const envire::core::GraphTraits::vertex_descriptor target = control->graph->target(graphTreeView.crossEdges[0].edge);
+            const envire::core::FrameId sourceId = control->graph->getFrameId(source);
+            const envire::core::FrameId targetId = control->graph->getFrameId(target);
+            const std::string msg = "Loop in tree detected: " + sourceId + " --> " + targetId +
+                               ". The physics plugin cannot handle loops in the graph";
+            throw std::runtime_error(msg);
+        }        
+
+        const envire::core::GraphTraits::vertex_descriptor originDesc = control->graph->vertex("center");
+        updateChildPositions(originDesc, base::TransformWithCovariance::Identity()); 
     }
+
+    void EnvireNodeManager::updateChildPositions(const envire::core::GraphTraits::vertex_descriptor vertex,
+                                                const base::TransformWithCovariance& frameToRoot)
+    {
+        if(graphTreeView.tree.find(vertex) != graphTreeView.tree.end())
+        {
+            const std::unordered_set<envire::core::GraphTraits::vertex_descriptor>& children = graphTreeView.tree[vertex].children;
+            for(const envire::core::GraphTraits::vertex_descriptor child : children)
+            {
+                updatePositions(vertex, child, frameToRoot);
+            }
+        }
+    }
+
+    void EnvireNodeManager::updatePositions( const envire::core::GraphTraits::vertex_descriptor origin,
+                                        const envire::core::GraphTraits::vertex_descriptor target,
+                                        const base::TransformWithCovariance& originToRoot)
+    {
+
+        // FIX: do we need update time in transformation?
+        // FIX: we don't need to update the position of static nodes
+        // update only dynamic node => so combine the update method from simulation
+        // and transformation update of envire
+        // we don't need a list of dynamic nodes, it is enough if the simnode can
+        // be marked as dynamics
+        envire::core::Transform tf = control->graph->getTransform(origin, target);
+
+        if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(target))
+        {
+            // Update simulation node
+            using IteratorSimNode = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
+            IteratorSimNode begin_sim, end_sim;
+            boost::tie(begin_sim, end_sim) = control->graph->getItems<SimNodeItem>(target);
+            for (;begin_sim!=end_sim; begin_sim++)
+            {
+                const std::shared_ptr<mars::sim::SimNode> sim_node = begin_sim->getData();
+
+                base::TransformWithCovariance absolutTransform;
+                absolutTransform.translation = sim_node->getPosition();
+                absolutTransform.orientation = sim_node->getRotation();    
+
+                tf.setTransform(originToRoot * absolutTransform); 
+                control->graph->updateTransform(origin, target, tf);
+            }
+        }
+
+        const envire::core::Transform invTf = control->graph->getTransform(target, origin);
+        updateChildPositions(target, invTf.transform * originToRoot);
+    }    
 
      void EnvireNodeManager::preGraphicsUpdate() {
       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
