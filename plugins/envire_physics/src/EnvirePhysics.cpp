@@ -414,7 +414,7 @@ bool EnvirePhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const
   if (instantiated)
   {
 #ifdef DEBUG
-    LOG_DEBUG("[EnvirePhysics::InstantiateNode] ADD SIM NODE TO " + frame);
+    LOG_DEBUG(("[EnvirePhysics::InstantiateNode] ADD SIM NODE TO " + frame).c_str());
 #endif
     // Store the physics NodeInterface
     /*using physicsItemPtr = envire::core::Item<shared_ptr<NodeInterface>>::Ptr;
