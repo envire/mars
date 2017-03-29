@@ -1399,22 +1399,32 @@ namespace mars {
             for (;begin_sim!=end_sim; begin_sim++)
             {
                 const std::shared_ptr<mars::sim::SimNode> sim_node = begin_sim->getData();
+                mars::interfaces::NodeData node_data = sim_node->getSNode();
 
                 // update the pose of node only if it is dynamic
-                if (sim_node->isMovable() == true) {
+                // don't update the position of inertial, collision and visuals
+                // since these simnode has static transformation to the frame
+                // the frame updates its pose
+                if (sim_node->isMovable() == true)
+                {
                     // update the physic of sim node
                     sim_node->update(calc_ms, physics_thread);
                     
-                    // update graph: update the pose of sim node in graph
-                    base::TransformWithCovariance absolutTransform;
-                    absolutTransform.translation = sim_node->getPosition();
-                    absolutTransform.orientation = sim_node->getRotation();  
+                    if ( node_data.simNodeType != mars::interfaces::SimNodeType::INERTIA
+                        && node_data.simNodeType != mars::interfaces::SimNodeType::COLLISION
+                        && node_data.simNodeType != mars::interfaces::SimNodeType::VISUAL) {
+                        
+                        // update graph: update the pose of sim node in graph
+                        base::TransformWithCovariance absolutTransform;
+                        absolutTransform.translation = sim_node->getPosition();
+                        absolutTransform.orientation = sim_node->getRotation();  
 
-                    // FIX: do we need update time in transformation?  
+                        // FIX: do we need update time in transformation?  
 
-                    tf.setTransform(originToRoot * absolutTransform); 
-                    tf.time = base::Time::now();
-                    control->graph->updateTransform(origin, target, tf);
+                        tf.setTransform(originToRoot * absolutTransform); 
+                        tf.time = base::Time::now();
+                        control->graph->updateTransform(origin, target, tf);
+                    }
                 }
             }
         }

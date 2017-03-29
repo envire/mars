@@ -212,7 +212,9 @@ namespace mars {
                 // add empty visual
                 node.map["origname"] = "";
                 node.map["materialName"] = "_emptyVisualMaterial";
-                node.map["visualType"] = "empty";                           
+                node.map["visualType"] = "empty";    
+
+                node.simNodeType = mars::interfaces::SimNodeType::FRAME;                       
                 
                 return node; 
             }            
@@ -299,6 +301,7 @@ namespace mars {
 
                 mars::interfaces::NodeData node;  
                 node.fromConfigMap(&config, "", control->loadCenter);
+                node.simNodeType = mars::interfaces::SimNodeType::COLLISION;
                 
                 return node; 
             }      
@@ -367,6 +370,7 @@ namespace mars {
 
                 mars::interfaces::NodeData node;  
                 node.fromConfigMap(&config, "", control->loadCenter);
+                node.simNodeType = mars::interfaces::SimNodeType::INERTIA;                
                 
                 return node; 
             }               
@@ -470,6 +474,7 @@ namespace mars {
                 mars::interfaces::MaterialData material;
                 int valid = material.fromConfigMap(&material_config, tmpPath);
                 node.material = material;
+                node.simNodeType = mars::interfaces::SimNodeType::VISUAL;  
 
                 return node;
             }               
