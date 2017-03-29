@@ -65,7 +65,8 @@ namespace mars {
         void update(mars::interfaces::sReal time_ms);
 
       private:
-
+          
+        double timeSinceLastUiUpdate;
         // MenuInterface methods
         void menuAction(int action, bool checked = false);
 
