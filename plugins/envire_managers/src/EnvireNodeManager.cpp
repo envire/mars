@@ -1413,6 +1413,7 @@ namespace mars {
                     // FIX: do we need update time in transformation?  
 
                     tf.setTransform(originToRoot * absolutTransform); 
+                    tf.time = base::Time::now();
                     control->graph->updateTransform(origin, target, tf);
                 }
             }
