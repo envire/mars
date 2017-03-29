@@ -41,6 +41,15 @@ namespace mars {
     class LoadCenter;
     struct terrainStruct;
 
+    enum SimNodeType 
+    {
+      COLLISION = 0,
+      INERTIA = 1,
+      FRAME = 2,    // DUMMY SIMNODE 
+      VISUAL = 3,
+      NONE = 4
+    };
+
     /**
      * NodeData is a struct to exchange node information between the GUI
      * and the simulation
@@ -98,6 +107,8 @@ namespace mars {
         graphicsID1 = graphicsID2 = 0;
 
         frameID = "";
+
+        simNodeType = SimNodeType::NONE;
       }
 
       /**
@@ -141,6 +152,8 @@ namespace mars {
       void getFilesToSave(std::vector<std::string> *fileList);
       
       void fromGeometry(const boost::shared_ptr< urdf::Geometry >& geometry);
+
+      SimNodeType simNodeType;
 
       /**
        * The name of the node. \verbatim Default value: "" \endverbatim
