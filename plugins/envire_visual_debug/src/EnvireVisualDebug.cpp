@@ -35,17 +35,17 @@ namespace mars {
       using namespace mars::utils;
       using namespace mars::interfaces;
 
-      EnvireVisualDebug::EnvireVisualDebug(lib_manager::LibManager *theManager)
-          : MarsPluginTemplateGUI(theManager, "EnvireVisualDebug") {
+        EnvireVisualDebug::EnvireVisualDebug(lib_manager::LibManager *theManager)
+        : MarsPluginTemplateGUI(theManager, "EnvireVisualDebug"),
+        timeSinceLastUiUpdate(0) {
 
-        graphWindow = new envire::viz::EnvireVisualizerWindow();
-      }
+            graphWindow = new envire::viz::EnvireVisualizerWindow();
+        }
   
-      void EnvireVisualDebug::init() {
-
-        gui->addGenericMenuAction("../EnvireVisualDebug/showEnvireGraph", 1, this);
-
-      }
+        void EnvireVisualDebug::init() {
+            timeSinceLastUiUpdate = 0;
+            gui->addGenericMenuAction("../EnvireVisualDebug/showEnvireGraph", 1, this);
+        }
 
       void EnvireVisualDebug::reset() {
       }
@@ -54,15 +54,23 @@ namespace mars {
       }
 
 
-      void EnvireVisualDebug::update(sReal time_ms) {
-
-
-      }
+        void EnvireVisualDebug::update(sReal time_ms) 
+        {
+            if(graphWindow->isVisible())
+            {
+                timeSinceLastUiUpdate += time_ms;
+                if(timeSinceLastUiUpdate > 33) //=> 30 fps
+                {
+                    timeSinceLastUiUpdate = 0;
+                    graphWindow->redraw();
+                }
+            }
+        }
 
       void EnvireVisualDebug::menuAction (int action, bool checked)
       {
-        graphWindow->displayGraph(control->graph, "center");
-        graphWindow -> show();
+            graphWindow->displayGraph(control->graph, "center");
+            graphWindow->show();
       }
 
     } // end of namespace envire_visual_debug
