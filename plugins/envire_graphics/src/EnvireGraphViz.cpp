@@ -120,7 +120,7 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
     }    
 
     /// ---- Set Physical Representation -> collision objects
-    if(nodeData.physicMode != mars::interfaces::NODE_TYPE_TERRAIN) {
+    if(nodeData.noPhysical == false && nodeData.physicMode != mars::interfaces::NODE_TYPE_TERRAIN) {
         mars::interfaces::NodeData physicalRep;
         physicalRep = nodeData;
         physicalRep.material = nodeData.material;
