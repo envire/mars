@@ -55,8 +55,16 @@ namespace mars {
 
 
       void EnvireVisualDebug::update(sReal time_ms) {
-
-
+        static double timeSum = time_ms;
+        if(graphWindow->isVisible() && timeSum >= 33.33)
+        {
+            timeSum = 0;
+            graphWindow->redraw();
+        }
+        else
+        {
+            timeSum += time_ms;
+        }
       }
 
       void EnvireVisualDebug::menuAction (int action, bool checked)
