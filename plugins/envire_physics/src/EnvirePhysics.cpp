@@ -36,7 +36,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <envire_core/graph/EnvireGraph.hpp>
-#include <envire_core/graph/GraphViz.hpp>
+// #include <envire_core/graph/GraphViz.hpp>
 
 #include <envire_collider_mls/MLSCollision.hpp>
 #include <fstream>
@@ -305,18 +305,18 @@ void EnvirePhysics::update(sReal time_ms)
   const GraphTraits::vertex_descriptor originDesc = control->graph->vertex(originId);
   if(printGraph)
   {
-    envire::core::GraphViz viz;
-    std::string timeStamp = base::Time::now().toString();
-    std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
-    viz.write(*(control->graph), name);
+//     envire::core::GraphViz viz;
+//     std::string timeStamp = base::Time::now().toString();
+//     std::string name = "BeforeUpdatePhysics" + timeStamp + ".dot";
+//     viz.write(*(control->graph), name);
   }
   updateChildPositions(originDesc, TransformWithCovariance::Identity()); 
   if(printGraph)
   {
-    envire::core::GraphViz viz;
-    std::string timeStamp = base::Time::now().toString();
-    std::string name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
-    viz.write(*(control->graph), name);
+//     envire::core::GraphViz viz;
+//     std::string timeStamp = base::Time::now().toString();
+//     std::string name = "AfterUpdatePhysicsConfigs" + timeStamp + ".dot";
+//     viz.write(*(control->graph), name);
   }
 
 
