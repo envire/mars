@@ -104,9 +104,11 @@ namespace mars {
                 std::cout << "smurf loader given position" << std::endl;
                 vertex_descriptor center = addCenter();
                 envire::core::Transform iniPose;
+                // FIXME TODO use rot input. Is it Euler angles or scaled axis?
                 iniPose.transform.orientation = base::Quaterniond::Identity();
-                iniPose.transform.translation << pos.x(), pos.y(), pos.z();
+                iniPose.transform.translation = pos;
                 addRobot(filename, center, iniPose);
+                return true;
             }    
 
             int EnvireSmurfLoader::saveFile(std::string filename, std::string tmpPath)
