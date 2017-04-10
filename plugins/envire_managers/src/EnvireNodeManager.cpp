@@ -29,7 +29,6 @@
 
 #include <mars/sim/SimNode.h>
 #include <mars/sim/SimJoint.h>
-#include <mars/sim/JointManager.h>
 #include <mars/sim/PhysicsMapper.h>
 
 #include <mars/interfaces/sim/LoadCenter.h>
@@ -110,9 +109,6 @@ namespace mars {
         // so we can specify where the node should be placed
         if (nodeS->frameID.empty())
             nodeS->frameID = nodeS->name;
-
-
-        std::cout << "[EnvireNodeManager::addNode] at position: " << nodeS->pos.x() << " " << nodeS->pos.y() << " " << nodeS->pos.z() << std::endl;
         
         iMutex.lock();
         nodeS->index = next_node_id;
@@ -280,12 +276,12 @@ namespace mars {
                 control->graph->addTransform("center", nodeS->frameID, nodeTransf);                
             }
             
+            iMutex.lock(); 
             // add node into the graph
             SimNodeItemPtr newNodeItemPtr( new SimNodeItem(newNode));        
             control->graph->addItemToFrame(nodeS->frameID, newNodeItemPtr);   
                      
-            // add node into the node map
-            iMutex.lock();         
+            // add node into the node map        
             simNodes[nodeS->index] = newNodeItemPtr;
             //if (nodeS->movable)
             //    simNodesDyn[nodeS->index] = newNodeItemPtr;
@@ -686,7 +682,6 @@ namespace mars {
         }
     }
 
-
   //   /**
   //    * \brief removes the node with the corresponding id.
   //    *
@@ -960,19 +955,14 @@ namespace mars {
   //   /**
   //    *\brief Returns a pointer to the mars::sim::SimNode Object.
   //    */
-     mars::sim::SimNode *EnvireNodeManager::getSimNode(mars::interfaces::NodeId id) {
-            printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-  //     return const_cast<mars::sim::SimNode*>(static_cast<const EnvireNodeManager*>(this)->getSimNode(id));
-     }
 
-     const mars::sim::SimNode* EnvireNodeManager::getSimNode(mars::interfaces::NodeId id) const {
-            printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-  //     mars::utils::MutexLocker locker(&iMutex);
-  //     NodeMap::const_iterator iter = simNodes.find(id);
-  //     if (iter != simNodes.end())
-  //       return iter->second;
-  //     else
-  //       return NULL;
+    std::shared_ptr<mars::sim::SimNode> EnvireNodeManager::getSimNode(mars::interfaces::NodeId id) {
+        mars::utils::MutexLocker locker(&iMutex);
+        NodeMap::const_iterator iter = simNodes.find(id);
+        if (iter != simNodes.end())
+            return iter->second->getData();
+        else
+            return std::shared_ptr<mars::sim::SimNode>();
      }
 
 

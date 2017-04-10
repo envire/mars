@@ -401,8 +401,6 @@ void EnvireGraphViz::setNodeDataMaterial(NodeData& nodeData, boost::shared_ptr< 
 void EnvireGraphViz::update(sReal time_ms) {
   const float timeBetweenFramesMs = 1000.0 / visualUpdateRateFps;
   timeSinceLastUpdateMs += time_ms;
-
-   std::cout << "[EnvireGraphViz::updatePosition]" << std::endl;
   
   if(timeSinceLastUpdateMs >= timeBetweenFramesMs)
   {

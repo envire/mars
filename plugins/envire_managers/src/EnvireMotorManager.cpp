@@ -36,7 +36,6 @@
 #include <mars/sim/SimNode.h>
 #include <mars/sim/SimMotor.h>
 #include <mars/sim/SimJoint.h>
-#include <mars/sim/JointRecord.h>
 #include <mars/sim/PhysicsMapper.h>
 
 
@@ -172,9 +171,9 @@ namespace mars {
     {
 
       using VertexIterator = envire::core::EnvireGraph::vertex_iterator;
-      using JointRecordItem = envire::core::Item<mars::sim::JointRecord>;
-      using JointRecordItemIterator = envire::core::EnvireGraph::ItemIterator<JointRecordItem>;
-      using simMotorItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimMotor>>::Ptr;
+      using SimJointItem = envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>;
+      using SimJointItemIterator = envire::core::EnvireGraph::ItemIterator<SimJointItem>;
+      using SimMotorItemPtr = envire::core::Item<std::shared_ptr<mars::sim::SimMotor>>::Ptr;
 
       VertexIterator vi_begin, vi_end;
       boost::tie(vi_begin, vi_end) = control->graph->getVertices();
@@ -182,20 +181,20 @@ namespace mars {
       
       while ((vi_begin!=vi_end) && (!jointFound))
       {
-        if (control->graph->containsItems<JointRecordItem>(*vi_begin))
+        if (control->graph->containsItems<SimJointItem>(*vi_begin))
         {
           envire::core::FrameId frameName = control->graph->getFrameId(*vi_begin);
-          JointRecordItemIterator jri_begin, jri_end;
-          boost::tie(jri_begin, jri_end) = control->graph->getItems<JointRecordItem>(frameName); 
+          SimJointItemIterator jri_begin, jri_end;
+          boost::tie(jri_begin, jri_end) = control->graph->getItems<SimJointItem>(frameName); 
           while ((jri_begin!=jri_end) && (!jointFound))
           {
-            mars::sim::JointRecord jointRecord = jri_begin->getData();
-            if (jointRecord.name == jointName)
+            std::shared_ptr<mars::sim::SimJoint> simJoint = jri_begin->getData();
+            const interfaces::JointData joint_data = simJoint->getSJoint();
+            if (joint_data.name == jointName)
             {
               jointFound = true;
-              std::shared_ptr<mars::sim::SimJoint> simJoint = jointRecord.sim;
               simMotor->attachJoint(simJoint.get());
-              simMotorItemPtr simMotorItem(new envire::core::Item<shared_ptr<mars::sim::SimMotor>>(simMotor));
+              SimMotorItemPtr simMotorItem(new envire::core::Item<shared_ptr<mars::sim::SimMotor>>(simMotor));
               control->graph->addItemToFrame(frameName, simMotorItem);
             }
             jri_begin ++;

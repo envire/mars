@@ -40,6 +40,7 @@
 
 #include "EnvireMotorManager.hpp"
 #include "EnvireNodeManager.hpp"
+#include "EnvireJointManager.hpp"
 
 // Comment-in the following line in order to get debug traces
 //#define DEBUG
@@ -63,6 +64,7 @@ EnvireManager::EnvireManager(lib_manager::LibManager *theManager)
     LOG_INFO("[EnvireManager] set EnvireMotorManager for control->motors");
     control->nodes = new EnvireNodeManager(control, theManager);
     control->motors = new EnvireMotorManager(control);
+    control->joints = new EnvireJointManager(control);
 }
 
 void EnvireManager::init() {

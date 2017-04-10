@@ -83,6 +83,7 @@ namespace mars {
       axis1.setZero();
       axis2.setZero();
       invertAxis = false;
+      frameID = "";
     }
 
     bool JointData::fromConfigMap(ConfigMap *config,

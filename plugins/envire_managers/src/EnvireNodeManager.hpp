@@ -111,8 +111,7 @@ namespace mars {
             virtual void setContactParamMotion1(mars::interfaces::NodeId id, mars::interfaces::sReal motion);
             virtual void addNodeSensor(mars::interfaces::BaseNodeSensor *sensor);
             virtual void reloadNodeSensor(mars::interfaces::BaseNodeSensor *sensor);
-            virtual mars::sim::SimNode* getSimNode(mars::interfaces::NodeId id);
-            virtual const mars::sim::SimNode* getSimNode(mars::interfaces::NodeId id) const;
+            virtual std::shared_ptr<mars::sim::SimNode> getSimNode(mars::interfaces::NodeId id);
             virtual void reloadNodes(bool reloadGraphics);
             virtual const mars::utils::Vector setReloadExtent(mars::interfaces::NodeId id, const mars::utils::Vector &ext);
             virtual void setReloadPosition(mars::interfaces::NodeId id, const mars::utils::Vector &pos);

@@ -79,9 +79,6 @@ set(SOURCES_H
        src/core/Controller.h
        src/core/ControllerManager.h
        src/core/EntityManager.h
-       src/core/JointManager.h
-       src/core/MotorManager.h
-       src/core/NodeManager.h
           
        src/core/ConfigMapItem.h
        
@@ -92,7 +89,6 @@ set(SOURCES_H
        src/core/SimMotor.h
        src/core/SimNode.h
        src/core/Simulator.h
-       src/core/JointRecord.h
        src/sensors/RotatingRaySensor.h
        
        src/physics/JointPhysics.h
@@ -134,9 +130,6 @@ set(TARGET_SRC
        src/core/Controller.cpp
        src/core/ControllerManager.cpp
        src/core/EntityManager.cpp
-       src/core/JointManager.cpp
-       src/core/MotorManager.cpp
-       src/core/NodeManager.cpp
             
        src/core/PhysicsMapper.cpp
        src/core/SensorManager.cpp

@@ -42,6 +42,7 @@
 
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/SimulatorInterface.h>
+#include <mars/interfaces/sim/JointManagerInterface.h>
 
 #include <mars/sim/SimNode.h>
 #include <mars/sim/SimJoint.h>
@@ -150,10 +151,29 @@ namespace mars {
                 std::pair<mars::sim::SimNode*, mars::sim::SimNode*> source_target = findSourceTarget(item_data);
                 if (source_target.first != NULL && source_target.second != NULL)
                 {
-                    if(jointInterfacePtr->createJoint(&joint_data, source_target.first->getInterface(), source_target.second->getInterface()))
+
+                    envire::core::FrameId storage_frame_id = item_data.getSourceFrame().getName();
+
+                    // This is work around, to assign the source and target sim node to the joint data
+                    // since the joint manager requires NodeID information
+                    mars::interfaces::NodeId source_id = control->nodes->getID(source_target.first->getName());
+                    if (source_id == INVALID_ID)
+                        LOG_ERROR("[SimJointCreator::createSimJoint] Failed to find NodeIF ***" + source_target.first->getName() + "***");
+
+                    mars::interfaces::NodeId target_id = control->nodes->getID(source_target.second->getName());
+                    if (source_id == INVALID_ID)
+                        LOG_ERROR("[SimJointCreator::createSimJoint] Failed to find NodeIF ***" + source_target.first->getName() + "***");                    
+
+                    joint_data.nodeIndex1 = source_id;
+                    joint_data.nodeIndex2 = target_id;
+                    joint_data.frameID = storage_frame_id;
+
+                    control->joints->addJoint(&joint_data);
+
+                    /*if(jointInterfacePtr->createJoint(&joint_data, source_target.first->getInterface(), source_target.second->getInterface()))
                     {
     #ifdef DEBUG
-                        LOG_DEBUG("[SimJointCreator::createPhysicalJoint] Physical joint ***" + joint_data.name + "*** created");
+                        LOG_DEBUG("[SimJointCreator::createSimJoint] Physical joint ***" + joint_data.name + "*** created");
     #endif
                         control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
 
@@ -169,15 +189,15 @@ namespace mars {
                         control->graph->addItemToFrame(storage_frame_id, simJointPtrItemPtr);            
 
     #ifdef DEBUG
-                        LOG_DEBUG("[SimJointCreator::createPhysicalJoint] SimJoint  ***" + joint_data.name + "*** is created");
+                        LOG_DEBUG("[SimJointCreator::createSimJoint] SimJoint  ***" + joint_data.name + "*** is created");
     #endif                       
                         
                         addToJointRecord(storage_frame_id, joint_data.name, simJoint.get());                           
                     }
                     else
                     {
-                        LOG_ERROR("[SimJointCreator::createPhysicalJoint] Failed to create physical joint ***" + joint_data.name + "***");
-                    }                   
+                        LOG_ERROR("[SimJointCreator::createSimJoint] Failed to create physical joint ***" + joint_data.name + "***");
+                    } */                  
                 }    
             }             
 

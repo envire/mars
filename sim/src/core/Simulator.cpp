@@ -29,13 +29,14 @@
 #include "config.h"
 #include "Simulator.h"
 #include "PhysicsMapper.h"
-#include "NodeManager.h"
-#include "JointManager.h"
-#include "MotorManager.h"
 #include "SensorManager.h"
 #include "ControllerManager.h"
 #include "EntityManager.h"
 #include "Controller.h"
+
+#include <mars/interfaces/sim/NodeManagerInterface.h>
+#include <mars/interfaces/sim/JointManagerInterface.h>
+#include <mars/interfaces/sim/MotorManagerInterface.h>
 
 #include <mars/utils/misc.h>
 #include <mars/interfaces/SceneParseException.h>
@@ -244,7 +245,7 @@ namespace mars {
       }
 
       //control->nodes = new NodeManager(control, libManager);
-      control->joints = new JointManager(control);
+      //control->joints = new JointManager(control);
       //control->motors = new MotorManager(control);
 
       if (control->motors == NULL)
