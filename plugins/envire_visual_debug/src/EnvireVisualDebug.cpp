@@ -53,19 +53,18 @@ namespace mars {
       EnvireVisualDebug::~EnvireVisualDebug() {
       }
 
-
-        void EnvireVisualDebug::update(sReal time_ms) 
+      void EnvireVisualDebug::update(sReal time_ms) {
+        static double timeSum = time_ms;
+        if(graphWindow->isVisible() && timeSum >= 33.33)
         {
-            if(graphWindow->isVisible())
-            {
-                timeSinceLastUiUpdate += time_ms;
-                if(timeSinceLastUiUpdate > 33) //=> 30 fps
-                {
-                    timeSinceLastUiUpdate = 0;
-                    graphWindow->redraw();
-                }
-            }
+            timeSum = 0;
+            graphWindow->redraw();
         }
+        else
+        {
+            timeSum += time_ms;
+        }
+      }
 
       void EnvireVisualDebug::menuAction (int action, bool checked)
       {

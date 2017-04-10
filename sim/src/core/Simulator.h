@@ -45,6 +45,8 @@
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
 
+#include <envire_core/graph/EnvireGraph.hpp>
+
 #include <iostream>
 
 
@@ -159,6 +161,11 @@ namespace mars {
 
       virtual void saveToFile(std::string file_name) const;
 
+
+      virtual std::vector<uint8_t> serializeScene(bool include_objects = false) const;
+      virtual bool updateScenePositions(const std::vector<uint8_t>& scene);
+
+
       //threads
       virtual bool allConcurrencysHandled(); ///< Checks if external requests are open.
       void setSyncThreads(bool value); ///< Syncs the threads of GUI and simulation.
@@ -222,6 +229,14 @@ namespace mars {
       virtual unsigned long getTime();
 
       virtual double getCalcMs();
+
+      envire::core::EnvireGraph getGraphWithoutItems() const
+      {
+        std::vector<std::type_index> filter_list;
+        envire::core::EnvireGraph graph_copy(*(control->graph), &filter_list, true);
+
+        return graph_copy;
+      }      
 
     private:
 

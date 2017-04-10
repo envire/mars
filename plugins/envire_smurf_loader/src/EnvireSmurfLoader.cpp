@@ -46,6 +46,7 @@
 
 // To log the graph
 #include <base/Time.hpp>
+#include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/graph/GraphViz.hpp>
 
 
@@ -113,10 +114,12 @@ namespace mars {
                 std::cout << "smurf loader given position" << std::endl;
                 vertex_descriptor center = control->graph->getVertex("center");
                 envire::core::Transform iniPose;
+                // FIXME TODO use rot input. Is it Euler angles or scaled axis?
                 iniPose.transform.orientation = base::Quaterniond::Identity();
-                iniPose.transform.translation << pos.x(), pos.y(), pos.z();
+                iniPose.transform.translation = pos;
                 addRobot(filename, center, iniPose);
                 createSimObjects();
+                return true;
             }    
 
             int EnvireSmurfLoader::saveFile(std::string filename, std::string tmpPath)
