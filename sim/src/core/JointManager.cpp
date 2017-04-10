@@ -63,7 +63,7 @@ namespace mars {
     }
 
     unsigned long JointManager::addJoint(JointData *jointS, bool reload) {
-      JointInterface *newJointInterface;
+      std::shared_ptr<JointInterface> newJointInterface;
       std::vector<SimNode*>::iterator iter;
       SimNode *node1 = 0;
       SimNode *node2 = 0;
@@ -84,7 +84,7 @@ namespace mars {
       }
 
       // create an interface object to the physics
-      newJointInterface = PhysicsMapper::newJointPhysics(control->sim->getPhysics());
+      newJointInterface.reset(PhysicsMapper::newJointPhysics(control->sim->getPhysics()));
       // reset the anchor
       //if node index is 0, the node connects to the environment.
       node1 = control->nodes->getSimNode(jointS->nodeIndex1);
@@ -126,7 +126,7 @@ namespace mars {
         std::cerr << "JointManager: Could not create new joint (JointInterface::createJoint() returned false)." << std::endl;
         // if no node was created in physics
         // delete the objects
-        delete newJointInterface;
+        newJointInterface.reset();
         // and return false
         return 0;
       }

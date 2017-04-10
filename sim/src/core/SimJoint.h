@@ -139,7 +139,7 @@ namespace mars {
       void setId(unsigned long i);
       void setJointType(interfaces::JointType type);
       void setOfflinePosition(interfaces::sReal value);
-      void setPhysicalJoint(interfaces::JointInterface *physical_joint);
+      void setPhysicalJoint(std::shared_ptr<interfaces::JointInterface> physical_joint);
       void setSDParams(interfaces::JointData *sJoint);
       void setSJoint(const interfaces::JointData &sJoint);
       void setVelocity(interfaces::sReal velocity, unsigned char axis_index=1);
@@ -195,7 +195,7 @@ namespace mars {
     private:
       interfaces::ControlCenter *control;
       interfaces::JointData sJoint;
-      interfaces::JointInterface *physical_joint;
+      std::shared_ptr<interfaces::JointInterface> physical_joint;
       SimNode *snode1, *snode2;
       interfaces::JointId id;
       interfaces::sReal position1, position2;

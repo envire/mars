@@ -64,7 +64,7 @@ namespace mars {
         control->dataBroker->unregisterTimedProducer(this, groupName, dataName,
                                                      "mars_sim/simTimer");
       }
-      if(physical_joint) delete physical_joint;
+      if(physical_joint) physical_joint.reset();
     }
 
     void SimJoint::reattachJoint(void) {
@@ -286,12 +286,8 @@ namespace mars {
       return tmp;
     }
 
-    void SimJoint::setPhysicalJoint(interfaces::JointInterface *physical_joint) {
+    void SimJoint::setPhysicalJoint(std::shared_ptr<interfaces::JointInterface> physical_joint) {
       this->physical_joint = physical_joint;
-    }
-
-    void SimJoint::setInterface(JointInterface* physical_joint) { // deprecated
-      setPhysicalJoint(physical_joint);
     }
 
     void SimJoint::setEffortLimit(interfaces::sReal effort, unsigned char axis_index) {
