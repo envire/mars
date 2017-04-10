@@ -342,8 +342,8 @@ void EnvirePhysics::updateTree()
   treeView = control->graph->getTree(originId);
   if(treeView.crossEdges.size() > 0)
   {
-    const GraphTraits::vertex_descriptor source = control->graph->source(treeView.crossEdges[0].edge);
-    const GraphTraits::vertex_descriptor target = control->graph->target(treeView.crossEdges[0].edge);
+    const GraphTraits::vertex_descriptor source = control->graph->getSourceVertex(treeView.crossEdges[0].edge);
+    const GraphTraits::vertex_descriptor target = control->graph->getTargetVertex(treeView.crossEdges[0].edge);
     const FrameId sourceId = control->graph->getFrameId(source);
     const FrameId targetId = control->graph->getFrameId(target);
     const string msg = "Loop in tree detected: " + sourceId + " --> " + targetId +
