@@ -398,8 +398,8 @@ namespace mars {
       if(spring > 0.00000001) {
         dJointSetSliderParam(jointId, dParamLoStop, lo1);
         dJointSetSliderParam(jointId, dParamHiStop, hi1);
-        dJointSetSliderParam(jointId, dParamStopCFM, cfm1);
-        dJointSetSliderParam(jointId, dParamStopERP, erp1);
+//        dJointSetSliderParam(jointId, dParamStopCFM, cfm1);
+//        dJointSetSliderParam(jointId, dParamStopERP, erp1);
       }
       else if(damping > 0.00000001) {
         dJointSetSliderParam(jointId, dParamFMax, damping);
@@ -896,6 +896,8 @@ namespace mars {
       dReal anchor[4], axis[4], axis2[4];
       int calc1 = 0, calc2 = 0;
       dReal radius, dot, torque;
+      dReal sliderPosition, sliderVelocity;
+      dReal dt = theWorld->getWorldStep();
       dReal v1[3], normal[3], load[3], tmp1[3], axis_force[3];
       MutexLocker locker(&(theWorld->iMutex));
 
@@ -913,7 +915,13 @@ namespace mars {
         calc2 = 0;
 	break;
       case JOINT_TYPE_SLIDER:
+        sliderPosition = dJointGetSliderPosition(jointId);
+        sliderVelocity = dJointGetSliderPositionRate(jointId);
         dJointGetSliderAxis(jointId, axis);
+        // limit slider position to joint limit (to avoid numerical explosion)
+        sliderPosition = std::min(hi1, std::max(lo1, sliderPosition));
+        // limit sliderVelocity so that limits could not be left within timestep
+        sliderVelocity = std::min((hi1-sliderPosition)/(10*dt), std::max((lo1-sliderPosition)/(10*dt), sliderVelocity));
         calc1 = 2;
 	break;
       case JOINT_TYPE_BALL:
@@ -1008,6 +1016,9 @@ namespace mars {
       }
       else if(calc1 == 2) {
         // this is for the slider
+        motor_torque = -spring * (sliderPosition + sliderVelocity * dt/2);
+        motor_torque -= sliderVelocity * damping;
+        motor_torque += 150; // HACK for CREX: additional force at 0 position
       }
       if(calc2 == 1) {
         if(body1) {
@@ -1149,12 +1160,15 @@ namespace mars {
 
     void JointPhysics::setTorque2(sReal torque) {
       CPP_UNUSED(torque);
+      // HACK use setTorque2 just for spring joints
+      MutexLocker locker(&(theWorld->iMutex));
       switch(joint_type) {
       case  JOINT_TYPE_HINGE:
         break;
       case JOINT_TYPE_HINGE2:
         break;
       case JOINT_TYPE_SLIDER:
+        dJointAddSliderForce(jointId, torque);
         break;
       case JOINT_TYPE_BALL:
         // no axis

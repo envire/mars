@@ -45,6 +45,8 @@
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/graphics/GraphicsUpdateInterface.h>
 
+#include <envire_core/graph/EnvireGraph.hpp>
+
 #include <iostream>
 
 
@@ -227,6 +229,14 @@ namespace mars {
       virtual unsigned long getTime();
 
       virtual double getCalcMs();
+
+      envire::core::EnvireGraph getGraphWithoutItems() const
+      {
+        std::vector<std::type_index> filter_list;
+        envire::core::EnvireGraph graph_copy(*(control->graph), &filter_list, true);
+
+        return graph_copy;
+      }      
 
     private:
 
