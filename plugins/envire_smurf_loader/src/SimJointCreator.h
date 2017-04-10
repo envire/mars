@@ -157,10 +157,7 @@ namespace mars {
     #endif
                         control->sim->sceneHasChanged(false);//important, otherwise the joint will be ignored by simulation
 
-                        // create SimJoint
-                        using JointInterfacePtrItemPtr = envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>::Ptr;
-                        JointInterfacePtrItemPtr jointInterfacePtrItemPtr(new envire::core::Item<std::shared_ptr<mars::interfaces::JointInterface>>(jointInterfacePtr));
-                
+                        // create SimJoint               
                         std::shared_ptr<mars::sim::SimJoint> simJoint(new mars::sim::SimJoint(control, joint_data));
                         simJoint->setPhysicalJoint(jointInterfacePtr);
 
@@ -169,14 +166,13 @@ namespace mars {
                         envire::core::FrameId storage_frame_id = item_data.getSourceFrame().getName();
 
                         SimJointPtrItemPtr simJointPtrItemPtr(new envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>(simJoint));
-                        control->graph->addItemToFrame(storage_frame_id, simJointPtrItemPtr);          
-                        control->graph->addItemToFrame(storage_frame_id, jointInterfacePtrItemPtr);   
+                        control->graph->addItemToFrame(storage_frame_id, simJointPtrItemPtr);            
 
     #ifdef DEBUG
                         LOG_DEBUG("[SimJointCreator::createPhysicalJoint] SimJoint  ***" + joint_data.name + "*** is created");
     #endif                       
                         
-                        addToJointRecord(storage_frame_id, joint_data.name, simJoint.get(), jointInterfacePtr.get());                           
+                        addToJointRecord(storage_frame_id, joint_data.name, simJoint.get());                           
                     }
                     else
                     {
@@ -185,7 +181,7 @@ namespace mars {
                 }    
             }             
 
-            void addToJointRecord(const envire::core::FrameId &frameId, const std::string &jointName, mars::sim::SimJoint *simJoint, mars::interfaces::JointInterface *jointInterface)
+            void addToJointRecord(const envire::core::FrameId &frameId, const std::string &jointName, mars::sim::SimJoint *simJoint)
             {
                 using RecordIterator = envire::core::EnvireGraph::ItemIterator<envire::core::Item<mars::sim::JointRecord>>;
                 RecordIterator begin, end;
@@ -202,7 +198,6 @@ namespace mars {
                         LOG_DEBUG("[SimJointCreator::addToJointRecord] Store SimJoint and JointInterface into JointRecord");
     #endif                                              
                         record->sim = std::shared_ptr<mars::sim::SimJoint>(simJoint);
-                        record->interface = std::shared_ptr<mars::interfaces::JointInterface>(jointInterface);
                     }
                     begin ++;
                 }
