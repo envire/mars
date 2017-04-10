@@ -1353,8 +1353,8 @@ namespace mars {
         // FIX: update Graph
         if(graphTreeView.crossEdges.size() > 0)
         {
-            const envire::core::GraphTraits::vertex_descriptor source = control->graph->source(graphTreeView.crossEdges[0].edge);
-            const envire::core::GraphTraits::vertex_descriptor target = control->graph->target(graphTreeView.crossEdges[0].edge);
+            const envire::core::GraphTraits::vertex_descriptor source = control->graph->getSourceVertex(graphTreeView.crossEdges[0].edge);
+            const envire::core::GraphTraits::vertex_descriptor target = control->graph->getTargetVertex(graphTreeView.crossEdges[0].edge);
             const envire::core::FrameId sourceId = control->graph->getFrameId(source);
             const envire::core::FrameId targetId = control->graph->getFrameId(target);
             const std::string msg = "Loop in tree detected: " + sourceId + " --> " + targetId +
