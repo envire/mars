@@ -159,6 +159,11 @@ namespace mars {
 
       virtual void saveToFile(std::string file_name) const;
 
+
+      virtual std::vector<uint8_t> serializeScene(bool include_objects = false) const;
+      virtual bool updateScenePositions(const std::vector<uint8_t>& scene);
+
+
       //threads
       virtual bool allConcurrencysHandled(); ///< Checks if external requests are open.
       void setSyncThreads(bool value); ///< Syncs the threads of GUI and simulation.

@@ -46,12 +46,16 @@
 #include <lib_manager/LibInterface.hpp>
 #include <mars/interfaces/Logging.hpp>
 #include <envire_core/graph/EnvireGraph.hpp>
+#include <envire_core/serialization/Serialization.hpp>
 
 #include <signal.h>
 #include <getopt.h>
 #include <stdexcept>
 #include <algorithm>
 #include <cctype> // for tolower()
+#include <boost/exception/all.hpp>
+#include <exception>
+
 
 #ifdef __linux__
 #include <time.h>
@@ -742,6 +746,80 @@ namespace mars {
       sceneHasChanged(true);
       return 1;
     }
+
+    std::vector<uint8_t> Simulator::serializeScene(bool include_objects) const {
+
+        //get envire graph
+        //std::shared_ptr<envire::core::EnvireGraph> graph = control->graph;
+
+        NodeManagerInterface* nmi = control->nodes;
+
+        std::vector< uint8_t > binary;
+
+        std::ostringstream stream;
+        boost::archive::binary_oarchive binary_ar(stream);
+
+
+        if (include_objects){
+            binary_ar & *(control->graph.get());
+        }else{
+            //copy minimal graph
+            envire::core::EnvireGraph graph = getGraphWithoutItems();
+            binary_ar & graph;
+        }
+        int bufsize = stream.str().size();
+        binary.resize(bufsize);
+
+        memcpy(binary.data(),stream.str().data(),bufsize);
+        //binary = stream.str();
+
+        return binary;
+    }
+    bool Simulator::updateScenePositions(const std::vector<uint8_t>& scene){
+
+
+        LOG_ERROR("%s\n",__PRETTY_FUNCTION__);
+        std::istringstream stream (std::string(scene.begin(), scene.end()));
+        envire::core::EnvireGraph graph;
+
+        try{
+            boost::archive::binary_iarchive ia(stream);
+            ia >> graph;
+        }catch(boost::exception &e){
+            std::cout << boost::diagnostic_information(e) << std::endl;
+        }
+
+
+        std::pair<envire::core::EnvireGraph::edge_iterator,envire::core::EnvireGraph::edge_iterator> edges = graph.getEdges();
+
+        LOG_ERROR("%s loaded graph, now updating edges\n",__PRETTY_FUNCTION__);
+
+        for (auto edge = edges.first; edge != edges.second; edge++){
+
+            //get Transformations
+            envire::core::Transform tf = graph.getTransform(*edge);
+            envire::core::EnvireGraph::vertex_descriptor source = graph.getSourceVertex(*edge);
+            envire::core::EnvireGraph::vertex_descriptor target = graph.getTargetVertex(*edge);
+            envire::core::FrameId sid = graph.getFrameId(source);
+            envire::core::FrameId tid = graph.getFrameId(target);
+
+            //envire::core::EnvireGraph::edge_descriptor e =  control->graph->getEdge(sid,tid);
+            //(*control->graph)[e] = tf;
+
+            control->graph->updateTransform(sid,tid,tf);
+
+            printf("edge: %s -> %s updated\n",sid.c_str(),tid.c_str());
+
+        }
+
+        LOG_ERROR("%s done updating edges\n",__PRETTY_FUNCTION__);
+
+        sceneChanged();
+
+        return true;
+
+    }
+
 
     void Simulator::addLight(LightData light) {
       sceneHasChanged(false);
