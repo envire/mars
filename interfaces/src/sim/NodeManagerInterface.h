@@ -796,15 +796,8 @@ namespace mars {
     /**
      *
      * low level update function to sync external changes in the envire graph to the sim nodes
-     *
-     * @param origin source frame of the trasform to update
-     * @param target
-     * @param originToRoot
-     * @param calc_ms
-     * @param physics_thread
      */
-     virtual void updatePositions(const envire::core::GraphTraits::vertex_descriptor origin,
-                          const envire::core::GraphTraits::vertex_descriptor target) = 0;
+     virtual void updateSimNodePositionsFromGraph() = 0;
 
     };
 

@@ -1386,42 +1386,60 @@ namespace mars {
         }
     }
 
-void EnvireNodeManager::updatePositions(const envire::core::GraphTraits::vertex_descriptor origin,
-                     const envire::core::GraphTraits::vertex_descriptor target){
-
-    /**
-      BUG: has to go though all nodes AFTER complete graph update
-    */
+void EnvireNodeManager::updateSimNodePositionsFromGraph(){
 
     //update positions in sim nodes
 
-    if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(target)){
-        // Update simulation node
+    std::pair<envire::core::EnvireGraph::vertex_iterator, envire::core::EnvireGraph::vertex_iterator> vertices = control->graph->getVertices();
+
+    for (auto vertex = vertices.first; vertex != vertices.second; vertex++){
+
         envire::core::GraphTraits::vertex_descriptor center = control->graph->getVertex("center");
-        base::TransformWithCovariance targetPos = control->graph->getTransform(target,center).transform;
+        base::TransformWithCovariance targetPos = control->graph->getTransform(center,*vertex).transform;
 
-        using IteratorSimNode = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
-        IteratorSimNode begin_sim, end_sim;
-        boost::tie(begin_sim, end_sim) = control->graph->getItems<SimNodeItem>(target);
-        for (;begin_sim!=end_sim; begin_sim++)
-        {
-            const std::shared_ptr<mars::sim::SimNode> sim_node = begin_sim->getData();
+        if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(*vertex)){
+            // Update simulation node
 
-            // update the pose of node only if it is dynamic
-            // don't update the position of inertial, collision and visuals
-            // since these simnode has static transformation to the frame
-            // the frame updates its pose
-//                    if (sim_node->isMovable() == true)
-//                    {
-                //utils::Vector setPosition(const utils::Vector &pos, bool move_group) = 0;
+
+            using IteratorSimNode = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
+            IteratorSimNode begin_sim, end_sim;
+            boost::tie(begin_sim, end_sim) = control->graph->getItems<SimNodeItem>(*vertex);
+            for (;begin_sim!=end_sim; begin_sim++)
+            {
+                const std::shared_ptr<mars::sim::SimNode> sim_node = begin_sim->getData();
+
+                utils::Vector oldpos = sim_node->getPosition();
+
                 utils::Vector pos = targetPos.translation;
                 sim_node->setPosition(pos,false);
 
                 utils::Quaternion rot = targetPos.orientation;
                 sim_node->setRotation(rot,false);
-//                    }
+    //                    }
+                std::string name = control->graph->getFrameId(*vertex);
 
+                LOG_WARN("node %s (%.2f %.2f %.2f) to (%.2f %.2f %.2f)\n",name.c_str(),oldpos.x(),oldpos.y(),oldpos.z(),pos.x(),pos.y(),pos.z());
+
+            }
         }
+
+//        if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>>(*vertex)){
+//
+//            using IteratorSimJoint = envire::core::EnvireGraph::ItemIterator<SimJointItem>;
+//            IteratorSimJoint begin_sim, end_sim;
+//            boost::tie(begin_sim, end_sim) = control->graph->getItems<SimJointItem>(*vertex);
+//            for (;begin_sim!=end_sim; begin_sim++)
+//            {
+//                const std::shared_ptr<mars::sim::SimJoint> sim_joint = begin_sim->getData();
+//
+//
+//                utils::Vector pos = targetPos.translation;
+//                sim_joint->setAnchor(pos);
+//
+//
+//            }
+//        }
+
     }
 }
 

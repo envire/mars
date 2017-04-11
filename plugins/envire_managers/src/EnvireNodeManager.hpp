@@ -53,6 +53,7 @@ namespace mars {
         namespace envire_managers {
 
           using SimNodeItem =  envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
+          using SimJointItem =  envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>;
           using SimNodeItemPtr = SimNodeItem::Ptr;          
 
           typedef std::map<mars::interfaces::NodeId, SimNodeItemPtr> NodeMap;
@@ -171,8 +172,7 @@ namespace mars {
             virtual void edit(mars::interfaces::NodeId id, const std::string &key,
                               const std::string &value);
 
-            virtual void updatePositions(const envire::core::GraphTraits::vertex_descriptor origin,
-                                         const envire::core::GraphTraits::vertex_descriptor target);
+            virtual void updateSimNodePositionsFromGraph();
 
           private:
             mars::interfaces::NodeId next_node_id;

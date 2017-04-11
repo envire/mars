@@ -90,7 +90,7 @@ namespace mars {
       virtual void sceneHasChanged(bool reset) = 0;
       virtual void saveToFile(std::string file_name) const = 0;
 
-      virtual std::vector<uint8_t> serializeScene(bool include_objects = false) const = 0;
+      virtual std::vector<uint8_t> serializeScene(bool include_objects = false) = 0;
       virtual bool updateScenePositions(const std::vector<uint8_t>& scene) = 0;
 
       //threads

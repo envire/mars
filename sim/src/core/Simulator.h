@@ -162,7 +162,7 @@ namespace mars {
       virtual void saveToFile(std::string file_name) const;
 
 
-      virtual std::vector<uint8_t> serializeScene(bool include_objects = false) const;
+      virtual std::vector<uint8_t> serializeScene(bool include_objects = false);
       virtual bool updateScenePositions(const std::vector<uint8_t>& scene);
 
 

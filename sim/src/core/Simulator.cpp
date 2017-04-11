@@ -748,7 +748,7 @@ namespace mars {
       return 1;
     }
 
-    std::vector<uint8_t> Simulator::serializeScene(bool include_objects) const {
+    std::vector<uint8_t> Simulator::serializeScene(bool include_objects){
 
         //get envire graph
         //std::shared_ptr<envire::core::EnvireGraph> graph = control->graph;
@@ -760,6 +760,8 @@ namespace mars {
         std::ostringstream stream;
         boost::archive::binary_oarchive binary_ar(stream);
 
+        stepping_mutex.lock();
+        physicsThreadLock();
 
         if (include_objects){
             binary_ar & *(control->graph.get());
@@ -768,6 +770,10 @@ namespace mars {
             envire::core::EnvireGraph graph = getGraphWithoutItems();
             binary_ar & graph;
         }
+
+        physicsThreadUnlock();
+        stepping_mutex.unlock();
+
         int bufsize = stream.str().size();
         binary.resize(bufsize);
 
@@ -779,7 +785,6 @@ namespace mars {
     bool Simulator::updateScenePositions(const std::vector<uint8_t>& scene){
 
 
-        LOG_ERROR("%s\n",__PRETTY_FUNCTION__);
         std::istringstream stream (std::string(scene.begin(), scene.end()));
         envire::core::EnvireGraph graph;
 
@@ -790,34 +795,40 @@ namespace mars {
             std::cout << boost::diagnostic_information(e) << std::endl;
         }
 
-
+        stepping_mutex.lock();
+        physicsThreadLock();
         std::pair<envire::core::EnvireGraph::edge_iterator,envire::core::EnvireGraph::edge_iterator> edges = graph.getEdges();
 
-        LOG_ERROR("%s loaded graph, now updating edges\n",__PRETTY_FUNCTION__);
-
+        //update edges
         for (auto edge = edges.first; edge != edges.second; edge++){
 
-            //get Transformations
+            //get Transformations, has to go though frame ids, the descriptors may be different in loaded graph
+            //but the frameIds are the same
             envire::core::Transform tf = graph.getTransform(*edge);
             envire::core::EnvireGraph::vertex_descriptor source = graph.getSourceVertex(*edge);
             envire::core::EnvireGraph::vertex_descriptor target = graph.getTargetVertex(*edge);
             envire::core::FrameId sid = graph.getFrameId(source);
             envire::core::FrameId tid = graph.getFrameId(target);
 
-            //envire::core::EnvireGraph::edge_descriptor e =  control->graph->getEdge(sid,tid);
-            //(*control->graph)[e] = tf;
-
             control->graph->updateTransform(sid,tid,tf);
 
-            control->nodes->updatePositions(source,target);
-
-            printf("edge: %s -> %s updated\n",sid.c_str(),tid.c_str());
+//            LOG_INFO("edge: %s -> %s updated\n",graph.getFrameId(source).c_str(),graph.getFrameId(target).c_str());
 
         }
+        //load new global positions to the sim nodes
+        control->nodes->updateSimNodePositionsFromGraph();
 
-        LOG_ERROR("%s done updating edges\n",__PRETTY_FUNCTION__);
+//        LOG_ERROR("%s done updating edges\n",__PRETTY_FUNCTION__);
 
-        sceneChanged();
+        //tell the sim the scene has beed resetted
+        //sceneHasChanged(true);
+        //resetSim(false);
+
+
+        //TODO: fix joint anchors
+
+        physicsThreadUnlock();
+        stepping_mutex.unlock();
 
         return true;
 
