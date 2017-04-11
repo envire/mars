@@ -405,6 +405,7 @@ namespace mars {
   //     newNode.material = terrain->material;
   //     control->sim->sceneHasChanged(false);
   //     return addNode(&newNode, true);
+          return 0;
    }
 
   //   /**
@@ -422,6 +423,7 @@ namespace mars {
   //     for(iter=v_NodeData.begin(); iter!=v_NodeData.end(); iter++)
   //       tmp.push_back(addNode(&(*iter)));
   //     return tmp;
+         return std::vector<mars::interfaces::NodeId>();
    }
 
   //   /**
@@ -434,6 +436,7 @@ namespace mars {
             printf("not implemented : %s\n", __PRETTY_FUNCTION__);
   //     control->sim->sceneHasChanged(false);
   //     return addNode(snode);
+            return 0;
     }
 
   //   /**
@@ -444,11 +447,13 @@ namespace mars {
             printf("not implemented : %s\n", __PRETTY_FUNCTION__);
   //     mars::utils::MutexLocker locker(&iMutex);
   //     return simNodes.size();
+         return 0;
     }
 
    mars::interfaces::NodeId EnvireNodeManager::getNextNodeID() const {
           printf("not implemented : %s\n", __PRETTY_FUNCTION__);
   //     return next_node_id;
+          return 0;
      }
 
   //   /**
@@ -774,6 +779,8 @@ namespace mars {
   //    */
    const mars::utils::Vector EnvireNodeManager::getCenterOfMass(const std::vector<mars::interfaces::NodeId> &ids) const {
           printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+          return mars::utils::Vector();
+
   //     std::vector<mars::interfaces::NodeId>::const_iterator iter;
   //     NodeMap::const_iterator nter;
   //     std::vector<mars::interfaces::NodeInterface*> pNodes;
@@ -805,6 +812,7 @@ namespace mars {
 
    const mars::utils::Vector EnvireNodeManager::getPosition(mars::interfaces::NodeId id) const {
           printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+          return mars::utils::Vector();
   //     mars::utils::Vector pos(0.0,0.0,0.0);
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::const_iterator iter = simNodes.find(id);
@@ -816,6 +824,7 @@ namespace mars {
 
    const mars::utils::Quaternion EnvireNodeManager::getRotation(mars::interfaces::NodeId id) const {
           printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+          return  mars::utils::Quaternion();
   //     mars::utils::Quaternion q(mars::utils::Quaternion::Identity());
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::const_iterator iter = simNodes.find(id);
@@ -827,6 +836,7 @@ namespace mars {
 
    const mars::utils::Vector EnvireNodeManager::getLinearVelocity(mars::interfaces::NodeId id) const {
           printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+          return mars::utils::Vector();
   //     mars::utils::Vector vel(0.0,0.0,0.0);
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::const_iterator iter = simNodes.find(id);
@@ -837,6 +847,7 @@ namespace mars {
 
   const mars::utils::Vector EnvireNodeManager::getAngularVelocity(mars::interfaces::NodeId id) const {
           printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+          return mars::utils::Vector();
   //     mars::utils::Vector avel(0.0,0.0,0.0);
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::const_iterator iter = simNodes.find(id);
@@ -848,6 +859,7 @@ namespace mars {
 
    const mars::utils::Vector EnvireNodeManager::getLinearAcceleration(mars::interfaces::NodeId id) const {
           printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+          return mars::utils::Vector();
   //     mars::utils::Vector acc(0.0,0.0,0.0);
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::const_iterator iter = simNodes.find(id);
@@ -858,6 +870,7 @@ namespace mars {
 
    const mars::utils::Vector EnvireNodeManager::getAngularAcceleration(mars::interfaces::NodeId id) const {
           printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+          return mars::utils::Vector();
   //     mars::utils::Vector aacc(0.0,0.0,0.0);
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::const_iterator iter = simNodes.find(id);
@@ -1293,6 +1306,7 @@ namespace mars {
   //    */
      const mars::utils::Vector EnvireNodeManager::setReloadExtent(mars::interfaces::NodeId id, const mars::utils::Vector &ext) {
       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+      return mars::utils::Vector();
   //     mars::utils::Vector x(0.0,0.0,0.0);
   //     mars::utils::MutexLocker locker(&iMutex);
   //     std::list<mars::interfaces::NodeData>::iterator iter = getReloadNode(id);
@@ -1633,6 +1647,7 @@ void EnvireNodeManager::updatePositions(const envire::core::GraphTraits::vertex_
 
      const mars::interfaces::contact_params EnvireNodeManager::getContactParams(mars::interfaces::NodeId id) const {
       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+      return mars::interfaces::contact_params();
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::const_iterator iter = simNodes.find(id);
   //     if (iter != simNodes.end())
@@ -1704,6 +1719,7 @@ void EnvireNodeManager::updatePositions(const envire::core::GraphTraits::vertex_
 
      mars::interfaces::NodeId EnvireNodeManager::getDrawID(mars::interfaces::NodeId id) const {
       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+      return 0;
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::const_iterator iter = simNodes.find(id);
   //     if (iter != simNodes.end())
@@ -1715,6 +1731,7 @@ void EnvireNodeManager::updatePositions(const envire::core::GraphTraits::vertex_
 
      const mars::utils::Vector EnvireNodeManager::getContactForce(mars::interfaces::NodeId id) const {
       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+      return utils::Vector();
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::const_iterator iter = simNodes.find(id);
   //     if (iter != simNodes.end())
@@ -1726,6 +1743,7 @@ void EnvireNodeManager::updatePositions(const envire::core::GraphTraits::vertex_
 
      double EnvireNodeManager::getCollisionDepth(mars::interfaces::NodeId id) const {
       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+      return 0;
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::const_iterator iter = simNodes.find(id);
   //     if (iter != simNodes.end())
@@ -1791,6 +1809,7 @@ void EnvireNodeManager::updatePositions(const envire::core::GraphTraits::vertex_
 
      std::vector<mars::interfaces::NodeId> EnvireNodeManager::getConnectedNodes(mars::interfaces::NodeId id) {
       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+      return std::vector<mars::interfaces::NodeId>();
   //     std::vector<mars::interfaces::NodeId> connected;
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::iterator iter = simNodes.find(id);
@@ -1837,6 +1856,7 @@ void EnvireNodeManager::updatePositions(const envire::core::GraphTraits::vertex_
      bool EnvireNodeManager::getDataBrokerNames(mars::interfaces::NodeId id, std::string *groupName,
                                           std::string *dataName) const {
       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+      return false;
   //     NodeMap::const_iterator iter = simNodes.find(id);
   //     //LOG_DEBUG("We have currently %i elements\n",(int)simNodes.size());
   //     if (iter == simNodes.end())
@@ -1869,6 +1889,7 @@ void EnvireNodeManager::updatePositions(const envire::core::GraphTraits::vertex_
 
      bool EnvireNodeManager::getIsMovable(mars::interfaces::NodeId id) const {
       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+      return true;
   //     NodeMap::const_iterator iter = simNodes.find(id);
   //     if(iter != simNodes.end())
   //       return iter->second->isMovable();
