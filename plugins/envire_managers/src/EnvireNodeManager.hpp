@@ -171,6 +171,9 @@ namespace mars {
             virtual void edit(mars::interfaces::NodeId id, const std::string &key,
                               const std::string &value);
 
+            virtual void updatePositions(const envire::core::GraphTraits::vertex_descriptor origin,
+                                         const envire::core::GraphTraits::vertex_descriptor target);
+
           private:
             mars::interfaces::NodeId next_node_id;
             bool update_all_nodes;
@@ -179,7 +182,7 @@ namespace mars {
             //NodeMap simNodesDyn;
             NodeMap nodesToUpdate;
             //std::list<mars::interfaces::NodeData> simNodesReload;
-            unsigned long maxGroupID;
+            int maxGroupID;
             lib_manager::LibManager *libManager;
             mutable mars::utils::Mutex iMutex;
 
@@ -235,6 +238,9 @@ namespace mars {
             void updateChildPositions(const envire::core::GraphTraits::vertex_descriptor vertex,
                                       const base::TransformWithCovariance& frameToRoot,
                                       mars::interfaces::sReal calc_ms, bool physics_thread);
+
+
+
             void updatePositions(const envire::core::GraphTraits::vertex_descriptor origin,
                                  const envire::core::GraphTraits::vertex_descriptor target,
                                  const base::TransformWithCovariance& originToRoot,

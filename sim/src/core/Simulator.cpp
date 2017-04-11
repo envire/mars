@@ -809,6 +809,8 @@ namespace mars {
 
             control->graph->updateTransform(sid,tid,tf);
 
+            control->nodes->updatePositions(source,target);
+
             printf("edge: %s -> %s updated\n",sid.c_str(),tid.c_str());
 
         }

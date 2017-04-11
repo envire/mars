@@ -41,6 +41,8 @@
 
 #include <mars/utils/Vector.h>
 #include <mars/utils/Quaternion.h>
+#include <envire_core/graph/GraphTypes.hpp>
+
 
 namespace mars {
 
@@ -790,6 +792,20 @@ namespace mars {
        */
       virtual void edit(NodeId id, const std::string &key,
                         const std::string &value) = 0;
+
+    /**
+     *
+     * low level update function to sync external changes in the envire graph to the sim nodes
+     *
+     * @param origin source frame of the trasform to update
+     * @param target
+     * @param originToRoot
+     * @param calc_ms
+     * @param physics_thread
+     */
+     virtual void updatePositions(const envire::core::GraphTraits::vertex_descriptor origin,
+                          const envire::core::GraphTraits::vertex_descriptor target) = 0;
+
     };
 
   } // end of namespace interfaces

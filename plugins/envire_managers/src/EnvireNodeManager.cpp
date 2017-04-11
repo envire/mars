@@ -1372,6 +1372,41 @@ namespace mars {
         }
     }
 
+void EnvireNodeManager::updatePositions(const envire::core::GraphTraits::vertex_descriptor origin,
+                     const envire::core::GraphTraits::vertex_descriptor target){
+
+    //update positions in sim nodes
+
+    if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(target)){
+        // Update simulation node
+        envire::core::GraphTraits::vertex_descriptor center = control->graph->getVertex("center");
+        base::TransformWithCovariance targetPos = control->graph->getTransform(target,center).transform;
+
+        using IteratorSimNode = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
+        IteratorSimNode begin_sim, end_sim;
+        boost::tie(begin_sim, end_sim) = control->graph->getItems<SimNodeItem>(target);
+        for (;begin_sim!=end_sim; begin_sim++)
+        {
+            const std::shared_ptr<mars::sim::SimNode> sim_node = begin_sim->getData();
+
+            // update the pose of node only if it is dynamic
+            // don't update the position of inertial, collision and visuals
+            // since these simnode has static transformation to the frame
+            // the frame updates its pose
+//                    if (sim_node->isMovable() == true)
+//                    {
+                //utils::Vector setPosition(const utils::Vector &pos, bool move_group) = 0;
+                utils::Vector pos = targetPos.translation;
+                sim_node->setPosition(pos,false);
+
+                utils::Quaternion rot = targetPos.orientation;
+                sim_node->setRotation(rot,false);
+//                    }
+
+        }
+    }
+}
+
     void EnvireNodeManager::updatePositions( const envire::core::GraphTraits::vertex_descriptor origin,
                                         const envire::core::GraphTraits::vertex_descriptor target,
                                         const base::TransformWithCovariance& originToRoot,
