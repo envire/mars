@@ -1375,6 +1375,10 @@ namespace mars {
 void EnvireNodeManager::updatePositions(const envire::core::GraphTraits::vertex_descriptor origin,
                      const envire::core::GraphTraits::vertex_descriptor target){
 
+    /**
+      BUG: has to go though all nodes AFTER complete graph update
+    */
+
     //update positions in sim nodes
 
     if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(target)){
