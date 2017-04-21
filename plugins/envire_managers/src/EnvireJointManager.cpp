@@ -294,21 +294,12 @@ namespace mars {
 
         mars::utils::MutexLocker locker(&iMutex);
 
-                using IteratorSimJoint = envire::core::EnvireGraph::ItemIterator<SimJointItem>;
-                IteratorSimJoint begin_sim, end_sim;
-                boost::tie(begin_sim, end_sim) = control->graph->getItems<SimJointItem>(*vertex);
-                for (;begin_sim!=end_sim; begin_sim++)
-                {
-                    const std::shared_ptr<mars::sim::SimJoint> sim_joint = begin_sim->getData();
-                    //utils::Vector anchor = targetPos.translation;
-                    //sim_joint->setAnchor(anchor);
-                    sim_joint->reattachJoint();
+        for (JointMap::iterator iter = simJoints.begin(); iter != simJoints.end(); iter++) {
+            const std::shared_ptr<mars::sim::SimJoint> sim_joint = iter->second->getData();
 
-            //utils::Vector pos = sim_joint->getAnchor();
+            sim_joint->reattachJoint();
+
         }
-
-
-
     }
 
 
