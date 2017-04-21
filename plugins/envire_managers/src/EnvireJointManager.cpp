@@ -294,65 +294,15 @@ namespace mars {
 
         mars::utils::MutexLocker locker(&iMutex);
 
-//
-//        //update positions in sim nodes
-//        std::pair<envire::core::EnvireGraph::vertex_iterator, envire::core::EnvireGraph::vertex_iterator> vertices = control->graph->getVertices();
-//
-//       for (auto vertex = vertices.first; vertex != vertices.second; vertex++){
-////
-//            envire::core::GraphTraits::vertex_descriptor center = control->graph->getVertex("body");
-//            base::TransformWithCovariance targetPos = control->graph->getTransform(center,*vertex).transform;
-////
-////            if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>>(*vertex)){
-////
-////                using IteratorSimJoint = envire::core::EnvireGraph::ItemIterator<SimJointItem>;
-////                IteratorSimJoint begin_sim, end_sim;
-////                boost::tie(begin_sim, end_sim) = control->graph->getItems<SimJointItem>(*vertex);
-////                for (;begin_sim!=end_sim; begin_sim++)
-////                {
-////                    const std::shared_ptr<mars::sim::SimJoint> sim_joint = begin_sim->getData();
-////                    utils::Vector anchor = targetPos.translation;
-////
-////                    utils::Vector oldpos = sim_joint->getAnchor();
-////
-////                    utils::Vector pos = targetPos.translation;
-////                    //sim_joint->setAnchor(pos);
-////
-////                    std::string name = control->graph->getFrameId(*vertex);
-////
-////                    LOG_WARN("joint %s (%.2f %.2f %.2f) to (%.2f %.2f %.2f)\n",name.c_str(),oldpos.x(),oldpos.y(),oldpos.z(),pos.x(),pos.y(),pos.z());
-//                      LOG_WARN("joint %s (%.2f %.2f %.2f) to (%.2f %.2f %.2f)\n",name.c_str(),oldpos.x(),oldpos.y(),oldpos.z(),pos.x(),pos.y(),pos.z());
-////
-////
-////                    //sim_joint->setAnchor(anchor);
-////                    //sim_joint->reattachJoint();
-////
-//////                    mars::interfaces::JointData jd = sim_joint->getSJoint();
-//////                    jd.angle1_offset = 0;
-//////                    jd.angle2_offset = 0;
-//////                    sim_joint->setSJoint(jd);
-////
-////                }
-////            }
-//        }
-
-
-        for (JointMap::iterator iter = simJoints.begin(); iter != simJoints.end(); iter++) {
-            const std::shared_ptr<mars::sim::SimJoint> sim_joint = iter->second->getData();
-
-            mars::interfaces::JointData d = sim_joint->getSJoint();
-
-            if (d.type == mars::interfaces::JOINT_TYPE_SLIDER){
-                std::cout << "1:" << d.angle1_offset << " " << d.angle2_offset << std::endl;
-            }
-
-            utils::Vector oldpos = sim_joint->getAnchor();
-
-            sim_joint->setAttachedNodes(sim_joint->getAttachedNode1(),sim_joint->getAttachedNode1());
-            sim_joint->reattachJoint();
-
-            //LOG_WARN("joint %s (%.2f %.2f %.2f) to (%.2f %.2f %.2f)\n",name.c_str(),oldpos.x(),oldpos.y(),oldpos.z(),pos.x(),pos.y(),pos.z());
-
+                using IteratorSimJoint = envire::core::EnvireGraph::ItemIterator<SimJointItem>;
+                IteratorSimJoint begin_sim, end_sim;
+                boost::tie(begin_sim, end_sim) = control->graph->getItems<SimJointItem>(*vertex);
+                for (;begin_sim!=end_sim; begin_sim++)
+                {
+                    const std::shared_ptr<mars::sim::SimJoint> sim_joint = begin_sim->getData();
+                    //utils::Vector anchor = targetPos.translation;
+                    //sim_joint->setAnchor(anchor);
+                    sim_joint->reattachJoint();
 
             //utils::Vector pos = sim_joint->getAnchor();
         }
