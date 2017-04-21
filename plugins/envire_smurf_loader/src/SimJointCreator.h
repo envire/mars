@@ -106,6 +106,7 @@ namespace mars {
                 envire::core::Transform target_transf = control->graph->getTransform(origin_frame_id, target_frame_id); 
                 utils::Vector anchor = target_transf.transform.translation;
                 jointData.anchor = anchor;
+                jointData.anchorPos == mars::interfaces::ANCHOR_NODE1;
             }  
 
             std::pair<mars::sim::SimNode*, mars::sim::SimNode*> findSourceTarget(const ItemDataType &item_data)

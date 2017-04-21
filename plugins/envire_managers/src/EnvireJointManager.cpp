@@ -107,7 +107,7 @@ namespace mars {
       //if (load_option == OPEN_INITIAL)
       //jointS->angle1_offset = jointS->angle2_offset = 0;
       // TODO: set anchor!
-      /*if (jointS->anchorPos == mars::interfaces::ANCHOR_NODE1) {
+      if (jointS->anchorPos == mars::interfaces::ANCHOR_NODE1) {
         assert(node1);
         jointS->anchor = node1->getPosition();
       } else if (jointS->anchorPos == mars::interfaces::ANCHOR_NODE2) {
@@ -117,7 +117,7 @@ namespace mars {
         assert(node1);
         assert(node2);
         jointS->anchor = (node1->getPosition() + node2->getPosition()) / 2.;
-      }*/
+      }
 
       // create the physical node data
       if (newJointInterface->createJoint(jointS, i_node1, i_node2)) {
