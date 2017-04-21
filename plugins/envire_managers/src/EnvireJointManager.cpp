@@ -308,8 +308,8 @@ namespace mars {
                 for (;begin_sim!=end_sim; begin_sim++)
                 {
                     const std::shared_ptr<mars::sim::SimJoint> sim_joint = begin_sim->getData();
-                    utils::Vector anchor = targetPos.translation;
-                    sim_joint->setAnchor(anchor);
+                    //utils::Vector anchor = targetPos.translation;
+                    //sim_joint->setAnchor(anchor);
                     sim_joint->reattachJoint();
 
 //                    mars::interfaces::JointData jd = sim_joint->getSJoint();
