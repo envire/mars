@@ -301,6 +301,8 @@ namespace mars {
 
       virtual void connectMimics();
 
+      virtual void updatePositionsFromGraph();
+
     private:
       
       /*
@@ -329,7 +331,7 @@ namespace mars {
       unsigned long next_motor_id;
 
       //! a container for all motors currently present in the simulation
-      std::map<unsigned long, mars::sim::SimMotor*> simMotors;
+      std::map<unsigned long, std::shared_ptr<mars::sim::SimMotor> > simMotors;
 
       //! a containter for all motors that are reloaded after a reset of the simulation
       std::list<mars::interfaces::MotorData> simMotorsReload;
