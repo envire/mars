@@ -206,7 +206,14 @@ namespace mars {
                                interfaces::sReal lowStop2) = 0;
       virtual void setHighStop2(unsigned long id,
                                 interfaces::sReal highStop2) = 0;
+      /**
+       *
+       * low level update function to sync external changes in the envire graph to the sim nodes
+       */
+       virtual void updatePositionsFromGraph() = 0;
     };
+
+
 
   } // end of namespace interfaces
 } // end of namespace mars

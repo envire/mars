@@ -103,6 +103,8 @@ namespace mars {
       virtual void setLowStop2(unsigned long id, mars::interfaces::sReal lowStop2);
       virtual void setHighStop2(unsigned long id, mars::interfaces::sReal highStop2);
 
+      virtual void updatePositionsFromGraph();
+
     private:
       unsigned long next_joint_id;
       JointMap simJoints;

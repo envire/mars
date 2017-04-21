@@ -797,7 +797,7 @@ namespace mars {
      *
      * low level update function to sync external changes in the envire graph to the sim nodes
      */
-     virtual void updateSimNodePositionsFromGraph() = 0;
+     virtual void updatePositionsFromGraph() = 0;
 
     };
 

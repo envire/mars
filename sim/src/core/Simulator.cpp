@@ -816,7 +816,8 @@ namespace mars {
 
         }
         //load new global positions to the sim nodes
-        control->nodes->updateSimNodePositionsFromGraph();
+        control->nodes->updatePositionsFromGraph();
+        control->joints->updatePositionsFromGraph();
 
 //        LOG_ERROR("%s done updating edges\n",__PRETTY_FUNCTION__);
 

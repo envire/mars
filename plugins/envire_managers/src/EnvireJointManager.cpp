@@ -289,6 +289,42 @@ namespace mars {
       }
     }
 
+
+    void EnvireJointManager::updatePositionsFromGraph(){
+
+        //update positions in sim nodes
+        std::pair<envire::core::EnvireGraph::vertex_iterator, envire::core::EnvireGraph::vertex_iterator> vertices = control->graph->getVertices();
+
+        for (auto vertex = vertices.first; vertex != vertices.second; vertex++){
+
+            envire::core::GraphTraits::vertex_descriptor center = control->graph->getVertex("center");
+            base::TransformWithCovariance targetPos = control->graph->getTransform(center,*vertex).transform;
+
+            if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>>(*vertex)){
+
+                using IteratorSimJoint = envire::core::EnvireGraph::ItemIterator<SimJointItem>;
+                IteratorSimJoint begin_sim, end_sim;
+                boost::tie(begin_sim, end_sim) = control->graph->getItems<SimJointItem>(*vertex);
+                for (;begin_sim!=end_sim; begin_sim++)
+                {
+                    const std::shared_ptr<mars::sim::SimJoint> sim_joint = begin_sim->getData();
+                    utils::Vector anchor = targetPos.translation;
+                    sim_joint->setAnchor(anchor);
+                    sim_joint->reattachJoint();
+
+//                    mars::interfaces::JointData jd = sim_joint->getSJoint();
+//                    jd.angle1_offset = 0;
+//                    jd.angle2_offset = 0;
+//                    sim_joint->setSJoint(jd);
+
+                }
+            }
+        }
+
+    }
+
+
+
     void EnvireJointManager::clearAllJoints(bool clear_all) {
       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
       // map<unsigned long, SimJoint*>::iterator iter;
