@@ -187,7 +187,11 @@ namespace mars {
 
     private:
       interfaces::ControlCenter *control;
+
+      // configuration for the node
       interfaces::NodeData sNode;
+
+      // output data from physic
       utils::Vector f;
       utils::Vector t;
       utils::Vector l_vel;
@@ -198,14 +202,16 @@ namespace mars {
       utils::Vector a_acc;
       bool ground_contact;
       interfaces::sReal ground_contact_force;
+
       std::shared_ptr<interfaces::NodeInterface> my_interface;
-      bool has_sensor;
-      interfaces::sReal i_velocity_sum;
-      interfaces::sReal i_velocity[BACK_VEL];
-      int vel_ptr;
-      unsigned long graphics_id, graphics_id2;
+
+      //bool has_sensor;
+      //interfaces::sReal i_velocity_sum;
+      //interfaces::sReal i_velocity[BACK_VEL];
+      //int vel_ptr;
+      //unsigned long graphics_id, graphics_id2;
       bool update_ray;
-      int visual_rep;
+      //int visual_rep;
       mutable utils::Mutex iMutex;
       // stuff for dataBroker communication
       data_broker::DataPackageMapping dbPackageMapping;

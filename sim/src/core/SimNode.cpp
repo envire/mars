@@ -35,6 +35,10 @@
 #include <cstring>
 #include <cmath>
 
+#ifdef _MSC_VER
+#define __PRETTY_FUNCTION__  __FUNCTION__ __FUNCSIG__
+#endif
+
 namespace mars {
   namespace sim {
 
@@ -67,14 +71,14 @@ namespace mars {
       t = Vector(0.0, 0.0, 0.0);
       ground_contact = 0;
       ground_contact_force = 0;
-      i_velocity_sum = 0.0;
-      for(int i=0; i<BACK_VEL; i++)
-        i_velocity[i] = 0.0;
-      vel_ptr = 0;
-      graphics_id = 0;
-      graphics_id2 = 0;
+      //i_velocity_sum = 0.0;
+      //for(int i=0; i<BACK_VEL; i++)
+      //  i_velocity[i] = 0.0;
+      //vel_ptr = 0;
+      //graphics_id = 0;
+      //graphics_id2 = 0;
       update_ray = false;
-      visual_rep = 1;
+      //visual_rep = 1;
 
       dbPackageMapping.add("id", &sNode.index);
       dbPackageMapping.add("position/x", &sNode.pos.x());
@@ -176,23 +180,27 @@ namespace mars {
     }
 
     void SimNode::setGraphicsID(unsigned long g_id) {
-      MutexLocker locker(&iMutex);
-      graphics_id = g_id;
+      printf("not implemented (deprecated): %s\n", __PRETTY_FUNCTION__);
+      //MutexLocker locker(&iMutex);
+      //graphics_id = g_id;
     }
 
     unsigned long SimNode::getGraphicsID(void) const {
-      MutexLocker locker(&iMutex);
-      return graphics_id;
+      printf("not implemented (deprecated): %s\n", __PRETTY_FUNCTION__);
+      //MutexLocker locker(&iMutex);
+      //return graphics_id;
     }
 
     void SimNode::setGraphicsID2(unsigned long g_id) {
-      MutexLocker locker(&iMutex);
-      graphics_id2 = g_id;
+      printf("not implemented (deprecated): %s\n", __PRETTY_FUNCTION__);
+      //MutexLocker locker(&iMutex);
+      //graphics_id2 = g_id;
     }
 
     unsigned long SimNode::getGraphicsID2(void) const {
-      MutexLocker locker(&iMutex);
-      return graphics_id2;
+      printf("not implemented (deprecated): %s\n", __PRETTY_FUNCTION__);
+      //MutexLocker locker(&iMutex);
+      //return graphics_id2;
     }
 
     const Vector SimNode::setPosition(const Vector &newPosition,
@@ -239,13 +247,15 @@ namespace mars {
     }
 
     void SimNode::setVisualRep(int val) {
-      MutexLocker locker(&iMutex);
-      visual_rep = val;
+      printf("not implemented (deprecated): %s\n", __PRETTY_FUNCTION__);
+      //MutexLocker locker(&iMutex);
+      //visual_rep = val;
     }
 
     int SimNode::getVisualRep(void) const {
-      MutexLocker locker(&iMutex);
-      return visual_rep;
+      printf("not implemented (deprecated): %s\n", __PRETTY_FUNCTION__);
+      //MutexLocker locker(&iMutex);
+      //return visual_rep;
     }
 
 
@@ -397,31 +407,32 @@ namespace mars {
     }
 
     void SimNode::setExtent(const Vector &ext, bool update) {
-      MutexLocker locker(&iMutex);
-      sNode.ext = ext;
-      if(update){
-        if(control->graphics) {
-          Vector scale;
-          if(sNode.filename == "PRIMITIVE") {
-            scale = sNode.ext;
-          } else {
-            scale = sNode.visual_size;
-          }
-          control->graphics->setDrawObjectScale(graphics_id, scale);
-        }
-        if (my_interface != nullptr) my_interface->changeNode(&sNode);
+      printf("not implemented (deprecated): %s\n", __PRETTY_FUNCTION__);
+      // MutexLocker locker(&iMutex);
+      // sNode.ext = ext;
+      // if(update){
+      //   if(control->graphics) {
+      //     Vector scale;
+      //     if(sNode.filename == "PRIMITIVE") {
+      //       scale = sNode.ext;
+      //     } else {
+      //       scale = sNode.visual_size;
+      //     }
+      //     control->graphics->setDrawObjectScale(graphics_id, scale);
+      //   }
+      //   if (my_interface != nullptr) my_interface->changeNode(&sNode);
 
-        /*  //TODO is this really needed?
-            nodes = simNodes;
-            nodesj = simNodes;
-            jointsj = control->joints->getSimJoints();
-            nodes.erase(nodes.find(editedNode->getID()));
-            resetRelativeNodes(*editedNode, &nodes);
-            iMutex.unlock(); // is this desired???
-            resetRelativeJoints(*editedNode, &nodesj, &jointsj);
-            iMutex.lock();
-        */
-      }
+      //   /*  //TODO is this really needed?
+      //       nodes = simNodes;
+      //       nodesj = simNodes;
+      //       jointsj = control->joints->getSimJoints();
+      //       nodes.erase(nodes.find(editedNode->getID()));
+      //       resetRelativeNodes(*editedNode, &nodes);
+      //       iMutex.unlock(); // is this desired???
+      //       resetRelativeJoints(*editedNode, &nodesj, &jointsj);
+      //       iMutex.lock();
+      //   */
+      // }
     }
 
 
@@ -498,22 +509,23 @@ namespace mars {
 
 
     void SimNode::setColor(Vector color){
-      MutexLocker locker(&iMutex);
-      Color c;
-      c.r = color[0];
-      c.g = color[1];
-      c.b = color[2];
-      c.a = 1;
-      sNode.material.diffuseFront = c;
-      sNode.material.diffuseBack  = c;
-      sNode.material.ambientFront = c;
-      sNode.material.ambientBack  = c;
-      sNode.material.emissionFront = c;
-      sNode.material.emissionBack  = c;
-      sNode.material.specularFront = c;
-      sNode.material.specularBack  = c;
-      if(control->graphics)
-        control->graphics->setDrawObjectMaterial(graphics_id,sNode.material);
+      printf("not implemented (deprecated): %s\n", __PRETTY_FUNCTION__);      
+      // MutexLocker locker(&iMutex);
+      // Color c;
+      // c.r = color[0];
+      // c.g = color[1];
+      // c.b = color[2];
+      // c.a = 1;
+      // sNode.material.diffuseFront = c;
+      // sNode.material.diffuseBack  = c;
+      // sNode.material.ambientFront = c;
+      // sNode.material.ambientBack  = c;
+      // sNode.material.emissionFront = c;
+      // sNode.material.emissionBack  = c;
+      // sNode.material.specularFront = c;
+      // sNode.material.specularBack  = c;
+      // if(control->graphics)
+      //   control->graphics->setDrawObjectMaterial(graphics_id,sNode.material);
     }
 
     /**
