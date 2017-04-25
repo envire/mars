@@ -112,7 +112,7 @@ namespace mars {
       }
       newMotor->setSMotor(*motorS);
       iMutex.lock();
-      simMotors[newMotor->getIndex()] = newMotor.get();
+      simMotors[newMotor->getIndex()] = newMotor;
       iMutex.unlock();
       control->sim->sceneHasChanged(false);
 
@@ -228,7 +228,7 @@ namespace mars {
      */
     void EnvireMotorManager::editMotor(const MotorData &motorS) {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter = simMotors.find(motorS.index);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::iterator iter = simMotors.find(motorS.index);
       if (iter != simMotors.end())
         iter->second->setSMotor(motorS);
     }
@@ -243,7 +243,7 @@ namespace mars {
      */
     void EnvireMotorManager::getListMotors(vector<core_objects_exchange> *motorList)const{
       core_objects_exchange obj;
-      map<unsigned long, mars::sim::SimMotor*>::const_iterator iter;
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::const_iterator iter;
       motorList->clear();
       iMutex.lock();
       for (iter = simMotors.begin(); iter != simMotors.end(); iter++) {
@@ -264,7 +264,7 @@ namespace mars {
      */
     const MotorData EnvireMotorManager::getFullMotor(unsigned long index) const {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::const_iterator iter = simMotors.find(index);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::const_iterator iter = simMotors.find(index);
       if (iter != simMotors.end())
         return iter->second->getSMotor();
       else {
@@ -281,14 +281,10 @@ namespace mars {
      * \param index The unique id of the motor to remove form the simulation.
      */
     void EnvireMotorManager::removeMotor(unsigned long index) {
-      mars::sim::SimMotor* tmpMotor = NULL;
       iMutex.lock();
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter = simMotors.find(index);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::iterator iter = simMotors.find(index);
       if (iter != simMotors.end()) {
-        tmpMotor = iter->second;
         simMotors.erase(iter);
-        if (tmpMotor)
-          delete tmpMotor;
       }
       iMutex.unlock();
   
@@ -310,9 +306,9 @@ namespace mars {
      */
     mars::sim::SimMotor* EnvireMotorManager::getSimMotor(unsigned long id) const {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::const_iterator iter = simMotors.find(id);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::const_iterator iter = simMotors.find(id);
       if (iter != simMotors.end())
-        return iter->second;
+        return iter->second.get();
       else
         return NULL;
     }
@@ -333,10 +329,10 @@ namespace mars {
      */
     mars::sim::SimMotor* EnvireMotorManager::getSimMotorByName(const std::string &name) const {
       MutexLocker locker(&iMutex);
-      std::map<unsigned long, mars::sim::SimMotor*>::const_iterator iter;
+      std::map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::const_iterator iter;
       for (iter = simMotors.begin(); iter != simMotors.end(); iter++)
         if (iter->second->getName() == name)
-          return iter->second;
+          return iter->second.get();
       return NULL;
     }
 
@@ -354,7 +350,7 @@ namespace mars {
      */
     void EnvireMotorManager::setMotorValue(unsigned long id, sReal value) {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter = simMotors.find(id);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::iterator iter = simMotors.find(id);
       if (iter != simMotors.end())
         iter->second->setControlValue(value);
     }
@@ -362,7 +358,7 @@ namespace mars {
 
     void EnvireMotorManager::setMotorValueDesiredVelocity(unsigned long id, sReal velocity) {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter = simMotors.find(id);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::iterator iter = simMotors.find(id);
       if (iter != simMotors.end())
         iter->second->setVelocity(velocity);
     }
@@ -382,7 +378,7 @@ namespace mars {
      */
     void EnvireMotorManager::setMotorP(unsigned long id, sReal value) {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter = simMotors.find(id);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::iterator iter = simMotors.find(id);
       if (iter != simMotors.end())
         iter->second->setP(value);
     }
@@ -401,7 +397,7 @@ namespace mars {
      */
     void EnvireMotorManager::setMotorI(unsigned long id, sReal value) {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter = simMotors.find(id);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::iterator iter = simMotors.find(id);
       if (iter != simMotors.end())
         iter->second->setI(value);
     }
@@ -420,7 +416,7 @@ namespace mars {
      */
     void EnvireMotorManager::setMotorD(unsigned long id, sReal value) {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter = simMotors.find(id);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::iterator iter = simMotors.find(id);
       if (iter != simMotors.end())
         iter->second->setD(value);
     }
@@ -433,7 +429,7 @@ namespace mars {
      */
     void EnvireMotorManager::deactivateMotor(unsigned long id) {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter = simMotors.find(id);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::iterator iter = simMotors.find(id);
       if (iter != simMotors.end())
         iter->second->deactivate();
     }
@@ -447,7 +443,7 @@ namespace mars {
      * \return Id of the motor if it exists, otherwise 0
      */
     unsigned long EnvireMotorManager::getID(const std::string& name) const {
-      map<unsigned long, mars::sim::SimMotor*>::const_iterator iter;
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::const_iterator iter;
       MutexLocker locker(&iMutex);
 
       for (iter = simMotors.begin(); iter != simMotors.end(); iter++) {
@@ -471,7 +467,7 @@ namespace mars {
      */
     void EnvireMotorManager::moveMotor(unsigned long index, double value) {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter = simMotors.find(index);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::iterator iter = simMotors.find(index);
       if (iter != simMotors.end())
         iter->second->setControlValue(value);
     }
@@ -488,9 +484,6 @@ namespace mars {
      */
     void EnvireMotorManager::clearAllMotors(bool clear_all) {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter;
-      for(iter = simMotors.begin(); iter != simMotors.end(); iter++)
-        delete iter->second;
       simMotors.clear();
       mimicmotors.clear();
       if(clear_all) simMotorsReload.clear();
@@ -525,7 +518,7 @@ namespace mars {
      * \param calc_ms The timing value in miliseconds. 
      */
     void EnvireMotorManager::updateMotors(double calc_ms) {
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter;
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::iterator iter;
       MutexLocker locker(&iMutex);
       for(iter = simMotors.begin(); iter != simMotors.end(); iter++)
         iter->second->update(calc_ms);
@@ -534,7 +527,7 @@ namespace mars {
 
     sReal EnvireMotorManager::getActualPosition(unsigned long motorId) const {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::const_iterator iter;
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::const_iterator iter;
       iter = simMotors.find(motorId);
       if (iter != simMotors.end())
         return iter->second->getPosition();
@@ -543,7 +536,7 @@ namespace mars {
 
     sReal EnvireMotorManager::getTorque(unsigned long motorId) const {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::const_iterator iter;
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::const_iterator iter;
       iter = simMotors.find(motorId);
       if (iter != simMotors.end())
         return iter->second->getEffort();
@@ -552,7 +545,7 @@ namespace mars {
 
     void EnvireMotorManager::setMaxTorque(unsigned long id, sReal maxTorque) {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::const_iterator iter;
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::const_iterator iter;
       iter = simMotors.find(id);
       if (iter != simMotors.end())
         iter->second->setMaxEffort(maxTorque);
@@ -560,7 +553,7 @@ namespace mars {
 
     void EnvireMotorManager::setMaxSpeed(unsigned long id, sReal maxSpeed) {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::const_iterator iter;
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::const_iterator iter;
       iter = simMotors.find(id);
       if (iter != simMotors.end())
         iter->second->setMaxSpeed(maxSpeed);
@@ -578,7 +571,7 @@ namespace mars {
      * \param joint_index The id of the joint that is to be detached.
      */
     void EnvireMotorManager::removeJointFromMotors(unsigned long joint_index) {
-      map<unsigned long, mars::sim::SimMotor*>::iterator iter;
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::iterator iter;
       MutexLocker locker(&iMutex);
       for (iter = simMotors.begin(); iter != simMotors.end(); iter++) 
         if (iter->second->getJointIndex() == joint_index) 
@@ -589,7 +582,7 @@ namespace mars {
                                           std::string *groupName, 
                                           std::string *dataName) const {
       MutexLocker locker(&iMutex);
-      map<unsigned long, mars::sim::SimMotor*>::const_iterator iter = simMotors.find(jointId);
+      map<unsigned long, std::shared_ptr<mars::sim::SimMotor>>::const_iterator iter = simMotors.find(jointId);
       if(iter != simMotors.end())
         iter->second->getDataBrokerNames(groupName, dataName);
     }
@@ -599,10 +592,20 @@ namespace mars {
       for (it = mimicmotors.begin(); it!=mimicmotors.end(); ++it) {
         mars::sim::SimMotor* parentmotor = getSimMotorByName(it->second);
         if (parentmotor != NULL)
-          parentmotor->addMimic(simMotors[it->first]);
+          parentmotor->addMimic(simMotors[it->first].get());
       }
     }
 
-  }
+    void EnvireMotorManager::updatePositionsFromGraph(){
+
+        //update positions in sim nodes
+
+        for (auto node = simMotors.begin();node!=simMotors.end();++node){
+            const std::shared_ptr<mars::sim::SimMotor> sim_motor = node->second;
+            sim_motor->refreshPositions();
+        }
+    }
+
+  } // end of Namespace envire_managers
   } // end of namespace sim
 } // end of namespace mars
