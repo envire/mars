@@ -232,7 +232,7 @@ namespace mars {
 
       envire::core::EnvireGraph getGraphWithoutItems() const
       {
-        std::vector<std::type_index> filter_list;
+        std::unordered_set<std::type_index> filter_list;
         envire::core::EnvireGraph graph_copy(*(control->graph), &filter_list, true);
 
         return graph_copy;
