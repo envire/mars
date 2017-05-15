@@ -42,6 +42,8 @@
 #include <mars/interfaces/sim/PhysicsInterface.h>
 #include <mars/interfaces/graphics/draw_structs.h>
 
+#include <smurf/Collidable.hpp>
+
 #include <vector>
 
 #include <ode/ode.h>
@@ -132,6 +134,13 @@ namespace mars {
       // this functions are for the collision implementation
       void nearCallback (dGeomID o1, dGeomID o2);
       static void callbackForward(void *data, dGeomID o1, dGeomID o2);
+
+      void stepTheWorldChecks(void);
+      void clearPreviousStep(void);
+      std::vector<smurf::Collidable> getAllCollidables(void);
+      void computeCollisions(void);
+      void execStep(void);
+
     };
 
   } // end of namespace sim

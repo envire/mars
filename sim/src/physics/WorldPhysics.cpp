@@ -50,6 +50,12 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/intrusive_ptr.hpp>	
 
+#include <envire_core/graph/EnvireGraph.hpp>
+#include <envire_core/items/Item.hpp>
+
+
+#define SIM_CENTER_FRAME_NAME std::string("center")
+
 namespace mars {
   namespace sim {
 
@@ -216,69 +222,159 @@ namespace mars {
       return world_init;
     }
 
-    /**
-     * \brief This function handles the calculation of a step in the world.
+    /** 
      *
-     * pre:
-     *     - world_init = true
-     *     - step_size > 0
+     * \brief Auxiliar methof of step the world. Checks required before
+     * computing the collision and the contact forces are done here.
      *
-     * post:
-     *     - handled the collisions
-     *     - step the world for step_size seconds
-     *     - the contactgroup should be empty
      */
-    void WorldPhysics::stepTheWorld(void) {
-      MutexLocker locker(&iMutex);
-      std::vector<dJointFeedback*>::iterator iter;
-      geom_data* data;
-      int i;
-      // if world_init = false or step_size <= 0 debug something
-       if(world_init && step_size > 0) {
+    void WorldPhysics::stepTheWorldChecks(void) {
+        // Gravity Check
         if(old_gravity != world_gravity) {
           old_gravity = world_gravity;
           dWorldSetGravity(world, world_gravity.x(),
                            world_gravity.y(), world_gravity.z());
         }
-
+        // CFM Check
         if(old_cfm != world_cfm) {
           old_cfm = world_cfm;
           dWorldSetCFM(world, (dReal)world_cfm);
         }
-
+        // ERP Check
         if(old_erp != world_erp) {
           old_erp = world_erp;
           dWorldSetERP(world, (dReal)world_erp);
         }
-	//	printf("now WorldPhysics.cpp..stepTheWorld(void)....1 : dSpaceGetNumGeoms: %d\n",dSpaceGetNumGeoms(space)); 
-        /// first clear the collision counters of all geoms
-        for(i=0; i<dSpaceGetNumGeoms(space); i++) {
-          data = (geom_data*)dGeomGetData(dSpaceGetGeom(space, i));
-          data->num_ground_collisions = 0;
-          data->contact_ids.clear();
-          data->contact_points.clear();
-          data->ground_feedbacks.clear();
-        
-        }
-        
+    }
 
-        for(iter = contact_feedback_list.begin();
-            iter != contact_feedback_list.end(); iter++) {
-          free((*iter));
-        }
- 
-        contact_feedback_list.clear();
-        draw_intern.clear();
-        /// then we have to clear the contacts
+    /** 
+     *
+     * \brief Auxiliar methof of step the world. 
+     * Clears the contact and contact feedback information from previous step.
+     *
+     */
+    void WorldPhysics::clearPreviousStep(void){
+      // Clear Previous Collisions
+      //	printf("now WorldPhysics.cpp..stepTheWorld(void)....1 : dSpaceGetNumGeoms: %d\n",dSpaceGetNumGeoms(space)); 
+      /// first clear the collision counters of all geoms
+      int i;
+      geom_data* data;
+      for(i=0; i<dSpaceGetNumGeoms(space); i++) {
+        data = (geom_data*)dGeomGetData(dSpaceGetGeom(space, i));
+        data->num_ground_collisions = 0;
+        data->contact_ids.clear();
+        data->contact_points.clear();
+        data->ground_feedbacks.clear();
+
+        // Clear draw_intern 
+        draw_intern.clear(); //TODO: Can we remove this?
+
+        // Clear contacts
         dJointGroupEmpty(contactgroup);
-        /// first check for collisions
-        num_contacts = log_contacts = 0;
-        create_contacts = 1;
+
+      }
+      std::vector<dJointFeedback*>::iterator iter;
+      // Clear Previous Contact Feedback
+      for(iter = contact_feedback_list.begin();
+          iter != contact_feedback_list.end(); iter++) {
+        free((*iter));
+      }
+      contact_feedback_list.clear();
+    }
+
+    /** 
+     *
+     * \brief Auxiliar methof of computeCollisions. 
+     * Returns all collidable objects in the graph in a std::vector
+     *
+     */
+    std::vector<smurf::Collidable> WorldPhysics::getAllCollidables(void)
+    {
+      using vertex_iterator = envire::core::EnvireGraph::vertex_iterator;
+      using CollisionType = smurf::Collidable;
+      using CollisionItem = envire::core::Item<CollisionType>;
+      using IterCollItem = envire::core::EnvireGraph::ItemIterator<CollisionItem>;
+      // TODO Put with the constants
+      envire::core::FrameId center = SIM_CENTER_FRAME_NAME; 
+
+      vertex_iterator it, end;
+      std::vector<CollisionType> allColls;
+      std::tie(it, end) = control->graph->getVertices();
+      for(; it != end; ++it)
+      {
+        // See if the vertex has collision objects
+        IterCollItem itCols, endCols;
+        std::tie(itCols, endCols) = control->graph->getItems<CollisionItem>(*it);
         
-        dSpaceCollide(space,this, &WorldPhysics::callbackForward);
-        drawLock.lock();
-        draw_extern.swap(draw_intern);
-        drawLock.unlock();
+        if(itCols != endCols)
+        {
+          for(; itCols!=endCols; ++itCols)
+          {
+            allColls.push_back(itCols->getData());
+          }
+        }
+      }
+      /* Just for debugging
+      std::vector<CollisionType>::const_iterator it_allCols, end_allCols;
+      it_allCols = allColls.begin();
+      end_allCols = allColls.end();
+
+      for(;it_allCols!=end_allCols; it_allCols++)
+      {
+        CollisionType collObj = *it_allCols;
+        std::string name = collObj.getName();
+        LOG_DEBUG("[WorldPhysics::computeCollisions] Found collidable with name: " + name);
+        LOG_DEBUG("[WorldPhysics::computeCollisions] Group: %i ", collObj.getGroupId());
+      }
+      */
+      return allColls;
+    }
+
+    /** 
+     *
+     * \brief Auxiliar methof of step the world. 
+     * Computes the collisions points
+     *
+     * Go through all the nodes of the graph, for each one that has a
+     * collision object or is an MLS compute the collisions to others.
+     * Unless they have same group id.
+     */
+    void WorldPhysics::computeCollisions(void){
+      /// first check for collisions
+      num_contacts = log_contacts = 0;
+      create_contacts = 1;
+      // NOTE This is all running without crashing in the current
+      // installation but I think that this next function is the one that we
+      // have to replace for the FCL one
+      //dSpaceCollide(space,this, &WorldPhysics::callbackForward);
+      //ODE would do a check of the space and the callback function but we
+      //don't need this, hopefully
+      // Take the graph and compute all the bounding boxes that might collide
+      // using FCL
+      std::vector<smurf::Collidable> allColls = getAllCollidables();
+      for(int i=0; i<allColls.size(); i++)
+      {
+        smurf::Collidable collObj1 = allColls[i];
+        LOG_DEBUG("[WorldPhysics::computeCollisions] About to check collision of: " + collObj1.getName());
+        for(int j=i+1; j<allColls.size(); j++)
+        {
+          smurf::Collidable collObj2 = allColls[j];
+          if (collObj1.getGroupId()!=collObj2.getGroupId())
+          {
+            LOG_DEBUG("[WorldPhysics::computeCollisions] With: " + collObj2.getName());
+
+          }
+        }
+      }
+    }
+
+    /** 
+     *
+     * \brief Auxiliar methof of step the world. 
+     * Executes the world step
+     *
+     */
+    void WorldPhysics::execStep(void){
         // then calculate the next state for a time of step_size seconds
         try {
           if(fast_step) dWorldQuickStep(world, step_size);
@@ -291,6 +387,36 @@ namespace mars {
           control->sim->handleError(WorldPhysics::error);
           WorldPhysics::error = PHYSICS_NO_ERROR;
 	}
+    }
+
+    /**
+     * \brief This function handles the calculation of a step in the world.
+     *
+     * pre:
+     *     - world_init = true
+     *     - step_size > 0
+     *
+     * post:
+     *     - handled the collisions
+     *     - step the world for step_size seconds
+     *     - the contactgroup should be empty
+     *
+     * TODO: Refactor this method. Move the initial checks to a separate
+     * method, the clears to another. The auxiliar vars initialization can also
+     * be moved to the auxiliar methods
+     */
+    void WorldPhysics::stepTheWorld(void) {
+      MutexLocker locker(&iMutex);
+      // if world_init = false or step_size <= 0 debug something
+      if (world_init && step_size > 0){
+        stepTheWorldChecks();
+        clearPreviousStep();
+        computeCollisions();
+        // Update draw (I guess) //TODO: Can we remove all draw stuff?
+        drawLock.lock();
+        draw_extern.swap(draw_intern);
+        drawLock.unlock();
+        execStep();
       }   
     }
 
@@ -453,7 +579,7 @@ namespace mars {
         dSpaceCollide2(o1,o2,this,& WorldPhysics::callbackForward);
         return;
       }
-      /// exit without doing anything if the two bodies are connected by a joint 
+
       dBodyID b1=dGeomGetBody(o1);
       dBodyID b2=dGeomGetBody(o2);
 
@@ -462,6 +588,8 @@ namespace mars {
 
 
   
+      // TODO Move all the ray sensor stuff to a separate method
+      // handle ray sensor collisions
             // test if we have a ray sensor:
       if(geom_data1->ray_sensor) {
         dContact contact;
@@ -498,11 +626,17 @@ namespace mars {
         return;
       }
       
+      
+      /// exit without doing anything if the two bodies are connected by a joint 
       if(b1 && b2 && dAreConnectedExcluding(b1,b2,dJointTypeContact))
         return;
 
+      // The check of the ray_sensor does not make sense, because the case has
+      // already been taken care of
       if(!b1 && !b2 && !geom_data1->ray_sensor && !geom_data2->ray_sensor) return;
 
+      // Init dContact (move to another method, maxNumContacts has to be known
+      // in this method later)
       int maxNumContacts = 0;
       if(geom_data1->c_params.max_num_contacts <
          geom_data2->c_params.max_num_contacts) {
@@ -557,7 +691,11 @@ namespace mars {
       */
   
 
-  
+      // NOTE Here is where the joint for the contact is created
+      //
+      
+      // Make a method that initializes the parameters of the contacts, it is
+      // what is done starting here until #END_INITCONTACPARAMS
       // frist we set the softness values:
       contact[0].surface.mode = dContactSoftERP | dContactSoftCFM;
       contact[0].surface.soft_cfm = (geom_data1->c_params.cfm +
@@ -578,6 +716,7 @@ namespace mars {
       if(contact[0].surface.mu != contact[0].surface.mu2)
         contact[0].surface.mode |= dContactMu2;
 
+      // Move handleFrictionDirection to another method
       // check if we have to calculate friction direction1
       if(geom_data1->c_params.friction_direction1 ||
          geom_data2->c_params.friction_direction1) {
@@ -634,7 +773,7 @@ namespace mars {
         }
         else {
           // the calculation steps as mentioned above
-          fprintf(stderr, "the calculation for friction directen set for both nodes is not done yet.\n");
+          fprintf(stderr, "the calculation for friction direction set for both nodes is not done yet.\n");
         }
       }
 
@@ -649,6 +788,8 @@ namespace mars {
         contact[0].surface.slip2 = (geom_data1->c_params.fds2 +
                                     geom_data2->c_params.fds2);
       }
+
+      // Then set bounce and bounce_vel
       if(geom_data1->c_params.bounce || geom_data2->c_params.bounce) {
         contact[0].surface.mode |= dContactBounce;
         contact[0].surface.bounce = (geom_data1->c_params.bounce +
@@ -658,13 +799,24 @@ namespace mars {
         else
           contact[0].surface.bounce_vel = geom_data2->c_params.bounce_vel;      
       }
-
+      
+      // Apply parametrization to all contacts.
       for (i=1;i<maxNumContacts;i++){
         contact[i] = contact[0];
      
       }
-
+      // #END_INITCONTACPARAMS
+      
+      // Most likely dCollide takes the two objects and determines the contact
+      // points by calling the correspondent dCollideType1Type2 function NOTE
+      // Where was for contact[0] the geom set? It isn't set, here you give the
+      // memory address to set it!
       numc=dCollide(o1,o2, maxNumContacts, &contact[0].geom,sizeof(dContact));
+    
+      // Is dCollide the method to be replaced? This one provides the
+      // information on where exactly the joints that apply the forces of the
+      // colision should be set. This information we could get from FCL
+
       if(numc){ 
 		  
 	  
@@ -692,6 +844,7 @@ namespace mars {
             item.start.x() = contact[i].geom.pos[0];
             item.start.y() = contact[i].geom.pos[1];
             item.start.z() = contact[i].geom.pos[2];
+            // NOTE Where are the pos set? in the call to dCollide above in this same method
             item.end.x() = contact[i].geom.pos[0] + contact[i].geom.normal[0];
             item.end.y() = contact[i].geom.pos[1] + contact[i].geom.normal[1];
             item.end.z() = contact[i].geom.pos[2] + contact[i].geom.normal[2];
