@@ -53,8 +53,12 @@
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/items/Item.hpp>
 
-
 #define SIM_CENTER_FRAME_NAME std::string("center")
+
+#include <maps/grid/MLSMap.hpp>
+#define MLS_FRAME_NAME std::string("mls_01")
+
+#include <envire_fcl/Collision.hpp>
 
 namespace mars {
   namespace sim {
@@ -285,49 +289,31 @@ namespace mars {
     /** 
      *
      * \brief Auxiliar methof of computeCollisions. 
-     * Returns all collidable objects in the graph in a std::vector
+     * Returns all frames that contain collidable objects 
      *
      */
-    std::vector<smurf::Collidable> WorldPhysics::getAllCollidables(void)
+    std::vector<envire::core::FrameId> WorldPhysics::getAllColFrames(void)
     {
-      using vertex_iterator = envire::core::EnvireGraph::vertex_iterator;
       using CollisionType = smurf::Collidable;
       using CollisionItem = envire::core::Item<CollisionType>;
       using IterCollItem = envire::core::EnvireGraph::ItemIterator<CollisionItem>;
-      // TODO Put with the constants
-      envire::core::FrameId center = SIM_CENTER_FRAME_NAME; 
-
-      vertex_iterator it, end;
-      std::vector<CollisionType> allColls;
+      // Find out the frames which contain a collidablem put them in a vector and pass it to the callback
+      std::vector<envire::core::FrameId> colFrames;
+      envire::core::EnvireGraph::vertex_iterator  it, end;
       std::tie(it, end) = control->graph->getVertices();
       for(; it != end; ++it)
       {
-        // See if the vertex has collision objects
-        IterCollItem itCols, endCols;
-        std::tie(itCols, endCols) = control->graph->getItems<CollisionItem>(*it);
-        
-        if(itCols != endCols)
-        {
-          for(; itCols!=endCols; ++itCols)
+          // See if the vertex has collision objects
+          IterCollItem itCols, endCols;
+          std::tie(itCols, endCols) = control->graph->getItems<CollisionItem>(*it);
+          if(itCols != endCols)
           {
-            allColls.push_back(itCols->getData());
+              envire::core::FrameId colFrame = control->graph->getFrameId(*it);
+              colFrames.push_back(colFrame);
+              std::cout << "Collision items found in frame " << colFrame << std::endl;
           }
-        }
       }
-      /* Just for debugging
-      std::vector<CollisionType>::const_iterator it_allCols, end_allCols;
-      it_allCols = allColls.begin();
-      end_allCols = allColls.end();
-
-      for(;it_allCols!=end_allCols; it_allCols++)
-      {
-        CollisionType collObj = *it_allCols;
-        std::string name = collObj.getName();
-        LOG_DEBUG("[WorldPhysics::computeCollisions] Found collidable with name: " + name);
-        LOG_DEBUG("[WorldPhysics::computeCollisions] Group: %i ", collObj.getGroupId());
-      }
-      */
-      return allColls;
+      return colFrames;
     }
 
     /** 
@@ -338,6 +324,7 @@ namespace mars {
      * Go through all the nodes of the graph, for each one that has a
      * collision object or is an MLS compute the collisions to others.
      * Unless they have same group id.
+     *
      */
     void WorldPhysics::computeCollisions(void){
       /// first check for collisions
@@ -351,6 +338,10 @@ namespace mars {
       //don't need this, hopefully
       // Take the graph and compute all the bounding boxes that might collide
       // using FCL
+      /*
+       * The collision between collidable objects is left for later. By now we
+       * compute only the collision points between the MLS and each collision
+       * objects
       std::vector<smurf::Collidable> allColls = getAllCollidables();
       for(int i=0; i<allColls.size(); i++)
       {
@@ -365,6 +356,78 @@ namespace mars {
 
           }
         }
+      }
+        */
+      // Get the mls
+      using mlsType = maps::grid::MLSMapKalman;
+      using CollisionType = smurf::Collidable;
+      using CollisionItem = envire::core::Item<CollisionType>;
+      using IterCollItem = envire::core::EnvireGraph::ItemIterator<CollisionItem>;
+      envire::core::EnvireGraph::ItemIterator<envire::core::Item<mlsType>> beginItem, endItem;
+      envire::core::FrameId mlsFrameId = MLS_FRAME_NAME;
+      boost::tie(beginItem, endItem) = control->graph->getItems<envire::core::Item<mlsType>>(mlsFrameId);
+      if (beginItem != endItem)
+      {
+        mlsType mls = beginItem->getData();
+        std::cout << "Mls map was fetched from the graph "<< std::endl;  
+        // Get the collidables
+        std::vector<envire::core::FrameId> colFrames = getAllColFrames();
+        // Check for each collidable if it has colision with the MLS
+        smurf::Collidable collidable;
+        IterCollItem itCols, endCols;
+        for(unsigned int frameIndex = 0; frameIndex<colFrames.size(); ++frameIndex)
+        {
+            itCols = control->graph->getItem<CollisionItem>(colFrames[frameIndex]); 
+            std::cout << "Collision related to frame " << colFrames[frameIndex] << std::endl;
+            collidable = itCols->getData();
+            // Transformation must be from the mls frame to the colision object frame
+            envire::core::Transform tfColCen = control->graph->getTransform(MLS_FRAME_NAME, colFrames[frameIndex]);
+            fcl::Transform3f trafo = tfColCen.transform.getTransform().cast<float>();
+            std::cout << "Edge modified. Trafo=\n" << std::endl;
+            std::cout << tfColCen.transform.getTransform().matrix() << std::endl;
+            fcl::CollisionRequestf request(10, true, 10, true);
+            fcl::CollisionResultf result;
+            urdf::Collision collision = collidable.getCollision();
+            bool collisionComputed = true;
+            switch (collision.geometry->type){
+                case urdf::Geometry::SPHERE:
+                    {
+                        std::cout << "Collision with a sphere" << std::endl;
+                        boost::shared_ptr<urdf::Sphere> sphereUrdf = boost::dynamic_pointer_cast<urdf::Sphere>(collision.geometry);
+                        fcl::Spheref sphere(sphereUrdf->radius);
+                        fcl::collide_mls(mls, trafo, &sphere, request, result);
+                        break;
+                    }
+                case urdf::Geometry::BOX:
+                    {
+                        std::cout << "Collision with a box" << std::endl;
+                        boost::shared_ptr<urdf::Box> boxUrdf = boost::dynamic_pointer_cast<urdf::Box>(collision.geometry);
+                        fcl::Boxf box(boxUrdf->dim.x, boxUrdf->dim.y, boxUrdf->dim.z);
+                        fcl::collide_mls(mls, trafo, &box, request, result);
+                        break;
+                    }
+                default:
+                    std::cout << "Collision with the selected geometry type not implemented" << std::endl;
+                    collisionComputed = false;
+            }
+            if (collisionComputed)
+            {
+                std::cout << "\nisCollision()==" << result.isCollision();
+                for(size_t i=0; i< result.numContacts(); ++i)
+                {
+                    const auto & cont = result.getContact(i);
+                    std::cout << "\n" << cont.pos.transpose() << "; " << cont.normal.transpose() << "; " << cont.penetration_depth;
+                }
+            std::cout << std::endl;
+            }
+        }
+
+
+
+      }
+      else
+      {
+        std::cout << "No MLS found in frame "<< MLS_FRAME_NAME << std::endl;  
       }
     }
 
@@ -418,6 +481,7 @@ namespace mars {
         drawLock.unlock();
         execStep();
       }   
+      // When is nearCallBack executed??
     }
 
     /**

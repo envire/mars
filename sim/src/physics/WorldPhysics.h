@@ -48,6 +48,8 @@
 
 #include <ode/ode.h>
 
+#include <envire_core/items/Frame.hpp>
+
 namespace mars {
   namespace sim {
 
@@ -137,7 +139,7 @@ namespace mars {
 
       void stepTheWorldChecks(void);
       void clearPreviousStep(void);
-      std::vector<smurf::Collidable> getAllCollidables(void);
+      std::vector<envire::core::FrameId> getAllColFrames(void);
       void computeCollisions(void);
       void execStep(void);
 

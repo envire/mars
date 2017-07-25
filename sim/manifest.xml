@@ -11,6 +11,8 @@
     <depend package="tools/configmaps" />
     <depend package="simulation/ode" />
     <depend package="envire/envire_core" />
+    <depend package="envire/envire_fcl" />
     <depend package="control/urdfdom" />
+    <depend package="slam/maps" />
     <tags>needs_opt</tags>
 </package>
