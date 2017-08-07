@@ -38,7 +38,7 @@
 #include <envire_core/graph/EnvireGraph.hpp>
 // #include <envire_core/graph/GraphViz.hpp>
 
-#include <envire_collider_mls/MLSCollision.hpp>
+//#include <envire_collider_mls/MLSCollision.hpp>
 #include <fstream>
 #include <boost/archive/polymorphic_binary_iarchive.hpp>
 
@@ -442,6 +442,7 @@ bool EnvirePhysics::instantiateNode(const std::shared_ptr<NodeData> &node, const
 }
 
 
+#if 0
 //struct NullDeleter {template<typename T> void operator()(T*) {}};   
 bool EnvirePhysics::addMlsSurface(NodeData* node)
 {
@@ -452,7 +453,7 @@ bool EnvirePhysics::addMlsSurface(NodeData* node)
  
   return true;
 } 	
-
+#endif
 
 void EnvirePhysics::setPos(const envire::core::FrameId& frame, const std::shared_ptr<mars::interfaces::NodeData>& node)
 {

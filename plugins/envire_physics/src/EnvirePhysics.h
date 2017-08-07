@@ -22,7 +22,7 @@
 #include <envire_core/graph/TreeView.hpp>
 
 
-#include <maps/grid/MLSMap.hpp>
+//#include <maps/grid/MLSMap.hpp>
 #include <mars/sim/PhysicsMapper.h>
 
 namespace mars {

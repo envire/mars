@@ -18,7 +18,7 @@ pkg_check_modules(PKGCONFIG REQUIRED
                 mars_sim
                 smurf
                 urdfdom
-                envire_collider_mls
+#                envire_collider_mls
                 )
                 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})

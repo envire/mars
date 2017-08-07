@@ -368,6 +368,7 @@ namespace mars {
                            jointS->axis1.z());
       dJointSetHinge2Axis2(jointId, jointS->axis2.x(), jointS->axis2.y(),
                            jointS->axis2.z());
+      //dJointSetHinge2Axes(jointId, jointS->axis1.data(), jointS->axis2.data());
   
       if(damping>0.00000001) {
         dJointSetHinge2Param(jointId, dParamFMax, damping);
@@ -544,6 +545,7 @@ namespace mars {
         break;
       case JOINT_TYPE_HINGE2:
         dJointSetHinge2Axis1(jointId, axis.x(), axis.y(), axis.z());
+        //dJointSetHinge2Axes(jointId, axis.data(), 0);
         break;
       case JOINT_TYPE_SLIDER:
         dJointSetSliderAxis(jointId, axis.x(), axis.y(), axis.z());
@@ -575,6 +577,7 @@ namespace mars {
         break;
       case JOINT_TYPE_HINGE2:
         dJointSetHinge2Axis2(jointId, axis.x(), axis.y(), axis.z());
+        //dJointSetHinge2Axes(jointId, 0, axis.data());
         break;
       case JOINT_TYPE_SLIDER:
         // the slider joint has only one axis
@@ -938,7 +941,7 @@ namespace mars {
         // no correct type is spezified, so no physically node will be created
         break;
       }
-      motor_torque = feedback.lambda;
+      //motor_torque = feedback.lambda;
       axis1_torque.x() = axis1_torque.y() = axis1_torque.z() = 0;
       axis2_torque.x() = axis2_torque.y() = axis2_torque.z() = 0;
       joint_load.x() = joint_load.y() = joint_load.z() = 0;
@@ -961,6 +964,7 @@ namespace mars {
           joint_load.z() = (sReal)tmp1[2];
           // now nearly the same for the torque
           dot = dDOT(axis, feedback.t1);
+          std::cout << "Motor torque1: " << motor_torque << ", " << dot << '\n';
           dOPC(tmp1, *, axis, dot);
           dOP(load, -, feedback.t1, tmp1);
           axis1_torque.x() += (sReal)tmp1[0];
@@ -1004,6 +1008,7 @@ namespace mars {
           joint_load.z() = (sReal)load[2];
           // now nearly the same for the torque
           dot = dDOT(feedback.t2, axis);
+          std::cout << "Motor torque2: " << motor_torque << ", " << dot << '\n';
           dOPC(tmp1, *, axis, dot);
           dOP(load, -, feedback.t2, tmp1);
           //axis1_torque.x() += (sReal)tmp1[0];
@@ -1021,6 +1026,7 @@ namespace mars {
         motor_torque += 150; // HACK for CREX: additional force at 0 position
       }
       if(calc2 == 1) {
+        std::cout << "calc2\n";
         if(body1) {
           b1_pos = dBodyGetPosition(body1);
           dOP(v1, -, b1_pos, anchor);
