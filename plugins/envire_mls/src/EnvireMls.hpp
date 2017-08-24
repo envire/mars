@@ -49,7 +49,8 @@ namespace mars {
   namespace plugins {
     namespace envire_mls {
 
-      using mlsType = maps::grid::MLSMapKalman;
+      using mlsPrec = maps::grid::MLSMapPrecalculated;
+      using mlsKal = maps::grid::MLSMapKalman;
       //using mlsType = maps::grid::MLSMap<maps::grid::MLSConfig::KALMAN>;
 
       // inherit from MarsPluginTemplateGUI for extending the gui
@@ -81,12 +82,12 @@ namespace mars {
 
         //void deserializeMLS(const std::string & mlsPath);
         mars::interfaces::NodeData* setUpNodeData();
-        mlsType getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId mlsFrameId);
+        mlsPrec getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId mlsFrameId);
 
         // Private members
- 	maps::grid::MLSMapKalman mlsKalman;
+ 	maps::grid::MLSMapPrecalculated mlsPrecalculated;
  	envire::collision::MLSCollision* mlsCollision;
-	boost::shared_ptr<maps::grid::MLSMapKalman> mlsPtr;   	
+	boost::shared_ptr<maps::grid::MLSMapPrecalculated> mlsPtr;   	
 
         bool tested;
         envire::core::FrameId mlsFrameId;

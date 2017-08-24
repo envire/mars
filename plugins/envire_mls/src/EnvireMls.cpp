@@ -59,11 +59,12 @@
 #define GD_C_PARAMS_ERP 0.001
 #define GD_C_PARAMS_BOUNCE 0.0
 
-#define ROBOT_TEST_POS  mars::utils::Vector(0,0,1)
-#define ROBOT_TEST_ROT  mars::utils::Vector(0,0,0)
+#define ROBOT_TEST_POS  mars::utils::Vector(0,5,1)
+#define ROBOT_TEST_ROT  mars::utils::Vector(0,180,0)
 #define ROBOT_NAME std::string("Asguard_v4")
 
-#define ASGUARD_PATH std::string("/models/robots/asguard_v4/smurf/asguard_v4.smurf")
+//#define ASGUARD_PATH std::string("/models/robots/asguard_v4/smurf/asguard_v4.smurf")
+#define ASGUARD_PATH std::string("/envire/envire_fcl/src/smurf/just_a_box/smurf/just_a_box.smurf")
 
 #define DEBUG 1
 
@@ -95,7 +96,8 @@ namespace mars {
         {
           control->graph->addFrame(center);
         }
-        // Create the default frame for the MLS 
+        // Create the default frame for the MLS but leave it empty.
+        // The mls is loaded in the first update.
         mlsFrameId = MLS_FRAME_NAME; 
         centerFrameId = SIM_CENTER_FRAME_NAME;
         control->graph->addFrame(mlsFrameId);
@@ -134,20 +136,25 @@ namespace mars {
       {
         /* Loads in the envire graph the mls given in the path after
          * deserializing it.
+         *
+         * The serialized object is graph containing the mls in DUMPED_MLS_FRAME
          */
         EnvireGraph auxMlsGraph;
         auxMlsGraph.loadFromFile(mlsPath);
         FrameId dumpedFrameId(DUMPED_MLS_FRAME_NAME);
-        mlsType mlsAux = getMLSMap(auxMlsGraph, dumpedFrameId);
-        Item<mlsType>::Ptr mlsItemPtr(new Item<mlsType>(mlsAux));
+        mlsPrec mlsAux = getMLSMap(auxMlsGraph, dumpedFrameId);
+        Item<mlsPrec>::Ptr mlsItemPtr(new Item<mlsPrec>(mlsAux));
         control->graph->addItemToFrame(mlsFrameId, mlsItemPtr);
       }
 
-      mlsType EnvireMls::getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId frameId)
+      mlsPrec EnvireMls::getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId frameId)
       {
-        EnvireGraph::ItemIterator<Item<mlsType>> beginItem, endItem;
-        boost::tie(beginItem, endItem) = graph.getItems<Item<mlsType>>(frameId);
-        mlsType mls = beginItem->getData();
+        // The serialized Mls is not in Precalculated but in Kalman, so we have to convert it
+        EnvireGraph::ItemIterator<Item<mlsKal>> beginItem, endItem;
+        boost::tie(beginItem, endItem) = graph.getItems<Item<mlsKal>>(frameId);
+        mlsKal mlsKal;
+        mlsPrec mls;
+        mls = beginItem->getData(); // Here the conversion to Precalculated occurs (mlsPerc <-> mlsKal)
         return mls;
       }
 
@@ -160,7 +167,7 @@ namespace mars {
          * centre centerFrame.
          */
 
-        mlsType mls = getMLSMap(*(control->graph), mlsFrameId);
+        mlsPrec mls = getMLSMap(*(control->graph), mlsFrameId);
         Transform mlsTransform = control->graph->getTransform(centerFrameId, mlsFrameId);
 #ifdef DEBUG
         LOG_DEBUG("[EnvireMls::addMLS] Tf x y z %f, %f, %f", 
@@ -175,9 +182,10 @@ namespace mars {
         node->physicMode = interfaces::NODE_TYPE_MLS;
         //node->env_path = mlsPath;
 
-	boost::shared_ptr<maps::grid::MLSMapKalman> mlsPtr(& mls);
-        // Store MLS geometry in simulation node
-        node->g_mls = (void*)(mlsCollision->createNewCollisionObject(mlsPtr));//_userdata);	
+	boost::shared_ptr<maps::grid::MLSMapPrecalculated> mlsPtr(& mls);
+        // Store MLS geometry in simulation nodeA
+        // Do we have to do this? I think not...
+        //node->g_mls = (void*)(mlsCollision->createNewCollisionObject(mlsPtr));//_userdata);	
 
         node->pos = mlsTransform.transform.translation; // The position was already set
         node->rot = mlsTransform.transform.orientation; // The position was already set

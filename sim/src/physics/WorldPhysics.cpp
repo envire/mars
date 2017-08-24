@@ -57,8 +57,11 @@
 
 #include <maps/grid/MLSMap.hpp>
 #define MLS_FRAME_NAME std::string("mls_01")
+#define DEBUG_MARS 1
 
 #include <envire_fcl/Collision.hpp>
+
+
 
 namespace mars {
   namespace sim {
@@ -359,7 +362,7 @@ namespace mars {
       }
         */
       // Get the mls
-      using mlsType = maps::grid::MLSMapKalman;
+      using mlsType = maps::grid::MLSMapPrecalculated;
       using CollisionType = smurf::Collidable;
       using CollisionItem = envire::core::Item<CollisionType>;
       using IterCollItem = envire::core::EnvireGraph::ItemIterator<CollisionItem>;
@@ -369,61 +372,74 @@ namespace mars {
       if (beginItem != endItem)
       {
         mlsType mls = beginItem->getData();
+#ifdef DEBUG_MARS
         std::cout << "Mls map was fetched from the graph "<< std::endl;  
-        // Get the collidables
+#endif
+        // Get the frames that contain collidables
         std::vector<envire::core::FrameId> colFrames = getAllColFrames();
-        // Check for each collidable if it has colision with the MLS
-        smurf::Collidable collidable;
-        IterCollItem itCols, endCols;
+#ifdef DEBUG_MARS
+        int countCollisions = 0;
+#endif
         for(unsigned int frameIndex = 0; frameIndex<colFrames.size(); ++frameIndex)
         {
-            itCols = control->graph->getItem<CollisionItem>(colFrames[frameIndex]); 
-            std::cout << "Collision related to frame " << colFrames[frameIndex] << std::endl;
-            collidable = itCols->getData();
-            // Transformation must be from the mls frame to the colision object frame
-            envire::core::Transform tfColCen = control->graph->getTransform(MLS_FRAME_NAME, colFrames[frameIndex]);
-            fcl::Transform3f trafo = tfColCen.transform.getTransform().cast<float>();
-            std::cout << "Edge modified. Trafo=\n" << std::endl;
-            std::cout << tfColCen.transform.getTransform().matrix() << std::endl;
-            fcl::CollisionRequestf request(10, true, 10, true);
-            fcl::CollisionResultf result;
-            urdf::Collision collision = collidable.getCollision();
-            bool collisionComputed = true;
-            switch (collision.geometry->type){
-                case urdf::Geometry::SPHERE:
-                    {
-                        std::cout << "Collision with a sphere" << std::endl;
-                        boost::shared_ptr<urdf::Sphere> sphereUrdf = boost::dynamic_pointer_cast<urdf::Sphere>(collision.geometry);
-                        fcl::Spheref sphere(sphereUrdf->radius);
-                        fcl::collide_mls(mls, trafo, &sphere, request, result);
-                        break;
-                    }
-                case urdf::Geometry::BOX:
-                    {
-                        std::cout << "Collision with a box" << std::endl;
-                        boost::shared_ptr<urdf::Box> boxUrdf = boost::dynamic_pointer_cast<urdf::Box>(collision.geometry);
-                        fcl::Boxf box(boxUrdf->dim.x, boxUrdf->dim.y, boxUrdf->dim.z);
-                        fcl::collide_mls(mls, trafo, &box, request, result);
-                        break;
-                    }
-                default:
-                    std::cout << "Collision with the selected geometry type not implemented" << std::endl;
-                    collisionComputed = false;
-            }
-            if (collisionComputed)
+#ifdef DEBUG_MARS
+          std::cout << "Collision related to frame " << colFrames[frameIndex] << std::endl;
+#endif
+          // Transformation must be from the mls frame to the colision object frame
+          envire::core::Transform tfColCen = control->graph->getTransform(MLS_FRAME_NAME, colFrames[frameIndex]);
+          fcl::Transform3f trafo = tfColCen.transform.getTransform().cast<float>();
+          // Get the collision objects -Assumes only one per frame-
+          IterCollItem itCols;
+          itCols = control->graph->getItem<CollisionItem>(colFrames[frameIndex]); 
+          smurf::Collidable collidable = itCols->getData();
+          urdf::Collision collision = collidable.getCollision();
+          // Prepare fcl call
+          fcl::CollisionRequestf request(10, true, 10, true);
+          fcl::CollisionResultf result;
+          bool collisionComputed = true;
+          switch (collision.geometry->type){
+              case urdf::Geometry::SPHERE:
+                  {
+                      //std::cout << "Collision with a sphere" << std::endl;
+                      boost::shared_ptr<urdf::Sphere> sphereUrdf = boost::dynamic_pointer_cast<urdf::Sphere>(collision.geometry);
+                      fcl::Spheref sphere(sphereUrdf->radius);
+                      fcl::collide_mls(mls, trafo, &sphere, request, result);
+                      break;
+                  }
+              case urdf::Geometry::BOX:
+                  {
+                      //std::cout << "Collision with a box" << std::endl;
+                      boost::shared_ptr<urdf::Box> boxUrdf = boost::dynamic_pointer_cast<urdf::Box>(collision.geometry);
+                      fcl::Boxf box(boxUrdf->dim.x, boxUrdf->dim.y, boxUrdf->dim.z);
+                      fcl::collide_mls(mls, trafo, &box, request, result);
+                      break;
+                  }
+              default:
+                  std::cout << "Collision with the selected geometry type not implemented" << std::endl;
+                  collisionComputed = false;
+          }
+          if (collisionComputed)
+          {
+#ifdef DEBUG_MARS
+            std::cout << "\nisCollision()==" << result.isCollision() << std::endl;
+            if (result.isCollision())
             {
-                std::cout << "\nisCollision()==" << result.isCollision();
-                for(size_t i=0; i< result.numContacts(); ++i)
-                {
-                    const auto & cont = result.getContact(i);
-                    std::cout << "\n" << cont.pos.transpose() << "; " << cont.normal.transpose() << "; " << cont.penetration_depth;
-                }
-            std::cout << std::endl;
+              std::cout << "\n Collision detected related to frame " << colFrames[frameIndex] << std::endl;
+              countCollisions ++;
+              for(size_t i=0; i< result.numContacts(); ++i)
+              {
+                  const auto & cont = result.getContact(i);
+                  std::cout << "\n" << cont.pos.transpose() << "; " << cont.normal.transpose() << "; " << cont.penetration_depth;
+              }
+              std::cout << std::endl;
             }
+#endif
+          }
         }
-
-
-
+#ifdef DEBUG_MARS
+        std::cout << "Total collisions found " << countCollisions << std::endl; 
+        std::cout << "Collision Check Finished " << std::endl;
+#endif
       }
       else
       {

@@ -68,6 +68,7 @@ namespace mars {
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Collidable>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapKalman>>,
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapPrecalculated>>,
                        public vizkit3d::MLSMapVisualization
       {
 
@@ -93,6 +94,7 @@ namespace mars {
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<maps::grid::MLSMapKalman>>& e);
+        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<maps::grid::MLSMapPrecalculated>>& e);
         virtual void frameAdded(const envire::core::FrameAddedEvent& e);
 
         // CFGClient methods

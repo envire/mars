@@ -63,6 +63,7 @@ void EnvireGraphViz::init()
   GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapKalman>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapPrecalculated>>::subscribe(control->graph.get());
   if(originId.empty())
   {
     envire::core::FrameId center = SIM_CENTER_FRAME_NAME; 
@@ -258,6 +259,21 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
   osgGroup = getVizNode();
   if (!osgGroup){ LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapKalman>] The generated osgGroup is null");}
   else {LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapKalman>] The OSG group is not null");}
+  control->graphics->addOSGNode(osgNode);
+  // We don't get any id back from addOSGNode, so I guess we don't need the following:
+  //uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+}
+
+void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<maps::grid::MLSMapPrecalculated>>& e)
+{
+  LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapPrecalculated>] Added an MLS to the graph, let's visualize it");
+  maps::grid::MLSMapPrecalculated map = e.item->getData();
+  osgNode = createMainNode(); // vizkit3d Protected
+  updateData(map);
+  updateMainNode(osgNode);// vizkit3d Protected
+  osgGroup = getVizNode();
+  if (!osgGroup){ LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapPrecalculated>] The generated osgGroup is null");}
+  else {LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapPrecalculated>] The OSG group is not null");}
   control->graphics->addOSGNode(osgNode);
   // We don't get any id back from addOSGNode, so I guess we don't need the following:
   //uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
