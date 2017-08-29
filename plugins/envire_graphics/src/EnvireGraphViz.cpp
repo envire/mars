@@ -139,14 +139,14 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
         LOG_DEBUG("Added Collidable");
         smurf::Collidable col = e.item->getData();
         urdf::Collision collision = col.getCollision();
-        boost::shared_ptr<urdf::Geometry> geom = collision.geometry;
+        urdf::GeometrySharedPtr geom = collision.geometry;
         switch(geom->type)
         {
             case urdf::Geometry::BOX:
             {
                 LOG_DEBUG("BOX");
                 //FIXME copy paste code from addBox()
-                boost::shared_ptr<urdf::Box> box = boost::dynamic_pointer_cast<urdf::Box>(geom);
+                urdf::BoxSharedPtr box = urdf::dynamic_pointer_cast<urdf::Box>(geom);
                 base::Vector3d extents(box->dim.x, box->dim.y, box->dim.z);
                 NodeData node;
                 node.initPrimitive(mars::interfaces::NODE_TYPE_BOX, extents, 0.00001);
@@ -160,7 +160,7 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
             {
                 LOG_DEBUG("CYLINDER");
                 //FIXME copy paste code from addCylinder()
-                boost::shared_ptr<urdf::Cylinder> cylinder = boost::dynamic_pointer_cast<urdf::Cylinder>(geom);
+                urdf::CylinderSharedPtr cylinder = urdf::dynamic_pointer_cast<urdf::Cylinder>(geom);
                 //x = length, y = radius, z = not used
                 base::Vector3d extents(cylinder->radius, cylinder->length, 0);
                 NodeData node;
@@ -177,7 +177,7 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
                 break;
             case urdf::Geometry::SPHERE:
             {
-                boost::shared_ptr<urdf::Sphere> sphere = boost::dynamic_pointer_cast<urdf::Sphere>(geom);      
+                urdf::SphereSharedPtr sphere = urdf::dynamic_pointer_cast<urdf::Sphere>(geom);
                 //y and z are unused
                 base::Vector3d extents(sphere->radius, 0, 0);
                 NodeData node;
@@ -223,7 +223,7 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
 {
     if (viewFrames)
     {
-        boost::shared_ptr<urdf::Sphere> sphere( new urdf::Sphere);
+        urdf::SphereSharedPtr sphere( new urdf::Sphere);
         sphere->radius = 0.01;
         //y and z are unused
         base::Vector3d extents(sphere->radius, 0, 0);
@@ -264,9 +264,8 @@ void EnvireGraphViz::addVisual(const envire::smurf::Visual& visual, const FrameI
 
 void EnvireGraphViz::addSphere(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
-  boost::shared_ptr<urdf::Sphere> sphere = boost::dynamic_pointer_cast<urdf::Sphere>(visual.geometry);
+  urdf::SphereSharedPtr sphere = urdf::dynamic_pointer_cast<urdf::Sphere>(visual.geometry);
   assert(sphere.get() != nullptr);
-  
   //y and z are unused
   base::Vector3d extents(sphere->radius, 0, 0);
   //LOG_DEBUG_S("[Envire Graphics] add SPHERE visual. name: " << visual.name << ", frame: "   << frameId << ", radius: " << sphere->radius);
@@ -282,7 +281,7 @@ void EnvireGraphViz::addSphere(const envire::smurf::Visual& visual, const FrameI
 
 void EnvireGraphViz::addBox(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
-  boost::shared_ptr<urdf::Box> box = boost::dynamic_pointer_cast<urdf::Box>(visual.geometry);
+  urdf::BoxSharedPtr box = urdf::dynamic_pointer_cast<urdf::Box>(visual.geometry);
   assert(box.get() != nullptr);
   
   base::Vector3d extents(box->dim.x, box->dim.y, box->dim.z);
@@ -298,7 +297,7 @@ void EnvireGraphViz::addBox(const envire::smurf::Visual& visual, const FrameId& 
 
 void EnvireGraphViz::addCylinder(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
-  boost::shared_ptr<urdf::Cylinder> cylinder = boost::dynamic_pointer_cast<urdf::Cylinder>(visual.geometry);
+  urdf::CylinderSharedPtr cylinder = urdf::dynamic_pointer_cast<urdf::Cylinder>(visual.geometry);
   assert(cylinder.get() != nullptr);
     
   //x = length, y = radius, z = not used
@@ -317,7 +316,7 @@ void EnvireGraphViz::addCylinder(const envire::smurf::Visual& visual, const Fram
 
 void EnvireGraphViz::addMesh(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
-  boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh>(visual.geometry);
+  urdf::MeshSharedPtr mesh = urdf::dynamic_pointer_cast<urdf::Mesh>(visual.geometry);
   assert(mesh.get() != nullptr);
   
   //LOG_DEBUG("[Envire Graphics] add MESH visual. name: " + visual.name + ", frame: "  + frameId + ", file: " + mesh->filename);
@@ -333,7 +332,7 @@ void EnvireGraphViz::addMesh(const envire::smurf::Visual& visual, const FrameId&
   uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); //remeber graphics handle
 }
 
-void EnvireGraphViz::setNodeDataMaterial(NodeData& nodeData, boost::shared_ptr< urdf::Material > material) const
+void EnvireGraphViz::setNodeDataMaterial(NodeData& nodeData, urdf::MaterialSharedPtr material) const
 {
   nodeData.material.texturename = material->texture_filename;
   nodeData.material.diffuseFront = mars::utils::Color(material->color.r, material->color.g,
