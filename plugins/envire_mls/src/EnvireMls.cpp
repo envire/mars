@@ -50,8 +50,8 @@
 #define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
 #define MLS_FRAME_TF_X 0.0
 #define MLS_FRAME_TF_Y 0.0
-#define MLS_FRAME_TF_Z 2.0 // Somehow positive values set the mls below the center...
-#define MLS_FRAME_TF_ROT_X 0.0 // Somehow positive values set the mls below the center...
+#define MLS_FRAME_TF_Z 0.0 // Somehow positive values set the mls below the center... I think this must be a bug of the visualizer
+#define MLS_FRAME_TF_ROT_X 0.0 
 
 #define GD_SENSE_CONTACT_FORCE 0
 #define GD_PARENT_GEOM 0
@@ -63,8 +63,7 @@
 #define ROBOT_TEST_ROT  mars::utils::Vector(0,180,0)
 #define ROBOT_NAME std::string("Asguard_v4")
 
-//#define ASGUARD_PATH std::string("/models/robots/asguard_v4/smurf/asguard_v4.smurf")
-#define ASGUARD_PATH std::string("/envire/envire_fcl/src/smurf/just_a_box/smurf/just_a_box.smurf")
+#define ASGUARD_PATH std::string("/models/robots/asguard_v4/smurf/asguard_v4.smurf")
 
 #define DEBUG 1
 

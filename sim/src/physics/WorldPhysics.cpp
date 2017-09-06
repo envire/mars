@@ -313,7 +313,9 @@ namespace mars {
           {
               envire::core::FrameId colFrame = control->graph->getFrameId(*it);
               colFrames.push_back(colFrame);
+#ifdef DEBUG_MARS
               std::cout << "Collision items found in frame " << colFrame << std::endl;
+#endif
           }
       }
       return colFrames;
