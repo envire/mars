@@ -56,11 +56,9 @@
 #define SIM_CENTER_FRAME_NAME std::string("center")
 
 #include <maps/grid/MLSMap.hpp>
+#include <smurf/Collidable.hpp>
 #define MLS_FRAME_NAME std::string("mls_01")
 #define DEBUG_MARS 1
-
-#include <envire_fcl/Collision.hpp>
-
 
 
 namespace mars {
@@ -335,18 +333,12 @@ namespace mars {
       /// first check for collisions
       num_contacts = log_contacts = 0;
       create_contacts = 1;
-      // NOTE This is all running without crashing in the current
-      // installation but I think that this next function is the one that we
-      // have to replace for the FCL one
-      //dSpaceCollide(space,this, &WorldPhysics::callbackForward);
-      //ODE would do a check of the space and the callback function but we
-      //don't need this, hopefully
-      // Take the graph and compute all the bounding boxes that might collide
-      // using FCL
       /*
        * The collision between collidable objects is left for later. By now we
        * compute only the collision points between the MLS and each collision
        * objects
+       */
+      /*
       std::vector<smurf::Collidable> allColls = getAllCollidables();
       for(int i=0; i<allColls.size(); i++)
       {
@@ -362,7 +354,7 @@ namespace mars {
           }
         }
       }
-        */
+      */
       // Get the mls
       using mlsType = maps::grid::MLSMapPrecalculated;
       using CollisionType = smurf::Collidable;
@@ -428,6 +420,8 @@ namespace mars {
             {
               std::cout << "\n Collision detected related to frame " << colFrames[frameIndex] << std::endl;
               countCollisions ++;
+              // Here a method createContacts will put the joints that correspond
+              createContacts(result, collidable); 
               for(size_t i=0; i< result.numContacts(); ++i)
               {
                   const auto & cont = result.getContact(i);
@@ -448,6 +442,163 @@ namespace mars {
         std::cout << "No MLS found in frame "<< MLS_FRAME_NAME << std::endl;  
       }
     }
+
+    void WorldPhysics::initContactParams(dContact *contactPtr, const smurf::ContactParams contactParams, int numContacts){
+      //MLS Has currently no contact parameters, we will use just the ones of the collidable by now
+      //const &geom_data1, const &geom_data2){
+      // Make a method that initializes the parameters of the contacts, it is
+      // what is done starting here until #END_INITCONTACPARAMS
+      // frist we set the softness values:
+      contactPtr[0].surface.mode = dContactSoftERP | dContactSoftCFM;
+      contactPtr[0].surface.soft_cfm = contactParams.cfm;
+#ifdef DEBUG_MARS
+      std::cout << "[WorldPhysics::InitContactParameters] contactPtr[0].surface.soft_cfm " << contactPtr[0].surface.soft_cfm << std::endl;
+#endif
+      contactPtr[0].surface.soft_erp = contactParams.erp;
+      if(contactParams.approx_pyramid) 
+      {
+        contactPtr[0].surface.mode |= dContactApprox1;
+      }                              
+      contactPtr[0].surface.mu = contactParams.friction1;
+      contactPtr[0].surface.mu2 = contactParams.friction2;
+      if(contactPtr[0].surface.mu != contactPtr[0].surface.mu2)
+        contactPtr[0].surface.mode |= dContactMu2;
+
+      // Move handleFrictionDirection to another method
+      // check if we have to calculate friction direction1
+      if(contactParams.friction_direction1){
+        contactPtr[0].surface.mode |= dContactFDir1;
+        /*
+         * Don't know how to do this part yet
+         * TODO Improve based on what is Done in NearCallback
+         *
+         *
+         */
+      }
+      // then check for fds
+      if(contactParams.fds1){
+        contactPtr[0].surface.mode |= dContactSlip1;
+        contactPtr[0].surface.slip1 = contactParams.fds1;
+      }
+      if(contactParams.fds2){
+        contactPtr[0].surface.mode |= dContactSlip2;
+        contactPtr[0].surface.slip2 = contactParams.fds2;
+      }
+      // Then set bounce and bounce_vel
+      if(contactParams.bounce){
+        contactPtr[0].surface.mode |= dContactBounce;
+        contactPtr[0].surface.bounce = contactParams.bounce;
+        contactPtr[0].surface.bounce_vel = contactParams.bounce_vel;
+      }
+      // Apply parametrization to all contacts.
+      for (int i=1;i<numContacts;i++){
+        contactPtr[i] = contactPtr[0];
+      }
+    }
+
+    /*
+    void WorldPhysics::createFeedbackJoints( dContact *contactPtr, const smurf::ContactParams contactParams, int numContacts){
+      //numContacts is the number of collisions detected by fcl between the robot and the mls
+      //num_contacts is a global variable of Worldphysics to keep track of the existent feedback joints
+        dJointFeedback *fb;
+        Vector contact_point;
+        dVector3 v;
+        num_contacts++;
+        if(create_contacts) {
+          fb = 0;
+          for(i=0;i<numContacts;i++){
+            if(contacParams.friction_direction1) {
+              v[0] = contactPtr[i].geom.normal[0];
+              v[1] = contactPtr[i].geom.normal[1];
+              v[2] = contactPtr[i].geom.normal[2];
+              dot = dDOT(v, contactPtr[i].fdir1);
+              dOPEC(v, *=, dot);
+              contactPtr[i].fdir1[0] -= v[0];
+              contactPtr[i].fdir1[1] -= v[1];
+              contactPtr[i].fdir1[2] -= v[2];
+              dNormalize3(contactPtr[0].fdir1);
+            }
+            contactPtr[0].geom.depth += (contactParams.depth_correction);
+            if(contactPtr[0].geom.depth < 0.0) contactPtr[0].geom.depth = 0.0;
+            dJointID c=dJointCreateContact(world,contactgroup,contactPtr+i);
+            // TODO !!! Here I have to attach it to the MLS somehow
+            dJointAttach(c,b1,b2);
+
+          }
+    }
+    */
+
+      /*
+      if(numc){ 
+		  
+	  
+        if(create_contacts) {
+
+          for(i=0;i<numc;i++){
+            contact[0].geom.depth += (geom_data1->c_params.depth_correction +
+                                      geom_data2->c_params.depth_correction);
+        
+            if(contact[0].geom.depth < 0.0) contact[0].geom.depth = 0.0;
+            dJointID c=dJointCreateContact(world,contactgroup,contact+i);
+
+            dJointAttach(c,b1,b2);
+
+            geom_data1->num_ground_collisions += numc;
+            geom_data2->num_ground_collisions += numc;
+
+            contact_point.x() = contact[i].geom.pos[0];
+            contact_point.y() = contact[i].geom.pos[1];
+            contact_point.z() = contact[i].geom.pos[2];
+
+            geom_data1->contact_ids.push_back(geom_data2->id);
+            geom_data2->contact_ids.push_back(geom_data1->id);
+            geom_data1->contact_points.push_back(contact_point);
+            geom_data2->contact_points.push_back(contact_point);
+            //if(dGeomGetClass(o1) == dPlaneClass) {
+            fb = 0;
+            if(geom_data2->sense_contact_force) {
+              fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
+              dJointSetFeedback(c, fb);
+           
+              contact_feedback_list.push_back(fb);
+              geom_data2->ground_feedbacks.push_back(fb);
+              geom_data2->node1 = false;
+            } 
+            //else if(dGeomGetClass(o2) == dPlaneClass) {
+            if(geom_data1->sense_contact_force) {
+              if(!fb) {
+                fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
+                dJointSetFeedback(c, fb);
+                  
+                contact_feedback_list.push_back(fb);
+              }
+              geom_data1->ground_feedbacks.push_back(fb);
+              geom_data1->node1 = true;
+            }
+          }
+        }  
+      }
+ *
+ */
+
+
+    /** 
+     *
+     * \brief Method called in computeCollisions when collisions are found.
+     * This method instantiates the correspondent contact joints.
+     * The method is based on what nearCallback was doing
+     */
+    void WorldPhysics::createContacts(const fcl::CollisionResultf & result, smurf::Collidable collidable){
+#ifdef DEBUG_MARS
+      std::cout << "[WorldPhysics::CreateContacts] Collidable " << collidable.getName() << std::endl;
+#endif
+      // Init dContact
+      dContact *contactPtr = new dContact[result.numContacts()];
+      const smurf::ContactParams contactParams = collidable.getContactParams();
+      initContactParams(contactPtr, contactParams, result.numContacts());
+      //TODO NEXT -Currently Commented out -  createFeedbackJoints(contactPtr, contactParams, result.numContacts());
+    }
+    
 
     /** 
      *
@@ -893,6 +1044,15 @@ namespace mars {
       // points by calling the correspondent dCollideType1Type2 function NOTE
       // Where was for contact[0] the geom set? It isn't set, here you give the
       // memory address to set it!
+      
+#ifdef DEBUG_MARS
+      // This lines is as today (7.09.2017) the method nearCallback is not
+      // being called. What we could do is either replace the following methdod
+      // dCollide for the collision computation in fcl and change back the code
+      // so that this method is called or move what is done in this method each
+      // time a collision is found in ComputeCollisions
+      std::cout << "[WorldPhysics::nearCallback] FOOOOOO" << maxNumContacts << std::endl; 
+#endif
       numc=dCollide(o1,o2, maxNumContacts, &contact[0].geom,sizeof(dContact));
     
       // Is dCollide the method to be replaced? This one provides the

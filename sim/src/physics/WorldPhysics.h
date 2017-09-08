@@ -49,6 +49,7 @@
 #include <ode/ode.h>
 
 #include <envire_core/items/Frame.hpp>
+#include <envire_fcl/Collision.hpp>
 
 namespace mars {
   namespace sim {
@@ -141,6 +142,8 @@ namespace mars {
       void clearPreviousStep(void);
       std::vector<envire::core::FrameId> getAllColFrames(void);
       void computeCollisions(void);
+      void createContacts(const fcl::CollisionResultf & result, smurf::Collidable collidable);
+      void initContactParams(dContact *contactPtr, const smurf::ContactParams contactParams, int numContacts);
       void execStep(void);
 
     };
