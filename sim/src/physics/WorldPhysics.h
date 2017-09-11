@@ -142,7 +142,8 @@ namespace mars {
       void clearPreviousStep(void);
       std::vector<envire::core::FrameId> getAllColFrames(void);
       void computeCollisions(void);
-      void createContacts(const fcl::CollisionResultf & result, smurf::Collidable collidable);
+      void createContacts(const fcl::CollisionResultf & result, smurf::Collidable collidable, const envire::core::FrameId frameId);
+      void createFeedbackJoints(const envire::core::FrameId frameId, const smurf::ContactParams contactParams, dContact *contactPtr, int numContacts);
       void initContactParams(dContact *contactPtr, const smurf::ContactParams contactParams, int numContacts);
       void execStep(void);
 

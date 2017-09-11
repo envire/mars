@@ -46,6 +46,7 @@
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/interfaces/Logging.hpp>
 
+#include <mars/sim/SimNode.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/intrusive_ptr.hpp>	
@@ -421,7 +422,7 @@ namespace mars {
               std::cout << "\n Collision detected related to frame " << colFrames[frameIndex] << std::endl;
               countCollisions ++;
               // Here a method createContacts will put the joints that correspond
-              createContacts(result, collidable); 
+              createContacts(result, collidable, colFrames[frameIndex] ); 
               for(size_t i=0; i< result.numContacts(); ++i)
               {
                   const auto & cont = result.getContact(i);
@@ -496,37 +497,64 @@ namespace mars {
       }
     }
 
-    /*
-    void WorldPhysics::createFeedbackJoints( dContact *contactPtr, const smurf::ContactParams contactParams, int numContacts){
+    void WorldPhysics::createFeedbackJoints( const envire::core::FrameId frameId, const smurf::ContactParams contactParams, dContact *contactPtr, int numContacts){
+#ifdef DEBUG_MARS
+      std::cout << "[WorldPhysics::createFeedbackJoints] " << frameId << std::endl;
+#endif
       //numContacts is the number of collisions detected by fcl between the robot and the mls
       //num_contacts is a global variable of Worldphysics to keep track of the existent feedback joints
-        dJointFeedback *fb;
-        Vector contact_point;
-        dVector3 v;
-        num_contacts++;
-        if(create_contacts) {
-          fb = 0;
-          for(i=0;i<numContacts;i++){
-            if(contacParams.friction_direction1) {
-              v[0] = contactPtr[i].geom.normal[0];
-              v[1] = contactPtr[i].geom.normal[1];
-              v[2] = contactPtr[i].geom.normal[2];
-              dot = dDOT(v, contactPtr[i].fdir1);
-              dOPEC(v, *=, dot);
-              contactPtr[i].fdir1[0] -= v[0];
-              contactPtr[i].fdir1[1] -= v[1];
-              contactPtr[i].fdir1[2] -= v[2];
-              dNormalize3(contactPtr[0].fdir1);
-            }
-            contactPtr[0].geom.depth += (contactParams.depth_correction);
-            if(contactPtr[0].geom.depth < 0.0) contactPtr[0].geom.depth = 0.0;
-            dJointID c=dJointCreateContact(world,contactgroup,contactPtr+i);
-            // TODO !!! Here I have to attach it to the MLS somehow
-            dJointAttach(c,b1,b2);
-
+      dJointFeedback *fb;
+      Vector contact_point;
+      dVector3 v;
+      //dMatrix3 R;
+      dReal dot;
+      num_contacts++;
+      if(create_contacts) {
+        fb = 0;
+        for(int i=0;i<numContacts;i++){
+          if(contactParams.friction_direction1) {
+            v[0] = contactPtr[i].geom.normal[0];
+            v[1] = contactPtr[i].geom.normal[1];
+            v[2] = contactPtr[i].geom.normal[2];
+            dot = dDOT(v, contactPtr[i].fdir1);
+            dOPEC(v, *=, dot);
+            contactPtr[i].fdir1[0] -= v[0];
+            contactPtr[i].fdir1[1] -= v[1];
+            contactPtr[i].fdir1[2] -= v[2];
+            dNormalize3(contactPtr[0].fdir1);
           }
+          contactPtr[0].geom.depth += (contactParams.depth_correction);
+          if(contactPtr[0].geom.depth < 0.0) contactPtr[0].geom.depth = 0.0;
+          dJointID c=dJointCreateContact(world,contactgroup,contactPtr+i);
+          // TODO !!! Here I have to attach it to the MLS somehow
+          // I need to get the dGeomID of the objects
+          // from the dGeomID I need to get the dBodyID
+          //dBodyID b1=dGeomGetBody(o1);
+          //dJointAttach(c,b1,0);
+          envire::core::EnvireGraph::ItemIterator<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>> begin, end;
+          boost::tie(begin, end) = control->graph->getItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(frameId);
+          if (begin != end){
+#ifdef DEBUG_MARS
+            std::cout << "[WorldPhysics::createFeedbackJoints] We have the simnode! " << std::endl;
+#endif            
+            std::shared_ptr<mars::sim::SimNode> nodePtr = begin->getData();
+            interfaces::NodeInterface * nodeIfPtr = nodePtr->getInterface();
+            interfaces::NodeInterface & nodeIfAdd = *nodeIfPtr;
+            // TODO get the NodePhys out of the SimNode. The Node Physics has the method to fet the dBodyID, with it the dJointAttach method can be used
+            NodePhysics * nodePhys = dynamic_cast<NodePhysics*>(nodeIfPtr);
+            const dBodyID bodyId = nodePhys->getBody();
+#ifdef DEBUG_MARS
+            utils::Vector* pos;
+            nodePhys->getPosition(pos);
+            std::cout << "[WorldPhysics::createFeedbackJoints] We have the simnode! " << pos->x() << std::endl;
+#endif            
+            //dGeomID nodeId = nodePtr -> getID();
+            //dJointAttach(c,nodeId,0);
+          }
+            
+        }
+      }
     }
-    */
 
       /*
       if(numc){ 
@@ -588,7 +616,7 @@ namespace mars {
      * This method instantiates the correspondent contact joints.
      * The method is based on what nearCallback was doing
      */
-    void WorldPhysics::createContacts(const fcl::CollisionResultf & result, smurf::Collidable collidable){
+    void WorldPhysics::createContacts(const fcl::CollisionResultf & result, smurf::Collidable collidable, const envire::core::FrameId frameId){
 #ifdef DEBUG_MARS
       std::cout << "[WorldPhysics::CreateContacts] Collidable " << collidable.getName() << std::endl;
 #endif
@@ -596,7 +624,7 @@ namespace mars {
       dContact *contactPtr = new dContact[result.numContacts()];
       const smurf::ContactParams contactParams = collidable.getContactParams();
       initContactParams(contactPtr, contactParams, result.numContacts());
-      //TODO NEXT -Currently Commented out -  createFeedbackJoints(contactPtr, contactParams, result.numContacts());
+      createFeedbackJoints(frameId, contactParams, contactPtr, result.numContacts());
     }
     
 
