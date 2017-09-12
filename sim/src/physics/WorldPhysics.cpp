@@ -539,14 +539,18 @@ namespace mars {
 #endif            
             std::shared_ptr<mars::sim::SimNode> nodePtr = begin->getData();
             interfaces::NodeInterface * nodeIfPtr = nodePtr->getInterface();
-            interfaces::NodeInterface & nodeIfAdd = *nodeIfPtr;
+            //interfaces::NodeInterface & nodeIfAdd = *nodeIfPtr;
             // TODO get the NodePhys out of the SimNode. The Node Physics has the method to fet the dBodyID, with it the dJointAttach method can be used
-            NodePhysics * nodePhys = dynamic_cast<NodePhysics*>(nodeIfPtr);
-            const dBodyID bodyId = nodePhys->getBody();
+            //NodePhysics * nodePhys = dynamic_cast<NodePhysics*>(nodeIfPtr);
+            //const dBodyID bodyId = nodePhys->getBody();
 #ifdef DEBUG_MARS
             utils::Vector* pos;
-            nodePhys->getPosition(pos);
-            std::cout << "[WorldPhysics::createFeedbackJoints] We have the simnode! " << pos->x() << std::endl;
+            utils::Vector posSimNode;
+            posSimNode = nodePtr -> getPosition();
+            //nodeIfPtr->getPosition(pos);
+            //std::cout << "[WorldPhysics::createFeedbackJoints] We have the simnode! " << pos->x() << std::endl;
+            std::cout << "[WorldPhysics::createFeedbackJoints] We have the simnode! PosSimNode" << posSimNode.x() << std::endl;
+            nodeIfPtr -> addContacts(c);
 #endif            
             //dGeomID nodeId = nodePtr -> getID();
             //dJointAttach(c,nodeId,0);
@@ -671,6 +675,9 @@ namespace mars {
       if (world_init && step_size > 0){
         stepTheWorldChecks();
         clearPreviousStep();
+        // TODO This method should be much similar to the previous one running
+        // dSpaceCollide and after computing all the "external contacts" those
+        // which take place with the mls
         computeCollisions();
         // Update draw (I guess) //TODO: Can we remove all draw stuff?
         drawLock.lock();

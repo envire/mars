@@ -47,6 +47,8 @@
 #include <set>
 #include <iostream>
 
+#define DEBUG_NODEPHYSICS 1
+
 namespace mars {
   namespace sim {
 
@@ -1720,12 +1722,20 @@ namespace mars {
       }
     }
 
+    void NodePhysics::addContacts(dJointID contactJointId){
+#ifdef DEBUG_NODEPHYSICS
+      std::cout << "[NodePhysics::addContact]: FOO" << std::endl;
+#endif
+      dJointAttach(contactJointId, nBody, 0);
+    }
+
     sReal NodePhysics::getCollisionDepth(void) const {
       if(nGeom && theWorld) {
         return theWorld->getCollisionDepth(nGeom);
       }
       return 0.0;
     }
+
 
   } // end of namespace sim
 } // end of namespace mars
