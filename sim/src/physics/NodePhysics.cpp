@@ -1722,11 +1722,48 @@ namespace mars {
       }
     }
 
-    void NodePhysics::addContacts(dJointID contactJointId){
+    void NodePhysics::addContacts(dJointID contactJointId, int numContacts, dContact contact){
+      // Here should the ODE stuff be made  
+
 #ifdef DEBUG_NODEPHYSICS
       std::cout << "[NodePhysics::addContact]: FOO" << std::endl;
 #endif
+      Vector contact_point;
+      dJointFeedback *fb;
       dJointAttach(contactJointId, nBody, 0);
+
+      node_data.num_ground_collisions += numContacts;
+
+      contact_point.x() = contact.geom.pos[0];
+      contact_point.y() = contact.geom.pos[1];
+      contact_point.z() = contact.geom.pos[2];
+
+      node_data.contact_ids.push_back(0);
+      node_data.contact_points.push_back(contact_point);
+
+      fb = 0;
+      //      if(geom_data2->sense_contact_force) {
+      //        fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
+      //        dJointSetFeedback(c, fb);
+      //     
+      //        contact_feedback_list.push_back(fb);
+      //        geom_data2->ground_feedbacks.push_back(fb);
+      //        geom_data2->node1 = false;
+      //      } 
+      //      //else if(dGeomGetClass(o2) == dPlaneClass) {
+      //      if(geom_data1->sense_contact_force) {
+      //        if(!fb) {
+      //          fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
+      //          dJointSetFeedback(c, fb);
+      //            
+      //          contact_feedback_list.push_back(fb);
+      //        }
+      node_data.ground_feedbacks.push_back(fb);
+      node_data.node1 = true;
+      //      }
+#ifdef DEBUG_NODEPHYSICS
+      std::cout << "[NodePhysics::addContact]: DONE" << std::endl;
+#endif
     }
 
     sReal NodePhysics::getCollisionDepth(void) const {

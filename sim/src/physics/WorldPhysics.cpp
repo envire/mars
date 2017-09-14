@@ -503,14 +503,11 @@ namespace mars {
 #endif
       //numContacts is the number of collisions detected by fcl between the robot and the mls
       //num_contacts is a global variable of Worldphysics to keep track of the existent feedback joints
-      dJointFeedback *fb;
-      Vector contact_point;
       dVector3 v;
       //dMatrix3 R;
       dReal dot;
       num_contacts++;
-      if(create_contacts) {
-        fb = 0;
+      if(create_contacts){
         for(int i=0;i<numContacts;i++){
           if(contactParams.friction_direction1) {
             v[0] = contactPtr[i].geom.normal[0];
@@ -543,21 +540,13 @@ namespace mars {
             // TODO get the NodePhys out of the SimNode. The Node Physics has the method to fet the dBodyID, with it the dJointAttach method can be used
             //NodePhysics * nodePhys = dynamic_cast<NodePhysics*>(nodeIfPtr);
             //const dBodyID bodyId = nodePhys->getBody();
-#ifdef DEBUG_MARS
-            utils::Vector* pos;
-            utils::Vector posSimNode;
-            posSimNode = nodePtr -> getPosition();
-            //nodeIfPtr->getPosition(pos);
-            //std::cout << "[WorldPhysics::createFeedbackJoints] We have the simnode! " << pos->x() << std::endl;
-            std::cout << "[WorldPhysics::createFeedbackJoints] We have the simnode! PosSimNode" << posSimNode.x() << std::endl;
-            nodeIfPtr -> addContacts(c);
-#endif            
-            //dGeomID nodeId = nodePtr -> getID();
-            //dJointAttach(c,nodeId,0);
+            nodeIfPtr -> addContacts(c, numContacts, contactPtr[i]);
           }
-            
-        }
-      }
+        } // for numContacts
+      } // if create contacts
+#ifdef DEBUG_MARS
+      std::cout << "[WorldPhysics::createFeedbackJoints] All done here " << std::endl;
+#endif            
     }
 
       /*
@@ -574,6 +563,7 @@ namespace mars {
             dJointID c=dJointCreateContact(world,contactgroup,contact+i);
 
             dJointAttach(c,b1,b2);
+             ### Done until here ###
 
             geom_data1->num_ground_collisions += numc;
             geom_data2->num_ground_collisions += numc;
