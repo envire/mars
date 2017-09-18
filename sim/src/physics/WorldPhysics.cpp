@@ -204,14 +204,19 @@ namespace mars {
      *     - afte that, world_init have to become false
      */
     void WorldPhysics::freeTheWorld(void) {
+#ifdef DEBUG_MARS
+      std::cout << "[WorldPhysics::freeTheWorld] START" << std::endl; 
+#endif
       MutexLocker locker(&iMutex);
       if(world_init) {
-        //LOG_DEBUG("free physics world");
         dJointGroupDestroy(contactgroup);
         dSpaceDestroy(space);
         dWorldDestroy(world);
         world_init = 0;
       }
+#ifdef DEBUG_MARS
+      std::cout << "[WorldPhysics::freeTheWorld] START" << std::endl; 
+#endif
       // else debug something
     }
 
@@ -260,6 +265,9 @@ namespace mars {
      *
      */
     void WorldPhysics::clearPreviousStep(void){
+#ifdef DEBUG_MARS
+      std::cout << "[WorldPhysics::clearPreviousStep] START" << std::endl; 
+#endif
       // Clear Previous Collisions
       //	printf("now WorldPhysics.cpp..stepTheWorld(void)....1 : dSpaceGetNumGeoms: %d\n",dSpaceGetNumGeoms(space)); 
       /// first clear the collision counters of all geoms
@@ -286,6 +294,9 @@ namespace mars {
         free((*iter));
       }
       contact_feedback_list.clear();
+#ifdef DEBUG_MARS
+      std::cout << "[WorldPhysics::clearPreviousStep] END" << std::endl; 
+#endif
     }
 
     /** 
@@ -454,6 +465,9 @@ namespace mars {
       contactPtr[0].surface.soft_cfm = contactParams.cfm;
 #ifdef DEBUG_MARS
       std::cout << "[WorldPhysics::InitContactParameters] contactPtr[0].surface.soft_cfm " << contactPtr[0].surface.soft_cfm << std::endl;
+      std::cout << "[WorldPhysics::InitContactParameters] ContactParams.cfm : " << contactParams.cfm <<std::endl;
+      std::cout << "[WorldPhysics::InitContactParameters] ContactParams.friction1 : " << contactParams.friction1 <<std::endl;
+      std::cout << "[WorldPhysics::InitContactParameters] ContactParams.friction1 : " << contactParams.friction_direction1 <<std::endl;
 #endif
       contactPtr[0].surface.soft_erp = contactParams.erp;
       if(contactParams.approx_pyramid) 
