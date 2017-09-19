@@ -145,6 +145,7 @@ namespace mars {
       void createContacts(const fcl::CollisionResultf & result, smurf::Collidable collidable, const envire::core::FrameId frameId);
       void createFeedbackJoints(const envire::core::FrameId frameId, const smurf::ContactParams contactParams, dContact *contactPtr, int numContacts);
       void initContactParams(dContact *contactPtr, const smurf::ContactParams contactParams, int numContacts);
+      void dumpFCLResult(const fcl::CollisionResultf &result, dContact *contactPtr);
       void execStep(void);
 
     };

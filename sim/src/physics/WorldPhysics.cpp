@@ -379,7 +379,7 @@ namespace mars {
       {
         mlsType mls = beginItem->getData();
 #ifdef DEBUG_MARS
-        std::cout << "Mls map was fetched from the graph "<< std::endl;  
+        std::cout << "[WorldPhysics::computeCollision]: Mls map was fetched from the graph "<< std::endl;  
 #endif
         // Get the frames that contain collidables
         std::vector<envire::core::FrameId> colFrames = getAllColFrames();
@@ -389,7 +389,7 @@ namespace mars {
         for(unsigned int frameIndex = 0; frameIndex<colFrames.size(); ++frameIndex)
         {
 #ifdef DEBUG_MARS
-          std::cout << "Collision related to frame " << colFrames[frameIndex] << std::endl;
+          std::cout << "[WorldPhysics::computeCollision]: Collision related to frame " << colFrames[frameIndex] << std::endl;
 #endif
           // Transformation must be from the mls frame to the colision object frame
           envire::core::Transform tfColCen = control->graph->getTransform(MLS_FRAME_NAME, colFrames[frameIndex]);
@@ -421,25 +421,26 @@ namespace mars {
                       break;
                   }
               default:
-                  std::cout << "Collision with the selected geometry type not implemented" << std::endl;
+                  std::cout << "[WorldPhysics::computeCollision]: Collision with the selected geometry type not implemented" << std::endl;
                   collisionComputed = false;
           }
           if (collisionComputed)
           {
 #ifdef DEBUG_MARS
-            std::cout << "\nisCollision()==" << result.isCollision() << std::endl;
+            std::cout << "\n[WorldPhysics::computeCollision]: isCollision()==" << result.isCollision() << std::endl;
             if (result.isCollision())
             {
-              std::cout << "\n Collision detected related to frame " << colFrames[frameIndex] << std::endl;
+              std::cout << "\n [WorldPhysics::computeCollision]: Collision detected related to frame " << colFrames[frameIndex] << std::endl;
               countCollisions ++;
               // Here a method createContacts will put the joints that correspond
               createContacts(result, collidable, colFrames[frameIndex] ); 
               for(size_t i=0; i< result.numContacts(); ++i)
               {
                   const auto & cont = result.getContact(i);
-                  std::cout << "\n" << cont.pos.transpose() << "; " << cont.normal.transpose() << "; " << cont.penetration_depth;
+                  std::cout << "[WorldPhysics::computeCollision]: Contact transpose " << cont.pos.transpose() << std::endl;
+                  std::cout << "[WorldPhysics::computeCollision]: Contact normal transpose " << cont.normal.transpose() << std::endl;
+                  std::cout << "[WorldPhysics::computeCollision]: Contact penetration depth " << cont.penetration_depth << std::endl;
               }
-              std::cout << std::endl;
             }
 #endif
           }
@@ -482,6 +483,8 @@ namespace mars {
       // Move handleFrictionDirection to another method
       // check if we have to calculate friction direction1
       if(contactParams.friction_direction1){
+        std::cout << "[WorldPhysics::initiContactParams] About to set friction direction" << std::endl;
+        dVector3 v1;
         contactPtr[0].surface.mode |= dContactFDir1;
         /*
          * Don't know how to do this part yet
@@ -489,6 +492,22 @@ namespace mars {
          *
          *
          */
+        //v1[0] = geom_data1->c_params.friction_direction1->x();
+        //v1[1] = geom_data1->c_params.friction_direction1->y();
+        //v1[2] = geom_data1->c_params.friction_direction1->z();
+        v1[0] = 0.0;
+        v1[1] = 1.0;
+        v1[2] = 0.0;
+        // translate the friction direction to global coordinates
+        // and set friction direction for contact
+        //dMULTIPLY0_331(contact[0].fdir1, R, v1);
+        contactPtr[0].fdir1[0] = v1[0];
+        contactPtr[0].fdir1[1] = v1[1];
+        contactPtr[0].fdir1[2] = v1[2];
+        //if(geom_data1->c_params.motion1) {
+        //  contactPtr[0].surface.mode |= dContactMotion1;
+        //  contactPtr[0].surface.motion1 = geom_data1->c_params.motion1;
+        //}
       }
       // then check for fds
       if(contactParams.fds1){
@@ -554,7 +573,25 @@ namespace mars {
             // TODO get the NodePhys out of the SimNode. The Node Physics has the method to fet the dBodyID, with it the dJointAttach method can be used
             //NodePhysics * nodePhys = dynamic_cast<NodePhysics*>(nodeIfPtr);
             //const dBodyID bodyId = nodePhys->getBody();
-            nodeIfPtr -> addContacts(c, numContacts, contactPtr[i]);
+            
+
+            dJointFeedback *fb;
+            fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
+            dJointSetFeedback(c, fb);
+            contact_feedback_list.push_back(fb);
+
+            Vector contact_point;
+            contact_point.x() = contactPtr[0].geom.pos[0];
+            contact_point.y() = contactPtr[0].geom.pos[1];
+            contact_point.z() = contactPtr[0].geom.pos[2];
+            
+#ifdef DEBUG_MARS
+            std::cout << "[WorldPhysics::addContact]: Contact point x" << contact_point.x() << std::endl;
+            std::cout << "[WorldPhysics::addContact]: Contact point y" << contact_point.y() << std::endl;
+            std::cout << "[WorldPhysics::addContact]: Contact point z" << contact_point.z() << std::endl;
+#endif
+
+            nodeIfPtr -> addContacts(c, numContacts, contactPtr[i], fb);
           }
         } // for numContacts
       } // if create contacts
@@ -618,6 +655,40 @@ namespace mars {
  */
 
 
+    void WorldPhysics::dumpFCLResult(const fcl::CollisionResultf &result, dContact *contactPtr)
+    {
+#ifdef DEBUG_MARS
+      std::cout << "[WorldPhysics::dumpFCLResults] To Dump: " << std::endl;
+      for(size_t i=0; i< result.numContacts(); ++i)
+      {
+          const auto & cont = result.getContact(i);
+          std::cout << "[WorldPhysics::dumpFCLResults]: Contact transpose " << cont.pos.transpose() << std::endl;
+          std::cout << "[WorldPhysics::dumpFCLResults]: Contact normal transpose " << cont.normal.transpose() << std::endl;
+          std::cout << "[WorldPhysics::dumpFCLResults]: Contact penetration depth " << cont.penetration_depth << std::endl;
+      }
+#endif
+
+#ifdef DEBUG_MARS
+      std::cout << "[WorldPhysics::dumpFCLResults] Result: " << std::endl;
+
+      dVector3 vNormal;
+      Vector contact_point;
+      for(size_t i=0; i< result.numContacts(); ++i)
+      {
+        contact_point.x() = contactPtr[0].geom.pos[0];
+        contact_point.y() = contactPtr[0].geom.pos[1];
+        contact_point.z() = contactPtr[0].geom.pos[2];
+        vNormal[0] = contactPtr[i].geom.normal[0];
+        vNormal[1] = contactPtr[i].geom.normal[1];
+        vNormal[2] = contactPtr[i].geom.normal[2];
+        const auto & cont = result.getContact(i);
+        std::cout << "[WorldPhysics::dumpFCLResults]:  contactPtr[0].geom.pos" << contact_point << std::endl;
+        std::cout << "[WorldPhysics::dumpFCLResults]: contactPtr[i].geom.normal " << vNormal << std::endl;
+        std::cout << "[WorldPhysics::dumpFCLResults]: contactPtr[i].geom.depth " << contactPtr[i].geom.depth << std::endl;
+      }
+#endif
+    }
+
     /** 
      *
      * \brief Method called in computeCollisions when collisions are found.
@@ -632,6 +703,9 @@ namespace mars {
       dContact *contactPtr = new dContact[result.numContacts()];
       const smurf::ContactParams contactParams = collidable.getContactParams();
       initContactParams(contactPtr, contactParams, result.numContacts());
+      dumpFCLResult(result, contactPtr);
+      // Here we have to copy the contact points to the contactPtr structure or
+      // if not pass the result to createFeedbackJoints so that it uses them
       createFeedbackJoints(frameId, contactParams, contactPtr, result.numContacts());
     }
     
