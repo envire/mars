@@ -42,6 +42,9 @@
 
 #include <mars/interfaces/NodeData.h>
 
+#include <mars/sim/SimNode.h>
+#include <mars/sim/JointRecord.h>
+
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/graph/GraphTypes.hpp>
 #include <envire_core/items/Transform.hpp>
