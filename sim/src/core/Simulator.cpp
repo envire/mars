@@ -816,7 +816,20 @@ namespace mars {
 
         }
         //load new global positions to the sim nodes
-        control->nodes->updateSimNodePositionsFromGraph();
+        control->nodes->updatePositionsFromGraph();
+        control->joints->updatePositionsFromGraph();
+        control->motors->updatePositionsFromGraph();
+
+        sceneHasChanged(true);
+//        control->controllers->setLoadingAllowed(false);
+//
+//        control->controllers->resetControllerData();
+//        control->entities->resetPose();
+//        for (unsigned int i=0; i<allPlugins.size(); i++)
+//          allPlugins[i].p_interface->reset();
+//        control->controllers->setLoadingAllowed(true);
+
+        //sceneChanged();
 
 //        LOG_ERROR("%s done updating edges\n",__PRETTY_FUNCTION__);
 

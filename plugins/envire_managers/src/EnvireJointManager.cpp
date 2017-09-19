@@ -262,15 +262,15 @@ namespace mars {
 
 
     void EnvireJointManager::reattacheJoints(unsigned long node_id) {
-      printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-      // map<unsigned long, SimJoint*>::iterator iter;
-      // MutexLocker locker(&iMutex);
-      // for (iter = simJoints.begin(); iter != simJoints.end(); iter++) {
-      //   if (iter->second->getSJoint().nodeIndex1 == node_id ||
-      //       iter->second->getSJoint().nodeIndex2 == node_id) {
-      //     iter->second->reattachJoint();
-      //   }
-      // }
+       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+//       JointMap::iterator iter;
+//       MutexLocker locker(&iMutex);
+//       for (iter = simJoints.begin(); iter != simJoints.end(); iter++) {
+//         if (iter->second->getSJoint().nodeIndex1 == node_id ||
+//             iter->second->getSJoint().nodeIndex2 == node_id) {
+//           iter->second->reattachJoint();
+//         }
+//      }
     }
 
     void EnvireJointManager::reloadJoints(void) {
@@ -288,6 +288,21 @@ namespace mars {
         iter->second->getData()->update(calc_ms);
       }
     }
+
+
+    void EnvireJointManager::updatePositionsFromGraph(){
+
+        mars::utils::MutexLocker locker(&iMutex);
+
+        for (JointMap::iterator iter = simJoints.begin(); iter != simJoints.end(); iter++) {
+            const std::shared_ptr<mars::sim::SimJoint> sim_joint = iter->second->getData();
+
+            sim_joint->reattachJoint();
+
+        }
+    }
+
+
 
     void EnvireJointManager::clearAllJoints(bool clear_all) {
       printf("not implemented : %s\n", __PRETTY_FUNCTION__);

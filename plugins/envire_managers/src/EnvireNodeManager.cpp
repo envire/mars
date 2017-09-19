@@ -1386,7 +1386,7 @@ namespace mars {
         }
     }
 
-void EnvireNodeManager::updateSimNodePositionsFromGraph(){
+void EnvireNodeManager::updatePositionsFromGraph(){
 
     //update positions in sim nodes
 
@@ -1422,25 +1422,8 @@ void EnvireNodeManager::updateSimNodePositionsFromGraph(){
 
             }
         }
-
-//        if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimJoint>>>(*vertex)){
-//
-//            using IteratorSimJoint = envire::core::EnvireGraph::ItemIterator<SimJointItem>;
-//            IteratorSimJoint begin_sim, end_sim;
-//            boost::tie(begin_sim, end_sim) = control->graph->getItems<SimJointItem>(*vertex);
-//            for (;begin_sim!=end_sim; begin_sim++)
-//            {
-//                const std::shared_ptr<mars::sim::SimJoint> sim_joint = begin_sim->getData();
-//
-//
-//                utils::Vector pos = targetPos.translation;
-//                sim_joint->setAnchor(pos);
-//
-//
-//            }
-//        }
-
     }
+
 }
 
     void EnvireNodeManager::updatePositions( const envire::core::GraphTraits::vertex_descriptor origin,
