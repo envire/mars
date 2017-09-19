@@ -261,7 +261,7 @@ namespace mars {
       {}
       
       JointType EnvireJoints::getJointType(smurf::Joint* joint){
-        boost::shared_ptr<urdf::Joint> jointModel = joint->getJointModel();
+        urdf::JointSharedPtr jointModel = joint->getJointModel();
         std::string logType;
         JointType jointType;
         switch (jointModel->type)

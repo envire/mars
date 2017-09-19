@@ -121,9 +121,9 @@ namespace mars {
          * visual.geometry is a CYLINDER*/
         void addCylinder(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
                          const boost::uuids::uuid& uuid);
-        
-        void setNodeDataMaterial(mars::interfaces::NodeData& nodeData, boost::shared_ptr<urdf::Material> material) const;
-        
+
+        void setNodeDataMaterial(mars::interfaces::NodeData& nodeData, urdf::MaterialSharedPtr material) const;
+
         /** Set @p origin as the new origin frame.
           * This will update the tree and recalculate all draw positions.
           * The new origin item will apear at (0, 0, 0) with identity orientation.

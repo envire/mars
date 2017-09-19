@@ -150,8 +150,8 @@ namespace mars {
                        bool skipFilenamePrefix = false,
                        bool exportDefault = false);
       void getFilesToSave(std::vector<std::string> *fileList);
-      
-      void fromGeometry(const boost::shared_ptr< urdf::Geometry >& geometry);
+
+      void fromGeometry(const urdf::GeometrySharedPtr& geometry);
 
       SimNodeType simNodeType;
 

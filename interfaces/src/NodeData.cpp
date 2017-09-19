@@ -382,8 +382,8 @@ namespace mars {
       if(terrain)
         fileList->push_back(terrain->srcname);
     }
-    
-    void NodeData::fromGeometry(const boost::shared_ptr<urdf::Geometry>& geometry){
+
+    void NodeData::fromGeometry(const urdf::GeometrySharedPtr& geometry){
       // TODO In the geometry object we don't have any of the contact information
       // TODO Inertia information is neither there
       Vector size(0.0, 0.0, 0.0);
@@ -418,7 +418,7 @@ namespace mars {
       }
       ext = size;
     }
-    
+
   } // end of namespace interfaces
 
 } // end of namespace mars
