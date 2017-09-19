@@ -20,7 +20,7 @@ add_definitions(${PKGCONFIG_CFLAGS_OTHER})  #flags excluding the ones with -I
 add_subdirectory(src)
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
-setup_qt()
+#setup_qt()
 
 target_link_libraries(${PROJECT_NAME}
                       ${PKGCONFIG_LIBRARIES}
