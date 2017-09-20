@@ -59,7 +59,7 @@
 #include <maps/grid/MLSMap.hpp>
 #include <smurf/Collidable.hpp>
 #define MLS_FRAME_NAME std::string("mls_01")
-#define DEBUG_MARS 1
+//#define DEBUG_MARS 1
 
 
 namespace mars {
@@ -428,12 +428,16 @@ namespace mars {
           {
 #ifdef DEBUG_MARS
             std::cout << "\n[WorldPhysics::computeCollision]: isCollision()==" << result.isCollision() << std::endl;
+#endif
             if (result.isCollision())
             {
+#ifdef DEBUG_MARS
               std::cout << "\n [WorldPhysics::computeCollision]: Collision detected related to frame " << colFrames[frameIndex] << std::endl;
               countCollisions ++;
+#endif
               // Here a method createContacts will put the joints that correspond
               createContacts(result, collidable, colFrames[frameIndex] ); 
+#ifdef DEBUG_MARS
               for(size_t i=0; i< result.numContacts(); ++i)
               {
                   const auto & cont = result.getContact(i);
@@ -441,8 +445,8 @@ namespace mars {
                   std::cout << "[WorldPhysics::computeCollision]: Contact normal transpose " << cont.normal.transpose() << std::endl;
                   std::cout << "[WorldPhysics::computeCollision]: Contact penetration depth " << cont.penetration_depth << std::endl;
               }
-            }
 #endif
+            }
           }
         }
 #ifdef DEBUG_MARS
@@ -467,6 +471,7 @@ namespace mars {
 #ifdef DEBUG_MARS
       std::cout << "[WorldPhysics::InitContactParameters] contactPtr[0].surface.soft_cfm " << contactPtr[0].surface.soft_cfm << std::endl;
       std::cout << "[WorldPhysics::InitContactParameters] ContactParams.cfm : " << contactParams.cfm <<std::endl;
+      std::cout << "[WorldPhysics::InitContactParameters] ContactParams.erp : " << contactParams.erp <<std::endl;
       std::cout << "[WorldPhysics::InitContactParameters] ContactParams.friction1 : " << contactParams.friction1 <<std::endl;
       std::cout << "[WorldPhysics::InitContactParameters] ContactParams.friction1 : " << contactParams.friction_direction1 <<std::endl;
 #endif
@@ -495,9 +500,6 @@ namespace mars {
         //v1[0] = geom_data1->c_params.friction_direction1->x();
         //v1[1] = geom_data1->c_params.friction_direction1->y();
         //v1[2] = geom_data1->c_params.friction_direction1->z();
-        v1[0] = 0.0;
-        v1[1] = 1.0;
-        v1[2] = 0.0;
         // translate the friction direction to global coordinates
         // and set friction direction for contact
         //dMULTIPLY0_331(contact[0].fdir1, R, v1);
@@ -586,9 +588,9 @@ namespace mars {
             contact_point.z() = contactPtr[0].geom.pos[2];
             
 #ifdef DEBUG_MARS
-            std::cout << "[WorldPhysics::addContact]: Contact point x" << contact_point.x() << std::endl;
-            std::cout << "[WorldPhysics::addContact]: Contact point y" << contact_point.y() << std::endl;
-            std::cout << "[WorldPhysics::addContact]: Contact point z" << contact_point.z() << std::endl;
+            std::cout << "[WorldPhysics::createFeedbackJoints]: Contact point x" << contact_point.x() << std::endl;
+            std::cout << "[WorldPhysics::createFeedbackJoints]: Contact point y" << contact_point.y() << std::endl;
+            std::cout << "[WorldPhysics::createFeedbackJoints]: Contact point z" << contact_point.z() << std::endl;
 #endif
 
             nodeIfPtr -> addContacts(c, numContacts, contactPtr[i], fb);
@@ -667,10 +669,23 @@ namespace mars {
           std::cout << "[WorldPhysics::dumpFCLResults]: Contact penetration depth " << cont.penetration_depth << std::endl;
       }
 #endif
+      for(size_t i=0; i< result.numContacts(); ++i)
+      {
+        const auto & cont = result.getContact(i);
+        const auto & pos = cont.pos.transpose();
+        contactPtr[i].geom.pos[0] = pos[0];
+        contactPtr[i].geom.pos[1] = pos[1];
+        contactPtr[i].geom.pos[2] = pos[2];
+        const auto & normal = cont.normal.transpose();
+        contactPtr[i].geom.normal[0] = normal[0];
+        contactPtr[i].geom.normal[1] = normal[1];
+        contactPtr[i].geom.normal[2] = normal[2];
+        const auto &depth = cont.penetration_depth;
+        contactPtr[i].geom.depth = depth;
+      }
 
 #ifdef DEBUG_MARS
       std::cout << "[WorldPhysics::dumpFCLResults] Result: " << std::endl;
-
       dVector3 vNormal;
       Vector contact_point;
       for(size_t i=0; i< result.numContacts(); ++i)

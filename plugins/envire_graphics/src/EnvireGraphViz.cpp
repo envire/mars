@@ -419,6 +419,7 @@ void EnvireGraphViz::updateVisuals()
                                GraphTraits::vertex_descriptor parent)
   {
     updatePosition<Item<envire::smurf::Visual>>(vd);
+    updatePosition<Item<smurf::Collidable>>(vd);
     updatePosition<Item<smurf::Frame>>(vd);
   });
 }

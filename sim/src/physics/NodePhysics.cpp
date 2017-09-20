@@ -47,7 +47,7 @@
 #include <set>
 #include <iostream>
 
-#define DEBUG_NODEPHYSICS 1
+//#define DEBUG_NODEPHYSICS 1
 
 namespace mars {
   namespace sim {
