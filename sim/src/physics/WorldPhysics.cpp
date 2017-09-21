@@ -415,13 +415,13 @@ namespace mars {
             {
 #ifdef DEBUG_MARS
               std::cout << "\n [WorldPhysics::computeMLSCollisions]: Collision detected related to frame " << colFrames[frameIndex] << std::endl;
-              countCollisions ++;
 #endif
               // Here a method createContacts will put the joints that correspond
               createContacts(result, collidable, colFrames[frameIndex] ); 
 #ifdef DEBUG_MARS
               for(size_t i=0; i< result.numContacts(); ++i)
               {
+                  countCollisions ++;
                   const auto & cont = result.getContact(i);
                   std::cout << "[WorldPhysics::computeMLSCollisions]: Contact transpose " << cont.pos.transpose() << std::endl;
                   std::cout << "[WorldPhysics::computeMLSCollisions]: Contact normal transpose " << cont.normal.transpose() << std::endl;
@@ -444,12 +444,9 @@ namespace mars {
 
     void WorldPhysics::initContactParams(dContact *contactPtr, const smurf::ContactParams contactParams, int numContacts){
       //MLS Has currently no contact parameters, we will use just the ones of the collidable by now
-      //const &geom_data1, const &geom_data2){
-      // Make a method that initializes the parameters of the contacts, it is
-      // what is done starting here until #END_INITCONTACPARAMS
-      // frist we set the softness values:
       contactPtr[0].surface.mode = dContactSoftERP | dContactSoftCFM;
-      contactPtr[0].surface.soft_cfm = contactParams.cfm;
+      //contactPtr[0].surface.soft_cfm = contactParams.cfm;
+      contactPtr[0].surface.soft_cfm = ground_cfm;
 #ifdef DEBUG_MARS
       std::cout << "[WorldPhysics::InitContactParameters] contactPtr[0].surface.soft_cfm " << contactPtr[0].surface.soft_cfm << std::endl;
       std::cout << "[WorldPhysics::InitContactParameters] ContactParams.cfm : " << contactParams.cfm <<std::endl;
@@ -457,7 +454,8 @@ namespace mars {
       std::cout << "[WorldPhysics::InitContactParameters] ContactParams.friction1 : " << contactParams.friction1 <<std::endl;
       std::cout << "[WorldPhysics::InitContactParameters] ContactParams.friction1 : " << contactParams.friction_direction1 <<std::endl;
 #endif
-      contactPtr[0].surface.soft_erp = contactParams.erp;
+      //contactPtr[0].surface.soft_erp = contactParams.erp;
+      contactPtr[0].surface.soft_erp = ground_erp;
       if(contactParams.approx_pyramid) 
       {
         contactPtr[0].surface.mode |= dContactApprox1;
@@ -475,23 +473,15 @@ namespace mars {
         contactPtr[0].surface.mode |= dContactFDir1;
         /*
          * Don't know how to do this part yet
-         * TODO Improve based on what is Done in NearCallback
+         * TODO Improve based on what is Done in NearCallback 
          *
+         * NOTE This if seems not to be entered anyway in the interactions with
+         * the MLS
          *
          */
-        //v1[0] = geom_data1->c_params.friction_direction1->x();
-        //v1[1] = geom_data1->c_params.friction_direction1->y();
-        //v1[2] = geom_data1->c_params.friction_direction1->z();
-        // translate the friction direction to global coordinates
-        // and set friction direction for contact
-        //dMULTIPLY0_331(contact[0].fdir1, R, v1);
         contactPtr[0].fdir1[0] = v1[0];
         contactPtr[0].fdir1[1] = v1[1];
         contactPtr[0].fdir1[2] = v1[2];
-        //if(geom_data1->c_params.motion1) {
-        //  contactPtr[0].surface.mode |= dContactMotion1;
-        //  contactPtr[0].surface.motion1 = geom_data1->c_params.motion1;
-        //}
       }
       // then check for fds
       if(contactParams.fds1){
@@ -760,10 +750,9 @@ namespace mars {
       if (world_init && step_size > 0){
         stepTheWorldChecks();
         clearPreviousStep();
-        // TODO This method should be much similar to the previous one running
-        // dSpaceCollide and after computing all the "external contacts" those
-        // which take place with the mls
-        computeMLSCollisions();
+        if (mlsInEnvire()){
+          computeMLSCollisions();
+        }
         dSpaceCollide(space,this, &WorldPhysics::callbackForward);
         // Update draw (I guess) //TODO: Can we remove all draw stuff?
         drawLock.lock();
