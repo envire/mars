@@ -301,7 +301,7 @@ namespace mars {
 
     /** 
      *
-     * \brief Auxiliar methof of computeCollisions. 
+     * \brief Auxiliar methof of computeMLSCollisions. 
      * Returns all frames that contain collidable objects 
      *
      */
@@ -341,32 +341,14 @@ namespace mars {
      * Unless they have same group id.
      *
      */
-    void WorldPhysics::computeCollisions(void){
+    void WorldPhysics::computeMLSCollisions(void){
       /// first check for collisions
       num_contacts = log_contacts = 0;
       create_contacts = 1;
       /*
-       * The collision between collidable objects is left for later. By now we
-       * compute only the collision points between the MLS and each collision
-       * objects
+       * Here only the collisions between the MLS and collidable objects are
+       * processed
        */
-      /*
-      std::vector<smurf::Collidable> allColls = getAllCollidables();
-      for(int i=0; i<allColls.size(); i++)
-      {
-        smurf::Collidable collObj1 = allColls[i];
-        LOG_DEBUG("[WorldPhysics::computeCollisions] About to check collision of: " + collObj1.getName());
-        for(int j=i+1; j<allColls.size(); j++)
-        {
-          smurf::Collidable collObj2 = allColls[j];
-          if (collObj1.getGroupId()!=collObj2.getGroupId())
-          {
-            LOG_DEBUG("[WorldPhysics::computeCollisions] With: " + collObj2.getName());
-
-          }
-        }
-      }
-      */
       // Get the mls
       using mlsType = maps::grid::MLSMapPrecalculated;
       using CollisionType = smurf::Collidable;
@@ -379,7 +361,7 @@ namespace mars {
       {
         mlsType mls = beginItem->getData();
 #ifdef DEBUG_MARS
-        std::cout << "[WorldPhysics::computeCollision]: Mls map was fetched from the graph "<< std::endl;  
+        std::cout << "[WorldPhysics::computeMLSCollisions]: Mls map was fetched from the graph "<< std::endl;  
 #endif
         // Get the frames that contain collidables
         std::vector<envire::core::FrameId> colFrames = getAllColFrames();
@@ -389,7 +371,7 @@ namespace mars {
         for(unsigned int frameIndex = 0; frameIndex<colFrames.size(); ++frameIndex)
         {
 #ifdef DEBUG_MARS
-          std::cout << "[WorldPhysics::computeCollision]: Collision related to frame " << colFrames[frameIndex] << std::endl;
+          std::cout << "[WorldPhysics::computeMLSCollisions]: Collision related to frame " << colFrames[frameIndex] << std::endl;
 #endif
           // Transformation must be from the mls frame to the colision object frame
           envire::core::Transform tfColCen = control->graph->getTransform(MLS_FRAME_NAME, colFrames[frameIndex]);
@@ -421,18 +403,18 @@ namespace mars {
                       break;
                   }
               default:
-                  std::cout << "[WorldPhysics::computeCollision]: Collision with the selected geometry type not implemented" << std::endl;
+                  std::cout << "[WorldPhysics::computeMLSCollisions]: Collision with the selected geometry type not implemented" << std::endl;
                   collisionComputed = false;
           }
           if (collisionComputed)
           {
 #ifdef DEBUG_MARS
-            std::cout << "\n[WorldPhysics::computeCollision]: isCollision()==" << result.isCollision() << std::endl;
+            std::cout << "\n[WorldPhysics::computeMLSCollisions]: isCollision()==" << result.isCollision() << std::endl;
 #endif
             if (result.isCollision())
             {
 #ifdef DEBUG_MARS
-              std::cout << "\n [WorldPhysics::computeCollision]: Collision detected related to frame " << colFrames[frameIndex] << std::endl;
+              std::cout << "\n [WorldPhysics::computeMLSCollisions]: Collision detected related to frame " << colFrames[frameIndex] << std::endl;
               countCollisions ++;
 #endif
               // Here a method createContacts will put the joints that correspond
@@ -441,9 +423,9 @@ namespace mars {
               for(size_t i=0; i< result.numContacts(); ++i)
               {
                   const auto & cont = result.getContact(i);
-                  std::cout << "[WorldPhysics::computeCollision]: Contact transpose " << cont.pos.transpose() << std::endl;
-                  std::cout << "[WorldPhysics::computeCollision]: Contact normal transpose " << cont.normal.transpose() << std::endl;
-                  std::cout << "[WorldPhysics::computeCollision]: Contact penetration depth " << cont.penetration_depth << std::endl;
+                  std::cout << "[WorldPhysics::computeMLSCollisions]: Contact transpose " << cont.pos.transpose() << std::endl;
+                  std::cout << "[WorldPhysics::computeMLSCollisions]: Contact normal transpose " << cont.normal.transpose() << std::endl;
+                  std::cout << "[WorldPhysics::computeMLSCollisions]: Contact penetration depth " << cont.penetration_depth << std::endl;
               }
 #endif
             }
@@ -706,7 +688,7 @@ namespace mars {
 
     /** 
      *
-     * \brief Method called in computeCollisions when collisions are found.
+     * \brief Method called in computeMLSCollisions when collisions are found.
      * This method instantiates the correspondent contact joints.
      * The method is based on what nearCallback was doing
      */
@@ -771,7 +753,8 @@ namespace mars {
         // TODO This method should be much similar to the previous one running
         // dSpaceCollide and after computing all the "external contacts" those
         // which take place with the mls
-        computeCollisions();
+        computeMLSCollisions();
+        dSpaceCollide(space,this, &WorldPhysics::callbackForward);
         // Update draw (I guess) //TODO: Can we remove all draw stuff?
         drawLock.lock();
         draw_extern.swap(draw_intern);
@@ -1173,14 +1156,6 @@ namespace mars {
       // Where was for contact[0] the geom set? It isn't set, here you give the
       // memory address to set it!
       
-#ifdef DEBUG_MARS
-      // This lines is as today (7.09.2017) the method nearCallback is not
-      // being called. What we could do is either replace the following methdod
-      // dCollide for the collision computation in fcl and change back the code
-      // so that this method is called or move what is done in this method each
-      // time a collision is found in ComputeCollisions
-      std::cout << "[WorldPhysics::nearCallback] FOOOOOO" << maxNumContacts << std::endl; 
-#endif
       numc=dCollide(o1,o2, maxNumContacts, &contact[0].geom,sizeof(dContact));
     
       // Is dCollide the method to be replaced? This one provides the
