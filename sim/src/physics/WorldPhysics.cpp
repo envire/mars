@@ -728,6 +728,16 @@ namespace mars {
 	}
     }
 
+    /** 
+     * \brief Returns true if an MLS exists in the Envire graph. Currently it
+     * is assumed that if the frame with name MLS_FRAME_NAME exists then a MLS
+     * exists
+     */
+    bool WorldPhysics::mlsInEnvire(void)
+    {
+      return control->graph->containsFrame(MLS_FRAME_NAME);
+    }
+
     /**
      * \brief This function handles the calculation of a step in the world.
      *

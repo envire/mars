@@ -137,7 +137,7 @@ namespace mars {
       // this functions are for the collision implementation
       void nearCallback (dGeomID o1, dGeomID o2);
       static void callbackForward(void *data, dGeomID o1, dGeomID o2);
-
+      bool mlsInEnvire(void);
       void stepTheWorldChecks(void);
       void clearPreviousStep(void);
       std::vector<envire::core::FrameId> getAllColFrames(void);
