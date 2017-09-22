@@ -515,6 +515,20 @@ namespace mars {
       dReal dot;
       num_contacts++;
       if(create_contacts){
+        draw_item item;
+        
+        item.id = 0;
+        item.type = DRAW_LINE;
+        item.draw_state = DRAW_STATE_CREATE;
+        item.point_size = 10;
+        item.myColor.r = 1;
+        item.myColor.g = 0;
+        item.myColor.b = 0;
+        item.myColor.a = 1;
+        item.label = "";
+        item.t_width = item.t_height = 0;
+        item.texture = "";
+        item.get_light = 0;
         for(int i=0;i<numContacts;i++){
           if(contactParams.friction_direction1) {
             v[0] = contactPtr[i].geom.normal[0];
@@ -529,12 +543,14 @@ namespace mars {
           }
           contactPtr[0].geom.depth += (contactParams.depth_correction);
           if(contactPtr[0].geom.depth < 0.0) contactPtr[0].geom.depth = 0.0;
+          item.start.x() = contactPtr[i].geom.pos[0];
+          item.start.y() = contactPtr[i].geom.pos[1];
+          item.start.z() = contactPtr[i].geom.pos[2];
+          item.end.x() = contactPtr[i].geom.pos[0] + contactPtr[i].geom.normal[0];
+          item.end.y() = contactPtr[i].geom.pos[1] + contactPtr[i].geom.normal[1];
+          item.end.z() = contactPtr[i].geom.pos[2] + contactPtr[i].geom.normal[2];
+          draw_intern.push_back(item);
           dJointID c=dJointCreateContact(world,contactgroup,contactPtr+i);
-          // TODO !!! Here I have to attach it to the MLS somehow
-          // I need to get the dGeomID of the objects
-          // from the dGeomID I need to get the dBodyID
-          //dBodyID b1=dGeomGetBody(o1);
-          //dJointAttach(c,b1,0);
           envire::core::EnvireGraph::ItemIterator<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>> begin, end;
           boost::tie(begin, end) = control->graph->getItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(frameId);
           if (begin != end){
@@ -543,23 +559,15 @@ namespace mars {
 #endif            
             std::shared_ptr<mars::sim::SimNode> nodePtr = begin->getData();
             interfaces::NodeInterface * nodeIfPtr = nodePtr->getInterface();
-            //interfaces::NodeInterface & nodeIfAdd = *nodeIfPtr;
-            // TODO get the NodePhys out of the SimNode. The Node Physics has the method to fet the dBodyID, with it the dJointAttach method can be used
-            //NodePhysics * nodePhys = dynamic_cast<NodePhysics*>(nodeIfPtr);
-            //const dBodyID bodyId = nodePhys->getBody();
-            
-
             dJointFeedback *fb;
             fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
             dJointSetFeedback(c, fb);
             contact_feedback_list.push_back(fb);
-
+#ifdef DEBUG_MARS
             Vector contact_point;
             contact_point.x() = contactPtr[0].geom.pos[0];
             contact_point.y() = contactPtr[0].geom.pos[1];
             contact_point.z() = contactPtr[0].geom.pos[2];
-            
-#ifdef DEBUG_MARS
             std::cout << "[WorldPhysics::createFeedbackJoints]: Contact point x" << contact_point.x() << std::endl;
             std::cout << "[WorldPhysics::createFeedbackJoints]: Contact point y" << contact_point.y() << std::endl;
             std::cout << "[WorldPhysics::createFeedbackJoints]: Contact point z" << contact_point.z() << std::endl;
