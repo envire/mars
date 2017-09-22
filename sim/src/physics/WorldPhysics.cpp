@@ -582,61 +582,6 @@ namespace mars {
 #endif            
     }
 
-      /*
-      if(numc){ 
-		  
-	  
-        if(create_contacts) {
-
-          for(i=0;i<numc;i++){
-            contact[0].geom.depth += (geom_data1->c_params.depth_correction +
-                                      geom_data2->c_params.depth_correction);
-        
-            if(contact[0].geom.depth < 0.0) contact[0].geom.depth = 0.0;
-            dJointID c=dJointCreateContact(world,contactgroup,contact+i);
-
-            dJointAttach(c,b1,b2);
-             ### Done until here ###
-
-            geom_data1->num_ground_collisions += numc;
-            geom_data2->num_ground_collisions += numc;
-
-            contact_point.x() = contact[i].geom.pos[0];
-            contact_point.y() = contact[i].geom.pos[1];
-            contact_point.z() = contact[i].geom.pos[2];
-
-            geom_data1->contact_ids.push_back(geom_data2->id);
-            geom_data2->contact_ids.push_back(geom_data1->id);
-            geom_data1->contact_points.push_back(contact_point);
-            geom_data2->contact_points.push_back(contact_point);
-            //if(dGeomGetClass(o1) == dPlaneClass) {
-            fb = 0;
-            if(geom_data2->sense_contact_force) {
-              fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
-              dJointSetFeedback(c, fb);
-           
-              contact_feedback_list.push_back(fb);
-              geom_data2->ground_feedbacks.push_back(fb);
-              geom_data2->node1 = false;
-            } 
-            //else if(dGeomGetClass(o2) == dPlaneClass) {
-            if(geom_data1->sense_contact_force) {
-              if(!fb) {
-                fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
-                dJointSetFeedback(c, fb);
-                  
-                contact_feedback_list.push_back(fb);
-              }
-              geom_data1->ground_feedbacks.push_back(fb);
-              geom_data1->node1 = true;
-            }
-          }
-        }  
-      }
- *
- */
-
-
     void WorldPhysics::dumpFCLResult(const fcl::CollisionResultf &result, dContact *contactPtr)
     {
 #ifdef DEBUG_MARS
@@ -657,16 +602,24 @@ namespace mars {
         contactPtr[i].geom.pos[1] = pos[1];
         contactPtr[i].geom.pos[2] = pos[2];
         const auto & normal = cont.normal.transpose();
-        contactPtr[i].geom.normal[0] = normal[0];
-        contactPtr[i].geom.normal[1] = normal[1];
-        contactPtr[i].geom.normal[2] = normal[2];
+        if (normal.z() < 0.0)
+        {
+          Eigen::Vector3d::Map(contactPtr[i].geom.normal) = -normal.cast<double>();
+        }
+        else
+        {
+          Eigen::Vector3d::Map(contactPtr[i].geom.normal) = normal.cast<double>();
+        }
+        //contactPtr[i].geom.normal[0] = normal[0];
+        //contactPtr[i].geom.normal[1] = normal[1];
+        //contactPtr[i].geom.normal[2] = normal[2];
         const auto &depth = cont.penetration_depth;
-        contactPtr[i].geom.depth = depth;
+        contactPtr[i].geom.depth = 2.0*std::abs(depth);
       }
 
 #ifdef DEBUG_MARS
       std::cout << "[WorldPhysics::dumpFCLResults] Result: " << std::endl;
-      dVector3 vNormal;
+      Vector vNormal;
       Vector contact_point;
       for(size_t i=0; i< result.numContacts(); ++i)
       {
@@ -677,8 +630,8 @@ namespace mars {
         vNormal[1] = contactPtr[i].geom.normal[1];
         vNormal[2] = contactPtr[i].geom.normal[2];
         const auto & cont = result.getContact(i);
-        std::cout << "[WorldPhysics::dumpFCLResults]:  contactPtr[0].geom.pos" << contact_point << std::endl;
-        std::cout << "[WorldPhysics::dumpFCLResults]: contactPtr[i].geom.normal " << vNormal << std::endl;
+        std::cout << "[WorldPhysics::dumpFCLResults]:  contactPtr[i].geom.pos" << contact_point.transpose() << std::endl;
+        std::cout << "[WorldPhysics::dumpFCLResults]: contactPtr[i].geom.normal " << vNormal.transpose() << std::endl;
         std::cout << "[WorldPhysics::dumpFCLResults]: contactPtr[i].geom.depth " << contactPtr[i].geom.depth << std::endl;
       }
 #endif
