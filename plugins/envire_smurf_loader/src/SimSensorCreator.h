@@ -88,7 +88,7 @@ namespace mars {
                 ItemItr i_itr;
                 for(i_itr = pair.first; i_itr != pair.second; i_itr++)
                 {
-                    smurf::Sensor &item_data = i_itr->getData();
+                    const smurf::Sensor &item_data = i_itr->getData();
 
 
                     using SensorItemPtr = envire::core::Item<std::shared_ptr<mars::interfaces::BaseSensor>>::Ptr;
@@ -154,7 +154,7 @@ namespace mars {
                 }         
             }
 
-            mars::interfaces::BaseSensor* createSensor(smurf::Sensor sensorSmurf, const envire::core::FrameId frameId)
+            mars::interfaces::BaseSensor* createSensor(const smurf::Sensor &sensorSmurf, const envire::core::FrameId frameId)
             {
                 configmaps::ConfigMap sensorMap = sensorSmurf.getMap();
                 sensorMap["frame"] = frameId;
