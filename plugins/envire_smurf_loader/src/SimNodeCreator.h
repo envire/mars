@@ -52,7 +52,7 @@
 #include <envire_core/items/Transform.hpp>
 #include <envire_core/items/Item.hpp>
 
-#include <envire_smurf/Visual.hpp>
+#include <smurf/Visual.hpp>
 
 #include <smurf/Robot.hpp>
 
@@ -376,16 +376,16 @@ namespace mars {
             }               
         };
 
-        class SimNodeCreatorVisual: public SimNodeCreator<envire::smurf::Visual>
+        class SimNodeCreatorVisual: public SimNodeCreator<smurf::Visual>
         {
         public:
             SimNodeCreatorVisual(mars::interfaces::ControlCenter *control, envire::core::FrameId origin_frame_id)
-                : SimNodeCreator(control, origin_frame_id, std::string("envire::smurf::Visual"))
+                : SimNodeCreator(control, origin_frame_id, std::string("smurf::Visual"))
             {}    
 
         private:
 
-            virtual mars::interfaces::NodeData createNodeData(const envire::smurf::Visual &visual)
+            virtual mars::interfaces::NodeData createNodeData(const smurf::Visual &visual)
             {
                 configmaps::ConfigMap config;
                 std::string name;

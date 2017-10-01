@@ -37,7 +37,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <smurf/Robot.hpp>
-#include <envire_smurf/Visual.hpp>
+#include <smurf/Visual.hpp>
 
 #include <envire_core/items/Item.hpp>
 #include <envire_core/events/GraphEventDispatcher.hpp>
@@ -62,7 +62,7 @@ namespace mars {
        * */
       class EnvireGraphViz : public mars::interfaces::MarsPluginTemplate,
                        public envire::core::GraphEventDispatcher,
-                       public envire::core::GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>,
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Visual>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Collidable>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>,
@@ -86,7 +86,7 @@ namespace mars {
         
         
         virtual void itemAdded(const envire::core::ItemAddedEvent& e);
-        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>>& e);
+        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Visual>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e);
@@ -99,27 +99,27 @@ namespace mars {
       private:
         
         /**Add a visual node to the simulation */
-        void addVisual(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
+        void addVisual(const smurf::Visual& visual, const envire::core::FrameId& frameId,
                        const boost::uuids::uuid& uuid);
 
         /**Adds a mesh visual to the simulation. Only call this method if you are sure that
          * visual.geometry is a MESH*/
-        void addMesh(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
+        void addMesh(const smurf::Visual& visual, const envire::core::FrameId& frameId,
                      const boost::uuids::uuid& uuid);
         
         /**Adds a box visual to the simulation. Only call this method if you are sure that
          * visual.geometry is a BOX*/
-        void addBox(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
+        void addBox(const smurf::Visual& visual, const envire::core::FrameId& frameId,
                      const boost::uuids::uuid& uuid);
         
         /**Adds a sphere visual to the simulation. Only call this method if you are sure that
          * visual.geometry is a SPHERE*/
-        void addSphere(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
+        void addSphere(const smurf::Visual& visual, const envire::core::FrameId& frameId,
                       const boost::uuids::uuid& uuid);
         
         /**Adds a cylinder visual to the simulation. Only call this method if you are sure that
          * visual.geometry is a CYLINDER*/
-        void addCylinder(const envire::smurf::Visual& visual, const envire::core::FrameId& frameId,
+        void addCylinder(const smurf::Visual& visual, const envire::core::FrameId& frameId,
                          const boost::uuids::uuid& uuid);
 
         void setNodeDataMaterial(mars::interfaces::NodeData& nodeData, urdf::MaterialSharedPtr material) const;

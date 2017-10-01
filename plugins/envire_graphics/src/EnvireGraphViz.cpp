@@ -58,7 +58,7 @@ void EnvireGraphViz::init()
 {
   assert(control->graph != nullptr);
   GraphEventDispatcher::subscribe(control->graph.get());
-  //GraphItemEventDispatcher<envire::core::Item<envire::smurf::Visual>>::subscribe(control->graph.get());
+  //GraphItemEventDispatcher<envire::core::Item<smurf::Visual>>::subscribe(control->graph.get());
   //GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>::subscribe(control->graph.get());
   //GraphItemEventDispatcher<envire::core::Item<smurf::Collidable>>::subscribe(control->graph.get());
   GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph.get());
@@ -183,9 +183,9 @@ void EnvireGraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
   }
 }
 
-void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<envire::smurf::Visual>>& e)
+void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Visual>>& e)
 {
-    envire::smurf::Visual vis = e.item->getData();
+    smurf::Visual vis = e.item->getData();
     addVisual(vis, e.frame, e.item->getID());
 }
 
@@ -297,7 +297,7 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
     }
 }
 
-void EnvireGraphViz::addVisual(const envire::smurf::Visual& visual, const FrameId& frameId,
+void EnvireGraphViz::addVisual(const smurf::Visual& visual, const FrameId& frameId,
                          const boost::uuids::uuid& uuid)
 {
   switch(visual.geometry->type)
@@ -319,7 +319,7 @@ void EnvireGraphViz::addVisual(const envire::smurf::Visual& visual, const FrameI
   }
 }
 
-void EnvireGraphViz::addSphere(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+void EnvireGraphViz::addSphere(const smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
   urdf::SphereSharedPtr sphere = urdf::dynamic_pointer_cast<urdf::Sphere>(visual.geometry);
   assert(sphere.get() != nullptr);
@@ -336,7 +336,7 @@ void EnvireGraphViz::addSphere(const envire::smurf::Visual& visual, const FrameI
 }
 
 
-void EnvireGraphViz::addBox(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+void EnvireGraphViz::addBox(const smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
   urdf::BoxSharedPtr box = urdf::dynamic_pointer_cast<urdf::Box>(visual.geometry);
   assert(box.get() != nullptr);
@@ -352,7 +352,7 @@ void EnvireGraphViz::addBox(const envire::smurf::Visual& visual, const FrameId& 
   uuidToGraphicsId[uuid] = control->graphics->addDrawObject(node); //remeber graphics handle
 }
 
-void EnvireGraphViz::addCylinder(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+void EnvireGraphViz::addCylinder(const smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
   urdf::CylinderSharedPtr cylinder = urdf::dynamic_pointer_cast<urdf::Cylinder>(visual.geometry);
   assert(cylinder.get() != nullptr);
@@ -371,7 +371,7 @@ void EnvireGraphViz::addCylinder(const envire::smurf::Visual& visual, const Fram
 }
 
 
-void EnvireGraphViz::addMesh(const envire::smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
+void EnvireGraphViz::addMesh(const smurf::Visual& visual, const FrameId& frameId, const boost::uuids::uuid& uuid)
 {
   urdf::MeshSharedPtr mesh = urdf::dynamic_pointer_cast<urdf::Mesh>(visual.geometry);
   assert(mesh.get() != nullptr);
@@ -433,7 +433,7 @@ void EnvireGraphViz::updateVisuals()
   tree.visitBfs(tree.root, [&](GraphTraits::vertex_descriptor vd, 
                                GraphTraits::vertex_descriptor parent)
   {
-    //updatePosition<Item<envire::smurf::Visual>>(vd);
+    //updatePosition<Item<smurf::Visual>>(vd);
     //updatePosition<Item<smurf::Frame>>(vd);
     updatePosition<Item<std::shared_ptr<mars::sim::SimNode>>>(vd);
   });
