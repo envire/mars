@@ -389,7 +389,7 @@ namespace mars {
               case urdf::Geometry::SPHERE:
                   {
                       //std::cout << "Collision with a sphere" << std::endl;
-                      boost::shared_ptr<urdf::Sphere> sphereUrdf = boost::dynamic_pointer_cast<urdf::Sphere>(collision.geometry);
+                      urdf::SphereSharedPtr sphereUrdf = urdf::dynamic_pointer_cast<urdf::Sphere>(collision.geometry);
                       fcl::Spheref sphere(sphereUrdf->radius);
                       fcl::collide_mls(mls, trafo, &sphere, request, result);
                       break;
@@ -397,7 +397,7 @@ namespace mars {
               case urdf::Geometry::BOX:
                   {
                       //std::cout << "Collision with a box" << std::endl;
-                      boost::shared_ptr<urdf::Box> boxUrdf = boost::dynamic_pointer_cast<urdf::Box>(collision.geometry);
+                      urdf::BoxSharedPtr boxUrdf = urdf::dynamic_pointer_cast<urdf::Box>(collision.geometry);
                       fcl::Boxf box(boxUrdf->dim.x, boxUrdf->dim.y, boxUrdf->dim.z);
                       fcl::collide_mls(mls, trafo, &box, request, result);
                       break;
