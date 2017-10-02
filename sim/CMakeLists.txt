@@ -8,6 +8,7 @@ cmake_minimum_required(VERSION 2.6)
 include(FindPkgConfig)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "${CMAKE_PREFIX_PATH}/include")
+set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "${CMAKE_PREFIX_PATH}/include/pcl-1.8")
 
 #set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "/home/dfki.uni-bremen.de/rdominguez/Entern/marsSimBug/install/include" )
 set(PKGCONFIG_INCLUDE_DIRS ${PKGCONFIG_INCLUDE_DIRS} "${CMAKE_PREFIX_PATH}/include/base/backward")
@@ -50,6 +51,8 @@ pkg_check_modules(PKGCONFIG REQUIRED
                             mars_utils
                             configmaps
                             envire_core
+                            envire_maps
+                            envire_fcl
 )
 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})

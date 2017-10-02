@@ -205,12 +205,11 @@ namespace mars {
           //libManager->loadLibrary("mars_smurf_loader");
           //libManager->loadLibrary("envire_physics");
           libManager->loadLibrary("envire_sensors");
-
+          libManager->loadLibrary("envire_mls");
           if (!noGUI)
           {
             libManager->loadLibrary("envire_graphics");
           }
-
         }
       }
 

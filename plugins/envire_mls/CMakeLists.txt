@@ -8,12 +8,12 @@ find_package(mars)
 mars_defaults()
 define_module_info()
 
-
 pkg_check_modules(PKGCONFIG REQUIRED
 			    lib_manager
                             envire_core
                             mars_sim
                             envire_collider_mls
+                            envire_smurf_loader
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
@@ -51,8 +51,8 @@ install(FILES ${HEADERS} DESTINATION include/mars/plugins/${PROJECT_NAME})
 configure_file(${PROJECT_NAME}.pc.in ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
-
 find_package(Rock)
 set(ROCK_USE_CXX11 TRUE)
 rock_init(envire_mls 0.1)
 rock_standard_layout()
+

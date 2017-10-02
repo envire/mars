@@ -38,7 +38,6 @@
 
 #include <lib_config/YAMLConfiguration.hpp>
 // To populate the Graph from the smurf
-
 #include <envire_smurf/GraphLoader.hpp>
 
 // For the floor
@@ -53,6 +52,8 @@
 #include "SimJointCreator.h"
 #include "SimMotorCreator.h"
 #include "SimSensorCreator.h"
+//TODO move definitions to Mars.h
+#define SIM_CENTER_FRAME_NAME std::string("center") 
 
 using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
 
@@ -79,7 +80,7 @@ namespace mars {
                     LOG_INFO("envire_smurf_loader: SMURF loader to loadCenter");                    
                 }
 
-                center = "center";
+                center = SIM_CENTER_FRAME_NAME;
             }
 
             EnvireSmurfLoader::~EnvireSmurfLoader() {
@@ -98,7 +99,7 @@ namespace mars {
                                     std::string robotname)
             {
                 std::cout << "smurf loader zero position" << std::endl;
-                vertex_descriptor center = control->graph->getVertex("center");
+                vertex_descriptor center = control->graph->getVertex(SIM_CENTER_FRAME_NAME);
                 envire::core::Transform iniPose;
                 iniPose.transform.orientation = base::Quaterniond::Identity();
                 iniPose.transform.translation << 0.0, 0.0, 0.3;
@@ -111,7 +112,7 @@ namespace mars {
                                 std::string robotname, utils::Vector pos, utils::Vector rot)
             {
                 std::cout << "smurf loader given position" << std::endl;
-                vertex_descriptor center = control->graph->getVertex("center");
+                vertex_descriptor center = control->graph->getVertex(SIM_CENTER_FRAME_NAME);
                 envire::core::Transform iniPose;
                 // FIXME TODO use rot input. Is it Euler angles or scaled axis?
                 iniPose.transform.orientation = base::Quaterniond::Identity();
@@ -139,8 +140,9 @@ namespace mars {
             
             vertex_descriptor EnvireSmurfLoader::addCenter()
             {
-                center = "center";
-                control->graph->addFrame(center);
+                center = SIM_CENTER_FRAME_NAME;
+                if (! control->graph->containsFrame(center))
+                    control->graph->addFrame(center);
                 return control->graph->getVertex(center);
             }
 

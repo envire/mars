@@ -30,15 +30,28 @@
 
 #include <mars/interfaces/sim/MarsPluginTemplate.h>
 #include <mars/interfaces/MARSDefs.h>
+#include <mars/interfaces/NodeData.h>
 
 #include <string>
 
 #include <envire_core/graph/EnvireGraph.hpp>
+#include <envire_core/items/Item.hpp>
+
+#include <envire_collider_mls/MLSCollision.hpp>
+
+#include <maps/grid/MLSMap.hpp>
+
+
+#include <mars/plugins/envire_smurf_loader/EnvireSmurfLoader.hpp>
 
 namespace mars {
 
   namespace plugins {
     namespace envire_mls {
+
+      using mlsPrec = maps::grid::MLSMapPrecalculated;
+      using mlsKal = maps::grid::MLSMapKalman;
+      //using mlsType = maps::grid::MLSMap<maps::grid::MLSConfig::KALMAN>;
 
       // inherit from MarsPluginTemplateGUI for extending the gui
       class EnvireMls: public mars::interfaces::MarsPluginTemplate {
@@ -60,10 +73,27 @@ namespace mars {
         void update(mars::interfaces::sReal time_ms);
 
         // EnvireMls methods
-        void addMLS(envire::core::FrameId center, const std::string & mlsPath);
+        void loadMLSMap(const std::string & mlsPath);
+        void addMLSNode();
+        void testAddMLS();
+        void testAddMLSAndRobot();
 
       private:
 
+        //void deserializeMLS(const std::string & mlsPath);
+        mars::interfaces::NodeData* setUpNodeData();
+        mlsPrec getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId mlsFrameId);
+
+        // Private members
+ 	maps::grid::MLSMapPrecalculated mlsPrecalculated;
+ 	envire::collision::MLSCollision* mlsCollision;
+	boost::shared_ptr<maps::grid::MLSMapPrecalculated> mlsPtr;   	
+
+        bool tested;
+        envire::core::FrameId mlsFrameId;
+        envire::core::FrameId centerFrameId;
+
+        //EnvireSmurfLoader::EnvireSmurfLoader* theLoader;
 
       }; // end of class definition EnvireMls
 

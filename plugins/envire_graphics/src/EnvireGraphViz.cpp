@@ -45,9 +45,10 @@ using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
   ss << __VA_ARGS__; \
   LOG_DEBUG(ss.str());
 
+#define SIM_CENTER_FRAME_NAME std::string("center")
 
 EnvireGraphViz::EnvireGraphViz(lib_manager::LibManager *theManager)
-  : MarsPluginTemplate(theManager, "EnvireGraphViz"), GraphEventDispatcher(), originId("center")
+  : MarsPluginTemplate(theManager, "EnvireGraphViz"), GraphEventDispatcher(), originId(SIM_CENTER_FRAME_NAME)
 {
     // FIX: take originId from the node manager
     // change the name of origin id from center into the world
@@ -64,6 +65,18 @@ void EnvireGraphViz::init()
   GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>::subscribe(control->graph.get());
 
   GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapKalman>>::subscribe(control->graph.get());
+  GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapPrecalculated>>::subscribe(control->graph.get());
+  if(originId.empty())
+  {
+    LOG_WARN("[EnvireGraphViz::init] Frame center will be added as origin because no origin frame exists");
+    envire::core::FrameId center = SIM_CENTER_FRAME_NAME; 
+    if (! control->graph->containsFrame(center))
+    {
+      control->graph->addFrame(center);
+    }
+    changeOrigin(center);
+  }
 }
 
 void EnvireGraphViz::reset() {
@@ -71,11 +84,6 @@ void EnvireGraphViz::reset() {
 
 void EnvireGraphViz::frameAdded(const FrameAddedEvent& e)
 {
-  //use the first frame we get as originId
-  //if(originId.empty())
-  //{
-  //  changeOrigin(e.frame);
-  //}
 }
 
 
@@ -159,6 +167,7 @@ void EnvireGraphViz::itemAdded(const envire::core::ItemAddedEvent& e)
     NodeData node1;
     node1.fromConfigMap(&pItem->getData(), "");
 
+  // MLS objects are visualized using their own osg visual (see void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<maps::grid::MLSMapKalman>>& e))
   if(node1.physicMode != NODE_TYPE_MLS) //TODO: implement a visualization for mls
   {    
     //assert that this item has not been added before
@@ -297,6 +306,39 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
     }
 }
 
+void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<maps::grid::MLSMapKalman>>& e)
+{
+  LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapKalman>] Added an MLS to the graph, let's visualize it");
+  maps::grid::MLSMapKalman map = e.item->getData();
+  osgNode = createMainNode(); // vizkit3d Protected
+  updateData(map);
+  updateMainNode(osgNode);// vizkit3d Protected
+  osgGroup = getVizNode();
+  if (!osgGroup){ LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapKalman>] The generated osgGroup is null");}
+  else {LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapKalman>] The OSG group is not null");}
+  control->graphics->addOSGNode(osgNode);
+  // We don't get any id back from addOSGNode, so I guess we don't need the following:
+  //uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+}
+
+void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<maps::grid::MLSMapPrecalculated>>& e)
+{
+  LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapPrecalculated>] Added an MLS to the graph, let's visualize it");
+  maps::grid::MLSMapPrecalculated map = e.item->getData();
+  osgNode = createMainNode(); // vizkit3d Protected
+  updateData(map);
+  updateMainNode(osgNode);// vizkit3d Protected
+  osgGroup = getVizNode();
+  if (!osgGroup){ LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapPrecalculated>] The generated osgGroup is null");}
+  else {LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapPrecalculated>] The OSG group is not null");}
+  control->graphics->addOSGNode(osgNode);
+  // We don't get any id back from addOSGNode, so I guess we don't need the following:
+  //uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
+}
+
+
+
+
 void EnvireGraphViz::addVisual(const smurf::Visual& visual, const FrameId& frameId,
                          const boost::uuids::uuid& uuid)
 {
@@ -323,6 +365,7 @@ void EnvireGraphViz::addSphere(const smurf::Visual& visual, const FrameId& frame
 {
   urdf::SphereSharedPtr sphere = urdf::dynamic_pointer_cast<urdf::Sphere>(visual.geometry);
   assert(sphere.get() != nullptr);
+  
   //y and z are unused
   base::Vector3d extents(sphere->radius, 0, 0);
   //LOG_DEBUG_S("[Envire Graphics] add SPHERE visual. name: " << visual.name << ", frame: "   << frameId << ", radius: " << sphere->radius);
@@ -436,6 +479,7 @@ void EnvireGraphViz::updateVisuals()
     //updatePosition<Item<smurf::Visual>>(vd);
     //updatePosition<Item<smurf::Frame>>(vd);
     updatePosition<Item<std::shared_ptr<mars::sim::SimNode>>>(vd);
+    //TODO Update position of MLS visualization?
   });
 }
 
@@ -446,7 +490,6 @@ template <class physicsType> void EnvireGraphViz::updatePosition(const vertex_de
   const FrameId& frameId = control->graph->getFrameId(vertex);
   base::Vector3d translation;
   base::Quaterniond orientation;
-   
   if(originId.compare(frameId) == 0)
   {
     translation << 0, 0, 0;

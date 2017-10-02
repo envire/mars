@@ -42,9 +42,14 @@
 #include <mars/interfaces/sim/PhysicsInterface.h>
 #include <mars/interfaces/graphics/draw_structs.h>
 
+#include <smurf/Collidable.hpp>
+
 #include <vector>
 
 #include <ode/ode.h>
+
+#include <envire_core/items/Frame.hpp>
+#include <envire_fcl/Collision.hpp>
 
 namespace mars {
   namespace sim {
@@ -132,6 +137,17 @@ namespace mars {
       // this functions are for the collision implementation
       void nearCallback (dGeomID o1, dGeomID o2);
       static void callbackForward(void *data, dGeomID o1, dGeomID o2);
+      bool mlsInEnvire(void);
+      void stepTheWorldChecks(void);
+      void clearPreviousStep(void);
+      std::vector<envire::core::FrameId> getAllColFrames(void);
+      void computeMLSCollisions(void);
+      void createContacts(const fcl::CollisionResultf & result, smurf::Collidable collidable, const envire::core::FrameId frameId);
+      void createFeedbackJoints(const envire::core::FrameId frameId, const smurf::ContactParams contactParams, dContact *contactPtr, int numContacts);
+      void initContactParams(dContact *contactPtr, const smurf::ContactParams contactParams, int numContacts);
+      void dumpFCLResult(const fcl::CollisionResultf &result, dContact *contactPtr);
+      void execStep(void);
+
     };
 
   } // end of namespace sim

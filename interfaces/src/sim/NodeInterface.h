@@ -38,6 +38,8 @@
 
 #include "PhysicsInterface.h"
 
+#include <ode/ode.h>
+
 namespace mars {
   namespace interfaces {
 
@@ -80,6 +82,7 @@ namespace mars {
       virtual void destroyNode(void) = 0;
       virtual void getMass(sReal *mass, sReal *inertia=0) const = 0;
       virtual const utils::Vector getContactForce(void) const = 0;
+      virtual void addContacts(dJointID contactJointId, int numContacts, dContact contact, dJointFeedback* fb) = 0;
       virtual sReal getCollisionDepth(void) const = 0;
     };
 

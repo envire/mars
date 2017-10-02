@@ -16,7 +16,11 @@ pkg_check_modules(PKGCONFIG REQUIRED
                 envire_core
                 mars_graphics
                 mars_sim
-                smurf)
+                smurf
+                maps
+                maps-viz
+                vizkit3d
+                )
                 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})

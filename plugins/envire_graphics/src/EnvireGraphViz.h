@@ -47,6 +47,8 @@
 #include <envire_core/graph/Path.hpp>
 
 #include <mars/sim/SimNode.h>
+#include <vizkit3d/MLSMapVisualization.hpp>
+#include <maps/grid/MLSMap.hpp>
 
 namespace envire {namespace core {
   class Transform;
@@ -55,7 +57,7 @@ namespace envire {namespace core {
 namespace mars {
   namespace plugins {
     namespace graph_viz_plugin {
-
+      //TODO do we need inheritance from MLSMapsVisualization
       /**
        * A very simple plugin that tries to convert all ConfigMaps found in the
        * transform graph into NodeData and draw it.
@@ -67,6 +69,9 @@ namespace mars {
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Collidable>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>,
                        public envire::core::GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapKalman>>,
+                       public envire::core::GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapPrecalculated>>,
+                       public vizkit3d::MLSMapVisualization
       {
 
       public:
@@ -90,6 +95,8 @@ namespace mars {
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Frame>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<smurf::Collidable>>& e);
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<::smurf::Joint>>& e);
+        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<maps::grid::MLSMapKalman>>& e);
+        virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<maps::grid::MLSMapPrecalculated>>& e);
         virtual void frameAdded(const envire::core::FrameAddedEvent& e);
 
         virtual void itemAdded(const envire::core::TypedItemAddedEvent<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>& e);
@@ -158,7 +165,8 @@ namespace mars {
         bool viewFrames = false;
         const int visualUpdateRateFps = 30;
         float timeSinceLastUpdateMs = 0; 
-
+        osg::ref_ptr<osg::Group> osgGroup;
+        osg::ref_ptr<osg::Node>  osgNode;
       }; // end of class definition TestTreeMars
 
     } // end of namespace TestTreeMars

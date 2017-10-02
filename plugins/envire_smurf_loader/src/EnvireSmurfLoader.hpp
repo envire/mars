@@ -69,7 +69,7 @@ namespace mars {
         int getLibVersion() const
         { return 1; }
         const std::string getLibName() const
-        { return std::string("eniver_smurf_loader"); }
+        { return std::string("envire_smurf_loader"); }
         CREATE_MODULE_INFO();
 
         virtual bool loadFile(std::string filename, std::string tmpPath,
