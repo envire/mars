@@ -53,6 +53,7 @@ pkg_check_modules(PKGCONFIG REQUIRED
                             envire_core
                             envire_maps
                             envire_fcl
+                            maps
 )
 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
