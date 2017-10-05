@@ -33,7 +33,7 @@
 #include <envire_core/items/Transform.hpp>
 
 
-#include <envire_core/graph/GraphViz.hpp>
+#include <envire_core/graph/GraphDrawing.hpp>
 
 #include <mars/sim/NodePhysics.h>
 
