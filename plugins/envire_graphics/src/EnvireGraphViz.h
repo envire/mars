@@ -63,15 +63,15 @@ namespace mars {
        * transform graph into NodeData and draw it.
        * */
       class EnvireGraphViz : public mars::interfaces::MarsPluginTemplate,
-                       public envire::core::GraphEventDispatcher,
-                       public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Visual>>,
-                       public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
-                       public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Collidable>>,
-                       public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>,
-                       public envire::core::GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>
-                       public envire::core::GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapKalman>>,
-                       public envire::core::GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapPrecalculated>>,
-                       public vizkit3d::MLSMapVisualization
+                             public envire::core::GraphEventDispatcher,
+                             public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Visual>>,
+                             public envire::core::GraphItemEventDispatcher<envire::core::Item<smurf::Frame>>,
+                             public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Collidable>>,
+                             public envire::core::GraphItemEventDispatcher<envire::core::Item<::smurf::Joint>>,
+                             public envire::core::GraphItemEventDispatcher<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>,
+                             public envire::core::GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapKalman>>,
+                             public envire::core::GraphItemEventDispatcher<envire::core::Item<maps::grid::MLSMapPrecalculated>>,
+                             public vizkit3d::MLSMapVisualization
       {
 
       public:
