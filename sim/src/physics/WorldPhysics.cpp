@@ -46,7 +46,7 @@
 #include <mars/interfaces/sim/SimulatorInterface.h>
 #include <mars/interfaces/Logging.hpp>
 
-#include <mars/sim/SimNode.h>
+#include <SimNode.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/intrusive_ptr.hpp>	
