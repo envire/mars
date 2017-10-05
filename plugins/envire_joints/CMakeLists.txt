@@ -17,7 +17,10 @@ pkg_check_modules(PKGCONFIG REQUIRED
                 mars_interfaces
                 smurf
                 envire_core
-                mars_sim)
+                mars_sim
+                envire_fcl
+                maps
+                )
 
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
