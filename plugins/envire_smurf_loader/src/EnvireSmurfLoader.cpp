@@ -26,7 +26,7 @@
  * Version 0.1
  */
 
-#include "EnvireSmurfLoader.h"
+#include "EnvireSmurfLoader.hpp"
 
 #include <mars/interfaces/Logging.hpp>
 
