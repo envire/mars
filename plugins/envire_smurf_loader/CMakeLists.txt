@@ -39,7 +39,7 @@ set(HEADERS
   src/SimJointCreator.h
   src/SimMotorCreator.h
   src/SimSensorCreator.h  
-	src/EnvireSmurfLoader.h
+  src/EnvireSmurfLoader.hpp
 )
 
 
