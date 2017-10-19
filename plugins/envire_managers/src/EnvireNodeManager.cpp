@@ -117,7 +117,7 @@ namespace mars {
 
         // ------ NOT RELOADED OBJECTS -> TERRAIN
         if (reload == false) {
-            LOG_ERROR("EnvireNodeManager::addNode: Reload is not implemented: " + nodeS->name);
+            LOG_ERROR(("EnvireNodeManager::addNode: Reload is not implemented: " + nodeS->name).c_str());
             iMutex.lock();
 
             //TODO: check if we can take out the mars_graphics
@@ -176,7 +176,7 @@ namespace mars {
         // ------ NODE_TYPE_MESH
         // convert obj to ode mesh
         if((nodeS->physicMode == mars::interfaces::NODE_TYPE_MESH) && (nodeS->terrain == 0) ) {
-            LOG_ERROR("EnvireNodeManager::addNode: NODE_TYPE_MESH not implemented: " + nodeS->name);
+            LOG_ERROR(("EnvireNodeManager::addNode: NODE_TYPE_MESH not implemented: " + nodeS->name).c_str());
             /*if(!control->loadCenter) {
             LOG_ERROR("EnvireNodeManager:: loadCenter is missing, can not create Node");
             return INVALID_ID;
@@ -199,7 +199,7 @@ namespace mars {
 
         // ------ NODE_TYPE_TERRAIN
         if((nodeS->physicMode == mars::interfaces::NODE_TYPE_TERRAIN) && nodeS->terrain ) {
-            LOG_DEBUG("EnvireNodeManager::addNode: NODE_TYPE_TERRAIN and nodeS->terrain: " + nodeS->name);
+            LOG_DEBUG(("EnvireNodeManager::addNode: NODE_TYPE_TERRAIN and nodeS->terrain: " + nodeS->name).c_str());
             if(!nodeS->terrain->pixelData) {
                 if(!control->loadCenter) {
                     LOG_ERROR("EnvireNodeManager:: loadCenter is missing, can not create Node");
@@ -248,7 +248,7 @@ namespace mars {
 
         // ------ PHYSICAL NODE
         if(nodeS->noPhysical == false) {  
-            LOG_DEBUG("EnvireNodeManager::addNode: nodeS->noPhysical: " + nodeS->name);   
+            LOG_DEBUG(("EnvireNodeManager::addNode: nodeS->noPhysical: " + nodeS->name).c_str());   
             // create an interface object to the physics
             mars::interfaces::NodeInterface *newNodeInterface = mars::sim::PhysicsMapper::newNodePhysics(control->sim->getPhysics());
 
@@ -270,7 +270,7 @@ namespace mars {
             // if frame is not in the graph, create one
             if (control->graph->containsFrame(nodeS->frameID) == false)
             {
-                LOG_DEBUG("[EnvireNodeManager::addNode] create new transformation between center and " + nodeS->frameID);
+                LOG_DEBUG(("[EnvireNodeManager::addNode] create new transformation between center and " + nodeS->frameID).c_str());
                 envire::core::Transform nodeTransf(nodeS->pos, nodeS->rot);
                 nodeTransf.time = base::Time::now();
                 control->graph->addTransform("center", nodeS->frameID, nodeTransf);                
@@ -307,7 +307,7 @@ namespace mars {
                 newNode->setGraphicsID(nodeS->graphicsID1);*/
                 
 
-                LOG_DEBUG("EnvireNodeManager::addNode: nodeS->noPhysical: " + nodeS->name);   
+                LOG_DEBUG(("EnvireNodeManager::addNode: nodeS->noPhysical: " + nodeS->name).c_str());   
 
                 /*if(nodeS->physicMode != mars::interfaces::NODE_TYPE_TERRAIN) {
                     LOG_DEBUG("EnvireNodeManager::addNode: nodeS->physicMode != mars::interfaces::NODE_TYPE_TERRAIN: " + nodeS->name);   
@@ -352,7 +352,7 @@ namespace mars {
                 newNode->setVisualRep(visual_rep);*/
             }
         } else {  // ------ NONE PHYSICAL NODE
-            LOG_ERROR("EnvireNodeManager::addNode: nonPhysical not implemented: " + nodeS->name);
+            LOG_ERROR(("EnvireNodeManager::addNode: nonPhysical not implemented: " + nodeS->name).c_str());
             /*
             iMutex.lock();
             simNodes[nodeS->index] = newNode;

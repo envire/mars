@@ -65,7 +65,7 @@ namespace mars {
       if (jointS->frameID.empty())
             jointS->frameID = jointS->name;
 
-      LOG_DEBUG("EnvireJointManager::addJoint: " + jointS->name);
+      LOG_DEBUG(("EnvireJointManager::addJoint: " + jointS->name).c_str());
 
       std::shared_ptr<mars::interfaces::JointInterface> newJointInterface;
       std::vector<mars::sim::SimNode*>::iterator iter;
@@ -76,7 +76,7 @@ namespace mars {
       mars::utils::Vector an;
 
       if (!reload) {
-        LOG_ERROR("EnvireJointManager::addNode: Reload is not implemented: " + jointS->name);
+        LOG_ERROR(("EnvireJointManager::addNode: Reload is not implemented: " + jointS->name).c_str());
       //  iMutex.lock();
       //  simJointsReload.push_back(*jointS);
       //  iMutex.unlock();
@@ -84,7 +84,7 @@ namespace mars {
 
       //if(jointS->axis1.lengthSquared() < Vector::EPSILON && jointS->type != JOINT_TYPE_FIXED) {
       if(jointS->axis1.squaredNorm() < mars::utils::EPSILON && jointS->type != mars::interfaces::JOINT_TYPE_FIXED) {
-        LOG_ERROR("EnvireJointManager::Cannot create joint without axis1 " + jointS->name);
+        LOG_ERROR(("EnvireJointManager::Cannot create joint without axis1 " + jointS->name).c_str());
         return 0;
       }
 
@@ -93,13 +93,13 @@ namespace mars {
       // reset the anchor
       //if node index is 0, the node connects to the environment.
       std::shared_ptr<mars::sim::SimNode> node1 = control->nodes->getSimNode(jointS->nodeIndex1);
-      LOG_DEBUG("EnvireJointManager::addJoint: node1: " + node1->getName());
+      LOG_DEBUG(("EnvireJointManager::addJoint: node1: " + node1->getName()).c_str());
       if (node1) 
         i_node1 = node1->getInterface();
 
       std::shared_ptr<mars::sim::SimNode> node2 = control->nodes->getSimNode(jointS->nodeIndex2);
 
-      LOG_DEBUG("EnvireJointManager::addJoint: node2: " + node2->getName());
+      LOG_DEBUG(("EnvireJointManager::addJoint: node2: " + node2->getName()).c_str());
 
       if (node2) i_node2 = node2->getInterface();
 
