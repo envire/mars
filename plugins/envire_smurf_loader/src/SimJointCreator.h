@@ -159,11 +159,11 @@ namespace mars {
                     // since the joint manager requires NodeID information
                     mars::interfaces::NodeId source_id = control->nodes->getID(source_target.first->getName());
                     if (source_id == INVALID_ID)
-                        LOG_ERROR("[SimJointCreator::createSimJoint] Failed to find NodeIF ***" + source_target.first->getName() + "***");
+                        LOG_ERROR(("[SimJointCreator::createSimJoint] Failed to find NodeIF ***" + source_target.first->getName() + "***").c_str());
 
                     mars::interfaces::NodeId target_id = control->nodes->getID(source_target.second->getName());
                     if (source_id == INVALID_ID)
-                        LOG_ERROR("[SimJointCreator::createSimJoint] Failed to find NodeIF ***" + source_target.first->getName() + "***");                    
+                        LOG_ERROR(("[SimJointCreator::createSimJoint] Failed to find NodeIF ***" + source_target.first->getName() + "***").c_str());                    
 
                     joint_data.nodeIndex1 = source_id;
                     joint_data.nodeIndex2 = target_id;
@@ -345,7 +345,7 @@ namespace mars {
                   }
                 }
 #ifdef DEBUG
-                LOG_DEBUG("[SimJointCreatorJoint::getJointType] The joint type is: " + log_type); 
+                LOG_DEBUG(("[SimJointCreatorJoint::getJointType] The joint type is: " + log_type).c_str()); 
 #endif
                 return joint_type;
             }                      

@@ -111,7 +111,7 @@ namespace mars {
                         bool attached = attachSensor(sensor.get(), frame_id);
                         if (!attached)
                         {              
-                            LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.");
+                            LOG_ERROR(("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
                         } else {
                             LOG_DEBUG(("[EnvireSensors::ItemAdded] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
                         }
@@ -134,7 +134,7 @@ namespace mars {
                         bool attached = attachSensor(sensor.get(), frame_id);
                         if (!attached)
                         {
-                            LOG_ERROR("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.");
+                            LOG_ERROR(("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
                         } else 
                         {
 #ifdef DEBUG              
@@ -176,7 +176,7 @@ namespace mars {
                     simNodePtr->addSensor(sensor);
                     attached = true;
 #ifdef DEBUG
-                    LOG_DEBUG("[SimSensorCreator::attachSensor] The SimNode ***" + simNodePtr->getName() + "*** to attach the sensor is found"); 
+                    LOG_DEBUG(("[SimSensorCreator::attachSensor] The SimNode ***" + simNodePtr->getName() + "*** to attach the sensor is found").c_str()); 
 #endif
                 }
                 return attached;
