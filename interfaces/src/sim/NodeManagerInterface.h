@@ -42,6 +42,7 @@
 #include <mars/utils/Vector.h>
 #include <mars/utils/Quaternion.h>
 #include <envire_core/graph/GraphTypes.hpp>
+#include <envire_core/items/Transform.hpp>
 
 
 namespace mars {
@@ -793,6 +794,7 @@ namespace mars {
       virtual void edit(NodeId id, const std::string &key,
                         const std::string &value) = 0;
 
+      virtual void setTfToCenter(envire::core::FrameId frameId, const envire::core::Transform tf)=0;
     /**
      *
      * low level update function to sync external changes in the envire graph to the sim nodes

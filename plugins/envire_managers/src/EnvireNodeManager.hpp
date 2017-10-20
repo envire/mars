@@ -172,7 +172,9 @@ namespace mars {
             virtual void edit(mars::interfaces::NodeId id, const std::string &key,
                               const std::string &value);
 
+            virtual void setTfToCenter(envire::core::FrameId frameId, const envire::core::Transform tf);
             virtual void updatePositionsFromGraph();
+
 
           private:
             mars::interfaces::NodeId next_node_id;

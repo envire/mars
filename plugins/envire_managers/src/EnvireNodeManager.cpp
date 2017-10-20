@@ -47,6 +47,8 @@
 
 #include <mars/utils/MutexLocker.h>
 
+#define SIM_CENTER_FRAME_NAME std::string("center")
+
 #ifdef _MSC_VER
 #define __PRETTY_FUNCTION__  __FUNCTION__ __FUNCSIG__
 #endif
@@ -800,14 +802,17 @@ namespace mars {
   //    *\brief Sets the position of the node with the given id.
   //    */
    void EnvireNodeManager::setPosition(mars::interfaces::NodeId id, const mars::utils::Vector &pos) {
-          printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-  //     mars::utils::MutexLocker locker(&iMutex);
+       mars::utils::MutexLocker locker(&iMutex);
+       printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+       // Find in which frame the simNode with the given Id and set its transformation to the center to be equal to the given position.
+       // This is a bit more tricky, as you have to change the last transformation only to match the total tf to the center.
   //     NodeMap::iterator iter = simNodes.find(id);
   //     if (iter != simNodes.end()) {
   //       iter->second->setPosition(pos, 1);
   //       nodesToUpdate[id] = iter->second;
   //     }
    }
+
 
 
    const mars::utils::Vector EnvireNodeManager::getPosition(mars::interfaces::NodeId id) const {
@@ -1386,6 +1391,12 @@ namespace mars {
         }
     }
 
+    void EnvireNodeManager::setTfToCenter(envire::core::FrameId frameId, const envire::core::Transform tf){
+        mars::utils::MutexLocker locker(&iMutex);
+        control->graph->updateTransform(frameId, SIM_CENTER_FRAME_NAME, tf);
+        updatePositionsFromGraph();
+    }
+
 void EnvireNodeManager::updatePositionsFromGraph(){
 
     //update positions in sim nodes
@@ -1709,7 +1720,7 @@ void EnvireNodeManager::updatePositionsFromGraph(){
      }
 
      void EnvireNodeManager::updateRay(mars::interfaces::NodeId id) {
-      printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+  //    printf("not implemented : %s\n", __PRETTY_FUNCTION__);
   //     mars::utils::MutexLocker locker(&iMutex);
   //     NodeMap::iterator iter = simNodes.find(id);
   //     if (iter != simNodes.end())
