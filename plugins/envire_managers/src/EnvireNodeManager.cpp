@@ -1393,7 +1393,7 @@ namespace mars {
 
     void EnvireNodeManager::setTfToCenter(envire::core::FrameId frameId, const envire::core::Transform tf){
         mars::utils::MutexLocker locker(&iMutex);
-        control->graph->updateTransform(frameId, SIM_CENTER_FRAME_NAME, tf);
+        control->graph->updateTransform(SIM_CENTER_FRAME_NAME, frameId, tf);
         updatePositionsFromGraph();
     }
 
