@@ -111,9 +111,9 @@ namespace mars {
                         bool attached = attachSensor(sensor.get(), frame_id);
                         if (!attached)
                         {              
-                            LOG_ERROR(("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
+                            LOG_ERROR(("[SimSensorCreator::create] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
                         } else {
-                            LOG_DEBUG(("[EnvireSensors::ItemAdded] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
+                            LOG_DEBUG(("[SimSensorCreator::create] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
                         }
                     }
                     else if (item_data.getType() == "Joint6DOF")
@@ -134,12 +134,31 @@ namespace mars {
                         bool attached = attachSensor(sensor.get(), frame_id);
                         if (!attached)
                         {
-                            LOG_ERROR(("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
+                            LOG_ERROR(("[SimSensorCreator::create] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
                         } else 
                         {
 #ifdef DEBUG              
-                            LOG_DEBUG(("[EnvireSensors::ItemAdded] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
+                            LOG_DEBUG(("[SimSensorCreator::create] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
 #endif
+                        }
+                    }
+                    else if (item_data.getType() == "CameraSensor")
+                    {
+#ifdef DEBUG
+                        LOG_DEBUG(("[SimSensorCreator::create] A Camera sensor  has been found with name " + item_data.getName()).c_str());
+#endif
+                        std::shared_ptr<mars::interfaces::BaseSensor> sensor(createSensor(item_data, frame_id));
+                        SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<mars::interfaces::BaseSensor>>(sensor));
+                        control->graph->addItemToFrame(frame_id, sensorItem);
+#ifdef DEBUG
+                        LOG_DEBUG("[SimSensorCreator::create] Base sensor instantiated and addedto the graph.");
+#endif
+                        bool attached = attachSensor(sensor.get(), frame_id);
+                        if (!attached)
+                        {              
+                            LOG_ERROR("[SimSensorCreator::create] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.");
+                        } else {
+                            LOG_DEBUG(("[SimSensorCreator::create] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
                         }
                     }
                     else

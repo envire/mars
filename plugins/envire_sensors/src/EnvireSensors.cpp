@@ -45,6 +45,8 @@
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <base/samples/Pointcloud.hpp>
 
+// TODO Remove this, currently this is done by simSensorCreator in
+// envire_smurf_loader mars plugin
 
 namespace mars {
   namespace plugins {
