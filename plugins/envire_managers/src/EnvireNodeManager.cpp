@@ -1405,7 +1405,7 @@ void EnvireNodeManager::updatePositionsFromGraph(){
 
     for (auto vertex = vertices.first; vertex != vertices.second; vertex++){
 
-        envire::core::GraphTraits::vertex_descriptor center = control->graph->getVertex("center");
+        envire::core::GraphTraits::vertex_descriptor center = control->graph->getVertex(SIM_CENTER_FRAME_NAME);
         base::TransformWithCovariance targetPos = control->graph->getTransform(center,*vertex).transform;
 
         if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(*vertex)){
