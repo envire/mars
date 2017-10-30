@@ -90,6 +90,7 @@ namespace mars {
 	boost::shared_ptr<maps::grid::MLSMapPrecalculated> mlsPtr;   	
 
         bool tested;
+        bool moved;
         envire::core::FrameId mlsFrameId;
         envire::core::FrameId centerFrameId;
 

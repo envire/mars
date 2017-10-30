@@ -38,6 +38,8 @@
 #include <mars/sim/NodePhysics.h>
 
 #include <mars/interfaces/sim/LoadCenter.h>
+#include <mars/interfaces/sim/NodeManagerInterface.h>
+#include <base/samples/RigidBodyState.hpp>
 
 
 
@@ -62,6 +64,8 @@
 #define ROBOT_TEST_POS  mars::utils::Vector(0,5,1)
 #define ROBOT_TEST_ROT  mars::utils::Vector(0,180,0)
 #define ROBOT_NAME std::string("Asguard_v4")
+
+#define ROBOT_ROOT_LINK_NAME std::string("body")
 
 #define ASGUARD_PATH std::string("/models/robots/asguard_v4/smurf/asguard_v4.smurf")
 
@@ -115,6 +119,7 @@ namespace mars {
 #endif
         control->graph->addTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_NAME, mlsTf);
         tested = false;
+        moved = false;
       }
 
       void EnvireMls::reset() { }
@@ -128,6 +133,22 @@ namespace mars {
           testAddMLSAndRobot();
 
           tested = true;
+        }
+        else{
+            if (not moved){
+                // Let's test the move robot method
+                base::samples::RigidBodyState robotPose;
+                robotPose.position << 8.0, 5.0, 0.0;
+                robotPose.orientation = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX());
+                envire::core::Transform robotTf(robotPose.position, robotPose.orientation);
+                //envire::core::Transform robotTf = robotPose.getTransform();
+                LOG_DEBUG("[EnvireMls::update] Robot Target Pose: %g, %g, %g", robotTf.transform.translation.x(), robotTf.transform.translation.y(), robotTf.transform.translation.z());
+                envire::core::FrameId robotRootFrame = ROBOT_ROOT_LINK_NAME;
+                control->nodes->setTfToCenter(robotRootFrame, robotTf);
+                //control->nodes->setTfToCenter(robotRootFrame, robotPose.getTransform());
+                LOG_DEBUG("[EnvireMls::update] Robot moved");
+                moved = true;
+            }
         }
       }
 
