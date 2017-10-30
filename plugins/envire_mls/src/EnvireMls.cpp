@@ -52,7 +52,7 @@
 #define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
 #define MLS_FRAME_TF_X 0.0
 #define MLS_FRAME_TF_Y 0.0
-#define MLS_FRAME_TF_Z 0.0 // Somehow positive values set the mls below the center... I think this must be a bug of the visualizer
+#define MLS_FRAME_TF_Z 0.0
 #define MLS_FRAME_TF_ROT_X 0.0 
 
 #define GD_SENSE_CONTACT_FORCE 0
@@ -117,7 +117,7 @@ namespace mars {
             double(MLS_FRAME_TF_Y), 
             double(MLS_FRAME_TF_Z));
 #endif
-        control->graph->addTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_NAME, mlsTf);
+        control->graph->addTransform(SIM_CENTER_FRAME_NAME, MLS_FRAME_NAME, mlsTf);
         tested = false;
         moved = false;
       }
