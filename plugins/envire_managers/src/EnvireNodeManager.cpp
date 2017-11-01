@@ -81,7 +81,7 @@ namespace mars {
       //}
 
         // keep updating tree
-        control->graph->getTree("center", true, &graphTreeView);
+        control->graph->getTree(SIM_CENTER_FRAME_NAME, true, &graphTreeView);
     }
 
 
@@ -275,7 +275,7 @@ namespace mars {
                 LOG_DEBUG(("[EnvireNodeManager::addNode] create new transformation between center and " + nodeS->frameID).c_str());
                 envire::core::Transform nodeTransf(nodeS->pos, nodeS->rot);
                 nodeTransf.time = base::Time::now();
-                control->graph->addTransform("center", nodeS->frameID, nodeTransf);                
+                control->graph->addTransform(SIM_CENTER_FRAME_NAME, nodeS->frameID, nodeTransf);                
             }
             
             iMutex.lock(); 
@@ -1373,7 +1373,7 @@ namespace mars {
 
         // update the graph from top to bottom
         // starts with the parent and go to children
-        const envire::core::GraphTraits::vertex_descriptor originDesc = control->graph->vertex("center");
+        const envire::core::GraphTraits::vertex_descriptor originDesc = control->graph->vertex(SIM_CENTER_FRAME_NAME);
         updateChildPositions(originDesc, base::TransformWithCovariance::Identity(), calc_ms, physics_thread); 
     }
 
