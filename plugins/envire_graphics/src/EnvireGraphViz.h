@@ -142,6 +142,8 @@ namespace mars {
          */
         void updateTree(const envire::core::FrameId& origin);
         
+        //update the visualization of the MLS (called by updateVisuals)
+        void updateMLSVis();
         //update position of all visuals
         void updateVisuals();
 
@@ -167,6 +169,11 @@ namespace mars {
         float timeSinceLastUpdateMs = 0; 
         osg::ref_ptr<osg::Group> osgGroup;
         osg::ref_ptr<osg::Node>  osgNode;
+        
+        envire::core::FrameId mlsFrameName;
+        osg::PositionAttitudeTransform* visTf;
+
+
       }; // end of class definition TestTreeMars
 
     } // end of namespace TestTreeMars

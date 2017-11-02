@@ -38,19 +38,18 @@
 #include <mars/sim/NodePhysics.h>
 
 #include <mars/interfaces/sim/LoadCenter.h>
+#include <mars/interfaces/sim/NodeManagerInterface.h>
+#include <base/samples/RigidBodyState.hpp>
+#include <mars/sim/defines.hpp>
 
-
-
-// Hardcoded parameters:
 #define MLS_NAME std::string("mls_01")
-#define MLS_FRAME_NAME std::string("mls_01")
 #define DUMPED_MLS_FRAME_NAME std::string("mls_map")
-#define SIM_CENTER_FRAME_NAME std::string("center")
+//#define SIM_CENTER_FRAME_NAME std::string("center")
 #define ENV_AUTOPROJ_ROOT "AUTOPROJ_CURRENT_ROOT"
 #define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
 #define MLS_FRAME_TF_X 0.0
 #define MLS_FRAME_TF_Y 0.0
-#define MLS_FRAME_TF_Z 0.0 // Somehow positive values set the mls below the center... I think this must be a bug of the visualizer
+#define MLS_FRAME_TF_Z 0.0
 #define MLS_FRAME_TF_ROT_X 0.0 
 
 #define GD_SENSE_CONTACT_FORCE 0
@@ -62,6 +61,8 @@
 #define ROBOT_TEST_POS  mars::utils::Vector(0,5,1)
 #define ROBOT_TEST_ROT  mars::utils::Vector(0,180,0)
 #define ROBOT_NAME std::string("Asguard_v4")
+
+#define ROBOT_ROOT_LINK_NAME std::string("body")
 
 #define ASGUARD_PATH std::string("/models/robots/asguard_v4/smurf/asguard_v4.smurf")
 
@@ -90,6 +91,12 @@ namespace mars {
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::init] Tests"); 
 #endif
+#ifndef SIM_CENTER_FRAME_NAME
+        LOG_DEBUG( "[EnvireMls::init] SIM_CENTER_FRAME_NAME is not defined "); 
+#endif
+#ifdef SIM_CENTER_FRAME_NAME
+        LOG_DEBUG( "[EnvireMls::init] SIM_CENTER_FRAME_NAME is defined: " + SIM_CENTER_FRAME_NAME); 
+#endif
         envire::core::FrameId center = SIM_CENTER_FRAME_NAME; 
         if (! control->graph->containsFrame(center))
         {
@@ -113,8 +120,9 @@ namespace mars {
             double(MLS_FRAME_TF_Y), 
             double(MLS_FRAME_TF_Z));
 #endif
-        control->graph->addTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_NAME, mlsTf);
+        control->graph->addTransform(SIM_CENTER_FRAME_NAME, MLS_FRAME_NAME, mlsTf);
         tested = false;
+        moved = false;
       }
 
       void EnvireMls::reset() { }
@@ -128,6 +136,22 @@ namespace mars {
           testAddMLSAndRobot();
 
           tested = true;
+        }
+        else{
+            if (not moved){
+                // Let's test the move robot method
+                base::samples::RigidBodyState robotPose;
+                robotPose.position << 8.0, 5.0, 0.0;
+                robotPose.orientation = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX());
+                envire::core::Transform robotTf(robotPose.position, robotPose.orientation);
+                //envire::core::Transform robotTf = robotPose.getTransform();
+                LOG_DEBUG("[EnvireMls::update] Robot Target Pose: %g, %g, %g", robotTf.transform.translation.x(), robotTf.transform.translation.y(), robotTf.transform.translation.z());
+                envire::core::FrameId robotRootFrame = ROBOT_ROOT_LINK_NAME;
+                control->nodes->setTfToCenter(robotRootFrame, robotTf);
+                //control->nodes->setTfToCenter(robotRootFrame, robotPose.getTransform());
+                LOG_DEBUG("[EnvireMls::update] Robot moved");
+                moved = true;
+            }
         }
       }
 

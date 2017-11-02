@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cassert>
 #include <sstream>
+#include <mars/sim/defines.hpp>
 
 using namespace mars::plugins::graph_viz_plugin;
 using namespace mars::utils;
@@ -44,8 +45,6 @@ using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
   std::stringstream ss; \
   ss << __VA_ARGS__; \
   LOG_DEBUG(ss.str());
-
-#define SIM_CENTER_FRAME_NAME std::string("center")
 
 EnvireGraphViz::EnvireGraphViz(lib_manager::LibManager *theManager)
   : MarsPluginTemplate(theManager, "EnvireGraphViz"), GraphEventDispatcher(), originId(SIM_CENTER_FRAME_NAME)
@@ -329,9 +328,14 @@ void EnvireGraphViz::itemAdded(const envire::core::TypedItemAddedEvent<envire::c
   updateData(map);
   updateMainNode(osgNode);// vizkit3d Protected
   osgGroup = getVizNode();
+  mlsFrameName = e.frame;
+  visTf = new osg::PositionAttitudeTransform();
+  visTf->addChild(osgNode);
+  updateMLSVis();
+
   if (!osgGroup){ LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapPrecalculated>] The generated osgGroup is null");}
   else {LOG_DEBUG("[EnvireGraphViz::itemAdded<MLSMapPrecalculated>] The OSG group is not null");}
-  control->graphics->addOSGNode(osgNode);
+  control->graphics->addOSGNode(visTf);
   // We don't get any id back from addOSGNode, so I guess we don't need the following:
   //uuidToGraphicsId[e.item->getID()] = control->graphics->addDrawObject(node); //remeber graphics handle
 }
@@ -468,6 +472,25 @@ void EnvireGraphViz::updateTree(const FrameId& origin)
   control->graph->getTree(newOrigin, true, &tree);
 }
 
+void EnvireGraphViz::updateMLSVis()
+{
+  envire::core::Transform simTf = control->graph->getTransform(SIM_CENTER_FRAME_NAME, mlsFrameName);
+  osg::Vec3d vector;
+  osg::Quat quat;
+
+  vector.x() = simTf.transform.translation.x();
+  vector.y() = simTf.transform.translation.y();
+  vector.z() = simTf.transform.translation.z();
+
+  quat.x() = simTf.transform.orientation.x();
+  quat.y() = simTf.transform.orientation.y();
+  quat.z() = simTf.transform.orientation.z();
+  quat.w() = simTf.transform.orientation.w();
+
+  visTf->setPosition(vector);
+  visTf->setAttitude(quat);
+}
+
 void EnvireGraphViz::updateVisuals()
 {
   if (tree.hasRoot() == false)
@@ -479,7 +502,11 @@ void EnvireGraphViz::updateVisuals()
     //updatePosition<Item<smurf::Visual>>(vd);
     //updatePosition<Item<smurf::Frame>>(vd);
     updatePosition<Item<std::shared_ptr<mars::sim::SimNode>>>(vd);
-    //TODO Update position of MLS visualization?
+    // Check that the frame exists
+    if (control->graph->containsFrame(mlsFrameName))
+    {
+      updateMLSVis();
+    }
   });
 }
 

@@ -47,7 +47,7 @@
 
 #include <mars/utils/MutexLocker.h>
 
-#define SIM_CENTER_FRAME_NAME std::string("center")
+#include <mars/sim/defines.hpp>
 
 #ifdef _MSC_VER
 #define __PRETTY_FUNCTION__  __FUNCTION__ __FUNCSIG__
@@ -81,7 +81,7 @@ namespace mars {
       //}
 
         // keep updating tree
-        control->graph->getTree("center", true, &graphTreeView);
+        control->graph->getTree(SIM_CENTER_FRAME_NAME, true, &graphTreeView);
     }
 
 
@@ -275,7 +275,7 @@ namespace mars {
                 LOG_DEBUG(("[EnvireNodeManager::addNode] create new transformation between center and " + nodeS->frameID).c_str());
                 envire::core::Transform nodeTransf(nodeS->pos, nodeS->rot);
                 nodeTransf.time = base::Time::now();
-                control->graph->addTransform("center", nodeS->frameID, nodeTransf);                
+                control->graph->addTransform(SIM_CENTER_FRAME_NAME, nodeS->frameID, nodeTransf);                
             }
             
             iMutex.lock(); 
@@ -1373,7 +1373,7 @@ namespace mars {
 
         // update the graph from top to bottom
         // starts with the parent and go to children
-        const envire::core::GraphTraits::vertex_descriptor originDesc = control->graph->vertex("center");
+        const envire::core::GraphTraits::vertex_descriptor originDesc = control->graph->vertex(SIM_CENTER_FRAME_NAME);
         updateChildPositions(originDesc, base::TransformWithCovariance::Identity(), calc_ms, physics_thread); 
     }
 
@@ -1405,12 +1405,11 @@ void EnvireNodeManager::updatePositionsFromGraph(){
 
     for (auto vertex = vertices.first; vertex != vertices.second; vertex++){
 
-        envire::core::GraphTraits::vertex_descriptor center = control->graph->getVertex("center");
+        envire::core::GraphTraits::vertex_descriptor center = control->graph->getVertex(SIM_CENTER_FRAME_NAME);
         base::TransformWithCovariance targetPos = control->graph->getTransform(center,*vertex).transform;
 
         if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(*vertex)){
             // Update simulation node
-
 
             using IteratorSimNode = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
             IteratorSimNode begin_sim, end_sim;
@@ -1422,10 +1421,10 @@ void EnvireNodeManager::updatePositionsFromGraph(){
                 utils::Vector oldpos = sim_node->getPosition();
 
                 utils::Vector pos = targetPos.translation;
-                sim_node->setPosition(pos,false);
+                sim_node->setPosition(pos,true);
 
                 utils::Quaternion rot = targetPos.orientation;
-                sim_node->setRotation(rot,false);
+                sim_node->setRotation(rot,true);
     //                    }
                 std::string name = control->graph->getFrameId(*vertex);
 

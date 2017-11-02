@@ -52,8 +52,7 @@
 #include "SimJointCreator.h"
 #include "SimMotorCreator.h"
 #include "SimSensorCreator.h"
-//TODO move definitions to Mars.h
-#define SIM_CENTER_FRAME_NAME std::string("center") 
+#include "mars/sim/defines.hpp"
 
 using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
 
