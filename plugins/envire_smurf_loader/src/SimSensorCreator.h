@@ -111,9 +111,9 @@ namespace mars {
                         bool attached = attachSensor(sensor.get(), frame_id);
                         if (!attached)
                         {              
-                            LOG_ERROR(("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
+                            LOG_ERROR(("[SimSensorCreator::create] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
                         } else {
-                            LOG_DEBUG(("[EnvireSensors::ItemAdded] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
+                            LOG_DEBUG(("[SimSensorCreator::create] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
                         }
                     }
                     else if (item_data.getType() == "Joint6DOF")
@@ -134,11 +134,11 @@ namespace mars {
                         bool attached = attachSensor(sensor.get(), frame_id);
                         if (!attached)
                         {
-                            LOG_ERROR(("[EnvireSensors::ItemAdded] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
+                            LOG_ERROR(("[SimSensorCreator::create] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
                         } else 
                         {
 #ifdef DEBUG              
-                            LOG_DEBUG(("[EnvireSensors::ItemAdded] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
+                            LOG_DEBUG(("[SimSensorCreator::create] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
 #endif
                         }
                     }
