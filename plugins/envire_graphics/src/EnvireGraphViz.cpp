@@ -503,7 +503,11 @@ void EnvireGraphViz::updateVisuals()
     //updatePosition<Item<smurf::Visual>>(vd);
     //updatePosition<Item<smurf::Frame>>(vd);
     updatePosition<Item<std::shared_ptr<mars::sim::SimNode>>>(vd);
-    updateMLSVis();
+    // Check that the frame exists
+    if (control->graph->containsFrame(mlsFrameName))
+    {
+      updateMLSVis();
+    }
   });
 }
 
