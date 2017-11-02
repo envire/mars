@@ -47,7 +47,7 @@
 
 #include <mars/utils/MutexLocker.h>
 
-#define SIM_CENTER_FRAME_NAME std::string("center")
+#include <mars/sim/defines.hpp>
 
 #ifdef _MSC_VER
 #define __PRETTY_FUNCTION__  __FUNCTION__ __FUNCSIG__

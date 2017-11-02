@@ -54,12 +54,9 @@
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/items/Item.hpp>
 
-#define SIM_CENTER_FRAME_NAME std::string("center")
-
 #include <maps/grid/MLSMap.hpp>
 #include <smurf/Collidable.hpp>
-#define MLS_FRAME_NAME std::string("mls_01")
-//#define DEBUG_MARS 1
+
 
 
 namespace mars {

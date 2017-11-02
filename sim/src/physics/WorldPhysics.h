@@ -50,6 +50,8 @@
 
 #include <envire_core/items/Frame.hpp>
 #include <envire_fcl/Collision.hpp>
+#include "defines.hpp"
+
 
 namespace mars {
   namespace sim {
