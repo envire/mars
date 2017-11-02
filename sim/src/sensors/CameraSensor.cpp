@@ -29,6 +29,9 @@
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/interfaces/Logging.hpp>
 
+#include <envire_core/graph/EnvireGraph.hpp>
+#include <envire_core/items/Item.hpp>
+
 #include <stdint.h>
 #include <cstring>
 #include <cstdlib>
@@ -54,6 +57,13 @@ namespace mars {
       depthCamera(id,name,config.width,config.height,1,true),
       imageCamera(id,name,config.width,config.height,4,false)
     {
+         
+    setFrame(config.frame);
+
+     envire::core::Transform sensorTf = control->graph->getTransform("center", frame); //FIXME Standarize the center of the graph name
+     position = sensorTf.transform.translation;
+     orientation = sensorTf.transform.orientation;
+        
       renderCam = 2;
       this->attached_node = config.attached_node;
       draw_id = control->nodes->getDrawID(attached_node);
@@ -69,6 +79,8 @@ namespace mars {
       if(control->dataBroker->registerTimedReceiver(this, groupName, dataName,"mars_sim/simTimer", config.updateRate)) {
       }
 
+      
+      
 
       cam_id=0;
       if(control->graphics) {
