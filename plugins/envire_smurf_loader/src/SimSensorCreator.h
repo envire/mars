@@ -100,21 +100,12 @@ namespace mars {
 #endif
 
                         std::shared_ptr<mars::interfaces::BaseSensor> sensor(createSensor(item_data, frame_id));
-
                         SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<mars::interfaces::BaseSensor>>(sensor));
                         control->graph->addItemToFrame(frame_id, sensorItem);
                         
-#ifdef DEBUG
-                        LOG_DEBUG("[SimSensorCreator::create] Base sensor instantiated and added to the graph.");
-#endif
-
-                        bool attached = attachSensor(sensor.get(), frame_id);
-                        if (!attached)
-                        {              
-                            LOG_ERROR(("[SimSensorCreator::create] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
-                        } else {
+#ifdef DEBUG              
                             LOG_DEBUG(("[SimSensorCreator::create] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
-                        }
+#endif
                     }
                     else if (item_data.getType() == "Joint6DOF")
                     {
@@ -123,24 +114,12 @@ namespace mars {
 #endif
 
                         std::shared_ptr<mars::interfaces::BaseSensor> sensor(createSensor(item_data, frame_id));
-
                         SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<mars::interfaces::BaseSensor>>(sensor));
                         control->graph->addItemToFrame(frame_id, sensorItem);
 
-#ifdef DEBUG
-                        LOG_DEBUG("[SimSensorCreator::create] Base sensor instantiated and added to the graph.");
-#endif
-
-                        bool attached = attachSensor(sensor.get(), frame_id);
-                        if (!attached)
-                        {
-                            LOG_ERROR(("[SimSensorCreator::create] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.").c_str());
-                        } else 
-                        {
 #ifdef DEBUG              
                             LOG_DEBUG(("[SimSensorCreator::create] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
 #endif
-                        }
                     }
                     else if (item_data.getType() == "CameraSensor")
                     {
@@ -154,17 +133,10 @@ namespace mars {
                                 std::shared_ptr<mars::interfaces::BaseSensor> sensor(createSensor(item_data, frame_id));
                                 SensorItemPtr sensorItem(new envire::core::Item<std::shared_ptr<mars::interfaces::BaseSensor>>(sensor));
                                 control->graph->addItemToFrame(frame_id, sensorItem);
-#ifdef DEBUG
-                                LOG_DEBUG("[SimSensorCreator::create] Base sensor instantiated and addedto the graph.");
-#endif
-                                bool attached = attachSensor(sensor.get(), frame_id);
-                                                                
-                                if (!attached)
-                                {              
-                                    LOG_ERROR("[SimSensorCreator::create] Could not find node interface to which to attach the sensor *" + item_data.getName() + "*.");
-                                } else {
-                                    LOG_DEBUG(("[SimSensorCreator::create] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
-                                }
+                                 
+#ifdef DEBUG                                                                        
+                                LOG_DEBUG(("[SimSensorCreator::create] *" + item_data.getType() + "* *" + item_data.getName() + "* is attached (frame: " + frame_id + ")").c_str());
+#endif                                
                             }
                             
                         }
@@ -181,31 +153,23 @@ namespace mars {
 
             mars::interfaces::BaseSensor* createSensor(const smurf::Sensor &sensorSmurf, const envire::core::FrameId frameId)
             {
-                configmaps::ConfigMap sensorMap = sensorSmurf.getMap();
-                sensorMap["frame"] = frameId;
-                mars::interfaces::BaseSensor* sensor = control->sensors->createAndAddSensor(&sensorMap); 
-                return sensor;
-            }   
-
-            bool attachSensor(mars::interfaces::BaseSensor* sensor, const envire::core::FrameId frameId)
-            {
                 using SimNodeItem = envire::core::Item<std::shared_ptr<mars::sim::SimNode>>;
                 using Iterator = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
-                bool attached = false;
-                std::shared_ptr<mars::sim::SimNode> simNodePtr;
+
+                configmaps::ConfigMap sensorMap = sensorSmurf.getMap();
+                sensorMap["frame"] = frameId;
+
                 Iterator begin, end;
                 boost::tie(begin, end) = control->graph->getItems<SimNodeItem>(frameId);
                 if (begin != end)
-                {
-                    simNodePtr = begin->getData();
-                    simNodePtr->addSensor(sensor);
-                    attached = true;
-#ifdef DEBUG
-                    LOG_DEBUG(("[SimSensorCreator::attachSensor] The SimNode ***" + simNodePtr->getName() + "*** to attach the sensor is found").c_str()); 
-#endif
+                {                
+                    sensorMap["attached_node"] = begin->getData()->getID();
+                } else {
+                    LOG_ERROR("[SimSensorCreator::create] Could not find node interface to which to attach the sensor *" + sensorSmurf.getName() + "*.");
                 }
-                return attached;
-            }                     
+                mars::interfaces::BaseSensor* sensor = control->sensors->createAndAddSensor(&sensorMap); 
+                return sensor;
+            }                      
         };
 
     } // end of namespace EnvireSmurfLoader
