@@ -947,19 +947,20 @@ namespace mars {
   //    *\brief Adds a physical sensor to the node with the given id.
   //    */
      void EnvireNodeManager::addNodeSensor(mars::interfaces::BaseNodeSensor *sensor){
-            printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-  //     mars::utils::MutexLocker locker(&iMutex);
-  //     NodeMap::iterator iter = simNodes.find(sensor->getAttachedNode());
-  //     if (iter != simNodes.end()) {
-  //       iter->second->addSensor(sensor);
-  //       NodeMap::iterator kter = simNodesDyn.find(sensor->getAttachedNode());
-  //       if (kter == simNodesDyn.end())
-  //         simNodesDyn[iter->first] = iter->second;
-  //     }
-  //     else
-  //       {
-  //         std::cerr << "Could not find node id " << sensor->getAttachedNode() << " in simNodes and did not call addSensors on the node." << std::endl;
-  //       }
+        std::cout << "EnvireNodeManager::addNodeSensor" << std::endl;
+       mars::utils::MutexLocker locker(&iMutex);
+       NodeMap::iterator iter = simNodes.find(sensor->getAttachedNode());
+       if (iter != simNodes.end()) {
+         iter->second->getData()->addSensor(sensor);
+         std::cout << "EnvireNodeManager::addNodeSensor FOUND" << std::endl;
+         //NodeMap::iterator kter = simNodesDyn.find(sensor->getAttachedNode());
+         //if (kter == simNodesDyn.end())
+         //  simNodesDyn[iter->first] = iter->second;
+       }
+       else
+       {
+           std::cerr << "Could not find node id " << sensor->getAttachedNode() << " in simNodes and did not call addSensors on the node." << std::endl;
+       }
    }
 
     void EnvireNodeManager::reloadNodeSensor(mars::interfaces::BaseNodeSensor* sensor) {
@@ -1729,14 +1730,12 @@ void EnvireNodeManager::updatePositionsFromGraph(){
 
 
      mars::interfaces::NodeId EnvireNodeManager::getDrawID(mars::interfaces::NodeId id) const {
-      printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-      return 0;
-  //     mars::utils::MutexLocker locker(&iMutex);
-  //     NodeMap::const_iterator iter = simNodes.find(id);
-  //     if (iter != simNodes.end())
-  //       return iter->second->getGraphicsID();
-  //     else
-  //       return INVALID_ID;
+       mars::utils::MutexLocker locker(&iMutex);
+       NodeMap::const_iterator iter = simNodes.find(id);
+       if (iter != simNodes.end())
+            return iter->second->getData()->getGraphicsID();
+       else
+         return INVALID_ID;
      }
 
 
