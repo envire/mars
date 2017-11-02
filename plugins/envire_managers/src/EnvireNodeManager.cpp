@@ -1411,7 +1411,6 @@ void EnvireNodeManager::updatePositionsFromGraph(){
         if (control->graph->containsItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(*vertex)){
             // Update simulation node
 
-
             using IteratorSimNode = envire::core::EnvireGraph::ItemIterator<SimNodeItem>;
             IteratorSimNode begin_sim, end_sim;
             boost::tie(begin_sim, end_sim) = control->graph->getItems<SimNodeItem>(*vertex);
@@ -1422,10 +1421,10 @@ void EnvireNodeManager::updatePositionsFromGraph(){
                 utils::Vector oldpos = sim_node->getPosition();
 
                 utils::Vector pos = targetPos.translation;
-                sim_node->setPosition(pos,false);
+                sim_node->setPosition(pos,true);
 
                 utils::Quaternion rot = targetPos.orientation;
-                sim_node->setRotation(rot,false);
+                sim_node->setRotation(rot,true);
     //                    }
                 std::string name = control->graph->getFrameId(*vertex);
 
