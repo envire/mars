@@ -40,14 +40,11 @@
 #include <mars/interfaces/sim/LoadCenter.h>
 #include <mars/interfaces/sim/NodeManagerInterface.h>
 #include <base/samples/RigidBodyState.hpp>
+#include <mars/sim/defines.hpp>
 
-
-
-// Hardcoded parameters:
 #define MLS_NAME std::string("mls_01")
-#define MLS_FRAME_NAME std::string("mls_01")
 #define DUMPED_MLS_FRAME_NAME std::string("mls_map")
-#define SIM_CENTER_FRAME_NAME std::string("center")
+//#define SIM_CENTER_FRAME_NAME std::string("center")
 #define ENV_AUTOPROJ_ROOT "AUTOPROJ_CURRENT_ROOT"
 #define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
 #define MLS_FRAME_TF_X 0.0
@@ -93,6 +90,12 @@ namespace mars {
       {
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::init] Tests"); 
+#endif
+#ifndef SIM_CENTER_FRAME_NAME
+        LOG_DEBUG( "[EnvireMls::init] SIM_CENTER_FRAME_NAME is not defined "); 
+#endif
+#ifdef SIM_CENTER_FRAME_NAME
+        LOG_DEBUG( "[EnvireMls::init] SIM_CENTER_FRAME_NAME is defined: " + SIM_CENTER_FRAME_NAME); 
 #endif
         envire::core::FrameId center = SIM_CENTER_FRAME_NAME; 
         if (! control->graph->containsFrame(center))

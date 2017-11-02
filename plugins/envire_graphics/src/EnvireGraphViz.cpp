@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cassert>
 #include <sstream>
+#include <mars/sim/defines.hpp>
 
 using namespace mars::plugins::graph_viz_plugin;
 using namespace mars::utils;
@@ -44,8 +45,6 @@ using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
   std::stringstream ss; \
   ss << __VA_ARGS__; \
   LOG_DEBUG(ss.str());
-
-#define SIM_CENTER_FRAME_NAME std::string("center")
 
 EnvireGraphViz::EnvireGraphViz(lib_manager::LibManager *theManager)
   : MarsPluginTemplate(theManager, "EnvireGraphViz"), GraphEventDispatcher(), originId(SIM_CENTER_FRAME_NAME)
