@@ -44,16 +44,22 @@
 
 #include <mars/sim/SimNode.h>
 #include <mars/sim/JointRecord.h>
+#include <mars/sim/defines.hpp>
 
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/graph/GraphTypes.hpp>
 #include <envire_core/items/Transform.hpp>
+
+#include <maps/grid/MLSMap.hpp>
 
 #include <smurf/Robot.hpp>
 
 namespace mars {
   namespace plugins {
     namespace EnvireSmurfLoader {
+
+      using mlsPrec = maps::grid::MLSMapPrecalculated;
+      using mlsKal = maps::grid::MLSMapKalman;
 
       // inherit from MarsPluginTemplateGUI for extending the gui
       class EnvireSmurfLoader: public mars::interfaces::LoadSceneInterface {
@@ -78,7 +84,10 @@ namespace mars {
         virtual bool loadFile(std::string filename, std::string tmpPath,
                                 std::string robotname, utils::Vector pos, utils::Vector rot);
 
+
         virtual int saveFile(std::string filename, std::string tmpPath);
+
+        void loadMLSMap(const std::string & mlsPath);
 
       private:
         interfaces::ControlCenter *control;
@@ -86,6 +95,8 @@ namespace mars {
         void addFloor(const envire::core::GraphTraits::vertex_descriptor &center);
 
         void addRobot(std::string filename,  envire::core::GraphTraits::vertex_descriptor center, envire::core::Transform iniPose);
+
+        mlsPrec getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId mlsFrameId);
 
         int nextGroupId;
 

@@ -35,6 +35,7 @@
 #include <mars/interfaces/sim/LoadCenter.h>
 #include <mars/sim/PhysicsMapper.h>
 #include <mars/sim/SimNode.h>
+#include <mars/utils/misc.h>
 
 #include <lib_config/YAMLConfiguration.hpp>
 // To populate the Graph from the smurf
@@ -76,6 +77,7 @@ namespace mars {
                     control->loadCenter->loadScene[".smurfs"] = this; // smurf scene
                     control->loadCenter->loadScene[".svg"] = this; // smurfed vector graphic
                     control->loadCenter->loadScene[".urdf"] = this; // urdf model
+                    control->loadCenter->loadScene[".graph"] = this; // urdf model
                     LOG_INFO("envire_smurf_loader: SMURF loader to loadCenter");                    
                 }
 
@@ -90,6 +92,7 @@ namespace mars {
                 control->loadCenter->loadScene.erase(".smurfs");
                 control->loadCenter->loadScene.erase(".svg");
                 control->loadCenter->loadScene.erase(".urdf");
+                control->loadCenter->loadScene.erase(".graph");
                 libManager->releaseLibrary("mars_sim");
               }                
             }       
@@ -110,14 +113,22 @@ namespace mars {
             bool EnvireSmurfLoader::loadFile(std::string filename, std::string tmpPath,
                                 std::string robotname, utils::Vector pos, utils::Vector rot)
             {
-                std::cout << "smurf loader given position" << std::endl;
-                vertex_descriptor center = control->graph->getVertex(SIM_CENTER_FRAME_NAME);
-                envire::core::Transform iniPose;
-                // FIXME TODO use rot input. Is it Euler angles or scaled axis?
-                iniPose.transform.orientation = base::Quaterniond::Identity();
-                iniPose.transform.translation = pos;
-                addRobot(filename, center, iniPose);
-                createSimObjects();
+                LOG_DEBUG("[EnvireSmurfLoader::loadFile] Smurf loader given position");
+                std::string suffix = utils::getFilenameSuffix(filename);
+                if (suffix == ".graph")
+                {
+
+                }
+                else
+                {
+                    vertex_descriptor center = control->graph->getVertex(SIM_CENTER_FRAME_NAME);
+                    envire::core::Transform iniPose;
+                    // FIXME TODO use rot input. Is it Euler angles or scaled axis?
+                    iniPose.transform.orientation = base::Quaterniond::Identity();
+                    iniPose.transform.translation = pos;
+                    addRobot(filename, center, iniPose);
+                    createSimObjects();
+                }
                 return true;
             }    
 
@@ -271,6 +282,34 @@ namespace mars {
                     sm.create(v_itr);
                 }                
             }            
+
+            void EnvireSmurfLoader::loadMLSMap(const std::string & mlsPath)
+            {
+                /* Loads in the envire graph the mls given in the path after
+                 * deserializing it.
+                 *
+                 * The serialized object is graph containing the mls in DUMPED_MLS_FRAME
+                 */
+                envire::core::EnvireGraph auxMlsGraph;
+                auxMlsGraph.loadFromFile(mlsPath);
+                envire::core::FrameId dumpedFrameId(DUMPED_MLS_FRAME_NAME);
+                envire::core::FrameId mlsFrameId(MLS_FRAME_NAME); 
+                mlsPrec mlsAux = getMLSMap(auxMlsGraph, dumpedFrameId);
+                envire::core::Item<mlsPrec>::Ptr mlsItemPtr(new envire::core::Item<mlsPrec>(mlsAux));
+                control->graph->addItemToFrame(mlsFrameId, mlsItemPtr);
+            }
+
+            mlsPrec EnvireSmurfLoader::getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId frameId)
+            {
+                // The serialized Mls is not in Precalculated but in Kalman, so we have to convert it
+                envire::core::EnvireGraph::ItemIterator<envire::core::Item<mlsKal>> beginItem, endItem;
+                boost::tie(beginItem, endItem) = graph.getItems<envire::core::Item<mlsKal>>(frameId);
+                mlsKal mlsKal;
+                mlsPrec mls;
+                mls = beginItem->getData(); // Here the conversion to Precalculated occurs (mlsPerc <-> mlsKal)
+                return mls;
+            }
+
         } // end of namespace EnvireSmurfLoader
     } // end of namespace plugins
 } // end of namespace mars

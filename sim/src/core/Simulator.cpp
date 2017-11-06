@@ -668,7 +668,7 @@ namespace mars {
                              utils::Vector pos, utils::Vector rot,
                              bool wasrunning) {
 
-      LOG_DEBUG("Loading scene internal with given position\n");
+      LOG_DEBUG("[Simulator::loadScene_internal] Loading scene internal with given position\n");
 
       if(control->loadCenter->loadScene.empty()) {
         LOG_ERROR("Simulator:: no module to load scene found");
@@ -677,11 +677,12 @@ namespace mars {
 
       try {
         std::string suffix = utils::getFilenameSuffix(filename);
+        LOG_DEBUG("[Simulator::loadScene] suffix: %s", suffix.c_str());
         if( control->loadCenter->loadScene.find(suffix) !=
             control->loadCenter->loadScene.end() ) {
-          if (! control->loadCenter->loadScene[suffix]->loadFile(filename.c_str(), getTmpPath().c_str(), robotname.c_str(), pos, rot)) {
-          return 0; //failed
-          }
+            if (! control->loadCenter->loadScene[suffix]->loadFile(filename.c_str(), getTmpPath().c_str(), robotname.c_str(), pos, rot)) {
+                return 0; //failed
+            }
         }
         else {
           // no scene loader found

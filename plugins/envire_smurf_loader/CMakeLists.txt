@@ -20,7 +20,8 @@ pkg_check_modules(PKGCONFIG REQUIRED
           envire_smurf
           lib_config
           base-lib
-         envire_collider_mls
+          #envire_collider_mls
+          maps
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
