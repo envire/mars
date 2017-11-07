@@ -45,6 +45,10 @@
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/items/Item.hpp>
 
+#define MLS_FRAME_TF_X 0.0
+#define MLS_FRAME_TF_Y 0.0
+#define MLS_FRAME_TF_Z 0.0
+#define MLS_FRAME_TF_ROT_X 0.0 
 
 using vertex_descriptor = envire::core::GraphTraits::vertex_descriptor;
 
@@ -67,6 +71,7 @@ namespace mars {
                 }
 
                 center = SIM_CENTER_FRAME_NAME;
+                mlsFrameId = MLS_FRAME_NAME; 
             }
 
             EnvireGraphLoader::~EnvireGraphLoader() {
@@ -86,12 +91,25 @@ namespace mars {
             bool EnvireGraphLoader::loadFile(std::string filename, std::string tmpPath,
                                 std::string robotname, utils::Vector pos, utils::Vector rot)
             {
+                // TODO: use the pos and rot received from the configuration or
+                // the ones of the original graph instead of the hardcoded ones
                 LOG_DEBUG("[EnvireGraphLoader::loadFile] Graph loader given position");
                 std::string suffix = utils::getFilenameSuffix(filename);
-                //if (suffix == ".graph")
-                //{
-
-                //}
+                if (! control->graph->containsFrame(center))
+                {
+                  control->graph->addFrame(center);
+                }
+                if (! control->graph->containsFrame(mlsFrameId))
+                {
+                  control->graph->addFrame(mlsFrameId);
+                }
+                // Create the default frame for the MLS but leave it empty.
+                // The mls is loaded in the first update.
+                envire::core::Transform mlsTf(base::Time::now());
+                mlsTf.transform.translation << double(MLS_FRAME_TF_X), double(MLS_FRAME_TF_Y), double(MLS_FRAME_TF_Z);
+                mlsTf.transform.orientation = base::AngleAxisd(double(MLS_FRAME_TF_ROT_X), base::Vector3d::UnitX());
+                control->graph->addTransform(center, mlsFrameId, mlsTf);
+                loadMLSMap(filename);
                 return true;
             }    
 
@@ -110,7 +128,6 @@ namespace mars {
                 envire::core::EnvireGraph auxMlsGraph;
                 auxMlsGraph.loadFromFile(mlsPath);
                 envire::core::FrameId dumpedFrameId(DUMPED_MLS_FRAME_NAME);
-                envire::core::FrameId mlsFrameId(MLS_FRAME_NAME); 
                 mlsPrec mlsAux = getMLSMap(auxMlsGraph, dumpedFrameId);
                 envire::core::Item<mlsPrec>::Ptr mlsItemPtr(new envire::core::Item<mlsPrec>(mlsAux));
                 control->graph->addItemToFrame(mlsFrameId, mlsItemPtr);

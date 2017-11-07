@@ -17,6 +17,7 @@
     <depend package="simulation/mars/plugins/envire_motors" optional="1" />
     <depend package="simulation/mars/plugins/envire_sensors" optional="1" />
     <depend package="simulation/mars/plugins/envire_smurf_loader" optional="1" />
+    <depend package="simulation/mars/plugins/envire_graph_loader" optional="1" />
     <depend package="simulation/mars/plugins/envire_managers" optional="1" />
     <depend package="simulation/mars/plugins/envire_graphics" optional="1" />
     <depend package="simulation/mars/plugins/envire_mls" optional="1" />

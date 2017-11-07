@@ -44,7 +44,6 @@
 
 #include <maps/grid/MLSMap.hpp>
 
-
 namespace mars {
   namespace plugins {
     namespace EnvireGraphLoader {
@@ -86,6 +85,7 @@ namespace mars {
         mlsPrec getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId mlsFrameId);
 
         envire::core::FrameId center;
+        envire::core::FrameId mlsFrameId;
 
       }; // end of class definition EnvireGraphLoader
 
