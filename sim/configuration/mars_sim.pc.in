@@ -9,5 +9,6 @@ Version: @PROJECT_VERSION@
 Libs: -L${libdir} -l@PROJECT_NAME@
 Requires.private: mars_utils mars_interfaces lib_manager data_broker cfg_manager ode 
 
-Cflags: -I${includedir}  -I${includedir}/mars_sim/ @ADD_INCLUDES@
+Cflags: -I${includedir}  -I${includedir}/mars_sim/ @ADD_INCLUDES@ @PKGCONFIG_CFLAGS@
+
 
