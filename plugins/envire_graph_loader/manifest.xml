@@ -1,5 +1,5 @@
 <package>
-    <description brief="envire_smurf_loader">
+    <description brief="envire_graph_loader">
       Plugin to load smurf in mars based on the envire graph
    </description>
     <maintainer>Raul/raul.dominguez@dfki.de</maintainer>
@@ -8,11 +8,6 @@
     <depend package="simulation/lib_manager" />
     <depend package="simulation/mars/common/data_broker" />
     <depend package="simulation/mars/interfaces" />
-    <depend package="simulation/mars/entity_generation/entity_factory" />
-    <depend package="envire/envire_smurf" />
-    <depend package="simulation/mars/plugins/envire_joints" />
-    <!--<depend package="simulation/mars/plugins/envire_motors" />-->
-    <depend package="tools/lib_config" />
-    <depend package="envire/envire_collider_mls" />    
+    <depend package="slam/maps" />  
     <tags>needs_opt</tags>
 </package>

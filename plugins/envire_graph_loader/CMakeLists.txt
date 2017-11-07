@@ -1,6 +1,6 @@
-project(envire_smurf_loader)
+project(envire_graph_loader)
 set(PROJECT_VERSION 1.0)
-set(PROJECT_DESCRIPTION "Tests")
+set(PROJECT_DESCRIPTION "Loads in simulation what stored in a .graph file implementing the loadScene Interface")
 cmake_minimum_required(VERSION 2.6)
 include(FindPkgConfig)
 
@@ -8,19 +8,14 @@ find_package(lib_manager)
 lib_defaults()
 define_module_info()
 
+
 pkg_check_modules(PKGCONFIG REQUIRED
           lib_manager
           data_broker
           mars_interfaces
-          smurf_parser
-          configmaps
-          urdfdom
           mars_sim
-          envire_smurf
-          lib_config
-          base-lib
+          maps
 )
-
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
 add_definitions(${PKGCONFIG_CFLAGS_OTHER})  #flags excluding the ones with -I
@@ -30,18 +25,12 @@ include_directories(
 )
 
 set(SOURCES 
-	src/EnvireSmurfLoader.cpp
+    src/EnvireGraphLoader.cpp
 )
 
 set(HEADERS
-  src/SimNodeCreator.h
-  src/SimJointCreator.h
-  src/SimMotorCreator.h
-  src/SimSensorCreator.h  
-  src/EnvireSmurfLoader.hpp
+    src/EnvireGraphLoader.hpp
 )
-
-
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
@@ -76,7 +65,7 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 find_package(Rock)
 set(ROCK_USE_CXX11 TRUE)
-rock_init(envire_smurf_loader 0.1)
+rock_init(envire_graph_loader 0.1)
 rock_standard_layout()
 
 find_package(Boost REQUIRED filesystem system thread)

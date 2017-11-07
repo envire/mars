@@ -26,43 +26,39 @@
  * Version 0.1
  */
 
-#ifndef MARS_PLUGINS_ENVIRESMURFLOADER_H
-#define MARS_PLUGINS_ENVIRESMURFLOADER_H
+#ifndef MARS_PLUGINS_ENVIREGRAPHLOADER_H
+#define MARS_PLUGINS_ENVIREGRAPHLOADER_H
 
 #ifdef _PRINT_HEADER_
-  #warning "EnvireSmurfLoader.h"
+  #warning "EnvireMlsLoader.hpp"
 #endif
 
 #include <string>
 
-// set define if you want to extend the gui
-//#define PLUGIN_WITH_MARS_GUI
 #include <mars/interfaces/sim/LoadSceneInterface.h>
 #include <mars/interfaces/sim/ControlCenter.h>
-
-#include <mars/interfaces/NodeData.h>
-
-#include <mars/sim/SimNode.h>
-#include <mars/sim/JointRecord.h>
-#include <mars/sim/defines.hpp>
 
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/graph/GraphTypes.hpp>
 #include <envire_core/items/Transform.hpp>
 
-#include <smurf/Robot.hpp>
+#include <maps/grid/MLSMap.hpp>
+
 
 namespace mars {
   namespace plugins {
-    namespace EnvireSmurfLoader {
+    namespace EnvireGraphLoader {
+
+      using mlsPrec = maps::grid::MLSMapPrecalculated;
+      using mlsKal = maps::grid::MLSMapKalman;
 
       // inherit from MarsPluginTemplateGUI for extending the gui
-      class EnvireSmurfLoader: public mars::interfaces::LoadSceneInterface {
+      class EnvireGraphLoader: public mars::interfaces::LoadSceneInterface {
 
 
       public:
-        EnvireSmurfLoader(lib_manager::LibManager *theManager);
-        ~EnvireSmurfLoader();
+        EnvireGraphLoader(lib_manager::LibManager *theManager);
+        ~EnvireGraphLoader();
 
         envire::core::GraphTraits::vertex_descriptor addCenter();
 
@@ -70,7 +66,7 @@ namespace mars {
         int getLibVersion() const
         { return 1; }
         const std::string getLibName() const
-        { return std::string("envire_smurf_loader"); }
+        { return std::string("envire_mls_loader"); }
         CREATE_MODULE_INFO();
 
         virtual bool loadFile(std::string filename, std::string tmpPath,
@@ -82,33 +78,19 @@ namespace mars {
 
         virtual int saveFile(std::string filename, std::string tmpPath);
 
+        void loadMLSMap(const std::string & mlsPath);
+
       private:
         interfaces::ControlCenter *control;
 
-        void addFloor(const envire::core::GraphTraits::vertex_descriptor &center);
-
-        void addRobot(std::string filename,  envire::core::GraphTraits::vertex_descriptor center, envire::core::Transform iniPose);
-
-        int nextGroupId;
-
-        void createSimObjects();
-
-        void loadNodes();
-        void loadJoints();
-        void loadMotors();
-        void loadSensors();
-
-        bool getSimObject(const envire::core::FrameId& frameName, std::shared_ptr<mars::sim::SimNode>& objectSim);
-
-        template <class ItemDataType>
-        void loadJoint(envire::core::EnvireGraph::vertex_iterator v_itr, std::string type_name);
+        mlsPrec getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId mlsFrameId);
 
         envire::core::FrameId center;
 
-      }; // end of class definition EnvireSmurfLoader
+      }; // end of class definition EnvireGraphLoader
 
-    } // end of namespace EnvireSmurfLoader
+    } // end of namespace EnvireGraphLoader
   } // end of namespace plugins
 } // end of namespace mars
 
-#endif // MARS_PLUGINS_ENVIRESMURFLOADER
+#endif // MARS_PLUGINS_ENVIRESGRAPHLOADER

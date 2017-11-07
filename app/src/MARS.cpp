@@ -201,6 +201,7 @@ namespace mars {
           libManager->loadLibrary("envire_managers");
 
           libManager->loadLibrary("envire_smurf_loader");
+          libManager->loadLibrary("envire_graph_loader");
           //libManager->loadLibrary("mars_smurf")
           //libManager->loadLibrary("mars_smurf_loader");
           //libManager->loadLibrary("envire_physics");
