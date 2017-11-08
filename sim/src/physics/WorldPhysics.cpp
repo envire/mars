@@ -253,6 +253,12 @@ namespace mars {
           old_erp = world_erp;
           dWorldSetERP(world, (dReal)world_erp);
         }
+        // Check that we have the collision frames 
+        // TODO The collision frames
+        // should be updated if more collidables are included
+        if(colFrames.empty()){
+          getAllColFrames();
+        }
     }
 
     /** 
@@ -302,13 +308,12 @@ namespace mars {
      * Returns all frames that contain collidable objects 
      *
      */
-    std::vector<envire::core::FrameId> WorldPhysics::getAllColFrames(void)
+    void WorldPhysics::getAllColFrames(void)
     {
       using CollisionType = smurf::Collidable;
       using CollisionItem = envire::core::Item<CollisionType>;
       using IterCollItem = envire::core::EnvireGraph::ItemIterator<CollisionItem>;
       // Find out the frames which contain a collidablem put them in a vector and pass it to the callback
-      std::vector<envire::core::FrameId> colFrames;
       envire::core::EnvireGraph::vertex_iterator  it, end;
       std::tie(it, end) = control->graph->getVertices();
       for(; it != end; ++it)
@@ -325,7 +330,6 @@ namespace mars {
 #endif
           }
       }
-      return colFrames;
     }
 
     /** 
@@ -360,8 +364,7 @@ namespace mars {
 #ifdef DEBUG_MARS
         std::cout << "[WorldPhysics::computeMLSCollisions]: Mls map was fetched from the graph "<< std::endl;  
 #endif
-        // Get the frames that contain collidables
-        std::vector<envire::core::FrameId> colFrames = getAllColFrames();
+        // The frames that contain collidables are obtained in stepTheWorldChecks (only once)
 #ifdef DEBUG_MARS
         int countCollisions = 0;
 #endif
