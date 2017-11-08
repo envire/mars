@@ -679,16 +679,6 @@ namespace mars {
 	}
     }
 
-    /** 
-     * \brief Returns true if an MLS exists in the Envire graph. Currently it
-     * is assumed that if the frame with name MLS_FRAME_NAME exists then a MLS
-     * exists
-     */
-    bool WorldPhysics::mlsInEnvire(void)
-    {
-      return control->graph->containsFrame(MLS_FRAME_NAME);
-    }
-
     /**
      * \brief This function handles the calculation of a step in the world.
      *
@@ -711,7 +701,10 @@ namespace mars {
       if (world_init && step_size > 0){
         stepTheWorldChecks();
         clearPreviousStep();
-        if (mlsInEnvire()){
+        // TODO Check here not only that the mls frame exists but also that a
+        // MLS is loaded there. Currently it is assumed that if the frame with
+        // name MLS_FRAME_NAME exists then a MLS exists
+        if (control->graph->containsFrame(MLS_FRAME_NAME)){
           computeMLSCollisions();
         }
         dSpaceCollide(space,this, &WorldPhysics::callbackForward);
