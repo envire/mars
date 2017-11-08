@@ -201,7 +201,7 @@ namespace mars {
      *     - afte that, world_init have to become false
      */
     void WorldPhysics::freeTheWorld(void) {
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::freeTheWorld] START" << std::endl; 
 #endif
       MutexLocker locker(&iMutex);
@@ -211,7 +211,7 @@ namespace mars {
         dWorldDestroy(world);
         world_init = 0;
       }
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::freeTheWorld] START" << std::endl; 
 #endif
       // else debug something
@@ -268,7 +268,7 @@ namespace mars {
      *
      */
     void WorldPhysics::clearPreviousStep(void){
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::clearPreviousStep] START" << std::endl; 
 #endif
       // Clear Previous Collisions
@@ -297,7 +297,7 @@ namespace mars {
         free((*iter));
       }
       contact_feedback_list.clear();
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::clearPreviousStep] END" << std::endl; 
 #endif
     }
@@ -325,7 +325,7 @@ namespace mars {
           {
               envire::core::FrameId colFrame = control->graph->getFrameId(*it);
               colFrames.push_back(colFrame);
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
               std::cout << "Collision items found in frame " << colFrame << std::endl;
 #endif
           }
@@ -361,16 +361,16 @@ namespace mars {
       if (beginItem != endItem)
       {
         mlsType mls = beginItem->getData();
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
         std::cout << "[WorldPhysics::computeMLSCollisions]: Mls map was fetched from the graph "<< std::endl;  
 #endif
         // The frames that contain collidables are obtained in stepTheWorldChecks (only once)
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
         int countCollisions = 0;
 #endif
         for(unsigned int frameIndex = 0; frameIndex<colFrames.size(); ++frameIndex)
         {
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
           std::cout << "[WorldPhysics::computeMLSCollisions]: Collision related to frame " << colFrames[frameIndex] << std::endl;
 #endif
           // Transformation must be from the mls frame to the colision object frame
@@ -408,17 +408,17 @@ namespace mars {
           }
           if (collisionComputed)
           {
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
             std::cout << "\n[WorldPhysics::computeMLSCollisions]: isCollision()==" << result.isCollision() << std::endl;
 #endif
             if (result.isCollision())
             {
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
               std::cout << "\n [WorldPhysics::computeMLSCollisions]: Collision detected related to frame " << colFrames[frameIndex] << std::endl;
 #endif
               // Here a method createContacts will put the joints that correspond
               createContacts(result, collidable, colFrames[frameIndex] ); 
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
               for(size_t i=0; i< result.numContacts(); ++i)
               {
                   countCollisions ++;
@@ -431,7 +431,7 @@ namespace mars {
             }
           }
         }
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
         std::cout << "Total collisions found " << countCollisions << std::endl; 
         std::cout << "Collision Check Finished " << std::endl;
 #endif
@@ -447,7 +447,7 @@ namespace mars {
       contactPtr[0].surface.mode = dContactSoftERP | dContactSoftCFM;
       //contactPtr[0].surface.soft_cfm = contactParams.cfm;
       contactPtr[0].surface.soft_cfm = ground_cfm;
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::InitContactParameters] contactPtr[0].surface.soft_cfm " << contactPtr[0].surface.soft_cfm << std::endl;
       std::cout << "[WorldPhysics::InitContactParameters] ContactParams.cfm : " << contactParams.cfm <<std::endl;
       std::cout << "[WorldPhysics::InitContactParameters] ContactParams.erp : " << contactParams.erp <<std::endl;
@@ -505,7 +505,7 @@ namespace mars {
     }
 
     void WorldPhysics::createFeedbackJoints( const envire::core::FrameId frameId, const smurf::ContactParams contactParams, dContact *contactPtr, int numContacts){
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::createFeedbackJoints] " << frameId << std::endl;
 #endif
       //numContacts is the number of collisions detected by fcl between the robot and the mls
@@ -554,7 +554,7 @@ namespace mars {
           envire::core::EnvireGraph::ItemIterator<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>> begin, end;
           boost::tie(begin, end) = control->graph->getItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(frameId);
           if (begin != end){
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
             std::cout << "[WorldPhysics::createFeedbackJoints] We have the simnode! " << std::endl;
 #endif            
             std::shared_ptr<mars::sim::SimNode> nodePtr = begin->getData();
@@ -563,7 +563,7 @@ namespace mars {
             fb = (dJointFeedback*)malloc(sizeof(dJointFeedback));
             dJointSetFeedback(c, fb);
             contact_feedback_list.push_back(fb);
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
             Vector contact_point;
             contact_point.x() = contactPtr[0].geom.pos[0];
             contact_point.y() = contactPtr[0].geom.pos[1];
@@ -577,14 +577,14 @@ namespace mars {
           }
         } // for numContacts
       } // if create contacts
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::createFeedbackJoints] All done here " << std::endl;
 #endif            
     }
 
     void WorldPhysics::dumpFCLResult(const fcl::CollisionResultf &result, dContact *contactPtr)
     {
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::dumpFCLResults] To Dump: " << std::endl;
       for(size_t i=0; i< result.numContacts(); ++i)
       {
@@ -617,7 +617,7 @@ namespace mars {
         contactPtr[i].geom.depth = 2.0*std::abs(depth);
       }
 
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::dumpFCLResults] Result: " << std::endl;
       Vector vNormal;
       Vector contact_point;
@@ -644,7 +644,7 @@ namespace mars {
      * The method is based on what nearCallback was doing
      */
     void WorldPhysics::createContacts(const fcl::CollisionResultf & result, smurf::Collidable collidable, const envire::core::FrameId frameId){
-#ifdef DEBUG_MARS
+#ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::CreateContacts] Collidable " << collidable.getName() << std::endl;
 #endif
       // Init dContact
