@@ -51,13 +51,9 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/intrusive_ptr.hpp>	
 
-#include <envire_core/graph/EnvireGraph.hpp>
-#include <envire_core/items/Item.hpp>
 
-#include <maps/grid/MLSMap.hpp>
+
 #include <smurf/Collidable.hpp>
-
-
 
 namespace mars {
   namespace sim {
@@ -129,6 +125,9 @@ namespace mars {
       dSetErrorHandler (myErrorFunction);
       dSetDebugHandler (myDebugFunction);
       dSetMessageHandler (myMessageFunction);
+      mlsFrameId = MLS_FRAME_NAME;
+      mlsLoaded = false;
+      
     }
 
     /**
@@ -259,6 +258,29 @@ namespace mars {
         if(colFrames.empty()){
           getAllColFrames();
         }
+
+        if(control->graph->containsFrame(MLS_FRAME_NAME) && (!mlsLoaded))
+        {
+          envire::core::EnvireGraph::ItemIterator<envire::core::Item<mlsType>> beginItem, endItem;
+          boost::tie(beginItem, endItem) = control->graph->getItems<envire::core::Item<mlsType>>(mlsFrameId);
+          if (beginItem != endItem)
+          {
+#ifdef DEBUG_WORLD_PHYSICS
+            std::cout << "[WorldPhysics::stepTheWorldChecks]: About to set the mls value "<< std::endl;  
+#endif    
+            mls = beginItem->getData();
+            mlsLoaded = true;
+#ifdef DEBUG_WORLD_PHYSICS
+            std::cout << "[WorldPhysics::stepTheWorldChecks]: Mls map was fetched from the graph "<< std::endl;  
+#endif    
+          }
+          else
+          {
+#ifdef DEBUG_WORLD_PHYSICS
+            std::cout << "[WorldPhysics::stepTheWorldChecks]: Mls map was not found yet in the graph "<< std::endl;  
+#endif    
+          }
+        }
     }
 
     /** 
@@ -326,7 +348,7 @@ namespace mars {
               envire::core::FrameId colFrame = control->graph->getFrameId(*it);
               colFrames.push_back(colFrame);
 #ifdef DEBUG_WORLD_PHYSICS
-              std::cout << "Collision items found in frame " << colFrame << std::endl;
+              std::cout << "[WorldPhysics::getAllColFrames] Collision items found in frame " << colFrame << std::endl;
 #endif
           }
       }
@@ -349,97 +371,78 @@ namespace mars {
       /*
        * Here only the collisions between the MLS and collidable objects are
        * processed
+       *The frames that contain collidables are obtained in stepTheWorldChecks (only once)
        */
-      // Get the mls
-      using mlsType = maps::grid::MLSMapPrecalculated;
-      using CollisionType = smurf::Collidable;
-      using CollisionItem = envire::core::Item<CollisionType>;
-      using IterCollItem = envire::core::EnvireGraph::ItemIterator<CollisionItem>;
-      envire::core::EnvireGraph::ItemIterator<envire::core::Item<mlsType>> beginItem, endItem;
-      envire::core::FrameId mlsFrameId = MLS_FRAME_NAME;
-      boost::tie(beginItem, endItem) = control->graph->getItems<envire::core::Item<mlsType>>(mlsFrameId);
-      if (beginItem != endItem)
+#ifdef DEBUG_WORLD_PHYSICS
+      int countCollisions = 0;
+#endif
+      for(unsigned int frameIndex = 0; frameIndex<colFrames.size(); ++frameIndex)
       {
-        mlsType mls = beginItem->getData();
 #ifdef DEBUG_WORLD_PHYSICS
-        std::cout << "[WorldPhysics::computeMLSCollisions]: Mls map was fetched from the graph "<< std::endl;  
+        std::cout << "[WorldPhysics::computeMLSCollisions]: Collision related to frame " << colFrames[frameIndex] << std::endl;
 #endif
-        // The frames that contain collidables are obtained in stepTheWorldChecks (only once)
-#ifdef DEBUG_WORLD_PHYSICS
-        int countCollisions = 0;
-#endif
-        for(unsigned int frameIndex = 0; frameIndex<colFrames.size(); ++frameIndex)
+        // Transformation must be from the mls frame to the colision object frame
+        envire::core::Transform tfColCen = control->graph->getTransform(MLS_FRAME_NAME, colFrames[frameIndex]);
+        fcl::Transform3f trafo = tfColCen.transform.getTransform().cast<float>();
+        // Get the collision objects -Assumes only one per frame-
+        IterCollItem itCols;
+        itCols = control->graph->getItem<CollisionItem>(colFrames[frameIndex]); 
+        smurf::Collidable collidable = itCols->getData();
+        urdf::Collision collision = collidable.getCollision();
+        // Prepare fcl call
+        fcl::CollisionRequestf request(10, true, 10, true);
+        fcl::CollisionResultf result;
+        bool collisionComputed = true;
+        switch (collision.geometry->type){
+          case urdf::Geometry::SPHERE:
+            {
+              //std::cout << "Collision with a sphere" << std::endl;
+              urdf::SphereSharedPtr sphereUrdf = urdf::dynamic_pointer_cast<urdf::Sphere>(collision.geometry);
+              fcl::Spheref sphere(sphereUrdf->radius);
+              fcl::collide_mls(mls, trafo, &sphere, request, result);
+              break;
+            }
+          case urdf::Geometry::BOX:
+            {
+              //std::cout << "Collision with a box" << std::endl;
+              urdf::BoxSharedPtr boxUrdf = urdf::dynamic_pointer_cast<urdf::Box>(collision.geometry);
+              fcl::Boxf box(boxUrdf->dim.x, boxUrdf->dim.y, boxUrdf->dim.z);
+              fcl::collide_mls(mls, trafo, &box, request, result);
+              break;
+            }
+          default:
+            std::cout << "[WorldPhysics::computeMLSCollisions]: Collision with the selected geometry type not implemented" << std::endl;
+            collisionComputed = false;
+        }
+        if (collisionComputed)
         {
 #ifdef DEBUG_WORLD_PHYSICS
-          std::cout << "[WorldPhysics::computeMLSCollisions]: Collision related to frame " << colFrames[frameIndex] << std::endl;
+          std::cout << "\n[WorldPhysics::computeMLSCollisions]: isCollision()==" << result.isCollision() << std::endl;
 #endif
-          // Transformation must be from the mls frame to the colision object frame
-          envire::core::Transform tfColCen = control->graph->getTransform(MLS_FRAME_NAME, colFrames[frameIndex]);
-          fcl::Transform3f trafo = tfColCen.transform.getTransform().cast<float>();
-          // Get the collision objects -Assumes only one per frame-
-          IterCollItem itCols;
-          itCols = control->graph->getItem<CollisionItem>(colFrames[frameIndex]); 
-          smurf::Collidable collidable = itCols->getData();
-          urdf::Collision collision = collidable.getCollision();
-          // Prepare fcl call
-          fcl::CollisionRequestf request(10, true, 10, true);
-          fcl::CollisionResultf result;
-          bool collisionComputed = true;
-          switch (collision.geometry->type){
-              case urdf::Geometry::SPHERE:
-                  {
-                      //std::cout << "Collision with a sphere" << std::endl;
-                      urdf::SphereSharedPtr sphereUrdf = urdf::dynamic_pointer_cast<urdf::Sphere>(collision.geometry);
-                      fcl::Spheref sphere(sphereUrdf->radius);
-                      fcl::collide_mls(mls, trafo, &sphere, request, result);
-                      break;
-                  }
-              case urdf::Geometry::BOX:
-                  {
-                      //std::cout << "Collision with a box" << std::endl;
-                      urdf::BoxSharedPtr boxUrdf = urdf::dynamic_pointer_cast<urdf::Box>(collision.geometry);
-                      fcl::Boxf box(boxUrdf->dim.x, boxUrdf->dim.y, boxUrdf->dim.z);
-                      fcl::collide_mls(mls, trafo, &box, request, result);
-                      break;
-                  }
-              default:
-                  std::cout << "[WorldPhysics::computeMLSCollisions]: Collision with the selected geometry type not implemented" << std::endl;
-                  collisionComputed = false;
-          }
-          if (collisionComputed)
+          if (result.isCollision())
           {
 #ifdef DEBUG_WORLD_PHYSICS
-            std::cout << "\n[WorldPhysics::computeMLSCollisions]: isCollision()==" << result.isCollision() << std::endl;
+            std::cout << "\n [WorldPhysics::computeMLSCollisions]: Collision detected related to frame " << colFrames[frameIndex] << std::endl;
 #endif
-            if (result.isCollision())
+            // Here a method createContacts will put the joints that correspond
+            createContacts(result, collidable, colFrames[frameIndex] ); 
+#ifdef DEBUG_WORLD_PHYSICS
+            for(size_t i=0; i< result.numContacts(); ++i)
             {
-#ifdef DEBUG_WORLD_PHYSICS
-              std::cout << "\n [WorldPhysics::computeMLSCollisions]: Collision detected related to frame " << colFrames[frameIndex] << std::endl;
-#endif
-              // Here a method createContacts will put the joints that correspond
-              createContacts(result, collidable, colFrames[frameIndex] ); 
-#ifdef DEBUG_WORLD_PHYSICS
-              for(size_t i=0; i< result.numContacts(); ++i)
-              {
-                  countCollisions ++;
-                  const auto & cont = result.getContact(i);
-                  std::cout << "[WorldPhysics::computeMLSCollisions]: Contact transpose " << cont.pos.transpose() << std::endl;
-                  std::cout << "[WorldPhysics::computeMLSCollisions]: Contact normal transpose " << cont.normal.transpose() << std::endl;
-                  std::cout << "[WorldPhysics::computeMLSCollisions]: Contact penetration depth " << cont.penetration_depth << std::endl;
-              }
-#endif
+              countCollisions ++;
+              const auto & cont = result.getContact(i);
+              std::cout << "[WorldPhysics::computeMLSCollisions]: Contact transpose " << cont.pos.transpose() << std::endl;
+              std::cout << "[WorldPhysics::computeMLSCollisions]: Contact normal transpose " << cont.normal.transpose() << std::endl;
+              std::cout << "[WorldPhysics::computeMLSCollisions]: Contact penetration depth " << cont.penetration_depth << std::endl;
             }
+#endif
           }
         }
+      }
 #ifdef DEBUG_WORLD_PHYSICS
-        std::cout << "Total collisions found " << countCollisions << std::endl; 
-        std::cout << "Collision Check Finished " << std::endl;
+      std::cout << "Total collisions found " << countCollisions << std::endl; 
+      std::cout << "Collision Check Finished " << std::endl;
 #endif
-      }
-      else
-      {
-        std::cout << "No MLS found in frame "<< MLS_FRAME_NAME << std::endl;  
-      }
     }
 
     void WorldPhysics::initContactParams(dContact *contactPtr, const smurf::ContactParams contactParams, int numContacts){
@@ -515,8 +518,9 @@ namespace mars {
       dReal dot;
       num_contacts++;
       if(create_contacts){
+#ifdef DRAW_MLS_CONTACTS
+        // NOTE Comment out this, so we don't draw the contacts
         draw_item item;
-        
         item.id = 0;
         item.type = DRAW_LINE;
         item.draw_state = DRAW_STATE_CREATE;
@@ -529,6 +533,7 @@ namespace mars {
         item.t_width = item.t_height = 0;
         item.texture = "";
         item.get_light = 0;
+#endif
         for(int i=0;i<numContacts;i++){
           if(contactParams.friction_direction1) {
             v[0] = contactPtr[i].geom.normal[0];
@@ -543,6 +548,7 @@ namespace mars {
           }
           contactPtr[0].geom.depth += (contactParams.depth_correction);
           if(contactPtr[0].geom.depth < 0.0) contactPtr[0].geom.depth = 0.0;
+#ifdef DRAW_MLS_CONTACTS
           item.start.x() = contactPtr[i].geom.pos[0];
           item.start.y() = contactPtr[i].geom.pos[1];
           item.start.z() = contactPtr[i].geom.pos[2];
@@ -550,6 +556,7 @@ namespace mars {
           item.end.y() = contactPtr[i].geom.pos[1] + contactPtr[i].geom.normal[1];
           item.end.z() = contactPtr[i].geom.pos[2] + contactPtr[i].geom.normal[2];
           draw_intern.push_back(item);
+#endif
           dJointID c=dJointCreateContact(world,contactgroup,contactPtr+i);
           envire::core::EnvireGraph::ItemIterator<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>> begin, end;
           boost::tie(begin, end) = control->graph->getItems<envire::core::Item<std::shared_ptr<mars::sim::SimNode>>>(frameId);
@@ -704,10 +711,17 @@ namespace mars {
         // TODO Check here not only that the mls frame exists but also that a
         // MLS is loaded there. Currently it is assumed that if the frame with
         // name MLS_FRAME_NAME exists then a MLS exists
-        if (control->graph->containsFrame(MLS_FRAME_NAME)){
+        if (mlsLoaded){
           computeMLSCollisions();
+        } 
+        else 
+        // NOTE TODO Only compute collision between other objects if an mls is
+        // not included. This is a fix to increase the speed of the simulations
+        // when MLS is used. Both collision checks in parallel should be
+        // possible in the future
+        {
+          dSpaceCollide(space,this, &WorldPhysics::callbackForward);
         }
-        dSpaceCollide(space,this, &WorldPhysics::callbackForward);
         // Update draw (I guess) //TODO: Can we remove all draw stuff?
         drawLock.lock();
         draw_extern.swap(draw_intern);

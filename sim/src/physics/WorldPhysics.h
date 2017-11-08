@@ -35,6 +35,8 @@
 //#define _VERIFY_WORLD_
 //#define _DEBUG_MASS_
 
+#include "defines.hpp"
+
 #include <mars/utils/Mutex.h>
 #include <mars/utils/Vector.h>
 #include <mars/interfaces/sim_common.h>
@@ -49,14 +51,24 @@
 #include <ode/ode.h>
 
 #include <envire_core/items/Frame.hpp>
+#include <envire_core/items/Item.hpp>
+#include <envire_core/graph/EnvireGraph.hpp>
+
 #include <envire_fcl/Collision.hpp>
-#include "defines.hpp"
+
+#include <maps/grid/MLSMap.hpp>
+
 
 
 namespace mars {
   namespace sim {
 
     class NodePhysics;
+
+    using mlsType = maps::grid::MLSMapPrecalculated;
+    using CollisionType = smurf::Collidable;
+    using CollisionItem = envire::core::Item<CollisionType>;
+    using IterCollItem = envire::core::EnvireGraph::ItemIterator<CollisionItem>;
 
     /**
      * The struct is used to handle some sensors in the physical
@@ -136,6 +148,9 @@ namespace mars {
       bool create_contacts, log_contacts;
       int num_contacts;
       int ray_collision;
+      envire::core::FrameId mlsFrameId;
+      bool mlsLoaded;
+      mlsType mls;
       // this functions are for the collision implementation
       void nearCallback (dGeomID o1, dGeomID o2);
       static void callbackForward(void *data, dGeomID o1, dGeomID o2);
