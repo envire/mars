@@ -399,7 +399,13 @@ namespace mars {
               //std::cout << "Collision with a sphere" << std::endl;
               urdf::SphereSharedPtr sphereUrdf = urdf::dynamic_pointer_cast<urdf::Sphere>(collision.geometry);
               fcl::Spheref sphere(sphereUrdf->radius);
+#ifdef DEBUG_WORLD_PHYSICS
+              std::cout << "[WorldPhysics::computeMLSCollisions]: About to request fcl collision" << std::endl;
+#endif
               fcl::collide_mls(mls, trafo, &sphere, request, result);
+#ifdef DEBUG_WORLD_PHYSICS
+              std::cout << "[WorldPhysics::computeMLSCollisions]: Request form fcl collision answered" << std::endl;
+#endif
               break;
             }
           case urdf::Geometry::BOX:

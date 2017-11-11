@@ -29,6 +29,7 @@
 #pragma once
 
 #include <mars/interfaces/sim/MarsPluginTemplate.h>
+#include <mars/interfaces/sim/MotorManagerInterface.h>
 #include <mars/interfaces/MARSDefs.h>
 #include <mars/interfaces/NodeData.h>
 
@@ -83,6 +84,7 @@ namespace mars {
         //void deserializeMLS(const std::string & mlsPath);
         mars::interfaces::NodeData* setUpNodeData();
         mlsPrec getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId mlsFrameId);
+        void moveForwards();
 
         // Private members
  	maps::grid::MLSMapPrecalculated mlsPrecalculated;
@@ -93,6 +95,7 @@ namespace mars {
         bool moved;
         envire::core::FrameId mlsFrameId;
         envire::core::FrameId centerFrameId;
+        bool movingForward;
 
         //EnvireSmurfLoader::EnvireSmurfLoader* theLoader;
 
