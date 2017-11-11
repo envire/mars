@@ -43,6 +43,8 @@
 #include <mars/sim/defines.hpp>
 #include <mars/sim/SimMotor.h>
 
+#include <base/TransformWithCovariance.hpp>
+
 #define MLS_NAME std::string("mls_01")
 #define DUMPED_MLS_FRAME_NAME std::string("mls_map")
 //#define SIM_CENTER_FRAME_NAME std::string("center")
@@ -76,6 +78,11 @@ const std::vector<std::string> MOTOR_NAMES{"wheel_front_left_motor", "wheel_fron
 
 const bool MOVE_FORWARD=true;
 const double SPEED=0.5;
+
+const bool LOAD_PLY=true;
+
+const std::string PLY_FILE = "/simulation/mars/plugins/envire_mls/testPLYData/pointcloud-20171110-2230.ply";
+
 
 namespace mars {
   namespace plugins {
@@ -130,7 +137,7 @@ namespace mars {
             double(MLS_FRAME_TF_Z));
 #endif
         control->graph->addTransform(SIM_CENTER_FRAME_NAME, MLS_FRAME_NAME, mlsTf);
-        tested = false;
+        sceneLoaded = false;
         moved = false;
         movingForward = false;
       }
@@ -141,11 +148,11 @@ namespace mars {
 
       void EnvireMls::update(sReal time_ms) 
       {
-        if (not tested){
+        if (not sceneLoaded){
           //testAddMLS();
           testAddMLSAndRobot();
 
-          tested = true;
+          sceneLoaded = true;
         }
         else{
             if (not moved){
@@ -299,7 +306,14 @@ namespace mars {
         std::string path = std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH;
         LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] Mls to test with: " + path); 
 #endif
-        loadMLSMap(std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH);
+        if (LOAD_PLY)
+        {
+            loadSlopedFromPLY();
+        }
+        else
+        {
+            loadMLSMap(std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH);
+        }
         // Next is to instantiate a load the correspondent nodeData
         //addMLSNode();
         
@@ -324,6 +338,32 @@ namespace mars {
 #endif 
           }
           movingForward = true;
+      }
+
+      void EnvireMls::loadSlopedFromPLY()
+      {
+#ifdef DEBUG
+          LOG_DEBUG( "[EnvireMls::loadSlopedFromPLY] Start"); 
+#endif
+          pcl::PLYReader reader;
+          pcl::PointCloud<pcl::PointXYZ> cloud;
+          reader.read(std::getenv(ENV_AUTOPROJ_ROOT) + PLY_FILE, cloud);
+#ifdef DEBUG
+          LOG_DEBUG( "[EnvireMls::loadSlopedFromPLY] Cloud has been generated"); 
+#endif  
+          Vector2ui num_cells {2500, 2500};
+          const Vector2d resolution {0.3, 0.3};
+          const MLSConfig config; // Thickness, gapsize
+          mlsSloped mlsS(num_cells, resolution, config);
+          mlsS.getLocalFrame().translation() << 0.5*mlsS.getSize(), 0;
+          base::TransformWithCovariance tf = base::TransformWithCovariance::Identity();
+          tf.setCovariance(base::TransformWithCovariance::Covariance::Identity()*0.001);
+          mlsS.mergePointCloud(cloud, tf);
+          Item<mlsPrec>::Ptr mlsItemPtr(new Item<mlsPrec>(mlsS));
+          control->graph->addItemToFrame(mlsFrameId, mlsItemPtr);
+#ifdef DEBUG
+          LOG_DEBUG( "[EnvireMls::loadSlopedFromPLY] MLS loaded to graph"); 
+#endif  
       }
 
     } // end of namespace envire_mls

@@ -11,6 +11,7 @@
     <depend package="simulation/mars/sim" />
     <depend package="envire/envire_core" />
     <depend package="envire/envire_collider_mls" />
+    <depend package="base/types" />
 
     <tags>needs_opt</tags>
 </package>

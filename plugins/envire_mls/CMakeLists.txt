@@ -8,12 +8,17 @@ find_package(lib_manager)
 lib_defaults()
 define_module_info()
 
+find_package(PCL 1.8 REQUIRED COMPONENTS common)
+set(PCL_LIBS pcl_common-${PCL_VERSION_MAJOR}.${PCL_VERSION_MINOR} pcl_io-${PCL_VERSION_MAJOR}.${PCL_VERSION_MINOR})
+
 pkg_check_modules(PKGCONFIG REQUIRED
 			    lib_manager
                             envire_core
                             mars_sim
                             envire_collider_mls
                             envire_smurf_loader
+                            ${PCL_LIBS}
+                            base-types
 )
 include_directories(${PKGCONFIG_INCLUDE_DIRS})
 link_directories(${PKGCONFIG_LIBRARY_DIRS})
