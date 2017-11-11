@@ -100,6 +100,7 @@ set(SOURCES_H
        src/physics/NodePhysics.h
        src/physics/WorldPhysics.h
        src/physics/defines.hpp
+       src/physics/WorldPhysicsConstants.hpp
        #src/physics/ItemPhysics.h
        
        src/sensors/CameraSensor.h

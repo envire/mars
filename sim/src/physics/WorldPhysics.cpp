@@ -38,6 +38,7 @@
 
 #include "WorldPhysics.h"
 #include "NodePhysics.h"
+#include "WorldPhysicsConstants.hpp"
 
 
 #include <mars/utils/MutexLocker.h>
@@ -94,24 +95,28 @@ namespace mars {
     WorldPhysics::WorldPhysics(ControlCenter *control) {
 
       this->control = control;
+
+      fast_step = world_physics_constants::FAST_STEP;
+      world_cfm = world_physics_constants::WORLD_CFM;
+      world_erp = world_physics_constants::WORLD_ERP;
+      world_gravity = world_physics_constants::WORLD_GRAVITY;
+      ground_friction = world_physics_constants::GROUND_FRICTION;
+
+      ground_cfm = world_physics_constants::GROUND_CFM;
+      ground_erp = world_physics_constants::GROUND_ERP;
+      // the step size in seconds
+      step_size =  world_physics_constants::STEP_SIZE;
+
       draw_contact_points = 0;
-      fast_step = 0;
-      world_cfm = 1e-10;
-      world_erp = 0.1;
-      world_gravity = Vector(0.0, 0.0, -9.81);
-      ground_friction = 20;
-      ground_cfm = 0.00000001;
-      ground_erp = 0.1;
       world = 0;
       space = 0;
       contactgroup = 0;
       world_init = 0;
-      num_contacts = 0;
+      // NOTE: I think that setting num_contacts value here doesn't make sense. It will
+      // be overwritten before used
+      num_contacts = 0; 
       create_contacts = 1;
       log_contacts = 0;
-
-      // the step size in seconds
-      step_size = 0.01;
       // dInitODE is relevant for using trimesh objects as correct as
       // possible in the ode implementation
       MutexLocker locker(&iMutex);

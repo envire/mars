@@ -58,6 +58,7 @@
 
 #include <maps/grid/MLSMap.hpp>
 
+#include <pcl/io/ply_io.h>
 
 
 namespace mars {
