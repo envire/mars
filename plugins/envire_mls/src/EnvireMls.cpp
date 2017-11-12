@@ -45,10 +45,6 @@
 
 #include <base/TransformWithCovariance.hpp>
 
-#define MLS_NAME std::string("mls_01")
-#define DUMPED_MLS_FRAME_NAME std::string("mls_map")
-//#define SIM_CENTER_FRAME_NAME std::string("center")
-#define ENV_AUTOPROJ_ROOT "AUTOPROJ_CURRENT_ROOT"
 //#define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
 //#define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/mls_map-cave-20171109.graph")
 #define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/mls_map-cave-20171110.graph")
@@ -65,11 +61,6 @@
 
 #define ROBOT_TEST_POS  mars::utils::Vector(-3.5,-1,0)
 #define ROBOT_TEST_Z_ROT  mars::utils::Vector(0,0,-90.0)
-#define ROBOT_NAME std::string("Asguard_v4")
-
-#define ROBOT_ROOT_LINK_NAME std::string("body")
-
-#define ASGUARD_PATH std::string("/models/robots/asguard_v4/smurf/asguard_v4.smurf")
 
 #define DEBUG 0
 
@@ -221,7 +212,7 @@ namespace mars {
         Vector pos = mlsTransform.transform.translation;
         NodeData* node(new NodeData);
         //NodeData* node(new NodeData);
-        node->init(MLS_NAME, pos);
+        node->init(MLS_FRAME_NAME, pos);
         node->physicMode = interfaces::NODE_TYPE_MLS;
         //node->env_path = mlsPath;
 
