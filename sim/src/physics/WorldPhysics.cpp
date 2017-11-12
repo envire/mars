@@ -130,7 +130,7 @@ namespace mars {
       dSetErrorHandler (myErrorFunction);
       dSetDebugHandler (myDebugFunction);
       dSetMessageHandler (myMessageFunction);
-      mlsFrameId = MLS_FRAME_NAME;
+      mlsFrameId = constants::MLS_FRAME_NAME;
       mlsLoaded = false;
       
     }
@@ -264,7 +264,7 @@ namespace mars {
           getAllColFrames();
         }
 
-        if(control->graph->containsFrame(MLS_FRAME_NAME) && (!mlsLoaded))
+        if(control->graph->containsFrame(constants::MLS_FRAME_NAME) && (!mlsLoaded))
         {
           envire::core::EnvireGraph::ItemIterator<envire::core::Item<mlsType>> beginItem, endItem;
           boost::tie(beginItem, endItem) = control->graph->getItems<envire::core::Item<mlsType>>(mlsFrameId);
@@ -387,7 +387,7 @@ namespace mars {
         std::cout << "[WorldPhysics::computeMLSCollisions]: Collision related to frame " << colFrames[frameIndex] << std::endl;
 #endif
         // Transformation must be from the mls frame to the colision object frame
-        envire::core::Transform tfColCen = control->graph->getTransform(MLS_FRAME_NAME, colFrames[frameIndex]);
+        envire::core::Transform tfColCen = control->graph->getTransform(constants::MLS_FRAME_NAME, colFrames[frameIndex]);
         fcl::Transform3f trafo = tfColCen.transform.getTransform().cast<float>();
         // Get the collision objects -Assumes only one per frame-
         IterCollItem itCols;

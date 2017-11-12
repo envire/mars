@@ -99,7 +99,7 @@ set(SOURCES_H
        src/physics/JointPhysics.h
        src/physics/NodePhysics.h
        src/physics/WorldPhysics.h
-       src/physics/defines.hpp
+       src/physics/constants.hpp
        src/physics/WorldPhysicsConstants.hpp
        #src/physics/ItemPhysics.h
        

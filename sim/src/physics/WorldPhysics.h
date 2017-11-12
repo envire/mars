@@ -35,7 +35,7 @@
 //#define _VERIFY_WORLD_
 //#define _DEBUG_MASS_
 
-#include "defines.hpp"
+#include "constants.hpp"
 
 #include <mars/utils/Mutex.h>
 #include <mars/utils/Vector.h>
