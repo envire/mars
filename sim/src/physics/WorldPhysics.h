@@ -35,7 +35,7 @@
 //#define _VERIFY_WORLD_
 //#define _DEBUG_MASS_
 
-#include "constants.hpp"
+
 
 #include <mars/utils/Mutex.h>
 #include <mars/utils/Vector.h>
@@ -43,6 +43,7 @@
 #include <mars/interfaces/sim/ControlCenter.h>
 #include <mars/interfaces/sim/PhysicsInterface.h>
 #include <mars/interfaces/graphics/draw_structs.h>
+#include "constants.hpp"
 
 #include <smurf/Collidable.hpp>
 

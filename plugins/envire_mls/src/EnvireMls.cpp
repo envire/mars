@@ -40,7 +40,7 @@
 #include <mars/interfaces/sim/LoadCenter.h>
 #include <mars/interfaces/sim/NodeManagerInterface.h>
 #include <base/samples/RigidBodyState.hpp>
-#include <mars/sim/defines.hpp>
+#include <mars/sim/constants.hpp>
 #include <mars/sim/SimMotor.h>
 
 #include <base/TransformWithCovariance.hpp>
