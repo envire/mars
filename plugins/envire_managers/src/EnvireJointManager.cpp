@@ -251,13 +251,12 @@ namespace mars {
 
 
     std::vector<mars::sim::SimJoint*> EnvireJointManager::getSimJoints(void) {
-      printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-      // vector<SimJoint*> v_simJoints;
-      // map<unsigned long, SimJoint*>::iterator iter;
-      // MutexLocker locker(&iMutex);
-      // for (iter = simJoints.begin(); iter != simJoints.end(); iter++)
-      //   v_simJoints.push_back(iter->second);
-      // return v_simJoints;
+      std::vector<mars::sim::SimJoint*> v_simJoints;
+      JointMap::iterator iter;
+      mars::utils::MutexLocker locker(&iMutex);
+      for (iter = simJoints.begin(); iter != simJoints.end(); iter++)
+        v_simJoints.push_back(iter->second->getData().get());
+      return v_simJoints;
     }
 
 
