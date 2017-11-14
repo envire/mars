@@ -29,6 +29,7 @@
 #pragma once
 
 #include <mars/interfaces/sim/MarsPluginTemplate.h>
+#include <mars/interfaces/sim/MotorManagerInterface.h>
 #include <mars/interfaces/MARSDefs.h>
 #include <mars/interfaces/NodeData.h>
 
@@ -51,6 +52,7 @@ namespace mars {
 
       using mlsPrec = maps::grid::MLSMapPrecalculated;
       using mlsKal = maps::grid::MLSMapKalman;
+      using mlsSloped = maps::grid::MLSMapSloped;
       //using mlsType = maps::grid::MLSMap<maps::grid::MLSConfig::KALMAN>;
 
       // inherit from MarsPluginTemplateGUI for extending the gui
@@ -83,16 +85,19 @@ namespace mars {
         //void deserializeMLS(const std::string & mlsPath);
         mars::interfaces::NodeData* setUpNodeData();
         mlsPrec getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId mlsFrameId);
+        void moveForwards();
+        void loadSlopedFromPLY();
 
         // Private members
  	maps::grid::MLSMapPrecalculated mlsPrecalculated;
  	envire::collision::MLSCollision* mlsCollision;
 	boost::shared_ptr<maps::grid::MLSMapPrecalculated> mlsPtr;   	
 
-        bool tested;
+        bool sceneLoaded;
         bool moved;
         envire::core::FrameId mlsFrameId;
         envire::core::FrameId centerFrameId;
+        bool movingForward;
 
         //EnvireSmurfLoader::EnvireSmurfLoader* theLoader;
 

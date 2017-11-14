@@ -41,12 +41,13 @@
 #include <mars/interfaces/sim/NodeManagerInterface.h>
 #include <base/samples/RigidBodyState.hpp>
 #include <mars/sim/defines.hpp>
+#include <mars/sim/SimMotor.h>
 
-#define MLS_NAME std::string("mls_01")
-#define DUMPED_MLS_FRAME_NAME std::string("mls_map")
-//#define SIM_CENTER_FRAME_NAME std::string("center")
-#define ENV_AUTOPROJ_ROOT "AUTOPROJ_CURRENT_ROOT"
-#define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
+#include <base/TransformWithCovariance.hpp>
+
+//#define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
+//#define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/mls_map-cave-20171109.graph")
+#define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/mls_map-cave-20171110.graph")
 #define MLS_FRAME_TF_X 0.0
 #define MLS_FRAME_TF_Y 0.0
 #define MLS_FRAME_TF_Z 0.0
@@ -58,15 +59,21 @@
 #define GD_C_PARAMS_ERP 0.001
 #define GD_C_PARAMS_BOUNCE 0.0
 
-#define ROBOT_TEST_POS  mars::utils::Vector(0,5,1)
-#define ROBOT_TEST_ROT  mars::utils::Vector(0,180,0)
-#define ROBOT_NAME std::string("Asguard_v4")
+#define ROBOT_TEST_POS  mars::utils::Vector(-3.5,-1,0)
+#define ROBOT_TEST_Z_ROT  mars::utils::Vector(0,0,-90.0)
 
-#define ROBOT_ROOT_LINK_NAME std::string("body")
+#define DEBUG 0
 
-#define ASGUARD_PATH std::string("/models/robots/asguard_v4/smurf/asguard_v4.smurf")
 
-#define DEBUG 1
+const std::vector<std::string> MOTOR_NAMES{"wheel_front_left_motor", "wheel_front_right_motor", "wheel_rear_left_motor", "wheel_rear_right_motor"};
+
+const bool MOVE_FORWARD=true;
+const double SPEED=0.5;
+
+const bool LOAD_PLY=true;
+
+const std::string PLY_FILE = "/simulation/mars/plugins/envire_mls/testPLYData/pointcloud-20171110-2230.ply";
+
 
 namespace mars {
   namespace plugins {
@@ -121,8 +128,9 @@ namespace mars {
             double(MLS_FRAME_TF_Z));
 #endif
         control->graph->addTransform(SIM_CENTER_FRAME_NAME, MLS_FRAME_NAME, mlsTf);
-        tested = false;
+        sceneLoaded = false;
         moved = false;
+        movingForward = false;
       }
 
       void EnvireMls::reset() { }
@@ -131,18 +139,18 @@ namespace mars {
 
       void EnvireMls::update(sReal time_ms) 
       {
-        if (not tested){
+        if (not sceneLoaded){
           //testAddMLS();
           testAddMLSAndRobot();
 
-          tested = true;
+          sceneLoaded = true;
         }
         else{
             if (not moved){
                 // Let's test the move robot method
                 base::samples::RigidBodyState robotPose;
-                robotPose.position << 8.0, 5.0, 0.0;
-                robotPose.orientation = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX());
+                robotPose.position << ROBOT_TEST_POS.x(), ROBOT_TEST_POS.y(), ROBOT_TEST_POS.z();
+                robotPose.orientation = Eigen::AngleAxisd(ROBOT_TEST_Z_ROT.z(), Eigen::Vector3d::UnitZ());
                 envire::core::Transform robotTf(robotPose.position, robotPose.orientation);
                 //envire::core::Transform robotTf = robotPose.getTransform();
                 LOG_DEBUG("[EnvireMls::update] Robot Target Pose: %g, %g, %g", robotTf.transform.translation.x(), robotTf.transform.translation.y(), robotTf.transform.translation.z());
@@ -151,6 +159,9 @@ namespace mars {
                 //control->nodes->setTfToCenter(robotRootFrame, robotPose.getTransform());
                 LOG_DEBUG("[EnvireMls::update] Robot moved");
                 moved = true;
+            }
+            if ((MOVE_FORWARD) && (!movingForward)){
+                moveForwards();    
             }
         }
       }
@@ -201,7 +212,7 @@ namespace mars {
         Vector pos = mlsTransform.transform.translation;
         NodeData* node(new NodeData);
         //NodeData* node(new NodeData);
-        node->init(MLS_NAME, pos);
+        node->init(MLS_FRAME_NAME, pos);
         node->physicMode = interfaces::NODE_TYPE_MLS;
         //node->env_path = mlsPath;
 
@@ -286,15 +297,64 @@ namespace mars {
         std::string path = std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH;
         LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] Mls to test with: " + path); 
 #endif
-        loadMLSMap(std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH);
+        if (LOAD_PLY)
+        {
+            loadSlopedFromPLY();
+        }
+        else
+        {
+            loadMLSMap(std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH);
+        }
         // Next is to instantiate a load the correspondent nodeData
         //addMLSNode();
         
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] 2"); 
 #endif
-        control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + ASGUARD_PATH, ROBOT_NAME, ROBOT_TEST_POS, ROBOT_TEST_ROT);
+        control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + ASGUARD_PATH, ROBOT_NAME, ROBOT_TEST_POS, ROBOT_TEST_Z_ROT);
 
+      }
+
+      void EnvireMls::moveForwards()
+      {
+          mars::sim::SimMotor* motor;
+          for(auto it: MOTOR_NAMES) {
+            motor = control->motors->getSimMotorByName(it);
+#ifdef DEBUG
+            LOG_DEBUG( "[EnvireMls::moveForwards] Motor " + it +" received"); 
+#endif
+            motor->setVelocity(SPEED);
+#ifdef DEBUG
+            LOG_DEBUG( "[EnvireMls::moveForwards] Motor " + it +" set velocity sent"); 
+#endif 
+          }
+          movingForward = true;
+      }
+
+      void EnvireMls::loadSlopedFromPLY()
+      {
+#ifdef DEBUG
+          LOG_DEBUG( "[EnvireMls::loadSlopedFromPLY] Start"); 
+#endif
+          pcl::PLYReader reader;
+          pcl::PointCloud<pcl::PointXYZ> cloud;
+          reader.read(std::getenv(ENV_AUTOPROJ_ROOT) + PLY_FILE, cloud);
+#ifdef DEBUG
+          LOG_DEBUG( "[EnvireMls::loadSlopedFromPLY] Cloud has been generated"); 
+#endif  
+          Vector2ui num_cells {2500, 2500};
+          const Vector2d resolution {0.3, 0.3};
+          const MLSConfig config; // Thickness, gapsize
+          mlsSloped mlsS(num_cells, resolution, config);
+          mlsS.getLocalFrame().translation() << 0.5*mlsS.getSize(), 0;
+          base::TransformWithCovariance tf = base::TransformWithCovariance::Identity();
+          tf.setCovariance(base::TransformWithCovariance::Covariance::Identity()*0.001);
+          mlsS.mergePointCloud(cloud, tf);
+          Item<mlsPrec>::Ptr mlsItemPtr(new Item<mlsPrec>(mlsS));
+          control->graph->addItemToFrame(mlsFrameId, mlsItemPtr);
+#ifdef DEBUG
+          LOG_DEBUG( "[EnvireMls::loadSlopedFromPLY] MLS loaded to graph"); 
+#endif  
       }
 
     } // end of namespace envire_mls
