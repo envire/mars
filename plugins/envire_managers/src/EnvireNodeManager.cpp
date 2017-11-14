@@ -33,6 +33,7 @@
 
 #include <mars/interfaces/sim/LoadCenter.h>
 #include <mars/interfaces/sim/SimulatorInterface.h>
+#include <mars/interfaces/sim/JointManagerInterface.h>
 #include <mars/interfaces/graphics/GraphicsManagerInterface.h>
 #include <mars/interfaces/terrainStruct.h>
 #include <mars/interfaces/Logging.hpp>
@@ -1066,76 +1067,74 @@ namespace mars {
                                       std::vector<int> *gids,
                                       NodeMap *nodes,
                                       void (*applyFunc)(mars::sim::SimNode *, const Params *)) {
-      printf("not implemented : %s\n", __PRETTY_FUNCTION__);
+      std::vector<mars::sim::SimJoint*>::iterator iter;
+      std::vector<int>::iterator jter;
+      NodeMap::iterator nter;
+      mars::interfaces::NodeId id2;
+      bool found = false;
 
-  //     std::vector<mars::sim::SimJoint*>::iterator iter;
-  //     std::vector<int>::iterator jter;
-  //     NodeMap::iterator nter;
-  //     mars::interfaces::NodeId id2;
-  //     bool found = false;
+      for(jter = gids->begin(); jter != gids->end(); jter++) {
+        for(nter = nodes->begin(); nter != nodes->end(); nter++) {
+          if(nter->second->getData()->getGroupID() == (*jter)) {
+            id2 = nter->first;
+            nodes->erase(nter);
+            recursiveHelper(id, params, joints, gids, nodes, applyFunc);
+            recursiveHelper(id2, params, joints, gids, nodes, applyFunc);
+            return;
+          }
+        }
+      }
 
-  //     for(jter = gids->begin(); jter != gids->end(); jter++) {
-  //       for(nter = nodes->begin(); nter != nodes->end(); nter++) {
-  //         if(nter->second->getGroupID() == (*jter)) {
-  //           id2 = nter->first;
-  //           nodes->erase(nter);
-  //           recursiveHelper(id, params, joints, gids, nodes, applyFunc);
-  //           recursiveHelper(id2, params, joints, gids, nodes, applyFunc);
-  //           return;
-  //         }
-  //       }
-  //     }
-
-  //     for (iter = joints->begin(); iter != joints->end(); iter++) {
-  //       if ((*iter)->getAttachedNode() &&
-  //           (*iter)->getAttachedNode()->getID() == id) {
-  //         for (jter = gids->begin(); jter != gids->end(); jter++) {
-  //           if ((*iter)->getAttachedNode(2) &&
-  //               (*jter) == (*iter)->getAttachedNode(2)->getGroupID()) {
-  //             found = true;
-  //             break;
-  //           }
-  //         }
-  //         if ((*iter)->getAttachedNode(2) &&
-  //             nodes->find((*iter)->getAttachedNode(2)->getID()) != nodes->end()) {
-  //           id2 = (*iter)->getAttachedNode(2)->getID();
-  //           if (!found) {
-  //             if ((*iter)->getAttachedNode(2)->getGroupID())
-  //               gids->push_back((*iter)->getAttachedNode(2)->getGroupID());
-  //             applyFunc((*iter)->getAttachedNode(2), params);
-  //           }
-  //           nodes->erase(nodes->find((*iter)->getAttachedNode(2)->getID()));
-  //           joints->erase(iter);
-  //           recursiveHelper(id, params, joints, gids, nodes, applyFunc);
-  //           recursiveHelper(id2, params, joints, gids, nodes, applyFunc);
-  //           return;
-  //         }
-  //         else found = false;
-  //       } else if ((*iter)->getAttachedNode(2) &&
-  //                  (*iter)->getAttachedNode(2)->getID() == id) {
-  //         for (jter = gids->begin(); jter != gids->end(); jter++) {
-  //           if ((*iter)->getAttachedNode() &&
-  //               (*jter) == (*iter)->getAttachedNode()->getGroupID()) {
-  //             found = true;
-  //             break;
-  //           }
-  //         }
-  //         if(nodes->find((*iter)->getAttachedNode()->getID()) != nodes->end()) {
-  //           id2 = (*iter)->getAttachedNode()->getID();
-  //           if (!found) {
-  //             if ((*iter)->getAttachedNode()->getGroupID())
-  //               gids->push_back((*iter)->getAttachedNode()->getGroupID());
-  //             applyFunc((*iter)->getAttachedNode(), params);
-  //           }
-  //           nodes->erase(nodes->find((*iter)->getAttachedNode()->getID()));
-  //           joints->erase(iter);
-  //           recursiveHelper(id, params, joints, gids, nodes, applyFunc);
-  //           recursiveHelper(id2, params, joints, gids, nodes, applyFunc);
-  //           return;
-  //         }
-  //         else found = false;
-  //       }
-  //     }
+      for (iter = joints->begin(); iter != joints->end(); iter++) {
+        if ((*iter)->getAttachedNode() &&
+            (*iter)->getAttachedNode()->getID() == id) {
+          for (jter = gids->begin(); jter != gids->end(); jter++) {
+            if ((*iter)->getAttachedNode(2) &&
+                (*jter) == (*iter)->getAttachedNode(2)->getGroupID()) {
+              found = true;
+              break;
+            }
+          }
+          if ((*iter)->getAttachedNode(2) &&
+              nodes->find((*iter)->getAttachedNode(2)->getID()) != nodes->end()) {
+            id2 = (*iter)->getAttachedNode(2)->getID();
+            if (!found) {
+              if ((*iter)->getAttachedNode(2)->getGroupID())
+                gids->push_back((*iter)->getAttachedNode(2)->getGroupID());
+              applyFunc((*iter)->getAttachedNode(2).get(), params);
+            }
+            nodes->erase(nodes->find((*iter)->getAttachedNode(2)->getID()));
+            joints->erase(iter);
+            recursiveHelper(id, params, joints, gids, nodes, applyFunc);
+            recursiveHelper(id2, params, joints, gids, nodes, applyFunc);
+            return;
+          }
+          else found = false;
+        } else if ((*iter)->getAttachedNode(2) &&
+                   (*iter)->getAttachedNode(2)->getID() == id) {
+          for (jter = gids->begin(); jter != gids->end(); jter++) {
+            if ((*iter)->getAttachedNode() &&
+                (*jter) == (*iter)->getAttachedNode()->getGroupID()) {
+              found = true;
+              break;
+            }
+          }
+          if(nodes->find((*iter)->getAttachedNode()->getID()) != nodes->end()) {
+            id2 = (*iter)->getAttachedNode()->getID();
+            if (!found) {
+              if ((*iter)->getAttachedNode()->getGroupID())
+                gids->push_back((*iter)->getAttachedNode()->getGroupID());
+              applyFunc((*iter)->getAttachedNode().get(), params);
+            }
+            nodes->erase(nodes->find((*iter)->getAttachedNode()->getID()));
+            joints->erase(iter);
+            recursiveHelper(id, params, joints, gids, nodes, applyFunc);
+            recursiveHelper(id2, params, joints, gids, nodes, applyFunc);
+            return;
+          }
+          else found = false;
+        }
+      }
      }
 
      void EnvireNodeManager::applyMove(mars::sim::SimNode *node, const Params *params)
@@ -1164,39 +1163,38 @@ namespace mars {
 
      void EnvireNodeManager::rotateNode(mars::interfaces::NodeId id, mars::utils::Vector pivot, mars::utils::Quaternion q,
                                   unsigned long excludeJointId, bool includeConnected) {
-      printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-  //     std::vector<int> gids;
-  //     NodeMap::iterator iter = simNodes.find(id);
-  //     if(iter == simNodes.end()) {
-  //       iMutex.unlock();
-  //       LOG_ERROR("EnvireNodeManager::rotateNode: node id not found!");
-  //       return;
-  //     }
+        std::vector<int> gids;
+        NodeMap::iterator iter = simNodes.find(id);
+        if(iter == simNodes.end()) {
+            iMutex.unlock();
+            LOG_ERROR("EnvireNodeManager::rotateNode: node id not found!");
+            return;
+        }
 
-  //     mars::sim::SimNode *editedNode = iter->second;
-  //     editedNode->rotateAtPoint(pivot, q, true);
+        std::shared_ptr<mars::sim::SimNode> editedNode = iter->second->getData();
+        editedNode->rotateAtPoint(pivot, q, true);
+    
+        if (includeConnected) {
+            std::vector<mars::sim::SimJoint*> joints = control->joints->getSimJoints();
+            std::vector<mars::sim::SimJoint*>::iterator jter;
+            for(jter=joints.begin(); jter!=joints.end(); ++jter) {
+                if((*jter)->getIndex() == excludeJointId) {
+                    joints.erase(jter);
+                    break;
+                }
+            }
 
-  //     if (includeConnected) {
-  //       std::vector<mars::sim::SimJoint*> joints = control->joints->getSimJoints();
-  //       std::vector<mars::sim::SimJoint*>::iterator jter;
-  //       for(jter=joints.begin(); jter!=joints.end(); ++jter) {
-  //         if((*jter)->getIndex() == excludeJointId) {
-  //           joints.erase(jter);
-  //           break;
-  //         }
-  //       }
+            if(editedNode->getGroupID())
+                gids.push_back(editedNode->getGroupID());
 
-  //       if(editedNode->getGroupID())
-  //         gids.push_back(editedNode->getGroupID());
+            NodeMap nodes = simNodes;
+            nodes.erase(nodes.find(editedNode->getID()));
 
-  //       NodeMap nodes = simNodes;
-  //       nodes.erase(nodes.find(editedNode->getID()));
-
-  //       rotateNodeRecursive(id, pivot, q, &joints,
-  //                           &gids, &nodes);
-  //     }
-  //     update_all_nodes = true;
-  //     updateDynamicNodes(0, false);
+            rotateNodeRecursive(id, pivot, q, &joints,
+                                   &gids, &nodes);
+        }
+        update_all_nodes = true;
+        updateDynamicNodes(0, false);
      }
 
      void EnvireNodeManager::positionNode(mars::interfaces::NodeId id, mars::utils::Vector pos,
@@ -1242,11 +1240,10 @@ namespace mars {
                                            std::vector<mars::sim::SimJoint*> *joints,
                                            std::vector<int> *gids,
                                            NodeMap *nodes) {
-      printf("not implemented : %s\n", __PRETTY_FUNCTION__);
-  //     RotationParams params;
-  //     params.rotation_point = rotation_point;
-  //     params.rotation = rotation;
-  //     recursiveHelper(id, &params, joints, gids, nodes, &applyRotation);
+        RotationParams params;
+        params.rotation_point = rotation_point;
+        params.rotation = rotation;
+        recursiveHelper(id, &params, joints, gids, nodes, &applyRotation);
      }
 
      void EnvireNodeManager::clearRelativePosition(mars::interfaces::NodeId id, bool lock) {
