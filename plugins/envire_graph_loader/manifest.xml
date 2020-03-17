@@ -9,6 +9,7 @@
     <depend package="simulation/mars/common/data_broker" />
     <depend package="simulation/mars/interfaces" />
     <depend package="simulation/mars/sim" />
+    <depend package="envire/envire_core" />
     <depend package="slam/maps" />  
     <tags>needs_opt</tags>
 </package>
