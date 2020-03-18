@@ -6,4 +6,7 @@ envire_smurf_loader
 main_gui
 mars_gui
 osgviz_mars_graphics
+envire_managers
 envire_graphics
+envire_graph_loader
+envire_sensors
