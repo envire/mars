@@ -45,6 +45,8 @@
 #include <envire_core/graph/EnvireGraph.hpp>
 #include <envire_core/items/Item.hpp>
 
+#include <mars/utils/Vector.h>
+
 #define MLS_FRAME_TF_X 0.0
 #define MLS_FRAME_TF_Y 0.0
 #define MLS_FRAME_TF_Z 0.0
@@ -84,8 +86,12 @@ namespace mars {
             bool EnvireGraphLoader::loadFile(std::string filename, std::string tmpPath,
                                     std::string robotname)
             {
-                LOG_INFO("[envire_graph_loader::loadFile] Method not implemented");                    
-                return false;
+                LOG_INFO("[envire_graph_loader::loadFile] This method is just a Dummy version of loadFile with pos and rot");                    
+                utils::Vector pos(0.0,0.0,0.0);
+                utils::Vector rot(0.0,0.0,0.0);
+                LOG_INFO("[envire_graph_loader::loadFile] About to call the alternative loadFile");                    
+                bool ok = loadFile(filename, tmpPath, robotname, pos, rot);
+                return ok;
             }
 
             bool EnvireGraphLoader::loadFile(std::string filename, std::string tmpPath,
@@ -135,12 +141,20 @@ namespace mars {
 
             mlsPrec EnvireGraphLoader::getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId frameId)
             {
-                // The serialized Mls is not in Precalculated but in Kalman, so we have to convert it
-                envire::core::EnvireGraph::ItemIterator<envire::core::Item<mlsKal>> beginItem, endItem;
-                boost::tie(beginItem, endItem) = graph.getItems<envire::core::Item<mlsKal>>(frameId);
-                mlsKal mlsKal;
                 mlsPrec mls;
-                mls = beginItem->getData(); // Here the conversion to Precalculated occurs (mlsPerc <-> mlsKal)
+                if (graph.containsItems<envire::core::Item<mlsKal>>(frameId))
+                {
+                    // The serialized Mls is not in Precalculated but in Kalman, so we have to convert it
+                    envire::core::EnvireGraph::ItemIterator<envire::core::Item<mlsKal>> beginItem, endItem;
+                    boost::tie(beginItem, endItem) = graph.getItems<envire::core::Item<mlsKal>>(frameId);
+                    mls = beginItem->getData(); // Here the conversion to Precalculated occurs (mlsKal->mlsPrec)
+                }
+                else if (graph.containsItems<envire::core::Item<mlsPrec>>(frameId))
+                {
+                    envire::core::EnvireGraph::ItemIterator<envire::core::Item<mlsPrec>> beginItem, endItem;
+                    boost::tie(beginItem, endItem) = graph.getItems<envire::core::Item<mlsPrec>>(frameId);
+                    mls = beginItem->getData(); 
+                }
                 return mls;
             }
 

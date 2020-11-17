@@ -1,6 +1,6 @@
 project(envire_graph_loader)
 set(PROJECT_VERSION 1.0)
-set(PROJECT_DESCRIPTION "Loads in simulation what stored in a .graph file implementing the loadScene Interface")
+set(PROJECT_DESCRIPTION "Loads in simulation what is stored in a .graph file implementing the loadScene Interface")
 cmake_minimum_required(VERSION 2.6)
 include(FindPkgConfig)
 
