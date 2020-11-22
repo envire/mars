@@ -45,35 +45,12 @@
 
 #include <base/TransformWithCovariance.hpp>
 
-//#define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
-//#define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/mls_map-cave-20171109.graph")
-#define TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/mls_map-cave-20171110.graph")
-#define MLS_FRAME_TF_X 0.0
-#define MLS_FRAME_TF_Y 0.0
-#define MLS_FRAME_TF_Z 0.0
-#define MLS_FRAME_TF_ROT_X 0.0 
+//#define DEBUG 0
 
-#define GD_SENSE_CONTACT_FORCE 0
-#define GD_PARENT_GEOM 0
-#define GD_C_PARAMS_CFM 0.001
-#define GD_C_PARAMS_ERP 0.001
-#define GD_C_PARAMS_BOUNCE 0.0
-
-#define ROBOT_TEST_POS  mars::utils::Vector(-3.5,-1,0)
-#define ROBOT_TEST_Z_ROT  mars::utils::Vector(0,0,-90.0)
-
-#define DEBUG 0
-
-
-const std::vector<std::string> MOTOR_NAMES{"wheel_front_left_motor", "wheel_front_right_motor", "wheel_rear_left_motor", "wheel_rear_right_motor"};
-
-const bool MOVE_FORWARD=true;
-const double SPEED=0.5;
-
-const bool LOAD_PLY=true;
-
-const std::string PLY_FILE = "/simulation/mars/plugins/envire_mls/testPLYData/pointcloud-20171110-2230.ply";
-
+/*
+This plugin requires the plugins envire_graph_loader and envire_smurf_loader
+to load the mls and the rover respectively
+*/
 
 namespace mars {
   namespace plugins {
@@ -85,12 +62,26 @@ namespace mars {
       using namespace envire::core;
       using namespace maps::grid;
 
+      //const TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/crater_simulation_mls.graph")
+      //const TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/mls_map-cave-20171109.graph")
+      //const TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/mls_map-cave-20171110.graph")
+      const std::string TEST_MLS_PATH = "/simulation/mars/plugins/envire_mls/testMlsData/precalculated_mls_map-20171112.graph";
+      const std::string MLS_NAME = "CavePrecalculated";
+      const Vector MLS_FRAME_POS  = {0.0, 0.0, 0.0};
+      const double MLS_FRAME_ROT_Z (M_PI*0.5);
+      // Robot name is defined in the defines.hpp
+      const Vector ROBOT_FRAME_POS = {0,0,0};
+      const double ROBOT_FRAME_ROT_Z = 0.0;
+      const std::vector<std::string> MOTOR_NAMES{"wheel_front_left_motor", "wheel_front_right_motor", "wheel_rear_left_motor", "wheel_rear_right_motor"};
+      const bool MOVE_FORWARD=true;
+      const double SPEED=0.5; // Rads per second . Wheels have 20cm rad, therefore speed for 2.5r/s is 0.5m/s, 0.5r/s is 0.1 m/s
+      const bool LOAD_PLY=false;
+      const std::string PLY_FILE = "/simulation/mars/plugins/envire_mls/testPLYData/pointcloud-20171110-2230.ply";
 
       EnvireMls::EnvireMls(lib_manager::LibManager *theManager)
         : MarsPluginTemplate(theManager, "EnvireMls") 
       {
         mlsCollision = envire::collision::MLSCollision::getInstance();
-        //theLoader = theManager->getLibraryAs<EnvireSmurfLoader::EnvireSmurfLoader>("envire_smurf_loader");
       }
 
       void EnvireMls::init() 
@@ -104,19 +95,6 @@ namespace mars {
 #ifdef SIM_CENTER_FRAME_NAME
         LOG_DEBUG( "[EnvireMls::init] SIM_CENTER_FRAME_NAME is defined: " + SIM_CENTER_FRAME_NAME); 
 #endif
-        envire::core::FrameId center = SIM_CENTER_FRAME_NAME; 
-        if (! control->graph->containsFrame(center))
-        {
-          control->graph->addFrame(center);
-        }
-        // Create the default frame for the MLS but leave it empty.
-        // The mls is loaded in the first update.
-        mlsFrameId = MLS_FRAME_NAME; 
-        centerFrameId = SIM_CENTER_FRAME_NAME;
-        control->graph->addFrame(mlsFrameId);
-        envire::core::Transform mlsTf(base::Time::now());
-        mlsTf.transform.translation << double(MLS_FRAME_TF_X), double(MLS_FRAME_TF_Y), double(MLS_FRAME_TF_Z);
-        mlsTf.transform.orientation = base::AngleAxisd(double(MLS_FRAME_TF_ROT_X), base::Vector3d::UnitX());
 #ifdef DEBUG
         LOG_DEBUG("[EnvireMls::init] mlsTf x y z %f, %f, %f", 
             mlsTf.transform.translation.x(), 
@@ -127,9 +105,7 @@ namespace mars {
             double(MLS_FRAME_TF_Y), 
             double(MLS_FRAME_TF_Z));
 #endif
-        control->graph->addTransform(SIM_CENTER_FRAME_NAME, MLS_FRAME_NAME, mlsTf);
         sceneLoaded = false;
-        moved = false;
         movingForward = false;
       }
 
@@ -140,179 +116,46 @@ namespace mars {
       void EnvireMls::update(sReal time_ms) 
       {
         if (not sceneLoaded){
-          //testAddMLS();
-          testAddMLSAndRobot();
-
+          loadMLSAndRobot();
           sceneLoaded = true;
         }
         else{
-            if (not moved){
-                // Let's test the move robot method
-                base::samples::RigidBodyState robotPose;
-                robotPose.position << ROBOT_TEST_POS.x(), ROBOT_TEST_POS.y(), ROBOT_TEST_POS.z();
-                robotPose.orientation = Eigen::AngleAxisd(ROBOT_TEST_Z_ROT.z(), Eigen::Vector3d::UnitZ());
-                envire::core::Transform robotTf(robotPose.position, robotPose.orientation);
-                //envire::core::Transform robotTf = robotPose.getTransform();
-                LOG_DEBUG("[EnvireMls::update] Robot Target Pose: %g, %g, %g", robotTf.transform.translation.x(), robotTf.transform.translation.y(), robotTf.transform.translation.z());
-                envire::core::FrameId robotRootFrame = ROBOT_ROOT_LINK_NAME;
-                control->nodes->setTfToCenter(robotRootFrame, robotTf);
-                //control->nodes->setTfToCenter(robotRootFrame, robotPose.getTransform());
-                LOG_DEBUG("[EnvireMls::update] Robot moved");
-                moved = true;
-            }
             if ((MOVE_FORWARD) && (!movingForward)){
                 moveForwards();    
             }
         }
       }
 
-      void EnvireMls::loadMLSMap(const std::string & mlsPath)
+      void EnvireMls::loadMLSMap()
       {
-        /* Loads in the envire graph the mls given in the path after
-         * deserializing it.
-         *
-         * The serialized object is graph containing the mls in DUMPED_MLS_FRAME
-         */
-        EnvireGraph auxMlsGraph;
-        auxMlsGraph.loadFromFile(mlsPath);
-        FrameId dumpedFrameId(DUMPED_MLS_FRAME_NAME);
-        mlsPrec mlsAux = getMLSMap(auxMlsGraph, dumpedFrameId);
-        Item<mlsPrec>::Ptr mlsItemPtr(new Item<mlsPrec>(mlsAux));
-        control->graph->addItemToFrame(mlsFrameId, mlsItemPtr);
+        if (LOAD_PLY)
+        {
+            loadSlopedFromPLY(); //old and untested in newer versions
+        }
+        else
+        {
+            Vector mlsRot(0,0,MLS_FRAME_ROT_Z);
+            control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH, MLS_NAME, MLS_FRAME_POS, mlsRot);
+        }
       }
 
-      mlsPrec EnvireMls::getMLSMap(const envire::core::EnvireGraph & graph, envire::core::FrameId frameId)
+      void EnvireMls::loadRobot()
       {
-        // The serialized Mls is not in Precalculated but in Kalman, so we have to convert it
-        EnvireGraph::ItemIterator<Item<mlsKal>> beginItem, endItem;
-        boost::tie(beginItem, endItem) = graph.getItems<Item<mlsKal>>(frameId);
-        mlsKal mlsKal;
-        mlsPrec mls;
-        mls = beginItem->getData(); // Here the conversion to Precalculated occurs (mlsPerc <-> mlsKal)
-        return mls;
+        Vector robotRot(0,0,ROBOT_FRAME_ROT_Z);
+        control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + ASGUARD_PATH, ROBOT_NAME, ROBOT_FRAME_POS, robotRot);
       }
 
-      NodeData* EnvireMls::setUpNodeData()
-      {
-        /**
-         * Look up the stored mls map and generate the correspondent MLSNodeData
-         *
-         * BUG: Currenty after one step the mls frame position is set to the
-         * centre centerFrame.
-         */
-
-        mlsPrec mls = getMLSMap(*(control->graph), mlsFrameId);
-        Transform mlsTransform = control->graph->getTransform(centerFrameId, mlsFrameId);
-#ifdef DEBUG
-        LOG_DEBUG("[EnvireMls::addMLS] Tf x y z %f, %f, %f", 
-            mlsTransform.transform.translation.x(), 
-            mlsTransform.transform.translation.y(), 
-            mlsTransform.transform.translation.z());
-#endif
-        Vector pos = mlsTransform.transform.translation;
-        NodeData* node(new NodeData);
-        //NodeData* node(new NodeData);
-        node->init(MLS_FRAME_NAME, pos);
-        node->physicMode = interfaces::NODE_TYPE_MLS;
-        //node->env_path = mlsPath;
-
-	boost::shared_ptr<maps::grid::MLSMapPrecalculated> mlsPtr(& mls);
-        // Store MLS geometry in simulation nodeA
-        // Do we have to do this? I think not...
-        //node->g_mls = (void*)(mlsCollision->createNewCollisionObject(mlsPtr));//_userdata);	
-
-        node->pos = mlsTransform.transform.translation; // The position was already set
-        node->rot = mlsTransform.transform.orientation; // The position was already set
-
-        // The position should be read from the envire graph
-
-        //dVector3 pos; // = mlsTransform.transform.translation;
-        //pos[ 0 ] = mlsTransform.transform.translation.x();
-        //pos[ 1 ] = mlsTransform.transform.translation.y();
-        //pos[ 2 ] = mlsTransform.transform.translation.z();
-
-        // Rotate so Z is up, not Y (which is the default orientation)
-        // NOTE is this to be done for all MLS or only for this particular case?
-        dMatrix3 R;
-        dRSetIdentity( R );
-        //dRFromAxisAndAngle( R, 1, 0, 0, (3.141592/180) * 90 );  //DEGTORAD
-
-        // Place it.
-        dGeomSetRotation( (dGeomID)node->g_mls, R );
-#ifdef DEBUG
-        LOG_DEBUG("[EnvireMls::addMLS] Set Position to %f, %f, %f", pos[0], pos[1], pos[2]);
-        LOG_DEBUG("[EnvireMls::addMLS] Tf x y z %f, %f, %f", 
-            mlsTransform.transform.translation.x(), 
-            mlsTransform.transform.translation.y(), 
-            mlsTransform.transform.translation.z());
-#endif
-        dGeomSetPosition( (dGeomID)node->g_mls, pos[0], pos[1], pos[2]);
-
-        // set geom data (move to its own method)
-        mars::sim::geom_data* gd = new mars::sim::geom_data;
-        (*gd).setZero();
-        gd->sense_contact_force = GD_SENSE_CONTACT_FORCE;
-        gd->parent_geom = GD_PARENT_GEOM;
-        gd->c_params.cfm = GD_C_PARAMS_CFM;
-        gd->c_params.erp = GD_C_PARAMS_ERP;
-        gd->c_params.bounce = GD_C_PARAMS_BOUNCE;
-        dGeomSetData((dGeomID)node->g_mls, gd);
-
-        node->movable = false;	
-
-        return node;
-      }
-
-
-      void EnvireMls::addMLSNode()
-      {
-        // TODO for loading various MLSs.
-        // If the frame where the MLS should be
-        // stored does not exists, create it by now we assume that the frame to
-        // add to is the default one for the mls, created in the init step
-        NodeData* nodePtr = setUpNodeData();
-        envire::core::Item<NodeData>::Ptr itemPtr(new envire::core::Item<NodeData>(*nodePtr));
-        envire::core::FrameId mlsFrameId = MLS_FRAME_NAME;
-        control->graph->addItemToFrame(mlsFrameId, itemPtr);        
-      }
-
-      void EnvireMls::testAddMLS()
-      {
-#ifdef DEBUG
-        std::string path = std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH;
-        LOG_DEBUG( "[EnvireMls::addMLS] Mls to test with: " + path); 
-#endif
-        loadMLSMap(TEST_MLS_PATH);
-        // Next is to instantiate a load the correspondent nodeData
-        //addMLSNode();
-        
-#ifdef DEBUG
-        LOG_DEBUG( "[EnvireMls::addMLS] 2"); 
-#endif
-      }
-
-      void EnvireMls::testAddMLSAndRobot()
+      void EnvireMls::loadMLSAndRobot()
       {
 #ifdef DEBUG
         std::string path = std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH;
         LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] Mls to test with: " + path); 
 #endif
-        if (LOAD_PLY)
-        {
-            loadSlopedFromPLY();
-        }
-        else
-        {
-            loadMLSMap(std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH);
-        }
-        // Next is to instantiate a load the correspondent nodeData
-        //addMLSNode();
-        
+        loadMLSMap();
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] 2"); 
 #endif
-        control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + ASGUARD_PATH, ROBOT_NAME, ROBOT_TEST_POS, ROBOT_TEST_Z_ROT);
-
+        loadRobot();
       }
 
       void EnvireMls::moveForwards()
