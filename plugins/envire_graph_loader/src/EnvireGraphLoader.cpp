@@ -112,7 +112,7 @@ namespace mars {
                 // Create the default frame for the MLS but leave it empty.
                 // The mls is loaded in the first update.
                 envire::core::Transform mlsTf(base::Time::now());
-                mlsTf.transform.translation << double(MLS_FRAME_TF_X), double(MLS_FRAME_TF_Y), double(MLS_FRAME_TF_Z);
+                mlsTf.transform.translation << pos[0], pos[1], pos[2];
                 mlsTf.transform.orientation = base::AngleAxisd(double(rot[2]), base::Vector3d::UnitZ()); //Rotation for now only on Z
                 control->graph->addTransform(center, mlsFrameId, mlsTf);
                 loadMLSMap(filename);

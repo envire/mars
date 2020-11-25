@@ -67,12 +67,12 @@ namespace mars {
       //const TEST_MLS_PATH std::string("/simulation/mars/plugins/envire_mls/testMlsData/mls_map-cave-20171110.graph")
       const std::string TEST_MLS_PATH = "/simulation/mars/plugins/envire_mls/testMlsData/precalculated_mls_map-20171112.graph";
       const std::string MLS_NAME = "CavePrecalculated";
-      const Vector MLS_FRAME_POS  = {0.0, 0.0, 0.0};
+      //const Vector MLS_FRAME_POS  = {0.0, 0.0, 0.0};
       //const double MLS_FRAME_ROT_Z (M_PI*0.5);
-      const double MLS_FRAME_ROT_Z = 0.0;
+      //const double MLS_FRAME_ROT_Z = 0.0;
       // Robot name is defined in the defines.hpp
-      const Vector ROBOT_FRAME_POS = {0,0,0};
-      const double ROBOT_FRAME_ROT_Z = 0.0;
+      //const Vector ROBOT_FRAME_POS = {0,0,0};
+      //const double ROBOT_FRAME_ROT_Z = 0.0;
       const std::vector<std::string> MOTOR_NAMES{"wheel_front_left_motor", "wheel_front_right_motor", "wheel_rear_left_motor", "wheel_rear_right_motor"};
       const bool MOVE_FORWARD=true;
       const double SPEED=0.5; // Rads per second . Wheels have 20cm rad, therefore speed for 2.5r/s is 0.5m/s, 0.5r/s is 0.1 m/s
@@ -84,6 +84,14 @@ namespace mars {
         : MarsPluginTemplate(theManager, "EnvireMls") 
       {
         mlsCollision = envire::collision::MLSCollision::getInstance();
+        robPos = {0.0, 0.0, 0.0};
+        robOri = 0.0;
+        mlsPos = {0.0, 0.0, 0.0};
+        mlsOri = 0.0;
+        mapStringParams["robPos"] = robPosP;
+        mapStringParams["robOri"] = robOriP;
+        mapStringParams["mlsPos"] = mlsPosP;
+        mapStringParams["mlsOri"] = mlsOriP;
       }
 
       void EnvireMls::init() 
@@ -96,17 +104,53 @@ namespace mars {
           " It might have not been found. : %s", yaml_path.c_str());
           throw;
         }
-        if (conf["mlsOrientation"])
+        std::vector<std::string> confItems = {
+          "robPos", "robOri",
+          "mlsPos", "mlsOri"
+        };
+        for (const std::string& item: confItems)
         {
-          LOG_INFO(
-              "[EnvireMls::init] Loaded orientation for the mls: %f ",
-              conf["mlsOrientation"].as<double>());
-          mlsOrientation = conf["mlsOrientation"].as<double>();
-        }
-        else
-        {
-          LOG_WARN("[EnvireMls::init] No MLS Orientation found");
-          mlsOrientation = 0.0;
+          LOG_INFO("[EnvireMls::init] confItem: " + item);
+          if (conf[item])
+          {
+            switch (mapStringParams[item]){
+              case robPosP:
+              {
+                std::vector<double> robPosV = conf["robPos"].as<std::vector<double>>();
+                robPos = {robPosV[0], robPosV[1], robPosV[2]};
+                LOG_INFO(
+                    "[EnvireMls::init] Loaded this position for the rover: %f, %f, %f ",
+                    robPos[0], robPos[1], robPos[2]);
+                break;
+
+              }
+              case robOriP:
+              {
+                robOri = conf["robOri"].as<double>();
+                LOG_INFO(
+                    "[EnvireMls::init] Loaded orientation for the robot: %f ",
+                    robOri);
+                break;
+              }
+              case mlsPosP:
+              {
+                std::vector<double> mlsPosV = conf["mlsPos"].as<std::vector<double>>();
+                mlsPos = {mlsPosV[0], mlsPosV[1], mlsPosV[2]};
+                LOG_INFO(
+                    "[EnvireMls::init] Loaded this position for the mls: %f, %f, %f",
+                    mlsPos[0], mlsPos[1], mlsPos[2]);
+                break;
+              }
+              case mlsOriP:
+              {
+                mlsOri = conf["mlsOri"].as<double>();
+                LOG_INFO(
+                    "[EnvireMls::init] Loaded orientation for the mls: %f ",
+                    mlsOri);
+                break;
+              }
+            }
+          }
         }
 
 #ifdef DEBUG
@@ -138,6 +182,11 @@ namespace mars {
 
       void EnvireMls::update(sReal time_ms) 
       {
+        if (control->graph->containsFrame(MLS_FRAME_NAME))
+        {
+          envire::core::Transform tfMlsCen = control->graph->getTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_NAME);
+          LOG_DEBUG("[EnvireMls::Update]: Transformation between MLS and center " + tfMlsCen.toString()); 
+        }
         if (not sceneLoaded){
           loadMLSAndRobot();
           sceneLoaded = true;
@@ -157,15 +206,15 @@ namespace mars {
         }
         else
         {
-            Vector mlsRot(0,0,mlsOrientation);
-            control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH, MLS_NAME, MLS_FRAME_POS, mlsRot);
+            Vector mlsRot(0,0,mlsOri);
+            control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH, MLS_NAME, mlsPos, mlsRot);
         }
       }
 
       void EnvireMls::loadRobot()
       {
-        Vector robotRot(0,0,ROBOT_FRAME_ROT_Z);
-        control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + ASGUARD_PATH, ROBOT_NAME, ROBOT_FRAME_POS, robotRot);
+        Vector robotRot(0,0,robOri);
+        control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + ASGUARD_PATH, ROBOT_NAME, robPos, robotRot);
       }
 
       void EnvireMls::loadMLSAndRobot()

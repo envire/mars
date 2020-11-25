@@ -37,7 +37,7 @@
 #include <envire_core/items/Item.hpp>
 #include <envire_collider_mls/MLSCollision.hpp>
 #include <maps/grid/MLSMap.hpp>
-#include <mars/plugins/envire_smurf_loader/EnvireSmurfLoader.hpp>
+//#include <mars/utils/Vector.h>
 
 namespace mars {
 
@@ -47,11 +47,9 @@ namespace mars {
       using mlsPrec = maps::grid::MLSMapPrecalculated;
       using mlsKal = maps::grid::MLSMapKalman;
       using mlsSloped = maps::grid::MLSMapSloped;
-      //using mlsType = maps::grid::MLSMap<maps::grid::MLSConfig::KALMAN>;
 
       // inherit from MarsPluginTemplateGUI for extending the gui
       class EnvireMls: public mars::interfaces::MarsPluginTemplate {
-
       public:
         EnvireMls(lib_manager::LibManager *theManager);
         ~EnvireMls();
@@ -81,13 +79,22 @@ namespace mars {
  	      envire::collision::MLSCollision* mlsCollision;
 	      boost::shared_ptr<maps::grid::MLSMapPrecalculated> mlsPtr;   	
 
+        enum ConfParams { mlsPosP, 
+                          mlsOriP,
+                          robPosP, 
+                          robOriP };
+
         bool sceneLoaded;
         envire::core::FrameId mlsFrameId;
         envire::core::FrameId centerFrameId;
         bool movingForward;
-        double mlsOrientation;
 
-        //EnvireSmurfLoader::EnvireSmurfLoader* theLoader;
+
+        std::map<std::string, ConfParams> mapStringParams;
+        mars::utils::Vector robPos;
+        double robOri;
+        mars::utils::Vector mlsPos;
+        double mlsOri;
 
       }; // end of class definition EnvireMls
 
