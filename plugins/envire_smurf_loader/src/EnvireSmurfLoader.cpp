@@ -116,7 +116,8 @@ namespace mars {
                 vertex_descriptor center = control->graph->getVertex(SIM_CENTER_FRAME_NAME);
                 envire::core::Transform iniPose;
                 // FIXME TODO use rot input. Is it Euler angles or scaled axis?
-                iniPose.transform.orientation = base::Quaterniond::Identity();
+                iniPose.transform.orientation = base::AngleAxisd(rot[2], base::Vector3d::UnitZ()); // For now only Z component of the rotation
+                //iniPose.transform.orientation = base::Quaterniond::Identity();
                 iniPose.transform.translation = pos;
                 addRobot(filename, center, iniPose);
                 createSimObjects();

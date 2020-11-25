@@ -31,7 +31,7 @@
 #include <fstream>
 #include <boost/archive/binary_iarchive.hpp>
 #include <envire_core/items/Transform.hpp>
-
+#include <yaml-cpp/yaml.h>
 
 #include <envire_core/graph/GraphDrawing.hpp>
 
@@ -68,7 +68,8 @@ namespace mars {
       const std::string TEST_MLS_PATH = "/simulation/mars/plugins/envire_mls/testMlsData/precalculated_mls_map-20171112.graph";
       const std::string MLS_NAME = "CavePrecalculated";
       const Vector MLS_FRAME_POS  = {0.0, 0.0, 0.0};
-      const double MLS_FRAME_ROT_Z (M_PI*0.5);
+      //const double MLS_FRAME_ROT_Z (M_PI*0.5);
+      const double MLS_FRAME_ROT_Z = 0.0;
       // Robot name is defined in the defines.hpp
       const Vector ROBOT_FRAME_POS = {0,0,0};
       const double ROBOT_FRAME_ROT_Z = 0.0;
@@ -77,6 +78,7 @@ namespace mars {
       const double SPEED=0.5; // Rads per second . Wheels have 20cm rad, therefore speed for 2.5r/s is 0.5m/s, 0.5r/s is 0.1 m/s
       const bool LOAD_PLY=false;
       const std::string PLY_FILE = "/simulation/mars/plugins/envire_mls/testPLYData/pointcloud-20171110-2230.ply";
+      const std::string yaml_path = "/simulation/mars/plugins/envire_mls/testMlsData/conf.yml";
 
       EnvireMls::EnvireMls(lib_manager::LibManager *theManager)
         : MarsPluginTemplate(theManager, "EnvireMls") 
@@ -86,6 +88,27 @@ namespace mars {
 
       void EnvireMls::init() 
       {
+        YAML::Node conf;
+        try{
+          conf = YAML::LoadFile(std::getenv(ENV_AUTOPROJ_ROOT) + yaml_path);
+        }catch (...){
+          LOG_ERROR("[EnvireMls::init] Something went wrong loading the test config yaml."
+          " It might have not been found. : %s", yaml_path.c_str());
+          throw;
+        }
+        if (conf["mlsOrientation"])
+        {
+          LOG_INFO(
+              "[EnvireMls::init] Loaded orientation for the mls: %f ",
+              conf["mlsOrientation"].as<double>());
+          mlsOrientation = conf["mlsOrientation"].as<double>();
+        }
+        else
+        {
+          LOG_WARN("[EnvireMls::init] No MLS Orientation found");
+          mlsOrientation = 0.0;
+        }
+
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::init] Tests"); 
 #endif
@@ -93,7 +116,7 @@ namespace mars {
         LOG_DEBUG( "[EnvireMls::init] SIM_CENTER_FRAME_NAME is not defined "); 
 #endif
 #ifdef SIM_CENTER_FRAME_NAME
-        LOG_DEBUG( "[EnvireMls::init] SIM_CENTER_FRAME_NAME is defined: " + SIM_CENTER_FRAME_NAME); 
+      LOG_DEBUG( "[EnvireMls::init] SIM_CENTER_FRAME_NAME is defined: " + SIM_CENTER_FRAME_NAME); 
 #endif
 #ifdef DEBUG
         LOG_DEBUG("[EnvireMls::init] mlsTf x y z %f, %f, %f", 
@@ -134,7 +157,7 @@ namespace mars {
         }
         else
         {
-            Vector mlsRot(0,0,MLS_FRAME_ROT_Z);
+            Vector mlsRot(0,0,mlsOrientation);
             control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH, MLS_NAME, MLS_FRAME_POS, mlsRot);
         }
       }

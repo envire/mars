@@ -113,7 +113,7 @@ namespace mars {
                 // The mls is loaded in the first update.
                 envire::core::Transform mlsTf(base::Time::now());
                 mlsTf.transform.translation << double(MLS_FRAME_TF_X), double(MLS_FRAME_TF_Y), double(MLS_FRAME_TF_Z);
-                mlsTf.transform.orientation = base::AngleAxisd(double(MLS_FRAME_TF_ROT_X), base::Vector3d::UnitX());
+                mlsTf.transform.orientation = base::AngleAxisd(double(rot[2]), base::Vector3d::UnitZ()); //Rotation for now only on Z
                 control->graph->addTransform(center, mlsFrameId, mlsTf);
                 loadMLSMap(filename);
                 return true;

@@ -13,6 +13,7 @@ set(PCL_LIBS pcl_common-${PCL_VERSION_MAJOR}.${PCL_VERSION_MINOR} pcl_io-${PCL_V
 
 pkg_check_modules(PKGCONFIG REQUIRED
 			    lib_manager
+          yaml-cpp
                             envire_core
                             mars_sim
                             envire_collider_mls

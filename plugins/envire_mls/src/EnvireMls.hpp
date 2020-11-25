@@ -85,6 +85,7 @@ namespace mars {
         envire::core::FrameId mlsFrameId;
         envire::core::FrameId centerFrameId;
         bool movingForward;
+        double mlsOrientation;
 
         //EnvireSmurfLoader::EnvireSmurfLoader* theLoader;
 
