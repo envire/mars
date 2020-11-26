@@ -56,6 +56,11 @@
 
 #include <smurf/Collidable.hpp>
 
+
+//#define DEBUG_WORLD_PHYSICS 1
+//#define DRAW_MLS_CONTACTS 1
+
+
 namespace mars {
   namespace sim {
 
@@ -218,6 +223,7 @@ namespace mars {
 #ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::freeTheWorld] START" << std::endl; 
 #endif
+
       // else debug something
     }
 
@@ -373,6 +379,11 @@ namespace mars {
       /// first check for collisions
       num_contacts = log_contacts = 0;
       create_contacts = 1;
+      if (control->graph->containsFrame(MLS_FRAME_NAME))
+      {
+        envire::core::Transform tfMlsCen = control->graph->getTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_NAME);
+        std::cout << "[WorldPhysics::computeMLSCollisions]: Transformation between MLS and center " << tfMlsCen.toString().c_str() << std::endl; // This tf is wrong when we rotate the mls frame
+      }
       /*
        * Here only the collisions between the MLS and collidable objects are
        * processed
@@ -386,9 +397,19 @@ namespace mars {
 #ifdef DEBUG_WORLD_PHYSICS
         std::cout << "[WorldPhysics::computeMLSCollisions]: Collision related to frame " << colFrames[frameIndex] << std::endl;
 #endif
+        envire::core::Transform tfColRobCen = control->graph->getTransform(SIM_CENTER_FRAME_NAME, colFrames[frameIndex]);
+#ifdef DEBUG_WORLD_PHYSICS
+        std::cout << "[WorldPhysics::computeMLSCollisions]: Transformation between sim center and robot colission frame " << colFrames[frameIndex] << std::endl; // This tf is wrong when we rotate the mls frame
+        std::cout << "[WorldPhysics::computeMLSCollisions]: " << tfColRobCen.toString().c_str() << std::endl;
+#endif
         // Transformation must be from the mls frame to the colision object frame
         envire::core::Transform tfColCen = control->graph->getTransform(MLS_FRAME_NAME, colFrames[frameIndex]);
-        fcl::Transform3f trafo = tfColCen.transform.getTransform().cast<float>();
+        fcl::Transform3f trafo = tfColCen.transform.getTransform().cast<float>(); 
+#ifdef DEBUG_WORLD_PHYSICS
+        std::cout << "[WorldPhysics::computeMLSCollisions]: About to provide transformation between MLS and " << colFrames[frameIndex] << std::endl; // This tf is wrong when we rotate the mls frame
+        std::cout << "[WorldPhysics::computeMLSCollisions]: Transformation according to envire graph: " << tfColCen.toString().c_str() << std::endl;
+#endif
+        //std::cout << "[WorldPhysics::computeMLSCollisions]: Transformation in fcl format: " << trafo << std::endl;
         // Get the collision objects -Assumes only one per frame-
         IterCollItem itCols;
         itCols = control->graph->getItem<CollisionItem>(colFrames[frameIndex]); 
@@ -400,7 +421,7 @@ namespace mars {
         bool collisionComputed = true;
         switch (collision.geometry->type){
           case urdf::Geometry::SPHERE:
-            {
+            { //wheel_front_left_motor_col_wheel_front_left_03
               //std::cout << "Collision with a sphere" << std::endl;
               urdf::SphereSharedPtr sphereUrdf = urdf::dynamic_pointer_cast<urdf::Sphere>(collision.geometry);
               fcl::Spheref sphere(sphereUrdf->radius);
@@ -600,14 +621,19 @@ namespace mars {
 #endif            
     }
 
-    void WorldPhysics::dumpFCLResult(const fcl::CollisionResultf &result, dContact *contactPtr)
-    {
+    void WorldPhysics::dumpFCLResult(const fcl::CollisionResultf &result, dContact *contactPtr, const envire::core::FrameId frameId)
+    { 
 #ifdef DEBUG_WORLD_PHYSICS
       std::cout << "[WorldPhysics::dumpFCLResults] To Dump: " << std::endl;
+      //envire::core::Transform tfColMls = control->graph->getTransform(frameId, MLS_FRAME_NAME); 
+      envire::core::Transform tfSimMls = control->graph->getTransform(SIM_CENTER_FRAME_NAME, MLS_FRAME_NAME); 
+      fcl::Transform3f trafo = tfSimMls.transform.getTransform().cast<float>();
+      std::cout << "[WorldPhysics::dumpFCLResults]: Trafo \n" << trafo.matrix() << std::endl;
       for(size_t i=0; i< result.numContacts(); ++i)
       {
           const auto & cont = result.getContact(i);
-          std::cout << "[WorldPhysics::dumpFCLResults]: Contact transpose " << cont.pos.transpose() << std::endl;
+          std::cout << "[WorldPhysics::dumpFCLResults]: Contact transpose " << (trafo * cont.pos).transpose() << std::endl;
+          std::cout << "[WorldPhysics::dumpFCLResults]: Contact normal transpose (*trafo.linear) " << (trafo.linear() * cont.normal).transpose() << std::endl;
           std::cout << "[WorldPhysics::dumpFCLResults]: Contact normal transpose " << cont.normal.transpose() << std::endl;
           std::cout << "[WorldPhysics::dumpFCLResults]: Contact penetration depth " << cont.penetration_depth << std::endl;
       }
@@ -615,11 +641,11 @@ namespace mars {
       for(size_t i=0; i< result.numContacts(); ++i)
       {
         const auto & cont = result.getContact(i);
-        const auto & pos = cont.pos.transpose();
+        const auto & pos = (trafo*cont.pos).transpose();
         contactPtr[i].geom.pos[0] = pos[0];
         contactPtr[i].geom.pos[1] = pos[1];
         contactPtr[i].geom.pos[2] = pos[2];
-        const auto & normal = cont.normal.transpose();
+        const auto & normal = (trafo.linear()*cont.normal).transpose();
         if (normal.z() < 0.0)
         {
           Eigen::Vector3d::Map(contactPtr[i].geom.normal) = -normal.cast<double>();
@@ -669,7 +695,7 @@ namespace mars {
       dContact *contactPtr = new dContact[result.numContacts()];
       const smurf::ContactParams contactParams = collidable.getContactParams();
       initContactParams(contactPtr, contactParams, result.numContacts());
-      dumpFCLResult(result, contactPtr);
+      dumpFCLResult(result, contactPtr, frameId); // Pass here the frame id or the transformation to the object?
       // Here we have to copy the contact points to the contactPtr structure or
       // if not pass the result to createFeedbackJoints so that it uses them
       createFeedbackJoints(frameId, contactParams, contactPtr, result.numContacts());
