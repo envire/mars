@@ -70,9 +70,14 @@ namespace mars {
 
         void loadMLSMap();
         void loadRobot();
-        void loadMLSAndRobot();
+        bool loadMLSAndRobot();
         void moveForwards();
         void loadSlopedFromPLY();
+        bool goalReached();
+        bool yamlLoad(const std::string & confPath, YAML::Node & conf);
+        bool loadConf(const std::string & confPath);
+        void cleanUp();
+        bool moveRobotTo(const envire::core::Transform& newPos);
 
         // Private members
  	      maps::grid::MLSMapPrecalculated mlsPrecalculated;
@@ -82,7 +87,13 @@ namespace mars {
         enum ConfParams { mlsPosP, 
                           mlsOriP,
                           robPosP, 
-                          robOriP };
+                          robOriP, 
+                          robGoalP }; 
+
+        const std::vector<std::string> confItems = {
+          "robPos", "robOri",
+          "mlsPos", "mlsOri",
+          "robGoal" };
 
         bool sceneLoaded;
         envire::core::FrameId mlsFrameId;
@@ -95,6 +106,10 @@ namespace mars {
         double robOri;
         mars::utils::Vector mlsPos;
         double mlsOri;
+        mars::utils::Vector robGoalPos;
+
+        unsigned int numConfsExecuted;
+        bool confLoaded;
 
       }; // end of class definition EnvireMls
 

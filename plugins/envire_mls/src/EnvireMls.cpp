@@ -31,6 +31,7 @@
 #include <fstream>
 #include <boost/archive/binary_iarchive.hpp>
 #include <envire_core/items/Transform.hpp>
+#include <envire_core/graph/TreeView.hpp>
 #include <yaml-cpp/yaml.h>
 
 #include <envire_core/graph/GraphDrawing.hpp>
@@ -79,6 +80,8 @@ namespace mars {
       const bool LOAD_PLY=false;
       const std::string PLY_FILE = "/simulation/mars/plugins/envire_mls/testPLYData/pointcloud-20171110-2230.ply";
       const std::string yaml_path = "/simulation/mars/plugins/envire_mls/testMlsData/conf.yml";
+      const std::vector<std::string> confs = {"/simulation/mars/plugins/envire_mls/testMlsData/conf.yml"};//,
+                                              //"/simulation/mars/plugins/envire_mls/testMlsData/conf.yml"};
 
       EnvireMls::EnvireMls(lib_manager::LibManager *theManager)
         : MarsPluginTemplate(theManager, "EnvireMls") 
@@ -92,67 +95,14 @@ namespace mars {
         mapStringParams["robOri"] = robOriP;
         mapStringParams["mlsPos"] = mlsPosP;
         mapStringParams["mlsOri"] = mlsOriP;
+        mapStringParams["robGoal"] = robGoalP;
+        numConfsExecuted = 0;
+        confLoaded = false;
       }
 
       void EnvireMls::init() 
       {
-        YAML::Node conf;
-        try{
-          conf = YAML::LoadFile(std::getenv(ENV_AUTOPROJ_ROOT) + yaml_path);
-        }catch (...){
-          LOG_ERROR("[EnvireMls::init] Something went wrong loading the test config yaml."
-          " It might have not been found. : %s", yaml_path.c_str());
-          throw;
-        }
-        std::vector<std::string> confItems = {
-          "robPos", "robOri",
-          "mlsPos", "mlsOri"
-        };
-        for (const std::string& item: confItems)
-        {
-          LOG_INFO("[EnvireMls::init] confItem: " + item);
-          if (conf[item])
-          {
-            switch (mapStringParams[item]){
-              case robPosP:
-              {
-                std::vector<double> robPosV = conf["robPos"].as<std::vector<double>>();
-                robPos = {robPosV[0], robPosV[1], robPosV[2]};
-                LOG_INFO(
-                    "[EnvireMls::init] Loaded this position for the rover: %f, %f, %f ",
-                    robPos[0], robPos[1], robPos[2]);
-                break;
-
-              }
-              case robOriP:
-              {
-                robOri = conf["robOri"].as<double>();
-                LOG_INFO(
-                    "[EnvireMls::init] Loaded orientation for the robot: %f ",
-                    robOri);
-                break;
-              }
-              case mlsPosP:
-              {
-                std::vector<double> mlsPosV = conf["mlsPos"].as<std::vector<double>>();
-                mlsPos = {mlsPosV[0], mlsPosV[1], mlsPosV[2]};
-                LOG_INFO(
-                    "[EnvireMls::init] Loaded this position for the mls: %f, %f, %f",
-                    mlsPos[0], mlsPos[1], mlsPos[2]);
-                break;
-              }
-              case mlsOriP:
-              {
-                mlsOri = conf["mlsOri"].as<double>();
-                LOG_INFO(
-                    "[EnvireMls::init] Loaded orientation for the mls: %f ",
-                    mlsOri);
-                break;
-              }
-            }
-          }
-        }
-
+        loadConf(yaml_path);
 #ifdef DEBUG
         LOG_DEBUG( "[EnvireMls::init] Tests"); 
 #endif
@@ -160,7 +110,7 @@ namespace mars {
         LOG_DEBUG( "[EnvireMls::init] SIM_CENTER_FRAME_NAME is not defined "); 
 #endif
 #ifdef SIM_CENTER_FRAME_NAME
-      LOG_DEBUG( "[EnvireMls::init] SIM_CENTER_FRAME_NAME is defined: " + SIM_CENTER_FRAME_NAME); 
+        LOG_DEBUG( "[EnvireMls::init] SIM_CENTER_FRAME_NAME is defined: " + SIM_CENTER_FRAME_NAME); 
 #endif
 #ifdef DEBUG
         LOG_DEBUG("[EnvireMls::init] mlsTf x y z %f, %f, %f", 
@@ -174,6 +124,16 @@ namespace mars {
 #endif
         sceneLoaded = false;
         movingForward = false;
+
+        if (control->graph->containsFrame(MLS_FRAME_NAME))
+        {
+#ifdef DEBUG
+          envire::core::Transform tfMlsCen = control->graph->getTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_NAME);
+          LOG_DEBUG("[EnvireMls::Update]: Transformation between MLS and center " + tfMlsCen.toString()); 
+#endif
+        }
+
+        control->sim->StartSimulation();
       }
 
       void EnvireMls::reset() { }
@@ -182,20 +142,103 @@ namespace mars {
 
       void EnvireMls::update(sReal time_ms) 
       {
-        if (control->graph->containsFrame(MLS_FRAME_NAME))
+        // Go over the different confs for each start timer prepare the scene
+        // let it run stop timer save output. Store also the initial distance.
+
+        // States: No conf loaded, simulation running, all confs done
+        bool allConfsDone = (numConfsExecuted == confs.size());
+        if (!allConfsDone)
         {
-          envire::core::Transform tfMlsCen = control->graph->getTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_NAME);
-          LOG_DEBUG("[EnvireMls::Update]: Transformation between MLS and center " + tfMlsCen.toString()); 
-        }
-        if (not sceneLoaded){
-          loadMLSAndRobot();
-          sceneLoaded = true;
-        }
-        else{
-            if ((MOVE_FORWARD) && (!movingForward)){
-                moveForwards();    
+          if (!confLoaded)
+          {              
+            confLoaded = loadConf(confs[numConfsExecuted]);
+            LOG_DEBUG( "[EnvireMls::update] Configuration Loaded"); 
+          }
+          if (confLoaded)
+          {
+            if (!sceneLoaded)
+            {
+              sceneLoaded = loadMLSAndRobot();
+              LOG_DEBUG( "[EnvireMls::update] Scene Loaded"); 
+              // void NodeManager::clearAllNodes(bool clear_all, bool clearGraphics) ?
             }
+            if (sceneLoaded)
+            {
+              if (goalReached())
+              {
+                //control->sim->StopSimulation();
+                //LOG_DEBUG( "[EnvireMls::update] Simulation stopped"); 
+                //cleanUp();
+                numConfsExecuted ++;
+                if (numConfsExecuted <= confs.size())
+                {
+                  //cleanUp();
+                  confLoaded = false;
+                  sceneLoaded = false;
+                }
+                LOG_DEBUG( "[EnvireMls::update] Goal was reached"); 
+                //control->sim->exitMars();
+              }
+              else
+              {
+                if ((MOVE_FORWARD) && (!movingForward))
+                {
+                    moveForwards();    
+                }
+                //envire::core::FrameId robotFrame = ROBOT_ROOT_LINK_NAME;
+                //envire::core::EnvireGraph copy(*control->graph.get());
+                //bool robotFrameFound = (control->graph->containsFrame(robotFrame));
+                //bool mlsFrameFound = (control->graph->containsFrame(MLS_FRAME_NAME));
+                //bool robotFrameFoundCopy = (copy.containsFrame(robotFrame));
+                //LOG_DEBUG( "[EnvireMls::update] RobotFrameFound %b", robotFrameFound ); 
+                //LOG_DEBUG( "[EnvireMls::update] mlsFrameFound %b", mlsFrameFound); 
+                //LOG_DEBUG( "[EnvireMls::update] RobotFrameFound Copy %b", robotFrameFoundCopy); 
+              }
+            }
+          }
         }
+        else // All done
+        {
+          control->sim->StopSimulation();
+        }
+      }
+
+      void EnvireMls::cleanUp(){
+        control->sim->StopSimulation();
+        bool clear_all = true;
+        bool clear_graphics = true;
+        control->nodes->clearAllNodes(clear_all, clear_graphics);
+        //control->graph.reset(new envire::core::EnvireGraph);
+        //control->graph->addFrame(SIM_CENTER_FRAME_NAME);
+        control->sim->StartSimulation();
+
+        //envire::core::TreeView robotTree = control->graph->getTree(control->graph->getVertex(SIM_CENTER_FRAME_NAME));
+        //LOG_DEBUG("robotTree root children size: %i", robotTree.tree[robotTree.root].children.size());
+        //bool robotRemoved = (!control->graph->containsFrame(ROBOT_ROOT_LINK_NAME));
+        //bool mlsRemoved = (!control->graph->containsFrame(MLS_FRAME_NAME));
+        //// Use Simulator::NewWorld()
+        //// Envire can't remove the next edge because on of them don't belong to the tree, but I think both should...
+        //robotTree.removeEdge( 
+        //  control->graph->getVertex(SIM_CENTER_FRAME_NAME),
+        //  control->graph->getVertex(ROBOT_ROOT_LINK_NAME)
+        //);
+        //robotTree.removeEdge(
+        //  control->graph->getVertex(SIM_CENTER_FRAME_NAME),
+        //  control->graph->getVertex(MLS_FRAME_NAME)
+        //);
+        //LOG_DEBUG("After removing edges robotTree root children size: %i", robotTree.tree[robotTree.root].children.size());
+        //robotRemoved = (!control->graph->containsFrame(ROBOT_ROOT_LINK_NAME));
+        //mlsRemoved = (!control->graph->containsFrame(MLS_FRAME_NAME));
+        
+        //bool clearAll = true;
+        //control->sim->newWorld(clearAll);
+
+        //control->graph->removeTransform(SIM_CENTER_FRAME_NAME, ROBOT_ROOT_LINK_NAME);
+        //control->graph->removeTransform(ROBOT_ROOT_LINK_NAME, SIM_CENTER_FRAME_NAME);
+        //control->graph->removeFrame(ROBOT_ROOT_LINK_NAME);
+        //control->graph->removeTransform(SIM_CENTER_FRAME_NAME, MLS_FRAME_NAME);
+        //control->graph->removeTransform(MLS_FRAME_NAME, SIM_CENTER_FRAME_NAME);
+        //control->graph->removeFrame(MLS_FRAME_NAME);
       }
 
       void EnvireMls::loadMLSMap()
@@ -217,8 +260,9 @@ namespace mars {
         control->sim->loadScene(std::getenv(ENV_AUTOPROJ_ROOT) + ASGUARD_PATH, ROBOT_NAME, robPos, robotRot);
       }
 
-      void EnvireMls::loadMLSAndRobot()
+      bool EnvireMls::loadMLSAndRobot()
       {
+        bool loaded = false;
 #ifdef DEBUG
         std::string path = std::getenv(ENV_AUTOPROJ_ROOT) + TEST_MLS_PATH;
         LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] Mls to test with: " + path); 
@@ -228,6 +272,8 @@ namespace mars {
         LOG_DEBUG( "[EnvireMls::testAddMLSAndRobot] 2"); 
 #endif
         loadRobot();
+        loaded = true;
+        return loaded;
       }
 
       void EnvireMls::moveForwards()
@@ -270,6 +316,115 @@ namespace mars {
 #ifdef DEBUG
           LOG_DEBUG( "[EnvireMls::loadSlopedFromPLY] MLS loaded to graph"); 
 #endif  
+      }
+
+      bool EnvireMls::goalReached()
+      {
+        envire::core::Transform robPosTf = control->graph->getTransform(SIM_CENTER_FRAME_NAME, ROBOT_ROOT_LINK_NAME);
+        base::Position robPos = robPosTf.transform.translation;
+        Eigen::Vector3f v;
+        Eigen::Vector3f w;
+        v << robPos[0], robPos[1], robPos[2];
+        w << robGoalPos[0], robGoalPos[1], robGoalPos[2];
+        Eigen::Vector3f diff = v - w;
+        float distance = diff.norm();
+        bool reached = (distance <= 0.2);
+        //LOG_DEBUG("[EnvireMls::goalReached] robPos x y z %f, %f, %f", 
+        //    robPosTf.transform.translation.x(), 
+        //    robPosTf.transform.translation.y(), 
+        //    robPosTf.transform.translation.z());
+        //LOG_DEBUG("[EnvireMls::goalReached] goalPos x y z %f, %f, %f", 
+        //    robGoalPos[0], robGoalPos[1], robGoalPos[2]);
+        //LOG_DEBUG("[EnvireMls::goalReached] distance %f", 
+        //    distance);
+        if (reached)
+        {
+          LOG_DEBUG( "[EnvireMls::goalReached] Target reached"); 
+        }
+        LOG_DEBUG( "[EnvireMls::goalReached] Distance: %f", distance); 
+        return reached;
+      }
+
+      bool EnvireMls::yamlLoad(const std::string & confPath, YAML::Node & conf)
+      {
+        bool loaded = false;
+        try{
+          conf = YAML::LoadFile(std::getenv(ENV_AUTOPROJ_ROOT) + confPath);
+          loaded = true;
+        }catch (...){
+          LOG_ERROR("[EnvireMls::init] Something went wrong loading the test config yaml."
+          " It might have not been found. : %s", confPath.c_str());
+        }
+        return loaded;
+      }
+
+      bool EnvireMls::loadConf(const std::string & confPath)
+      {
+        bool loaded = false;
+        YAML::Node conf;
+        if(yamlLoad(confPath, conf))
+        {
+          for (const std::string& item: confItems)
+          {
+            LOG_INFO("[EnvireMls::init] confItem: " + item);
+            if (conf[item])
+            {
+              switch (mapStringParams[item]){
+                case robPosP:
+                {
+                  std::vector<double> robPosV = conf["robPos"].as<std::vector<double>>();
+                  robPos = {robPosV[0], robPosV[1], robPosV[2]};
+                  LOG_INFO(
+                      "[EnvireMls::init] Loaded this position for the rover: %f, %f, %f ",
+                      robPos[0], robPos[1], robPos[2]);
+                  break;
+
+                }
+                case robOriP:
+                {
+                  robOri = conf["robOri"].as<double>();
+                  LOG_INFO(
+                      "[EnvireMls::init] Loaded orientation for the robot: %f ",
+                      robOri);
+                  break;
+                }
+                case mlsPosP:
+                {
+                  std::vector<double> mlsPosV = conf["mlsPos"].as<std::vector<double>>();
+                  mlsPos = {mlsPosV[0], mlsPosV[1], mlsPosV[2]};
+                  LOG_INFO(
+                      "[EnvireMls::init] Loaded this position for the mls: %f, %f, %f",
+                      mlsPos[0], mlsPos[1], mlsPos[2]);
+                  break;
+                }
+                case mlsOriP:
+                {
+                  mlsOri = conf["mlsOri"].as<double>();
+                  LOG_INFO(
+                      "[EnvireMls::init] Loaded orientation for the mls: %f ",
+                      mlsOri);
+                  break;
+                }
+                case robGoalP:
+                {
+                  std::vector<double> robGoalV = conf["robGoal"].as<std::vector<double>>();
+                  robGoalPos = {robGoalV[0], robGoalV[1], robGoalV[2]};
+                  LOG_INFO(
+                      "[EnvireMls::init] Loaded goal position: %f, %f, %f ",
+                      robGoalPos[0], robGoalPos[1], robGoalPos[2]);
+                  break;
+                }
+              }
+            }
+          }
+          loaded = true;
+        }
+        return loaded;
+      }
+
+      bool EnvireMls::moveRobotTo(const envire::core::Transform& newPos)
+      {
+        return false;
       }
 
     } // end of namespace envire_mls

@@ -1,0 +1,25 @@
+mlsOri: 0.0
+mlsPos: 
+  - 0.0
+  - 0.0
+  - 0.0
+robOri: 2.6
+robPos: 
+  - 1.70
+  - -1.80
+  - 0.30
+robGoal:
+# Goal at init pos
+#  - 1.70
+#  - -1.80
+#  - 0.30
+# A bit shorter
+  - -0.36
+  - -0.45
+  - 0.0
+# 4.7 meters, not always reached
+#  - -2.19
+#  - 0.81
+#  - -0.125
+
+

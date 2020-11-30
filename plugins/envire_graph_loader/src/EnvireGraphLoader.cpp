@@ -114,8 +114,17 @@ namespace mars {
                 envire::core::Transform mlsTf(base::Time::now());
                 mlsTf.transform.translation << pos[0], pos[1], pos[2];
                 mlsTf.transform.orientation = base::AngleAxisd(double(rot[2]), base::Vector3d::UnitZ()); //Rotation for now only on Z
-                control->graph->addTransform(center, mlsFrameId, mlsTf);
-                loadMLSMap(filename);
+                if (control->graph->containsEdge(center, mlsFrameId))
+                {
+                    control->graph->updateTransform(center, mlsFrameId, mlsTf);
+                    // TODO: Unload the mls map and load the next one 
+                    // loadMLSMap(filename); 
+                }
+                else
+                {
+                    control->graph->addTransform(center, mlsFrameId, mlsTf);
+                    loadMLSMap(filename);
+                }
                 return true;
             }    
 

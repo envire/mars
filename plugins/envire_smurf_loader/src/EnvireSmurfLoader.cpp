@@ -115,12 +115,24 @@ namespace mars {
                 std::string suffix = utils::getFilenameSuffix(filename);
                 vertex_descriptor center = control->graph->getVertex(SIM_CENTER_FRAME_NAME);
                 envire::core::Transform iniPose;
-                // FIXME TODO use rot input. Is it Euler angles or scaled axis?
                 iniPose.transform.orientation = base::AngleAxisd(rot[2], base::Vector3d::UnitZ()); // For now only Z component of the rotation
                 //iniPose.transform.orientation = base::Quaterniond::Identity();
                 iniPose.transform.translation = pos;
-                addRobot(filename, center, iniPose);
-                createSimObjects();
+                //envire::core::FrameId robFrameId(ROBOT_ROOT_LINK_NAME);
+                if (control->graph->containsFrame(ROBOT_ROOT_LINK_NAME))
+                {
+                    vertex_descriptor robotVertex = control->graph->getVertex(ROBOT_ROOT_LINK_NAME);
+                    // Adding the robot to the graph is not needed but the
+                    // transformation has to be updated and the sim object's 
+                    // positions have to be reseted
+                    control->graph->updateTransform(center, robotVertex, iniPose);
+                    control->nodes->updatePositionsFromGraph();
+                }
+                else
+                {
+                    addRobot(filename, center, iniPose);
+                    createSimObjects();
+                }
                 return true;
             }    
 
